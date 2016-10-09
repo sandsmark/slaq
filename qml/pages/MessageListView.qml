@@ -140,37 +140,4 @@ SilicaListView {
     function getMessageDay(message) {
         return new Date(parseInt(message.time, 10) * 1000).toLocaleString(Qt.locale(), "MMMM d, yyyy")
     }
-
-    /*
-    onMovementEnded: {
-        var index = -1;
-
-        if (atBottom) {
-            index = messageListModel.count - 1
-            console.log("Botton", index)
-        }
-        else {
-            index = listView.indexAt(contentX, contentY + height - footerItem.height)
-            console.log("First", index)
-
-            if (index === -1) {
-                index = listView.indexAt(contentX, contentY + height - footerItem.height + 10)
-                console.log("Second", index)
-            }
-
-            if (index === -1) {
-                index = listView.indexAt(contentX, contentY + height - footerItem.height + 5)
-                console.log("Third", index)
-            }
-        }
-
-        if (index >= 0) {
-            console.log("Move end", index)
-            latestRead = messageListModel.get(index).time
-            readTimer.start()
-        }
-    }
-    */
 }
-
-

@@ -86,7 +86,6 @@ DISTFILES += \
     qml/pages/Channel.qml \
     qml/pages/MessageListItem.qml \
     qml/pages/MessageInput.qml \
-    qml/pages/Icons.qml \
     qml/pages/Image.qml \
     qml/pages/ConnectionPanel.qml \
     qml/pages/ChannelListView.qml \
