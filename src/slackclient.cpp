@@ -421,6 +421,10 @@ QVariantList SlackClient::getChannels() {
     return Storage::channels();
 }
 
+QVariant SlackClient::getChannel(QString channelId) {
+    return Storage::channel(QVariant(channelId));
+}
+
 QString SlackClient::historyMethod(QString type) {
     if (type == "channel") {
         return "channels.history";
@@ -437,6 +441,34 @@ QString SlackClient::historyMethod(QString type) {
     else {
         return "";
     }
+}
+
+void SlackClient::joinChannel(QString channelId) {
+    QVariantMap channel = Storage::channel(QVariant(channelId));
+
+    QMap<QString,QString> params;
+    params.insert("name", channel.value("name").toString());
+
+    QNetworkReply* reply = executeGet("channels.join", params);
+    connect(reply, SIGNAL(finished()), this, SLOT(handleJoinChannelReply()));
+}
+
+void SlackClient::handleJoinChannelReply() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+    QJsonObject data = getResult(reply);
+
+    if (isError(data)) {
+        reply->deleteLater();
+        return;
+    }
+
+    QVariant id = data.value("channel").toObject().value("id").toVariant();
+    QVariantMap channel = Storage::channel(id);
+    channel.insert("isOpen", QVariant(true));
+    Storage::saveChannel(channel);
+
+    emit channelJoined(channel);
+    reply->deleteLater();
 }
 
 void SlackClient::loadMessages(QString type, QString channelId) {

@@ -1,8 +1,11 @@
 .import harbour.slackfish 1.0 as Slack
+.import "Channel.js" as Channel
 
 function init() {
     reloadChannels()
+    Slack.Client.onInitSuccess.connect(reloadChannels)
     Slack.Client.onChannelUpdated.connect(handleChannelUpdate)
+    Slack.Client.onChannelJoined.connect(handleChannelJoined)
 }
 
 function reloadChannels() {
@@ -18,8 +21,6 @@ function reloadChannels() {
 }
 
 function handleChannelUpdate(channel) {
-    console.log("updated", channel.id, channel.name)
-
     for (var i = 0; i < channelListModel.count; i++) {
         var current = channelListModel.get(i)
 
@@ -29,9 +30,13 @@ function handleChannelUpdate(channel) {
     }
 }
 
+function handleChannelJoined(channel) {
+    reloadChannels()
+}
+
 function compareChannels(a, b) {
     if (a.category === b.category) {
-        return a.name.localeCompare(b.name)
+        return Channel.compareByName(a, b)
     }
     else {
         if (a.category === "channel") {
@@ -41,7 +46,7 @@ function compareChannels(a, b) {
             return 1
         }
         else {
-            return a.name.localeCompare(b.name)
+            return Channel.compareByName(a, b)
         }
     }
 }

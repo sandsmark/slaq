@@ -5,8 +5,6 @@ import harbour.slackfish 1.0 as Slack
 Page {
     id: page
 
-    property bool shouldReload: false
-
     SilicaFlickable {
         anchors.fill: parent
 
@@ -19,6 +17,12 @@ Page {
                     pageStack.push(Qt.resolvedUrl("About.qml"))
                 }
             }
+            MenuItem {
+                text: qsTr("Join channel")
+                onClicked: {
+                    pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))
+                }
+            }
         }
 
         ChannelListView {
@@ -28,26 +32,4 @@ Page {
     }
 
     ConnectionPanel {}
-
-    onStatusChanged: {
-        if (status === PageStatus.Active && shouldReload) {
-            listView.reload()
-        }
-    }
-
-    Component.onCompleted: {
-        Slack.Client.onInitSuccess.connect(handleReload)
-    }
-
-    Component.onDestruction: {
-        Slack.Client.onInitSuccess.disconnect(handleReload)
-    }
-
-    function handleReload() {
-        if (status === PageStatus.Active) {
-            listView.reload()
-        } else {
-            shouldReload = true
-        }
-    }
 }

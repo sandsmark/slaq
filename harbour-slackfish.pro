@@ -94,4 +94,6 @@ DISTFILES += \
     qml/pages/RichTextLabel.qml \
     qml/pages/AttachmentFieldGrid.qml \
     qml/pages/Attachment.qml \
-    qml/pages/Spacer.qml
+    qml/pages/Spacer.qml \
+    qml/pages/ChannelSelect.qml \
+    qml/pages/Channel.js

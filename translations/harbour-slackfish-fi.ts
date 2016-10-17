@@ -22,6 +22,10 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
         <source>About</source>
         <translation>Tietoja</translation>
     </message>
+    <message>
+        <source>Join channel</source>
+        <translation>Liity kanavalle</translation>
+    </message>
 </context>
 <context>
     <name>ChannelListView</name>
@@ -32,6 +36,13 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
     <message>
         <source>Direct messages</source>
         <translation>Yksityisviestit</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelSelect</name>
+    <message>
+        <source>Join channel</source>
+        <translation>Liity kanavalle</translation>
     </message>
 </context>
 <context>

@@ -22,6 +22,10 @@ Browse channel and post new messages. Channels are updated real-time when new me
         <source>About</source>
         <translation>About</translation>
     </message>
+    <message>
+        <source>Join channel</source>
+        <translation>Join channel</translation>
+    </message>
 </context>
 <context>
     <name>ChannelListView</name>
@@ -32,6 +36,13 @@ Browse channel and post new messages. Channels are updated real-time when new me
     <message>
         <source>Direct messages</source>
         <translation>Direct messages</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelSelect</name>
+    <message>
+        <source>Join channel</source>
+        <translation>Join channel</translation>
     </message>
 </context>
 <context>

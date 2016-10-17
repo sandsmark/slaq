@@ -19,6 +19,7 @@ public:
     explicit SlackClient(QObject *parent = 0);
 
     Q_INVOKABLE QVariantList getChannels();
+    Q_INVOKABLE QVariant getChannel(QString channelId);
 
 signals:
     void testConnectionFail();
@@ -39,6 +40,7 @@ signals:
 
     void messageReceived(QVariantMap message);
     void channelUpdated(QVariantMap channel);
+    void channelJoined(QVariantMap channel);
     void userUpdated(QVariantMap user);
 
     void networkOff();
@@ -66,6 +68,9 @@ public slots:
 
     void markChannel(QString type, QString channelId, QString time);
     void handleMarkChannelReply();
+
+    void joinChannel(QString channelId);
+    void handleJoinChannelReply();
 
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 

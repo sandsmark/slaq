@@ -5,6 +5,7 @@ import harbour.slackfish 1.0 as Slack
 Page {
     id: page
 
+    property string channelId
     property variant channel
     property bool initialized: false
 
@@ -35,6 +36,10 @@ Page {
     }
 
     ConnectionPanel {}
+
+    Component.onCompleted: {
+        page.channel = Slack.Client.getChannel(page.channelId)
+    }
 
     onStatusChanged: {
         if (status === PageStatus.Active && !initialized) {

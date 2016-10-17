@@ -1,15 +1,14 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.slackfish 1.0 as Slack
+
 import "Settings.js" as Settings
 import "ChannelList.js" as ChannelList
+import "Channel.js" as Channel
 
 SilicaListView {
     id: listView
     spacing: Theme.paddingMedium
-
-    function reload() {
-        ChannelList.reloadChannels()
-    }
 
     VerticalScrollDecorator {}
 
@@ -45,7 +44,7 @@ SilicaListView {
 
             Image {
                 id: icon
-                source: "image://theme/" + getChannelIcon(model) + "?" + (delegate.highlighted ? currentColor : getChannelIconColor(model, currentColor))
+                source: "image://theme/" + Channel.getIcon(model) + "?" + (delegate.highlighted ? currentColor : Channel.getIconColor(model, currentColor))
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -61,37 +60,12 @@ SilicaListView {
         }
 
         onClicked: {
-            pageStack.push(Qt.resolvedUrl("Channel.qml"), {"channel": model})
+            pageStack.push(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
         }
     }
 
     Component.onCompleted: {
         ChannelList.init()
-    }
-
-    function getChannelIcon(model) {
-        switch (model.type) {
-            case "mpim":
-            case "channel":
-                return "icon-s-group-chat"
-            case "group":
-                return "icon-s-secure"
-            case "im":
-                return "icon-s-chat"
-        }
-    }
-
-    function getChannelIconColor(model, color) {
-        switch (model.presence) {
-            case "active":
-                return "lawngreen"
-
-            case "away":
-                return "lightgrey"
-
-            default:
-                return color
-        }
     }
 
     function getSectionName(category) {
