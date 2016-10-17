@@ -96,4 +96,5 @@ DISTFILES += \
     qml/pages/Attachment.qml \
     qml/pages/Spacer.qml \
     qml/pages/ChannelSelect.qml \
-    qml/pages/Channel.js
+    qml/pages/Channel.js \
+    qml/pages/Message.js

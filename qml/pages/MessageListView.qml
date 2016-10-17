@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.slackfish 1.0 as Slack
+import "Message.js" as Message
 
 SilicaListView {
     property alias atBottom: listView.atYEnd
@@ -101,12 +102,10 @@ SilicaListView {
 
     function handleLoadSuccess(channelId, messages) {
         if (channelId === channel.id) {
-            messages.sort(function(a, b) {
-                return a.time - b.time
-            })
+            messages.sort(Message.compareByTime)
             messageListModel.clear()
             messages.forEach(function(message) {
-                message.day = getMessageDay(message)
+                message.day = Message.getDisplayDate(message)
                 messageListModel.append(message)
             })
             listView.positionViewAtEnd()
@@ -123,7 +122,7 @@ SilicaListView {
     function handleMessageReceived(message) {
         if (message.type === "message" && message.channel === channel.id) {
             var isAtBottom = atBottom
-            message.day = getMessageDay(message)
+            message.day = Message.getDisplayDate(message)
             messageListModel.append(message)
 
             if (isAtBottom) {
@@ -135,9 +134,5 @@ SilicaListView {
                 }
             }
         }
-    }
-
-    function getMessageDay(message) {
-        return new Date(parseInt(message.time, 10) * 1000).toLocaleString(Qt.locale(), "MMMM d, yyyy")
     }
 }
