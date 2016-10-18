@@ -9,14 +9,12 @@ function init() {
 }
 
 function reloadChannels() {
-    var channels = Slack.Client.getChannels()
+    var channels = Slack.Client.getChannels().filter(Channel.isOpen)
     channels.sort(compareChannels)
 
     channelListModel.clear()
-    channels.forEach(function(channel) {
-        if (channel.isOpen) {
-            channelListModel.append(channel)
-        }
+    channels.forEach(function(c) {
+        channelListModel.append(c)
     })
 }
 

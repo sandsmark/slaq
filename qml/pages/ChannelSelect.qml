@@ -16,6 +16,11 @@ Page {
 
             VerticalScrollDecorator {}
 
+            ViewPlaceholder {
+                enabled: listView.count === 0
+                text: "No available channels"
+            }
+
             header: PageHeader {
                 title: qsTr("Join channel")
             }
@@ -63,12 +68,10 @@ Page {
     ConnectionPanel {}
 
     Component.onCompleted: {
-        var channels = Slack.Client.getChannels()
+        var channels = Slack.Client.getChannels().filter(Channel.isJoinableChannel)
         channels.sort(Channel.compareByName)
-        channels.forEach(function(channel) {
-            if (channel.category === "channel" && !channel.isOpen) {
-                channelListModel.append(channel)
-            }
+        channels.forEach(function(c) {
+            channelListModel.append(c)
         })
     }
 }

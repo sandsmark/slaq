@@ -4,6 +4,14 @@ function compareByName(a, b) {
     return a.name.localeCompare(b.name)
 }
 
+function isOpen(channel) {
+    return channel.isOpen
+}
+
+function isJoinableChannel(channel) {
+    return channel.category === "channel" && !channel.isOpen
+}
+
 function getIcon(model) {
     switch (model.type) {
         case "mpim":
