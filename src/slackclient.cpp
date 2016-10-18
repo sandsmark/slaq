@@ -71,6 +71,9 @@ void SlackClient::handleStreamMessage(QJsonObject message) {
     else if (type == "channel_joined") {
         parseChannelJoin(message);
     }
+    else if (type == "channel_left") {
+        parseChannelLeft(message);
+    }
     else if (type == "presence_change" || type == "manual_presence_change") {
         parsePresenceChange(message);
     }
@@ -82,13 +85,20 @@ void SlackClient::parseChannelJoin(QJsonObject message) {
     emit channelJoined(data);
 }
 
+void SlackClient::parseChannelLeft(QJsonObject message) {
+    QString id = message.value("channel").toString();
+    QVariantMap channel = Storage::channel(id);
+    channel.insert("isOpen", QVariant(false));
+    Storage::saveChannel(channel);
+    emit channelLeft(channel);
+}
+
 void SlackClient::parseChannelUpdate(QJsonObject message) {
     QString id = message.value("channel").toString();
     QVariantMap channel = Storage::channel(id);
     channel.insert("lastRead", message.value("ts").toVariant());
     channel.insert("unreadCount", message.value("unread_count_display").toVariant());
     Storage::saveChannel(channel);
-
     emit channelUpdated(channel);
 }
 
@@ -471,6 +481,25 @@ void SlackClient::handleJoinChannelReply() {
 
     if (isError(data)) {
         qDebug() << "Channel join failed";
+    }
+
+    reply->deleteLater();
+}
+
+void SlackClient::leaveChannel(QString channelId) {
+    QMap<QString,QString> params;
+    params.insert("channel", channelId);
+
+    QNetworkReply* reply = executeGet("channels.leave", params);
+    connect(reply, SIGNAL(finished()), this, SLOT(handleLeaveChannelReply()));
+}
+
+void SlackClient::handleLeaveChannelReply() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+    QJsonObject data = getResult(reply);
+
+    if (isError(data)) {
+        qDebug() << "Channel leave failed";
     }
 
     reply->deleteLater();

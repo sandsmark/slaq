@@ -37,6 +37,10 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
         <source>Direct messages</source>
         <translation>Yksityisviestit</translation>
     </message>
+    <message>
+        <source>Leave</source>
+        <translation>Sulje</translation>
+    </message>
 </context>
 <context>
     <name>ChannelSelect</name>

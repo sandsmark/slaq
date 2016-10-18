@@ -6,6 +6,7 @@ function init() {
     Slack.Client.onInitSuccess.connect(reloadChannels)
     Slack.Client.onChannelUpdated.connect(handleChannelUpdate)
     Slack.Client.onChannelJoined.connect(handleChannelJoined)
+    Slack.Client.onChannelLeft.connect(handleChannelLeft)
 }
 
 function reloadChannels() {
@@ -30,6 +31,16 @@ function handleChannelUpdate(channel) {
 
 function handleChannelJoined(channel) {
     reloadChannels()
+}
+
+function handleChannelLeft(channel) {
+    for (var i = 0; i < channelListModel.count; i++) {
+        var current = channelListModel.get(i)
+
+        if (channel.id === current.id) {
+            channelListModel.remove(i)
+        }
+    }
 }
 
 function compareChannels(a, b) {

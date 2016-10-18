@@ -37,6 +37,10 @@ Browse channel and post new messages. Channels are updated real-time when new me
         <source>Direct messages</source>
         <translation>Direct messages</translation>
     </message>
+    <message>
+        <source>Leave</source>
+        <translation>Leave</translation>
+    </message>
 </context>
 <context>
     <name>ChannelSelect</name>

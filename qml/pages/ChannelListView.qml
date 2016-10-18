@@ -28,9 +28,9 @@ SilicaListView {
         }
     }
 
-    delegate: BackgroundItem {
+    delegate: ListItem {
         id: delegate
-        height: row.height + Theme.paddingLarge
+        contentHeight: row.height + Theme.paddingLarge
         property color infoColor: delegate.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
         property color textColor: delegate.highlighted ? Theme.highlightColor : Theme.primaryColor
         property color currentColor: model.unreadCount > 0 ? textColor : infoColor
@@ -61,6 +61,17 @@ SilicaListView {
 
         onClicked: {
             pageStack.push(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
+        }
+
+        menu: ContextMenu {
+            hasContent: model.type === "channel"
+
+            MenuItem {
+                text: qsTr("Leave")
+                onClicked: {
+                    Slack.Client.leaveChannel(model.id)
+                }
+            }
         }
     }
 

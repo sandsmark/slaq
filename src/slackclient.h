@@ -41,6 +41,7 @@ signals:
     void messageReceived(QVariantMap message);
     void channelUpdated(QVariantMap channel);
     void channelJoined(QVariantMap channel);
+    void channelLeft(QVariantMap channel);
     void userUpdated(QVariantMap user);
 
     void networkOff();
@@ -72,6 +73,9 @@ public slots:
     void joinChannel(QString channelId);
     void handleJoinChannelReply();
 
+    void leaveChannel(QString channelId);
+    void handleLeaveChannelReply();
+
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 
 
@@ -92,6 +96,7 @@ private:
     void parseMessageUpdate(QJsonObject message);
     void parseChannelUpdate(QJsonObject message);
     void parseChannelJoin(QJsonObject message);
+    void parseChannelLeft(QJsonObject message);
     void parsePresenceChange(QJsonObject message);
 
     QVariantMap getMessageData(const QJsonObject message);
