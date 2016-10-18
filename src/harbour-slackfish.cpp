@@ -15,11 +15,11 @@ static QObject *slack_client_provider(QQmlEngine *engine, QJSEngine *scriptEngin
 
 int main(int argc, char *argv[])
 {
-    //QSettings settings; settings.remove("user/accessToken");
-    SlackConfig::clearWebViewCache();
-
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
     QScopedPointer<QQuickView> view(SailfishApp::createView());
+
+    //QSettings settings; settings.remove("user/accessToken");
+    SlackConfig::clearWebViewCache();
 
     qmlRegisterSingletonType<SlackClient>("harbour.slackfish", 1, 0, "Client", slack_client_provider);
 
