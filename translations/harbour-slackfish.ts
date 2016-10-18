@@ -44,6 +44,14 @@ Browse channel and post new messages. Channels are updated real-time when new me
         <source>Join channel</source>
         <translation>Join channel</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation>Search</translation>
+    </message>
+    <message>
+        <source>No available channels</source>
+        <translation">No available channels</translation>
+    </message>
 </context>
 <context>
     <name>ConnectionPanel</name>

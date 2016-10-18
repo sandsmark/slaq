@@ -9,24 +9,61 @@ Page {
     SilicaFlickable {
         anchors.fill: parent
 
+        PageHeader {
+            id: header
+            title: qsTr("Join channel")
+        }
+
+        ViewPlaceholder {
+            enabled: listView.count === 0
+            text: qsTr("No available channels")
+        }
+
         SilicaListView {
             id: listView
             spacing: Theme.paddingMedium
-            anchors.fill: parent
+
+            anchors.top: header.bottom
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
 
             VerticalScrollDecorator {}
 
-            ViewPlaceholder {
-                enabled: listView.count === 0
-                text: "No available channels"
-            }
+            // Prevent losing focus from search field
+            currentIndex: -1
 
-            header: PageHeader {
-                title: qsTr("Join channel")
+            header: SearchField {
+                id: searchField
+                width: parent.width
+                focus: true
+                placeholderText: qsTr("Search")
+
+                onTextChanged: {
+                    channelListModel.update()
+                }
             }
 
             model: ListModel {
                 id: channelListModel
+
+                property var available: Slack.Client.getChannels().filter(Channel.isJoinableChannel)
+
+                Component.onCompleted: update()
+
+                function matchesSearch(channel) {
+                    return listView.headerItem.text === "" || channel.name.toLowerCase().indexOf(listView.headerItem.text.toLowerCase()) >= 0
+                }
+
+                function update() {
+                    var channels = available.filter(matchesSearch)
+                    channels.sort(Channel.compareByName)
+
+                    clear()
+                    channels.forEach(function(c) {
+                        append(c)
+                    })
+                }
             }
 
             delegate: BackgroundItem {
@@ -66,12 +103,4 @@ Page {
     }
 
     ConnectionPanel {}
-
-    Component.onCompleted: {
-        var channels = Slack.Client.getChannels().filter(Channel.isJoinableChannel)
-        channels.sort(Channel.compareByName)
-        channels.forEach(function(c) {
-            channelListModel.append(c)
-        })
-    }
 }

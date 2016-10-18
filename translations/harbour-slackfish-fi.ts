@@ -44,6 +44,14 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
         <source>Join channel</source>
         <translation>Liity kanavalle</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation>Etsi</translation>
+    </message>
+    <message>
+        <source>No available channels</source>
+        <translation>Ei kanavia</translation>
+    </message>
 </context>
 <context>
     <name>ConnectionPanel</name>
