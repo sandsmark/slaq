@@ -91,6 +91,7 @@ private:
 
     void parseMessageUpdate(QJsonObject message);
     void parseChannelUpdate(QJsonObject message);
+    void parseChannelJoin(QJsonObject message);
     void parsePresenceChange(QJsonObject message);
 
     QVariantMap getMessageData(const QJsonObject message);
@@ -101,6 +102,8 @@ private:
     QString getAttachmentColor(QJsonObject attachment);
     QVariantList getAttachmentFields(QJsonObject attachment);
     QVariantList getAttachmentImages(QJsonObject attachment);
+
+    QVariantMap parseChannel(QJsonObject data);
 
     void parseUsers(QJsonObject data);
     void parseBots(QJsonObject data);

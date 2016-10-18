@@ -68,9 +68,18 @@ void SlackClient::handleStreamMessage(QJsonObject message) {
     else if (type == "group_marked" || type == "channel_marked" || type == "im_marked" || type == "mpim_marked") {
         parseChannelUpdate(message);
     }
+    else if (type == "channel_joined") {
+        parseChannelJoin(message);
+    }
     else if (type == "presence_change" || type == "manual_presence_change") {
         parsePresenceChange(message);
     }
+}
+
+void SlackClient::parseChannelJoin(QJsonObject message) {
+    QVariantMap data = parseChannel(message.value("channel").toObject());
+    Storage::saveChannel(data);
+    emit channelJoined(data);
 }
 
 void SlackClient::parseChannelUpdate(QJsonObject message) {
@@ -317,6 +326,20 @@ void SlackClient::handleStartReply() {
     reply->deleteLater();
 }
 
+QVariantMap SlackClient::parseChannel(QJsonObject channel) {
+    QVariantMap data;
+    data.insert("id", channel.value("id").toVariant());
+    data.insert("type", QVariant("channel"));
+    data.insert("category", QVariant("channel"));
+    data.insert("name", channel.value("name").toVariant());
+    data.insert("presence", QVariant("none"));
+    data.insert("isOpen", channel.value("is_member").toVariant());
+    data.insert("lastRead", channel.value("last_read").toVariant());
+    data.insert("unreadCount", channel.value("unread_count_display").toVariant());
+    data.insert("userId", QVariant());
+    return data;
+}
+
 void SlackClient::parseUsers(QJsonObject data) {
     foreach (const QJsonValue &value, data.value("users").toArray()) {
         QJsonObject user = value.toObject();
@@ -343,18 +366,7 @@ void SlackClient::parseBots(QJsonObject data) {
 
 void SlackClient::parseChannels(QJsonObject data) {
     foreach (const QJsonValue &value, data.value("channels").toArray()) {
-        QJsonObject channel = value.toObject();
-
-        QVariantMap data;
-        data.insert("id", channel.value("id").toVariant());
-        data.insert("type", QVariant("channel"));
-        data.insert("category", QVariant("channel"));
-        data.insert("name", channel.value("name").toVariant());
-        data.insert("presence", QVariant("none"));
-        data.insert("isOpen", channel.value("is_member").toVariant());
-        data.insert("lastRead", channel.value("last_read").toVariant());
-        data.insert("unreadCount", channel.value("unread_count_display").toVariant());
-        data.insert("userId", QVariant());
+        QVariantMap data = parseChannel(value.toObject());
         Storage::saveChannel(data);
     }
 }
@@ -458,16 +470,9 @@ void SlackClient::handleJoinChannelReply() {
     QJsonObject data = getResult(reply);
 
     if (isError(data)) {
-        reply->deleteLater();
-        return;
+        qDebug() << "Channel join failed";
     }
 
-    QVariant id = data.value("channel").toObject().value("id").toVariant();
-    QVariantMap channel = Storage::channel(id);
-    channel.insert("isOpen", QVariant(true));
-    Storage::saveChannel(channel);
-
-    emit channelJoined(channel);
     reply->deleteLater();
 }
 
