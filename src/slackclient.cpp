@@ -71,7 +71,10 @@ void SlackClient::handleStreamMessage(QJsonObject message) {
     else if (type == "channel_joined") {
         parseChannelJoin(message);
     }
-    else if (type == "channel_left") {
+    else if (type == "group_joined") {
+        parseGroupJoin(message);
+    }
+    else if (type == "channel_left" || type == "group_left") {
         parseChannelLeft(message);
     }
     else if (type == "presence_change" || type == "manual_presence_change") {
@@ -91,6 +94,12 @@ void SlackClient::parseChannelLeft(QJsonObject message) {
     channel.insert("isOpen", QVariant(false));
     Storage::saveChannel(channel);
     emit channelLeft(channel);
+}
+
+void SlackClient::parseGroupJoin(QJsonObject message) {
+    QVariantMap data = parseGroup(message.value("channel").toObject());
+    Storage::saveChannel(data);
+    emit channelJoined(data);
 }
 
 void SlackClient::parseChannelUpdate(QJsonObject message) {
@@ -350,6 +359,39 @@ QVariantMap SlackClient::parseChannel(QJsonObject channel) {
     return data;
 }
 
+QVariantMap SlackClient::parseGroup(QJsonObject group) {
+    QVariantMap data;
+
+    if (group.value("is_mpim").toBool()) {
+        data.insert("type", QVariant("mpim"));
+        data.insert("category", QVariant("chat"));
+
+        QStringList members;
+        QJsonArray memberList = group.value("members").toArray();
+        foreach (const QJsonValue &member, memberList) {
+            QVariant memberId = member.toVariant();
+
+            if (memberId != config->userId()) {
+                members << Storage::user(memberId).value("name").toString();
+            }
+        }
+        data.insert("name", QVariant(members.join(", ")));
+    }
+    else {
+        data.insert("type", QVariant("group"));
+        data.insert("category", QVariant("channel"));
+        data.insert("name", group.value("name").toVariant());
+    }
+
+    data.insert("id", group.value("id").toVariant());
+    data.insert("presence", QVariant("none"));
+    data.insert("isOpen", group.value("is_open").toVariant());
+    data.insert("lastRead", group.value("last_read").toVariant());
+    data.insert("unreadCount", group.value("unread_count_display").toVariant());
+    data.insert("userId", QVariant());
+    return data;
+}
+
 void SlackClient::parseUsers(QJsonObject data) {
     foreach (const QJsonValue &value, data.value("users").toArray()) {
         QJsonObject user = value.toObject();
@@ -383,37 +425,7 @@ void SlackClient::parseChannels(QJsonObject data) {
 
 void SlackClient::parseGroups(QJsonObject data) {
     foreach (const QJsonValue &value, data.value("groups").toArray()) {
-        QJsonObject group = value.toObject();
-
-        QVariantMap data;
-
-        if (group.value("is_mpim").toBool()) {
-            data.insert("type", QVariant("mpim"));
-            data.insert("category", QVariant("chat"));
-
-            QStringList members;
-            QJsonArray memberList = group.value("members").toArray();
-            foreach (const QJsonValue &member, memberList) {
-                QVariant memberId = member.toVariant();
-
-                if (memberId != config->userId()) {
-                    members << Storage::user(memberId).value("name").toString();
-                }
-            }
-            data.insert("name", QVariant(members.join(", ")));
-        }
-        else {
-            data.insert("type", QVariant("group"));
-            data.insert("category", QVariant("channel"));
-            data.insert("name", group.value("name").toVariant());
-        }
-
-        data.insert("id", group.value("id").toVariant());
-        data.insert("presence", QVariant("none"));
-        data.insert("isOpen", group.value("is_open").toVariant());
-        data.insert("lastRead", group.value("last_read").toVariant());
-        data.insert("unreadCount", group.value("unread_count_display").toVariant());
-        data.insert("userId", QVariant());
+        QVariantMap data = parseGroup(value.toObject());
         Storage::saveChannel(data);
     }
 }
@@ -500,6 +512,25 @@ void SlackClient::handleLeaveChannelReply() {
 
     if (isError(data)) {
         qDebug() << "Channel leave failed";
+    }
+
+    reply->deleteLater();
+}
+
+void SlackClient::leaveGroup(QString groupId) {
+    QMap<QString,QString> params;
+    params.insert("channel", groupId);
+
+    QNetworkReply* reply = executeGet("groups.leave", params);
+    connect(reply, SIGNAL(finished()), this, SLOT(handleLeaveGroupReply()));
+}
+
+void SlackClient::handleLeaveGroupReply() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+    QJsonObject data = getResult(reply);
+
+    if (isError(data)) {
+        qDebug() << "Group leave failed";
     }
 
     reply->deleteLater();

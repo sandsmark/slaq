@@ -10,6 +10,7 @@ function init() {
 }
 
 function reloadChannels() {
+    console.log("reload channels received")
     var channels = Slack.Client.getChannels().filter(Channel.isOpen)
     channels.sort(compareChannels)
 

@@ -92,6 +92,17 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
     </message>
 </context>
 <context>
+    <name>GroupLeaveDialog</name>
+    <message>
+        <source>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
+
+Are you sure you wish to leave?</source>
+        <translation>Jos suljet kanavan, et voi enää nähdä sen viestejä. Sinun pitää saada kutsu, että voit liittyä takaisin kanavalle.
+
+Oletko varma, että haluat sulkea kanavan?</translation>
+    </message>
+</context>
+<context>
     <name>Loader</name>
     <message>
         <source>Login</source>

@@ -76,6 +76,9 @@ public slots:
     void leaveChannel(QString channelId);
     void handleLeaveChannelReply();
 
+    void leaveGroup(QString groupId);
+    void handleLeaveGroupReply();
+
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 
 
@@ -97,6 +100,7 @@ private:
     void parseChannelUpdate(QJsonObject message);
     void parseChannelJoin(QJsonObject message);
     void parseChannelLeft(QJsonObject message);
+    void parseGroupJoin(QJsonObject message);
     void parsePresenceChange(QJsonObject message);
 
     QVariantMap getMessageData(const QJsonObject message);
@@ -109,6 +113,7 @@ private:
     QVariantList getAttachmentImages(QJsonObject attachment);
 
     QVariantMap parseChannel(QJsonObject data);
+    QVariantMap parseGroup(QJsonObject group);
 
     void parseUsers(QJsonObject data);
     void parseBots(QJsonObject data);

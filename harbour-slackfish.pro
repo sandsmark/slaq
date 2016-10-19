@@ -97,4 +97,5 @@ DISTFILES += \
     qml/pages/Spacer.qml \
     qml/pages/ChannelSelect.qml \
     qml/pages/Channel.js \
-    qml/pages/Message.js
+    qml/pages/Message.js \
+    qml/pages/GroupLeaveDialog.qml

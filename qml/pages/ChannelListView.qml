@@ -64,12 +64,20 @@ SilicaListView {
         }
 
         menu: ContextMenu {
-            hasContent: model.type === "channel"
+            hasContent: model.category === "channel"
 
             MenuItem {
                 text: qsTr("Leave")
                 onClicked: {
-                    Slack.Client.leaveChannel(model.id)
+                    if (model.type === "channel") {
+                        Slack.Client.leaveChannel(model.id)
+                    }
+                    else if (model.type === "group") {
+                        var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
+                        dialog.accepted.connect(function() {
+                            Slack.Client.leaveGroup(model.id)
+                        })
+                    }
                 }
             }
         }

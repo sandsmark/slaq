@@ -9,7 +9,7 @@ function isOpen(channel) {
 }
 
 function isJoinableChannel(channel) {
-    return channel.category === "channel" && !channel.isOpen
+    return channel.type === "channel" && !channel.isOpen
 }
 
 function getIcon(model) {
