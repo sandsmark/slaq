@@ -26,6 +26,10 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
         <source>Join channel</source>
         <translation>Liity kanavalle</translation>
     </message>
+    <message>
+        <source>Open chat</source>
+        <translation>Avaa keskustelu</translation>
+    </message>
 </context>
 <context>
     <name>ChannelListView</name>
@@ -39,6 +43,10 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
     </message>
     <message>
         <source>Leave</source>
+        <translation>Sulje</translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation>Sulje</translation>
     </message>
 </context>
@@ -55,6 +63,21 @@ Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun u
     <message>
         <source>No available channels</source>
         <translation>Ei kanavia</translation>
+    </message>
+</context>
+<context>
+    <name>ChatSelect</name>
+    <message>
+        <source>Open chat</source>
+        <translation>Avaa keskustelu</translation>
+    </message>
+    <message>
+        <source>No available chats</source>
+        <translation>Ei käyttäjiä</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Etsi</translation>
     </message>
 </context>
 <context>
@@ -100,6 +123,10 @@ Are you sure you wish to leave?</source>
         <translation>Jos suljet kanavan, et voi enää nähdä sen viestejä. Sinun pitää saada kutsu, että voit liittyä takaisin kanavalle.
 
 Oletko varma, että haluat sulkea kanavan?</translation>
+    </message>
+    <message>
+        <source>Leave %1</source>
+        <translation>Sulje %1</translation>
     </message>
 </context>
 <context>

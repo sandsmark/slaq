@@ -98,4 +98,5 @@ DISTFILES += \
     qml/pages/ChannelSelect.qml \
     qml/pages/Channel.js \
     qml/pages/Message.js \
-    qml/pages/GroupLeaveDialog.qml
+    qml/pages/GroupLeaveDialog.qml \
+    qml/pages/ChatSelect.qml

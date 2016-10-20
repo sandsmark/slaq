@@ -18,6 +18,12 @@ Page {
                 }
             }
             MenuItem {
+                text: qsTr("Open chat")
+                onClicked: {
+                    pageStack.push(Qt.resolvedUrl("ChatSelect.qml"))
+                }
+            }
+            MenuItem {
                 text: qsTr("Join channel")
                 onClicked: {
                     pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))

@@ -79,6 +79,12 @@ public slots:
     void leaveGroup(QString groupId);
     void handleLeaveGroupReply();
 
+    void openChat(QString chatId);
+    void handleOpenChatReply();
+
+    void closeChat(QString chatId);
+    void handleCloseChatReply();
+
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 
 
@@ -101,6 +107,8 @@ private:
     void parseChannelJoin(QJsonObject message);
     void parseChannelLeft(QJsonObject message);
     void parseGroupJoin(QJsonObject message);
+    void parseChatOpen(QJsonObject message);
+    void parseChatClose(QJsonObject message);
     void parsePresenceChange(QJsonObject message);
 
     QVariantMap getMessageData(const QJsonObject message);

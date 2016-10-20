@@ -12,6 +12,10 @@ function isJoinableChannel(channel) {
     return channel.type === "channel" && !channel.isOpen
 }
 
+function isJoinableChat(channel) {
+    return channel.type === "im" && !channel.isOpen
+}
+
 function getIcon(model) {
     switch (model.type) {
         case "mpim":

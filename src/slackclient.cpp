@@ -74,12 +74,34 @@ void SlackClient::handleStreamMessage(QJsonObject message) {
     else if (type == "group_joined") {
         parseGroupJoin(message);
     }
+    else if (type == "im_open") {
+        parseChatOpen(message);
+    }
+    else if (type == "im_close") {
+        parseChatClose(message);
+    }
     else if (type == "channel_left" || type == "group_left") {
         parseChannelLeft(message);
     }
     else if (type == "presence_change" || type == "manual_presence_change") {
         parsePresenceChange(message);
     }
+}
+
+void SlackClient::parseChatOpen(QJsonObject message) {
+    QString id = message.value("channel").toString();
+    QVariantMap channel = Storage::channel(id);
+    channel.insert("isOpen", QVariant(true));
+    Storage::saveChannel(channel);
+    emit channelJoined(channel);
+}
+
+void SlackClient::parseChatClose(QJsonObject message) {
+    QString id = message.value("channel").toString();
+    QVariantMap channel = Storage::channel(id);
+    channel.insert("isOpen", QVariant(false));
+    Storage::saveChannel(channel);
+    emit channelLeft(channel);
 }
 
 void SlackClient::parseChannelJoin(QJsonObject message) {
@@ -531,6 +553,46 @@ void SlackClient::handleLeaveGroupReply() {
 
     if (isError(data)) {
         qDebug() << "Group leave failed";
+    }
+
+    reply->deleteLater();
+}
+
+void SlackClient::openChat(QString chatId) {
+    QVariantMap channel = Storage::channel(QVariant(chatId));
+
+    QMap<QString,QString> params;
+    params.insert("user", channel.value("userId").toString());
+
+    QNetworkReply* reply = executeGet("im.open", params);
+    connect(reply, SIGNAL(finished()), this, SLOT(handleOpenChatReply()));
+}
+
+void SlackClient::handleOpenChatReply() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+    QJsonObject data = getResult(reply);
+
+    if (isError(data)) {
+        qDebug() << "Chat open failed";
+    }
+
+    reply->deleteLater();
+}
+
+void SlackClient::closeChat(QString chatId) {
+    QMap<QString,QString> params;
+    params.insert("channel", chatId);
+
+    QNetworkReply* reply = executeGet("im.close", params);
+    connect(reply, SIGNAL(finished()), this, SLOT(handleCloseChatReply()));
+}
+
+void SlackClient::handleCloseChatReply() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+    QJsonObject data = getResult(reply);
+
+    if (isError(data)) {
+        qDebug() << "Chat close failed";
     }
 
     reply->deleteLater();

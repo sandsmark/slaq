@@ -64,19 +64,25 @@ SilicaListView {
         }
 
         menu: ContextMenu {
-            hasContent: model.category === "channel"
+            hasContent: model.category === "channel" || model.type === "im"
 
             MenuItem {
-                text: qsTr("Leave")
+                text: model.category === "channel" ? qsTr("Leave") : qsTr("Close")
                 onClicked: {
-                    if (model.type === "channel") {
-                        Slack.Client.leaveChannel(model.id)
-                    }
-                    else if (model.type === "group") {
-                        var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
-                        dialog.accepted.connect(function() {
-                            Slack.Client.leaveGroup(model.id)
-                        })
+                    switch (model.type) {
+                        case "channel":
+                            Slack.Client.leaveChannel(model.id)
+                            break
+
+                        case "group":
+                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
+                            dialog.accepted.connect(function() {
+                                Slack.Client.leaveGroup(model.id)
+                            })
+                            break
+
+                        case "im":
+                            Slack.Client.closeChat(model.id)
                     }
                 }
             }
