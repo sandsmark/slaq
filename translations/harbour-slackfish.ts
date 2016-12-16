@@ -26,6 +26,10 @@ Browse channel and post new messages. Channels are updated real-time when new me
         <source>Join channel</source>
         <translation>Join channel</translation>
     </message>
+    <message>
+        <source>Open chat</source>
+        <translation>Open chat</translation>
+    </message>
 </context>
 <context>
     <name>ChannelListView</name>
@@ -41,6 +45,10 @@ Browse channel and post new messages. Channels are updated real-time when new me
         <source>Leave</source>
         <translation>Leave</translation>
     </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
 </context>
 <context>
     <name>ChannelSelect</name>
@@ -54,7 +62,22 @@ Browse channel and post new messages. Channels are updated real-time when new me
     </message>
     <message>
         <source>No available channels</source>
-        <translation">No available channels</translation>
+        <translation>No available channels</translation>
+    </message>
+</context>
+<context>
+    <name>ChatSelect</name>
+    <message>
+        <source>Open chat</source>
+        <translation>Open chat</translation>
+    </message>
+    <message>
+        <source>No available chats</source>
+        <translation>No available chats</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Search</translation>
     </message>
 </context>
 <context>
@@ -89,6 +112,21 @@ Browse channel and post new messages. Channels are updated real-time when new me
     <message>
         <source>No network connection</source>
         <translation>No network connection</translation>
+    </message>
+</context>
+<context>
+    <name>GroupLeaveDialog</name>
+    <message>
+        <source>Leave %1</source>
+        <translation>Leave %1</translation>
+    </message>
+    <message>
+        <source>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
+
+Are you sure you wish to leave?</source>
+        <translation>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
+
+Are you sure you wish to leave?</translation>
     </message>
 </context>
 <context>
