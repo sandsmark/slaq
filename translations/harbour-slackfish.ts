@@ -8,12 +8,16 @@
         <translation>About</translation>
     </message>
     <message>
-        <source>Unoffical Slack client for Sailfish OS.
-
-Browse channel and post new messages. Channels are updated real-time when new messages are posted.</source>
-        <translation>Unoffical Slack client for Sailfish OS.
-
-Browse channel and post new messages. Channels are updated real-time when new messages are posted.</translation>
+        <source>Browse channel and post new messages. Channels are updated real-time when new messages are posted.</source>
+        <translation>Browse channel and post new messages. Channels are updated real-time when new messages are posted.</translation>
+    </message>
+    <message>
+        <source>Unoffical Slack client for Sailfish OS</source>
+        <translation>Unoffical Slack client for Sailfish OS</translation>
+    </message>
+    <message>
+        <source>Source code and issues in &lt;a href=&apos;%1&apos;&gt;Github&lt;/a&gt;.</source>
+        <translation>Source code and issues in &lt;a href=&apos;%1&apos;&gt;Github&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>

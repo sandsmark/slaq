@@ -31,9 +31,11 @@ Page {
 
             Label {
                 x: page.padding
-                text: "Markus Sammallahti"
+                width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
+                wrapMode: Text.Wrap
+                text: qsTr("Unoffical Slack client for Sailfish OS")
                 color: Theme.highlightColor
-                font.pixelSize: Theme.fontSizeMedium
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Label {
@@ -41,10 +43,16 @@ Page {
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.fontSizeSmall
-                text: qsTr("Unoffical Slack client for Sailfish OS.
-
-Browse channel and post new messages. Channels are updated real-time when new messages are posted.")
+                text: qsTr("Browse channel and post new messages. Channels are updated real-time when new messages are posted.")
                 color: Theme.primaryColor
+            }
+
+            RichTextLabel {
+                x: page.padding
+                width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
+                font.pixelSize: Theme.fontSizeSmall
+                value: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/markussammallahti/harbour-slackfish")
+                onLinkActivated: Qt.openUrlExternally(link)
             }
         }
     }

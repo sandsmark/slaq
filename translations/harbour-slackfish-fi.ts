@@ -8,12 +8,16 @@
         <translation>Tietoja</translation>
     </message>
     <message>
-        <source>Unoffical Slack client for Sailfish OS.
-
-Browse channel and post new messages. Channels are updated real-time when new messages are posted.</source>
-        <translation>Epävirallinen Slack applikaatio Sailfish käyttöjärjestelmälle.
-
-Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun uusia viestejä saapuu.</translation>
+        <source>Browse channel and post new messages. Channels are updated real-time when new messages are posted.</source>
+        <translation>Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun uusia viestejä saapuu.</translation>
+    </message>
+    <message>
+        <source>Unoffical Slack client for Sailfish OS</source>
+        <translation>Epävirallinen Slack applikaatio Sailfish käyttöjärjestelmälle</translation>
+    </message>
+    <message>
+        <source>Source code and issues in &lt;a href=&apos;%1&apos;&gt;Github&lt;/a&gt;.</source>
+        <translation>Lähdekoodi ja vikailmoitukset &lt;a href=&apos;%1&apos;&gt;Githubissa&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
