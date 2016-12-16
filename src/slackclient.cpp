@@ -153,6 +153,12 @@ void SlackClient::parseMessageUpdate(QJsonObject message) {
         emit channelUpdated(channel);
     }
 
+    if (channel.value("isOpen").toBool() == false) {
+        if (channel.value("type").toString() == "im") {
+            openChat(channelId);
+        }
+    }
+
     emit messageReceived(data);
 }
 
