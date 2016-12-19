@@ -131,6 +131,8 @@ private:
 
     void findNewUsers(const QString &message);
 
+    void sendNotification(QString channelName, QString text);
+
     QVariantMap user(const QJsonObject &data);
 
     QString historyMethod(QString type);

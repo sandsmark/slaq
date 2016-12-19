@@ -9,16 +9,28 @@
 #   - icon definition filename in desktop file must be changed
 #   - translation filenames have to be changed
 
-# The name of your application
+# App config
 TARGET = harbour-slackfish
-
 CONFIG += sailfishapp
+SAILFISHAPP_ICONS = 86x86 108x108 128x128 256x256
 
+# Translations
+CONFIG += sailfishapp_i18n
+TRANSLATIONS += translations/harbour-slackfish-fi.ts
+
+# Notifications
+QT += dbus
+PKGCONFIG += nemonotifications-qt5
+dbus.path = /usr/share/dbus-1/interfaces
+dbus.files = src/harbour.slackfish.xml
+INSTALLS += dbus
+
+# Includes
 INCLUDEPATH += ./QtWebsocket
 
+# Check slack config
 CLIENT_ID = $$slack_client_id
 CLIENT_SECRET = $$slack_client_secret
-
 if(isEmpty(CLIENT_ID)) {
     error("No client id defined")
 }
@@ -26,9 +38,9 @@ if(isEmpty(CLIENT_ID)) {
 if(isEmpty(CLIENT_SECRET)) {
     error("No client secret defined")
 }
-
 DEFINES += SLACK_CLIENT_ID=\\\"$${CLIENT_ID}\\\"
 DEFINES += SLACK_CLIENT_SECRET=\\\"$${CLIENT_SECRET}\\\"
+
 
 SOURCES += src/harbour-slackfish.cpp \
     src/slackclient.cpp \
@@ -41,7 +53,9 @@ SOURCES += src/harbour-slackfish.cpp \
     src/networkaccessmanager.cpp \
     src/slackstream.cpp \
     src/storage.cpp \
-    src/messageformatter.cpp
+    src/messageformatter.cpp \
+    src/notificationlistener.cpp \
+    src/dbusadaptor.cpp
 
 OTHER_FILES += qml/harbour-slackfish.qml \
     qml/cover/CoverPage.qml \
@@ -51,18 +65,6 @@ OTHER_FILES += qml/harbour-slackfish.qml \
     translations/*.ts \
     harbour-slackfish.desktop \
     harbour-slackfish.png
-
-SAILFISHAPP_ICONS = 86x86 108x108 128x128 256x256
-
-# to disable building translations every time, comment out the
-# following CONFIG line
-CONFIG += sailfishapp_i18n
-
-# German translation is enabled as an example. If you aren't
-# planning to localize your app, remember to comment out the
-# following TRANSLATIONS line. And also do not forget to
-# modify the localized app name in the the .desktop file.
-TRANSLATIONS += translations/harbour-slackfish-fi.ts
 
 HEADERS += \
     src/slackclient.h \
@@ -75,7 +77,9 @@ HEADERS += \
     src/networkaccessmanager.h \
     src/slackstream.h \
     src/storage.h \
-    src/messageformatter.h
+    src/messageformatter.h \
+    src/notificationlistener.h \
+    src/dbusadaptor.h
 
 DISTFILES += \
     qml/pages/Settings.js \
@@ -99,4 +103,5 @@ DISTFILES += \
     qml/pages/Channel.js \
     qml/pages/Message.js \
     qml/pages/GroupLeaveDialog.qml \
-    qml/pages/ChatSelect.qml
+    qml/pages/ChatSelect.qml \
+    src/harbour.slackfish.xml

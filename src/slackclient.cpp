@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QRegularExpression>
 #include <QtNetwork/QNetworkConfigurationManager>
+#include <nemonotifications-qt5/notification.h>
 
 #include "slackclient.h"
 #include "storage.h"
@@ -151,6 +152,17 @@ void SlackClient::parseMessageUpdate(QJsonObject message) {
         channel.insert("unreadCount", unreadCount);
         Storage::saveChannel(channel);
         emit channelUpdated(channel);
+
+        QRegularExpression notificationTargetPattern("<!(here|channel|group|everyone)(\\|[^>]+)?>");
+        QRegularExpression notificationUserPattern("<@" + config->userId() + "(\\|[^>]+)?>");
+        QString text = message.value("text").toString();
+
+        if (notificationTargetPattern.match(text).hasMatch()) {
+            sendNotification(channel.value("name").toString(), text);
+        }
+        else if (notificationUserPattern.match(text).hasMatch()) {
+            sendNotification(channel.value("name").toString(), text);
+        }
     }
 
     if (channel.value("isOpen").toBool() == false) {
@@ -939,4 +951,15 @@ void SlackClient::findNewUsers(const QString &message) {
             Storage::saveUser(data);
         }
     }
+}
+
+void SlackClient::sendNotification(QString channelName, QString text) {
+    Notification notification;
+    notification.setAppName("Slackfish");
+    notification.setAppIcon("harbour-slackfish");
+    notification.setBody(QString("#%1: %2").arg(channelName, text.left(20)));
+    notification.setPreviewSummary(QString(tr("Mention in #%1")).arg(channelName));
+    notification.setPreviewBody(text.left(20));
+    notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate"));
+    notification.publish();
 }

@@ -1,0 +1,5 @@
+<node>
+  <interface name="harbour.slackfish">
+    <method name="activate" />
+ </interface>
+</node>

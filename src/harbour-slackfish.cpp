@@ -3,6 +3,8 @@
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
+#include "notificationlistener.h"
+#include "dbusadaptor.h"
 #include "storage.h"
 
 static QObject *slack_client_provider(QQmlEngine *engine, QJSEngine *scriptEngine) {
@@ -27,8 +29,18 @@ int main(int argc, char *argv[])
     view->engine()->setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
     view->showFullScreen();
 
+    NotificationListener* listener = new NotificationListener();
+    new DBusAdaptor(listener);
+    QDBusConnection connection = QDBusConnection::sessionBus();
+    connection.registerService("harbour.slackfish");
+    connection.registerObject("/", listener);
+    QObject::connect(listener, SIGNAL(activateReceived()), view->rootObject(), SLOT(activate()));
+
     int result = app->exec();
 
     qDebug() << "Application terminating";
+
+    delete listener;
+
     return result;
 }
