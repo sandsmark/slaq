@@ -110,6 +110,7 @@ private:
     void parseChatOpen(QJsonObject message);
     void parseChatClose(QJsonObject message);
     void parsePresenceChange(QJsonObject message);
+    void parseNotification(QJsonObject message);
 
     QVariantMap getMessageData(const QJsonObject message);
 
@@ -131,7 +132,7 @@ private:
 
     void findNewUsers(const QString &message);
 
-    void sendNotification(QString channelName, QString text);
+    void sendNotification(QString title, QString content);
 
     QVariantMap user(const QJsonObject &data);
 

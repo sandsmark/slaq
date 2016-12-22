@@ -167,4 +167,19 @@ Oletko varma, että haluat sulkea kanavan?</translation>
         <translation>Lähetä viesti %1%2</translation>
     </message>
 </context>
+<context>
+    <name>SlackClient</name>
+    <message>
+        <source>New message in %1</source>
+        <translation>Uusi viesti, %1</translation>
+    </message>
+    <message>
+        <source>New message from %1</source>
+        <translation>Uusi viesti, %1</translation>
+    </message>
+    <message>
+        <source>New message</source>
+        <translation>Uusi viesti</translation>
+    </message>
+</context>
 </TS>

@@ -87,6 +87,9 @@ void SlackClient::handleStreamMessage(QJsonObject message) {
     else if (type == "presence_change" || type == "manual_presence_change") {
         parsePresenceChange(message);
     }
+    else if (type == "desktop_notification") {
+        parseNotification(message);
+    }
 }
 
 void SlackClient::parseChatOpen(QJsonObject message) {
@@ -152,17 +155,6 @@ void SlackClient::parseMessageUpdate(QJsonObject message) {
         channel.insert("unreadCount", unreadCount);
         Storage::saveChannel(channel);
         emit channelUpdated(channel);
-
-        QRegularExpression notificationTargetPattern("<!(here|channel|group|everyone)(\\|[^>]+)?>");
-        QRegularExpression notificationUserPattern("<@" + config->userId() + "(\\|[^>]+)?>");
-        QString text = message.value("text").toString();
-
-        if (notificationTargetPattern.match(text).hasMatch()) {
-            sendNotification(channel.value("name").toString(), text);
-        }
-        else if (notificationUserPattern.match(text).hasMatch()) {
-            sendNotification(channel.value("name").toString(), text);
-        }
     }
 
     if (channel.value("isOpen").toBool() == false) {
@@ -194,6 +186,26 @@ void SlackClient::parsePresenceChange(QJsonObject message) {
             emit channelUpdated(channel);
         }
     }
+}
+
+void SlackClient::parseNotification(QJsonObject message) {
+  QString channel = message.value("subtitle").toString();
+  QString content = message.value("content").toString();
+
+  QString channelId = message.value("channel").toString();
+  QString title;
+
+  if (channelId.startsWith("C") || channelId.startsWith("G")) {
+      title = QString(tr("New message in %1")).arg(channel);
+  }
+  else if (channelId.startsWith("D")) {
+      title = QString(tr("New message from %1")).arg(channel);
+  }
+  else {
+      title = QString(tr("New message"));
+  }
+
+  sendNotification(title, content);
 }
 
 bool SlackClient::isOk(const QNetworkReply *reply) {
@@ -953,13 +965,20 @@ void SlackClient::findNewUsers(const QString &message) {
     }
 }
 
-void SlackClient::sendNotification(QString channelName, QString text) {
+void SlackClient::sendNotification(QString title, QString text) {
+    QString body = text.length() > 100 ? text.left(97) + "..." : text;
+    QString preview = text.length() > 40 ? text.left(37) + "..." : text;
+
     Notification notification;
     notification.setAppName("Slackfish");
     notification.setAppIcon("harbour-slackfish");
-    notification.setBody(QString("#%1: %2").arg(channelName, text.left(20)));
-    notification.setPreviewSummary(QString(tr("Mention in #%1")).arg(channelName));
-    notification.setPreviewBody(text.left(20));
+    notification.setBody(body);
+    notification.setPreviewSummary(title);
+    notification.setPreviewBody(preview);
+    notification.setCategory("chat");
+    notification.setHintValue("x-nemo-feedback", "chat_exists");
+    notification.setHintValue("x-nemo-priority", 100);
+    notification.setHintValue("x-nemo-display-on", true);
     notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate"));
     notification.publish();
 }

@@ -167,4 +167,19 @@ Are you sure you wish to leave?</translation>
         <translation>Message %1%2</translation>
     </message>
 </context>
+<context>
+    <name>SlackClient</name>
+    <message>
+        <source>New message in %1</source>
+        <translation>New message in %1</translation>
+    </message>
+    <message>
+        <source>New message from %1</source>
+        <translation>New message from %1</translation>
+    </message>
+    <message>
+        <source>New message</source>
+        <translation>New message</translation>
+    </message>
+</context>
 </TS>
