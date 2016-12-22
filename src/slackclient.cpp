@@ -15,7 +15,7 @@
 #include "storage.h"
 #include "messageformatter.h"
 
-SlackClient::SlackClient(QObject *parent) : QObject(parent), networkAccessible(QNetworkAccessManager::Accessible) {
+SlackClient::SlackClient(QObject *parent) : QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible) {
     networkAccessManager = new QNetworkAccessManager(this);
     config = new SlackConfig(this);
     stream = new SlackStream(this);
@@ -28,6 +28,14 @@ SlackClient::SlackClient(QObject *parent) : QObject(parent), networkAccessible(Q
     connect(stream, SIGNAL(connected()), this, SLOT(handleStreamStart()));
     connect(stream, SIGNAL(disconnected()), this, SLOT(handleStreamEnd()));
     connect(stream, SIGNAL(messageReceived(QJsonObject)), this, SLOT(handleStreamMessage(QJsonObject)));
+}
+
+void SlackClient::setAppActive(bool active) {
+    appActive = active;
+}
+
+void SlackClient::setActiveWindow(QString windowId) {
+    activeWindow = windowId;
 }
 
 void SlackClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible) {
@@ -205,7 +213,11 @@ void SlackClient::parseNotification(QJsonObject message) {
       title = QString(tr("New message"));
   }
 
-  sendNotification(title, content);
+  qDebug() << "App state" << appActive << activeWindow;
+
+  if (!appActive || activeWindow != channelId) {
+      sendNotification(title, content);
+  }
 }
 
 bool SlackClient::isOk(const QNetworkReply *reply) {

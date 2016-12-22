@@ -5,6 +5,12 @@ import harbour.slackfish 1.0 as Slack
 Page {
     id: page
 
+    property bool appActive: Qt.application.state === Qt.ApplicationActive
+
+    onAppActiveChanged: {
+        Slack.Client.setAppActive(appActive)
+    }
+
     SilicaFlickable {
         anchors.fill: parent
 

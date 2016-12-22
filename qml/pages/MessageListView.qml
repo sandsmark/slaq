@@ -7,7 +7,7 @@ SilicaListView {
     property alias atBottom: listView.atYEnd
     property variant channel
 
-    property bool appActive: Qt.application.active
+    property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
     property string latestRead: ""
 

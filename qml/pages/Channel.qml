@@ -42,11 +42,16 @@ Page {
     }
 
     onStatusChanged: {
-        if (status === PageStatus.Active && !initialized) {
-            initialized = true
-            listView.loadMessages()
+        if (status === PageStatus.Active) {
+            Slack.Client.setActiveWindow(page.channelId)
+
+            if (!initialized) {
+                initialized = true
+                listView.loadMessages()
+            }
         }
         else if (status === PageStatus.Deactivating) {
+            Slack.Client.setActiveWindow("")
             listView.markLatest()
         }
     }

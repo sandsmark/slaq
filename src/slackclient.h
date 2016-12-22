@@ -18,6 +18,9 @@ class SlackClient : public QObject
 public:
     explicit SlackClient(QObject *parent = 0);
 
+    Q_INVOKABLE void setAppActive(bool active);
+    Q_INVOKABLE void setActiveWindow(QString windowId);
+
     Q_INVOKABLE QVariantList getChannels();
     Q_INVOKABLE QVariant getChannel(QString channelId);
 
@@ -95,6 +98,9 @@ public slots:
     void reconnect();
 
 private:
+    bool appActive;
+    QString activeWindow;
+
     QNetworkReply* executePost(QString method, QMap<QString,QString> data);
     QNetworkReply* executeGet(QString method, QMap<QString,QString> params = QMap<QString,QString>());
 
