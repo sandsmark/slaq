@@ -138,7 +138,8 @@ private:
 
     void findNewUsers(const QString &message);
 
-    void sendNotification(QString title, QString content);
+    void sendNotification(QString channelId, QString title, QString content);
+    void clearNotifications();
 
     QVariantMap user(const QJsonObject &data);
 

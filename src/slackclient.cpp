@@ -32,10 +32,23 @@ SlackClient::SlackClient(QObject *parent) : QObject(parent), appActive(true), ac
 
 void SlackClient::setAppActive(bool active) {
     appActive = active;
+    clearNotifications();
 }
 
 void SlackClient::setActiveWindow(QString windowId) {
     activeWindow = windowId;
+    clearNotifications();
+}
+
+void SlackClient::clearNotifications() {
+  foreach (QObject* object, Notification::notifications()) {
+      Notification* n = qobject_cast<Notification*>(object);
+      if (n->hintValue("x-slackfish-channel").toString() == activeWindow) {
+          n->close();
+      }
+
+      delete n;
+  }
 }
 
 void SlackClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible) {
@@ -216,7 +229,7 @@ void SlackClient::parseNotification(QJsonObject message) {
   qDebug() << "App state" << appActive << activeWindow;
 
   if (!appActive || activeWindow != channelId) {
-      sendNotification(title, content);
+      sendNotification(channelId, title, content);
   }
 }
 
@@ -977,7 +990,7 @@ void SlackClient::findNewUsers(const QString &message) {
     }
 }
 
-void SlackClient::sendNotification(QString title, QString text) {
+void SlackClient::sendNotification(QString channelId, QString title, QString text) {
     QString body = text.length() > 100 ? text.left(97) + "..." : text;
     QString preview = text.length() > 40 ? text.left(37) + "..." : text;
 
@@ -988,6 +1001,7 @@ void SlackClient::sendNotification(QString title, QString text) {
     notification.setPreviewSummary(title);
     notification.setPreviewBody(preview);
     notification.setCategory("chat");
+    notification.setHintValue("x-slackfish-channel", channelId);
     notification.setHintValue("x-nemo-feedback", "chat_exists");
     notification.setHintValue("x-nemo-priority", 100);
     notification.setHintValue("x-nemo-display-on", true);
