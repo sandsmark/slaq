@@ -10,6 +10,7 @@ SlackStream::SlackStream(QObject *parent) : QObject(parent), isConnected(false),
     connect(webSocket, SIGNAL(connected()), this, SLOT(handleListerStart()));
     connect(webSocket, SIGNAL(disconnected()), this, SLOT(handleListerEnd()));
     connect(webSocket, SIGNAL(frameReceived(QString)), this, SLOT(handleMessage(QString)));
+    connect(checkTimer, SIGNAL(timeout()), this, SLOT(checkConnection()));
 }
 
 SlackStream::~SlackStream() {
