@@ -46,7 +46,7 @@ void SlackStream::handleListerStart() {
     qDebug() << "Socket connected";
     emit connected();
     isConnected = true;
-    checkTimer->start(20000);
+    checkTimer->start(15000);
 }
 
 void SlackStream::handleListerEnd() {
