@@ -994,6 +994,9 @@ void SlackClient::sendNotification(QString channelId, QString title, QString tex
     QString body = text.length() > 100 ? text.left(97) + "..." : text;
     QString preview = text.length() > 40 ? text.left(37) + "..." : text;
 
+    QVariantList arguments;
+    arguments.append(channelId);
+
     Notification notification;
     notification.setAppName("Slackfish");
     notification.setAppIcon("harbour-slackfish");
@@ -1005,6 +1008,6 @@ void SlackClient::sendNotification(QString channelId, QString title, QString tex
     notification.setHintValue("x-nemo-feedback", "chat_exists");
     notification.setHintValue("x-nemo-priority", 100);
     notification.setHintValue("x-nemo-display-on", true);
-    notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate"));
+    notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate", arguments));
     notification.publish();
 }

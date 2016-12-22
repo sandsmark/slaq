@@ -29,12 +29,11 @@ int main(int argc, char *argv[])
     view->engine()->setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
     view->showFullScreen();
 
-    NotificationListener* listener = new NotificationListener();
+    NotificationListener* listener = new NotificationListener(view.data());
     new DBusAdaptor(listener);
     QDBusConnection connection = QDBusConnection::sessionBus();
     connection.registerService("harbour.slackfish");
     connection.registerObject("/", listener);
-    QObject::connect(listener, SIGNAL(activateReceived()), view->rootObject(), SLOT(activate()));
 
     int result = app->exec();
 

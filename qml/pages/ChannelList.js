@@ -9,6 +9,13 @@ function init() {
     Slack.Client.onChannelLeft.connect(handleChannelLeft)
 }
 
+function disconnect() {
+    Slack.Client.onInitSuccess.disconnect(reloadChannels)
+    Slack.Client.onChannelUpdated.disconnect(handleChannelUpdate)
+    Slack.Client.onChannelJoined.disconnect(handleChannelJoined)
+    Slack.Client.onChannelLeft.disconnect(handleChannelLeft)
+}
+
 function reloadChannels() {
     var channels = Slack.Client.getChannels().filter(Channel.isOpen)
     channels.sort(compareChannels)

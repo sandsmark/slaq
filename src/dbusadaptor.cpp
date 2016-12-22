@@ -33,8 +33,8 @@ DBusAdaptor::~DBusAdaptor()
     // destructor
 }
 
-void DBusAdaptor::activate()
+void DBusAdaptor::activate(const QString &channelId)
 {
     // handle method call harbour.slackfish.activate
-    QMetaObject::invokeMethod(parent(), "activate");
+    QMetaObject::invokeMethod(parent(), "activate", Q_ARG(QString, channelId));
 }

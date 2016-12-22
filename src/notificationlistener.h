@@ -2,18 +2,19 @@
 #define NOTIFICATIONLISTENER_H
 
 #include <QObject>
+#include <QtQuick/QQuickView>
 
 class NotificationListener : public QObject
 {
   Q_OBJECT
 public:
-  explicit NotificationListener(QObject *parent = 0);
-
-signals:
-  void activateReceived();
+  explicit NotificationListener(QQuickView *view, QObject *parent = 0);
 
 public slots:
-  void activate();
+  void activate(const QString &channelId);
+
+private:
+  QQuickView *view;
 };
 
 #endif // NOTIFICATIONLISTENER_H

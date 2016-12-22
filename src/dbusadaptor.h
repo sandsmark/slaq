@@ -32,7 +32,9 @@ class DBusAdaptor: public QDBusAbstractAdaptor
     Q_CLASSINFO("D-Bus Interface", "harbour.slackfish")
     Q_CLASSINFO("D-Bus Introspection", ""
 "  <interface name=\"harbour.slackfish\">\n"
-"    <method name=\"activate\"/>\n"
+"    <method name=\"activate\">\n"
+"      <arg direction=\"in\" type=\"s\" name=\"channelId\"/>\n"
+"    </method>\n"
 "  </interface>\n"
         "")
 public:
@@ -41,7 +43,7 @@ public:
 
 public: // PROPERTIES
 public Q_SLOTS: // METHODS
-    void activate();
+    void activate(const QString &channelId);
 Q_SIGNALS: // SIGNALS
 };
 

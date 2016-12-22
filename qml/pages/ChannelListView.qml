@@ -93,6 +93,10 @@ SilicaListView {
         ChannelList.init()
     }
 
+    Component.onDestruction: {
+        ChannelList.disconnect()
+    }
+
     function getSectionName(category) {
         switch (category) {
             case "channel":
