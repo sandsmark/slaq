@@ -21,7 +21,7 @@ SilicaListView {
     }
 
     section {
-        property: "category"
+        property: "section"
         criteria: ViewSection.FullString
         delegate: SectionHeader {
             text: getSectionName(section)
@@ -97,8 +97,11 @@ SilicaListView {
         ChannelList.disconnect()
     }
 
-    function getSectionName(category) {
-        switch (category) {
+    function getSectionName(section) {
+        switch (section) {
+            case "unread":
+                return qsTr("Unreads")
+
             case "channel":
                 return qsTr("Channels")
 

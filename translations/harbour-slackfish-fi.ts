@@ -53,6 +53,10 @@
         <source>Close</source>
         <translation>Sulje</translation>
     </message>
+    <message>
+        <source>Unreads</source>
+        <translation>Lukemattomat</translation>
+    </message>
 </context>
 <context>
     <name>ChannelSelect</name>

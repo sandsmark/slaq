@@ -53,6 +53,10 @@
         <source>Close</source>
         <translation>Close</translation>
     </message>
+    <message>
+        <source>Unreads</source>
+        <translation>Unreads</translation>
+    </message>
 </context>
 <context>
     <name>ChannelSelect</name>
