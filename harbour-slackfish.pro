@@ -21,9 +21,6 @@ TRANSLATIONS += translations/harbour-slackfish-fi.ts
 # Notifications
 QT += dbus
 PKGCONFIG += nemonotifications-qt5
-dbus.path = /usr/share/dbus-1/interfaces
-dbus.files = src/harbour.slackfish.xml
-INSTALLS += dbus
 
 # Includes
 INCLUDEPATH += ./QtWebsocket
@@ -103,5 +100,4 @@ DISTFILES += \
     qml/pages/Channel.js \
     qml/pages/Message.js \
     qml/pages/GroupLeaveDialog.qml \
-    qml/pages/ChatSelect.qml \
-    src/harbour.slackfish.xml
+    qml/pages/ChatSelect.qml
