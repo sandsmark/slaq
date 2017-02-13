@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QImage>
 #include <QJsonObject>
 #include <QUrl>
 #include <QTimer>
@@ -70,6 +71,9 @@ public slots:
     void postMessage(QString channelId, QString content);
     void handlePostMessageReply();
 
+    void postImage(QString channelId, QString imagePath, QString title, QString comment);
+    void handlePostImage();
+
     void markChannel(QString type, QString channelId, QString time);
     void handleMarkChannelReply();
 
@@ -101,7 +105,9 @@ private:
     bool appActive;
     QString activeWindow;
 
-    QNetworkReply* executePost(QString method, QMap<QString,QString> data);
+    QNetworkReply* executePost(QString method, const QMap<QString, QString> &data);
+    QNetworkReply *executePostWithFile(QString method, const QMap<QString, QString>&, QIODevice *file, QString filename);
+
     QNetworkReply* executeGet(QString method, QMap<QString,QString> params = QMap<QString,QString>());
 
     bool isOk(const QNetworkReply *reply);

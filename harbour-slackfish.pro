@@ -26,6 +26,7 @@ PKGCONFIG += nemonotifications-qt5
 INCLUDEPATH += ./QtWebsocket
 
 # Check slack config
+
 CLIENT_ID = $$slack_client_id
 CLIENT_SECRET = $$slack_client_secret
 if(isEmpty(CLIENT_ID)) {
@@ -52,7 +53,8 @@ SOURCES += src/harbour-slackfish.cpp \
     src/storage.cpp \
     src/messageformatter.cpp \
     src/notificationlistener.cpp \
-    src/dbusadaptor.cpp
+    src/dbusadaptor.cpp \
+    src/filemodel.cpp
 
 OTHER_FILES += qml/harbour-slackfish.qml \
     qml/cover/CoverPage.qml \
@@ -76,7 +78,8 @@ HEADERS += \
     src/storage.h \
     src/messageformatter.h \
     src/notificationlistener.h \
-    src/dbusadaptor.h
+    src/dbusadaptor.h \
+    src/filemodel.h
 
 DISTFILES += \
     qml/pages/Settings.js \
@@ -100,4 +103,5 @@ DISTFILES += \
     qml/pages/Channel.js \
     qml/pages/Message.js \
     qml/pages/GroupLeaveDialog.qml \
-    qml/pages/ChatSelect.qml
+    qml/pages/ChatSelect.qml \
+    qml/dialogs/ImagePicker.qml
