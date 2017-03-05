@@ -55,6 +55,11 @@ SilicaListView {
         onSendMessage: {
             Slack.Client.postMessage(channel.id, content)
         }
+        onSendPicture: {
+            console.log("got picture ", filename, content)
+            Slack.Client.postImage(channel.id, filename, content, "")
+        }
+
     }
 
     onAppActiveChanged: {

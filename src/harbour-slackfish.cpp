@@ -6,6 +6,7 @@
 #include "notificationlistener.h"
 #include "dbusadaptor.h"
 #include "storage.h"
+#include "filemodel.h"
 
 static QObject *slack_client_provider(QQmlEngine *engine, QJSEngine *scriptEngine) {
     Q_UNUSED(engine)
@@ -24,6 +25,8 @@ int main(int argc, char *argv[])
     SlackConfig::clearWebViewCache();
 
     qmlRegisterSingletonType<SlackClient>("harbour.slackfish", 1, 0, "Client", slack_client_provider);
+
+    view->rootContext()->setContextProperty("fileModel", new FileModel());
 
     view->setSource(SailfishApp::pathTo("qml/harbour-slackfish.qml"));
     view->engine()->setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
