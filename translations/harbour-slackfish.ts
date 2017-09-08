@@ -21,6 +21,13 @@
     </message>
 </context>
 <context>
+    <name>Channel</name>
+    <message>
+        <source>Upload image</source>
+        <translation>Upload image</translation>
+    </message>
+</context>
+<context>
     <name>ChannelList</name>
     <message>
         <source>About</source>
@@ -123,6 +130,25 @@
     </message>
 </context>
 <context>
+    <name>FileSend</name>
+    <message>
+        <source>Upload image</source>
+        <translation>Upload image</translation>
+    </message>
+    <message>
+        <source>Select image</source>
+        <translation>Select image</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Send</translation>
+    </message>
+    <message>
+        <source>Uploading</source>
+        <translation>Uploading</translation>
+    </message>
+</context>
+<context>
     <name>GroupLeaveDialog</name>
     <message>
         <source>Leave %1</source>
@@ -135,6 +161,13 @@ Are you sure you wish to leave?</source>
         <translation>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
 
 Are you sure you wish to leave?</translation>
+    </message>
+</context>
+<context>
+    <name>ImagePicker</name>
+    <message>
+        <source>Select picture</source>
+        <translation>Select picture</translation>
     </message>
 </context>
 <context>

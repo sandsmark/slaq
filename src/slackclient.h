@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QImage>
+#include <QFile>
 #include <QJsonObject>
 #include <QUrl>
 #include <QTimer>
@@ -47,6 +48,9 @@ signals:
     void channelJoined(QVariantMap channel);
     void channelLeft(QVariantMap channel);
     void userUpdated(QVariantMap user);
+
+    void postImageSuccess();
+    void postImageFail();
 
     void networkOff();
     void networkOn();
@@ -106,7 +110,7 @@ private:
     QString activeWindow;
 
     QNetworkReply* executePost(QString method, const QMap<QString, QString> &data);
-    QNetworkReply *executePostWithFile(QString method, const QMap<QString, QString>&, QIODevice *file, QString filename);
+    QNetworkReply *executePostWithFile(QString method, const QMap<QString, QString>&, QFile *file);
 
     QNetworkReply* executeGet(QString method, QMap<QString,QString> params = QMap<QString,QString>());
 

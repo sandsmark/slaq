@@ -21,6 +21,13 @@
     </message>
 </context>
 <context>
+    <name>Channel</name>
+    <message>
+        <source>Upload image</source>
+        <translation>Lähetä kuva</translation>
+    </message>
+</context>
+<context>
     <name>ChannelList</name>
     <message>
         <source>About</source>
@@ -123,6 +130,25 @@
     </message>
 </context>
 <context>
+    <name>FileSend</name>
+    <message>
+        <source>Upload image</source>
+        <translation>Lähetä kuva</translation>
+    </message>
+    <message>
+        <source>Select image</source>
+        <translation>Valitse kuva</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Lähetä</translation>
+    </message>
+    <message>
+        <source>Uploading</source>
+        <translation>Lähetetään</translation>
+    </message>
+</context>
+<context>
     <name>GroupLeaveDialog</name>
     <message>
         <source>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
@@ -135,6 +161,13 @@ Oletko varma, että haluat sulkea kanavan?</translation>
     <message>
         <source>Leave %1</source>
         <translation>Sulje %1</translation>
+    </message>
+</context>
+<context>
+    <name>ImagePicker</name>
+    <message>
+        <source>Select picture</source>
+        <translation>Valitse kuva</translation>
     </message>
 </context>
 <context>

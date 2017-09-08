@@ -104,4 +104,5 @@ DISTFILES += \
     qml/pages/Message.js \
     qml/pages/GroupLeaveDialog.qml \
     qml/pages/ChatSelect.qml \
-    qml/dialogs/ImagePicker.qml
+    qml/dialogs/ImagePicker.qml \
+    qml/pages/FileSend.qml

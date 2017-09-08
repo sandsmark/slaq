@@ -25,67 +25,65 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 
 #include <QStandardPaths>
 
-FileModel::FileModel(QObject *parent) :
-    QAbstractListModel(parent)
-{
+FileModel::FileModel(QObject *parent) : QAbstractListModel(parent) {
 }
 
 QHash<int, QByteArray> FileModel::roleNames() const {
     QHash<int, QByteArray> roles = QAbstractListModel::roleNames();
-        roles.insert(NameRole, QByteArray("name"));
-        roles.insert(PathRole, QByteArray("path"));
-        roles.insert(SizeRole, QByteArray("size"));
-        return roles;
+    roles.insert(NameRole, QByteArray("name"));
+    roles.insert(PathRole, QByteArray("path"));
+    roles.insert(SizeRole, QByteArray("size"));
+    return roles;
 }
 
-int FileModel::rowCount(const QModelIndex &parent) const
-{
+int FileModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     return fileList.size();
 }
 
-void FileModel::searchFiles(QString path)
-{
+void FileModel::searchFiles(QString path) {
     QDir dir(path);
-    QStringList sl;
-    sl << "*.jpg" << "*.JPG" << "*.jpeg" << "*.JPEG" << "*.png" << "*.PNG" << "*.gif" << "*.GIF";
-    const QFileInfoList &list = dir.entryInfoList(sl, QDir::AllDirs | QDir::NoDot | QDir::NoSymLinks | QDir::Files, QDir::DirsFirst | QDir::Time);
-        foreach (const QFileInfo &info, list) {
-            if (info.fileName() == "..")
-                continue;
+    QStringList accepted;
+    accepted << "*.jpg" << "*.JPG" << "*.jpeg" << "*.JPEG" << "*.png" << "*.PNG" << "*.gif" << "*.GIF";
+    const QFileInfoList &list = dir.entryInfoList(accepted, QDir::AllDirs | QDir::NoDot | QDir::NoSymLinks | QDir::Files, QDir::DirsFirst | QDir::Time);
+    foreach (const QFileInfo &info, list) {
+        if (info.fileName() == "..") {
+            continue;
+        }
 
-            if (info.isDir()) {
-                        searchFiles(info.filePath());
-                    }
-          else if (info.isFile()) {
+        if (info.isDir()) {
+            searchFiles(info.filePath());
+        }
+        else if (info.isFile()) {
             beginInsertRows(QModelIndex(), rowCount(), rowCount());
             fileList.append(new FileInfo(info.fileName(), info.absoluteFilePath(), info.size()));
             endInsertRows();
         }
-        }
+    }
 }
 
-QVariant FileModel::data(const QModelIndex &index, int role) const
-{
-    FileInfo * fi = fileList.at(index.row());
-    if (role == NameRole)
+QVariant FileModel::data(const QModelIndex &index, int role) const {
+    FileInfo *fi = fileList.at(index.row());
+    if (role == NameRole) {
         return QVariant::fromValue(fi->name);
-    else if (role == PathRole)
+    }
+    else if (role == PathRole) {
         return QVariant::fromValue(fi->path);
-    else if (role == SizeRole)
+    }
+    else if (role == SizeRole) {
         return QVariant::fromValue(fi->size);
+    }
 
     return QVariant();
 }
 
-QString FileModel::getSearchPath()
-{
+QString FileModel::getSearchPath() {
     QString res = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     return res;
 }
 
-void FileModel::setSearchPath(QString path)
-{
+void FileModel::setSearchPath(QString path) {
+    Q_UNUSED(path);
     beginResetModel();
     qDeleteAll(fileList);
     fileList.clear();

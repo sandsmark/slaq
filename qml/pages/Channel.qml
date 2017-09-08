@@ -32,6 +32,17 @@ Page {
             onLoadStarted: {
                 loader.visible = true
             }
+
+            PushUpMenu {
+                id: bottomMenu
+
+                MenuItem {
+                    text: qsTr("Upload image")
+                    onClicked: {
+                        pageStack.push(Qt.resolvedUrl("FileSend.qml"), {"channelId": page.channelId})
+                    }
+                }
+            }
         }
     }
 

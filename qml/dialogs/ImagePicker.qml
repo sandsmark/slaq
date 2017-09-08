@@ -33,13 +33,8 @@ Dialog {
     canAccept: selectedPath.length > 0
     allowedOrientations: Orientation.All
 
-    Component.onCompleted: {
-        console.log("IMAGEPICKER CREATED")
-    }
-
     property string selectedPath: ""
     property int selectedRotation: 0
-    signal selected(string path)
 
     DialogHeader {
         id: title
@@ -54,10 +49,6 @@ Dialog {
         }
     }
 
-    onAccepted: {
-        page.selected(selectedPath)
-    }
-
     SilicaGridView {
         id: view
         clip: true
@@ -65,7 +56,7 @@ Dialog {
         anchors.bottom: page.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        cellWidth: page.isPortrait ? (page.width / 4) : (page.width / 7)
+        cellWidth: page.isPortrait ? (page.width / 4) : (page.width / 8)
         cellHeight: cellWidth
         cacheBuffer: cellHeight * 2
 
@@ -90,12 +81,20 @@ Dialog {
 
                 states: [
                     State {
-                        name: 'loaded'; when: image.status == Image.Ready
-                        PropertyChanges { target: image; opacity: 1; }
+                        name: 'loaded'
+                        when: image.status == Image.Ready
+                        PropertyChanges {
+                            target: image
+                            opacity: 1
+                        }
                     },
                     State {
-                        name: 'loading'; when: image.status != Image.Ready
-                        PropertyChanges { target: image; opacity: 0; }
+                        name: 'loading'
+                        when: image.status != Image.Ready
+                        PropertyChanges {
+                            target: image
+                            opacity: 0
+                        }
                     }
                 ]
 
@@ -106,7 +105,7 @@ Dialog {
             Rectangle {
                 anchors.fill: parent
                 color: Theme.highlightColor
-                visible: model.path == page.selectedPath
+                visible: model.path === page.selectedPath
                 opacity: 0.5
             }
             Rectangle {

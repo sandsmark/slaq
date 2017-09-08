@@ -310,39 +310,33 @@ QNetworkReply* SlackClient::executePost(QString method, const QMap<QString, QStr
     return networkAccessManager->post(request, body);
 }
 
-QNetworkReply* SlackClient::executePostWithFile(QString method, const QMap<QString, QString>& formdata, QIODevice* file, QString filename)
-{
-    QHttpMultiPart* postdata(new QHttpMultiPart(QHttpMultiPart::FormDataType));
-    QHttpPart tokenpart;
-    QHttpPart filepart;
+QNetworkReply* SlackClient::executePostWithFile(QString method, const QMap<QString, QString>& formdata, QFile* file) {
+    QHttpMultiPart* dataParts = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
-    tokenpart.setHeader(QNetworkRequest::ContentDispositionHeader, "from-data; name=\"token\"");
-    tokenpart.setBody(config->accessToken().toUtf8());
+    QHttpPart tokenPart;
+    tokenPart.setHeader(QNetworkRequest::ContentDispositionHeader, "from-data; name=\"token\"");
+    tokenPart.setBody(config->accessToken().toUtf8());
+    dataParts->append(tokenPart);
 
-    filepart.setHeader(QNetworkRequest::ContentDispositionHeader, "from-data; name=\"file\"; filename=\"" + filename + "\"");
-    filepart.setBodyDevice(file);
+    QHttpPart filePart;
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, "from-data; name=\"file\"; filename=\"" + file->fileName() + "\"");
+    filePart.setBodyDevice(file);
+    dataParts->append(filePart);
 
-    postdata->append(tokenpart);
-    postdata->append(filepart);
-
-    foreach(const QString key, formdata.keys())
-    {
+    foreach (const QString key, formdata.keys()) {
         QHttpPart data;
         data.setHeader(QNetworkRequest::ContentDispositionHeader, "form-data; name=\"" + key.toUtf8() + "\"");
-        data.setBody(formdata[key].toUtf8());
-        postdata->append(data);
+        data.setBody(formdata.value(key).toUtf8());
+        dataParts->append(data);
     }
 
     QUrl url("https://slack.com/api/" + method);
     QNetworkRequest request(url);
 
+    qDebug() << "POST" << url << dataParts;
 
-    qDebug() << "POST" << url << postdata;
-
-    QNetworkReply* reply = networkAccessManager->post(request,postdata);
-
-//    connect(reply, SIGNAL(finished()),
- //           postdata, SLOT(deleteLater()));
+    QNetworkReply* reply = networkAccessManager->post(request, dataParts);
+    connect(reply, SIGNAL(finished()), dataParts, SLOT(deleteLater()));
 
     return reply;
 }
@@ -785,7 +779,6 @@ void SlackClient::postMessage(QString channelId, QString content) {
 }
 
 void SlackClient::handlePostMessageReply() {
-    qDebug() << sender();
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
 
     QJsonObject data = getResult(reply);
@@ -794,44 +787,43 @@ void SlackClient::handlePostMessageReply() {
     reply->deleteLater();
 }
 
-void SlackClient::postImage(QString channelId, QString imagePath, QString title, QString comment)
-{
+void SlackClient::postImage(QString channelId, QString imagePath, QString title, QString comment) {
     QMap<QString,QString> data;
     data.insert("channels", channelId);
 
-    if(!title.isEmpty())
+    if (!title.isEmpty()) {
         data.insert("title", title);
-    if(!comment.isEmpty())
-        data.insert("initial_comment", comment);
+    }
 
-    QFile* imagefile(new QFile(imagePath));
-    imagefile->open(QFile::ReadOnly);
-    if(!imagefile->isReadable() || !imagefile->isOpen())
-    {
+    if (!comment.isEmpty()) {
+        data.insert("initial_comment", comment);
+    }
+
+    QFile* imageFile = new QFile(imagePath);
+    if (!imageFile->open(QFile::ReadOnly)) {
         qWarning() << "image file not readable" << imagePath;
         return;
     }
 
-    qDebug() << "sending image " << imagePath;
+    qDebug() << "sending image" << imagePath;
+    QNetworkReply* reply = executePostWithFile("files.upload", data, imageFile);
 
-    QNetworkReply* reply = executePostWithFile("files.upload", data, imagefile,  "image.jpg");
-
-    reply->setObjectName("postimagereply");
-
-    //delete resources
     connect(reply, SIGNAL(finished()), this, SLOT(handlePostImage()));
-    connect(reply, SIGNAL(finished()), imagefile, SLOT(deleteLater()));
+    connect(reply, SIGNAL(finished()), imageFile, SLOT(deleteLater()));
 }
 
-void SlackClient::handlePostImage()
-{
-    QObject* s = sender();
-    qDebug() << sender() << s->objectName();
-    QNetworkReply* reply = (QNetworkReply*) s;
+void SlackClient::handlePostImage() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
 
     QJsonObject data = getResult(reply);
+    qDebug() << "Post image result" << data;
 
-    qDebug() << "Post message result" << data;
+    if (isError(data)) {
+        emit postImageFail();
+    }
+    else {
+        emit postImageSuccess();
+    }
 
     reply->deleteLater();
 }

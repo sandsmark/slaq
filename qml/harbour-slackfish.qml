@@ -9,10 +9,6 @@ ApplicationWindow {
     allowedOrientations: Orientation.All
     _defaultPageOrientations: Orientation.All
 
-    ImagePicker {
-        id: imagepicker
-    }
-
     function activateChannel(channelId) {
         console.log("Navigate to", channelId);
         pageStack.clear()
