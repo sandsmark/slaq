@@ -1,17 +1,19 @@
 import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick.Controls 2.2
+import QtQuick.Window 2.2
+import ".."
 import harbour.slackfish 1.0 as Slack
 
-DockedPanel {
+Drawer {
     id: connectionPanel
     width: parent.width
     height: content.height + Theme.paddingLarge
 
-    dock: Dock.Bottom
+    edge: Qt.BottomEdge
 
     Column {
         id: content
-        width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
+        width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio >= 90 ? 4 : 2)
         anchors.centerIn: parent
         spacing: Theme.paddingMedium
 
@@ -23,7 +25,6 @@ DockedPanel {
             BusyIndicator {
                 running: reconnectingMessage.visible
                 anchors.verticalCenter: parent.verticalCenter
-                size: BusyIndicatorSize.ExtraSmall
             }
 
             Label {

@@ -1,20 +1,16 @@
-import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick 2.10
 import harbour.slackfish 1.0 as Slack
+import QtQuick.Controls 2.3
+import ".."
 
-import "Settings.js" as Settings
-import "ChannelList.js" as ChannelList
-import "Channel.js" as Channel
+import "../Settings.js" as Settings
+import "../ChannelList.js" as ChannelList
+import "../Channel.js" as Channel
 
-SilicaListView {
+ListView {
     id: listView
-    spacing: Theme.paddingMedium
 
-    VerticalScrollDecorator {}
-
-    header: PageHeader {
-        title: Settings.getUserInfo().teamName
-    }
+    ScrollBar.vertical: ScrollBar { }
 
     model: ListModel {
         id: channelListModel
@@ -23,48 +19,34 @@ SilicaListView {
     section {
         property: "section"
         criteria: ViewSection.FullString
-        delegate: SectionHeader {
+        delegate: Label {
             text: getSectionName(section)
         }
     }
 
-    delegate: ListItem {
+    delegate: ItemDelegate {
         id: delegate
-        contentHeight: row.height + Theme.paddingLarge
-        property color infoColor: delegate.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
-        property color textColor: delegate.highlighted ? Theme.highlightColor : Theme.primaryColor
-        property color currentColor: model.unreadCount > 0 ? textColor : infoColor
+        text: model.name
+        property color textColor: delegate.highlighted ? SystemPalette.base : SystemPalette.base
+        highlighted: model.unreadCount > 0
 
-        Row {
-            id: row
-            width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-            anchors.verticalCenter: parent.verticalCenter
-            x: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
-            spacing: Theme.paddingMedium
-
-            Image {
-                id: icon
-                source: "image://theme/" + Channel.getIcon(model) + "?" + (delegate.highlighted ? currentColor : Channel.getIconColor(model, currentColor))
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Label {
-                width: parent.width - icon.width - Theme.paddingMedium
-                wrapMode: Text.Wrap
-                anchors.verticalCenter: parent.verticalCenter
-                font.pixelSize: Theme.fontSizeMedium
-                font.bold: model.unreadCount > 0
-                text: model.name
-                color: currentColor
-            }
-        }
+        icon.name: Channel.getIcon(model)
 
         onClicked: {
             pageStack.push(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
         }
 
-        menu: ContextMenu {
-            hasContent: model.category === "channel" || model.type === "im"
+        property bool hasActions: model.category === "channel" || model.type === "im"
+        onPressAndHold: if (hasActions) { actionsMenu.popup() }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: "RightButton"
+            onClicked: if (hasActions) { actionsMenu.popup() }
+        }
+
+         Menu {
+             id: actionsMenu
 
             MenuItem {
                 text: model.category === "channel" ? qsTr("Leave") : qsTr("Close")

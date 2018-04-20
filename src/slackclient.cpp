@@ -11,7 +11,7 @@
 #include <QFile>
 #include <QHttpMultiPart>
 #include <QtNetwork/QNetworkConfigurationManager>
-#include <nemonotifications-qt5/notification.h>
+//#include <nemonotifications-qt5/notification.h>
 
 #include "slackclient.h"
 #include "storage.h"
@@ -30,6 +30,9 @@ SlackClient::SlackClient(QObject *parent) : QObject(parent), appActive(true), ac
     connect(stream, SIGNAL(connected()), this, SLOT(handleStreamStart()));
     connect(stream, SIGNAL(disconnected()), this, SLOT(handleStreamEnd()));
     connect(stream, SIGNAL(messageReceived(QJsonObject)), this, SLOT(handleStreamMessage(QJsonObject)));
+
+    connect(this, &SlackClient::connected, this, &SlackClient::isOnlineChanged);
+    connect(this, &SlackClient::disconnected, this, &SlackClient::isOnlineChanged);
 }
 
 void SlackClient::setAppActive(bool active) {
@@ -43,14 +46,14 @@ void SlackClient::setActiveWindow(QString windowId) {
 }
 
 void SlackClient::clearNotifications() {
-  foreach (QObject* object, Notification::notifications()) {
-      Notification* n = qobject_cast<Notification*>(object);
-      if (n->hintValue("x-slackfish-channel").toString() == activeWindow) {
-          n->close();
-      }
+//  foreach (QObject* object, Notification::notifications()) {
+//      Notification* n = qobject_cast<Notification*>(object);
+//      if (n->hintValue("x-slackfish-channel").toString() == activeWindow) {
+//          n->close();
+//      }
 
-      delete n;
-  }
+//      delete n;
+//  }
 }
 
 void SlackClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible) {
@@ -84,6 +87,7 @@ void SlackClient::handleStreamEnd() {
 }
 
 void SlackClient::handleStreamMessage(QJsonObject message) {
+    qDebug() << "stream message" << message;
     QString type = message.value("type").toString();
 
     if (type == "message") {
@@ -541,6 +545,7 @@ void SlackClient::parseGroups(QJsonObject data) {
 }
 
 void SlackClient::parseChats(QJsonObject data) {
+    qDebug() << "parse chats";// << data;
     foreach (const QJsonValue &value, data.value("ims").toArray()) {
         QJsonObject chat = value.toObject();
         QVariantMap data;
@@ -567,6 +572,11 @@ QVariantList SlackClient::getChannels() {
 
 QVariant SlackClient::getChannel(QString channelId) {
     return Storage::channel(QVariant(channelId));
+}
+
+bool SlackClient::isOnline() const
+{
+    return stream && stream->isConnected();
 }
 
 QString SlackClient::historyMethod(QString type) {
@@ -598,6 +608,7 @@ void SlackClient::joinChannel(QString channelId) {
 }
 
 void SlackClient::handleJoinChannelReply() {
+    qDebug() << "join reply";
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
     QJsonObject data = getResult(reply);
 
@@ -657,6 +668,7 @@ void SlackClient::openChat(QString chatId) {
 }
 
 void SlackClient::handleOpenChatReply() {
+    qDebug() << "open chat reply";
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
     QJsonObject data = getResult(reply);
 
@@ -1071,17 +1083,17 @@ void SlackClient::sendNotification(QString channelId, QString title, QString tex
     QVariantList arguments;
     arguments.append(channelId);
 
-    Notification notification;
-    notification.setAppName("Slackfish");
-    notification.setAppIcon("harbour-slackfish");
-    notification.setBody(body);
-    notification.setPreviewSummary(title);
-    notification.setPreviewBody(preview);
-    notification.setCategory("chat");
-    notification.setHintValue("x-slackfish-channel", channelId);
-    notification.setHintValue("x-nemo-feedback", "chat_exists");
-    notification.setHintValue("x-nemo-priority", 100);
-    notification.setHintValue("x-nemo-display-on", true);
-    notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate", arguments));
-    notification.publish();
+//    Notification notification;
+//    notification.setAppName("Slackfish");
+//    notification.setAppIcon("harbour-slackfish");
+//    notification.setBody(body);
+//    notification.setPreviewSummary(title);
+//    notification.setPreviewBody(preview);
+//    notification.setCategory("chat");
+//    notification.setHintValue("x-slackfish-channel", channelId);
+//    notification.setHintValue("x-nemo-feedback", "chat_exists");
+//    notification.setHintValue("x-nemo-priority", 100);
+//    notification.setHintValue("x-nemo-display-on", true);
+//    notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate", arguments));
+//    notification.publish();
 }

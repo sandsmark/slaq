@@ -70,9 +70,9 @@ public:
 	qint64 write(const QByteArray & byteArray); // write data as binary
 
 public slots:
-	void connectToHost(const QString & hostName, quint16 port = 80, OpenMode mode = ReadWrite);
-	void connectToHost(const QHostAddress & address, quint16 port = 80, OpenMode mode = ReadWrite);
-	void disconnectFromHost();
+    void connectToHost(const QString & hostName, quint16 port = 80, OpenMode mode = ReadWrite, NetworkLayerProtocol protocol = AnyIPProtocol) override;
+    void connectToHost(const QHostAddress & address, quint16 port = 80, OpenMode mode = ReadWrite) override;
+    void disconnectFromHost() override;
 	void abort(QString reason = QString());
 	void ping();
 
@@ -90,7 +90,8 @@ protected:
 	void initTcpSocket();
 
 protected slots:
-	virtual void close(CloseStatusCode closeStatusCode = NoCloseStatusCode, QString reason = QString());
+    void close(CloseStatusCode closeStatusCode, QString reason = QString());
+    void close() override { close(NoCloseStatusCode, QString()); }
 	void processDataV0();
 	void processDataV4();
 	void processHandshake();

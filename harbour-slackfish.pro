@@ -19,16 +19,16 @@ CONFIG += sailfishapp_i18n
 TRANSLATIONS += translations/harbour-slackfish-fi.ts
 
 # Notifications
-QT += dbus
-PKGCONFIG += nemonotifications-qt5
+QT += dbus quick widgets
+#PKGCONFIG += nemonotifications-qt5
 
 # Includes
 INCLUDEPATH += ./QtWebsocket
 
 # Check slack config
 
-CLIENT_ID = $$slack_client_id
-CLIENT_SECRET = $$slack_client_secret
+CLIENT_ID = $$(slack_client_id)
+CLIENT_SECRET = $$(slack_client_secret)
 if(isEmpty(CLIENT_ID)) {
     error("No client id defined")
 }
@@ -84,13 +84,11 @@ HEADERS += \
 DISTFILES += \
     qml/pages/Settings.js \
     qml/pages/LoginPage.qml \
-    qml/pages/Loader.qml \
     qml/pages/ChannelList.qml \
     qml/pages/ChannelList.js \
     qml/pages/Channel.qml \
     qml/pages/MessageListItem.qml \
     qml/pages/MessageInput.qml \
-    qml/pages/Image.qml \
     qml/pages/ConnectionPanel.qml \
     qml/pages/ChannelListView.qml \
     qml/pages/MessageListView.qml \
@@ -105,4 +103,9 @@ DISTFILES += \
     qml/pages/GroupLeaveDialog.qml \
     qml/pages/ChatSelect.qml \
     qml/dialogs/ImagePicker.qml \
-    qml/pages/FileSend.qml
+    qml/pages/FileSend.qml \
+    qml/pages/SlackImage.qml \
+    qml/pages/LoadingPage.qml
+
+RESOURCES += \
+    qml.qrc

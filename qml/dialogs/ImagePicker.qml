@@ -21,8 +21,9 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
-import QtQuick 2.2
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+import QtQuick.Controls 2.3
+import ".."
 
 //Thanks to mitakuuluu for this page
 
@@ -36,10 +37,7 @@ Dialog {
     property string selectedPath: ""
     property int selectedRotation: 0
 
-    DialogHeader {
-        id: title
-        title: qsTr("Select picture")
-    }
+    title: qsTr("Select picture")
 
     onStatusChanged: {
         if (page.status === DialogStatus.Opened) {
@@ -49,7 +47,7 @@ Dialog {
         }
     }
 
-    SilicaGridView {
+    GridView {
         id: view
         clip: true
         anchors.top: title.bottom
@@ -99,12 +97,12 @@ Dialog {
                 ]
 
                 Behavior on opacity {
-                    FadeAnimation {}
+                    NumberAnimation { duration: 100 }
                 }
             }
             Rectangle {
                 anchors.fill: parent
-                color: Theme.highlightColor
+                color: SystemPalette.highlight
                 visible: model.path === page.selectedPath
                 opacity: 0.5
             }
@@ -126,7 +124,6 @@ Dialog {
                 elide: Text.ElideRight
                 horizontalAlignment : Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                color: Theme.primaryColor
             }
 
             MouseArea {
@@ -146,7 +143,5 @@ Dialog {
         }
     }
 
-    VerticalScrollDecorator {
-        flickable: view
-    }
+    ScrollBar.vertical: ScrollBar { }
 }

@@ -1,5 +1,6 @@
-import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+import QtQuick.Controls 2.2
+import ".."
 
 Column {
     property variant attachment
@@ -8,12 +9,12 @@ Column {
 
     spacing: Theme.paddingSmall
 
-    RichTextLabel {
+    Label {
         id: pretextLabel
         width: parent.width
         font.pixelSize: Theme.fontSizeSmall
         visible: text.length > 0
-        value: attachment.pretext
+        text: attachment.pretext
         onLinkActivated: linkClicked(link)
     }
 
@@ -30,26 +31,26 @@ Column {
             id: color
             width: Theme.paddingSmall
             height: parent.height
-            color: attachment.indicatorColor === "theme" ? Theme.highlightColor : attachment.indicatorColor
+            color: attachment.indicatorColor === "theme" ? SystemPalette.highlight : attachment.indicatorColor
         }
 
         Column {
             width: parent.width - color.width - Theme.paddingMedium
             spacing: Theme.paddingSmall
 
-            RichTextLabel {
+            Label {
                 width: parent.width
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: Font.Bold
-                value: attachment.title
+                text: attachment.title
                 visible: text.length > 0
                 onLinkActivated: linkClicked(link)
             }
 
-            RichTextLabel {
+            Label {
                 width: parent.width
                 font.pixelSize: Theme.fontSizeSmall
-                value: attachment.content
+                text: attachment.content
                 visible: text.length > 0
                 onLinkActivated: linkClicked(link)
             }

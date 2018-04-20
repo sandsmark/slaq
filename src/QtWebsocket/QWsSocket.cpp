@@ -106,8 +106,10 @@ void QWsSocket::initTcpSocket()
 	QObject::connect(tcpSocket, SIGNAL(hostFound()), this, SIGNAL(hostFound()), Qt::UniqueConnection);
 }
 
-void QWsSocket::connectToHost(const QString& hostName, quint16 port, OpenMode mode)
+void QWsSocket::connectToHost(const QString& hostName, quint16 port, OpenMode mode, NetworkLayerProtocol protocol)
 {
+    Q_UNUSED(protocol);
+
 	// abort connection if a the socket is not in the Unconnected state
 	if (QAbstractSocket::SocketState() != QAbstractSocket::UnconnectedState)
 	{

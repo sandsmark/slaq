@@ -1,5 +1,7 @@
-#include <QtQuick>
-#include <sailfishapp.h>
+#include <QQuickView>
+#include <QApplication>
+#include <QQmlContext>
+#include <QQmlApplicationEngine>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
@@ -8,41 +10,32 @@
 #include "storage.h"
 #include "filemodel.h"
 
-static QObject *slack_client_provider(QQmlEngine *engine, QJSEngine *scriptEngine) {
-    Q_UNUSED(engine)
-    Q_UNUSED(scriptEngine)
-
-    SlackClient *client = new SlackClient();
-    return client;
-}
-
 int main(int argc, char *argv[])
 {
-    QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
-    QScopedPointer<QQuickView> view(SailfishApp::createView());
+    QApplication app(argc, argv);
+    QQmlApplicationEngine engine;
 
     //QSettings settings; settings.remove("user/accessToken");
     SlackConfig::clearWebViewCache();
 
-    qmlRegisterSingletonType<SlackClient>("harbour.slackfish", 1, 0, "Client", slack_client_provider);
+    qmlRegisterSingletonType<SlackClient>("harbour.slackfish", 1, 0, "Client", [](QQmlEngine *, QJSEngine*) -> QObject* {
+        return new SlackClient;
+    });
 
-    view->rootContext()->setContextProperty("fileModel", new FileModel());
+    engine.rootContext()->setContextProperty("fileModel", new FileModel());
+    engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
-    view->setSource(SailfishApp::pathTo("qml/harbour-slackfish.qml"));
-    view->engine()->setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
-    view->showFullScreen();
+    engine.load(QUrl("qrc:/qml/harbour-slackfish.qml"));
+    if  (engine.rootObjects().isEmpty()) {
+        qWarning() << "No root objects?";
+//        return 1;
+    }
 
-    NotificationListener* listener = new NotificationListener(view.data());
-    new DBusAdaptor(listener);
-    QDBusConnection connection = QDBusConnection::sessionBus();
-    connection.registerService("harbour.slackfish");
-    connection.registerObject("/", listener);
+//    NotificationListener* listener = new NotificationListener(&engine);
+//    new DBusAdaptor(listener);
+//    QDBusConnection connection = QDBusConnection::sessionBus();
+//    connection.registerService("harbour.slackfish");
+//    connection.registerObject("/", listener);
 
-    int result = app->exec();
-
-    qDebug() << "Application terminating";
-
-    delete listener;
-
-    return result;
+    return app.exec();
 }

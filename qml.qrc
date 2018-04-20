@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/harbour-slackfish.qml</file>
+        <file>qml/cover/CoverPage.qml</file>
+        <file>qml/dialogs/ImagePicker.qml</file>
+        <file>qml/pages/About.qml</file>
+        <file>qml/pages/Attachment.qml</file>
+        <file>qml/pages/AttachmentFieldGrid.qml</file>
+        <file>qml/pages/Channel.qml</file>
+        <file>qml/pages/ChannelList.qml</file>
+        <file>qml/pages/ChannelListView.qml</file>
+        <file>qml/pages/ChannelSelect.qml</file>
+        <file>qml/pages/ChatSelect.qml</file>
+        <file>qml/pages/ConnectionPanel.qml</file>
+        <file>qml/pages/FileSend.qml</file>
+        <file>qml/pages/GroupLeaveDialog.qml</file>
+        <file>qml/pages/LoginPage.qml</file>
+        <file>qml/pages/MessageInput.qml</file>
+        <file>qml/pages/MessageListItem.qml</file>
+        <file>qml/pages/MessageListView.qml</file>
+        <file>qml/pages/RichTextLabel.qml</file>
+        <file>qml/pages/Spacer.qml</file>
+        <file>qml/pages/qmldir</file>
+        <file>qml/Theme.qml</file>
+        <file>qml/qmldir</file>
+        <file>qml/Channel.js</file>
+        <file>qml/ChannelList.js</file>
+        <file>qml/Message.js</file>
+        <file alias="qml/Settings.js">qml/Settings.js</file>
+        <file>qml/pages/SlackImage.qml</file>
+        <file>qml/pages/LoadingPage.qml</file>
+    </qresource>
+</RCC>

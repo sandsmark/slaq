@@ -1,12 +1,18 @@
-import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+import QtQuick.Window 2.2
+import QtQuick.Controls 2.2
+import ".."
 
 Page {
     id: page
 
-    property double padding: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
+    property double padding: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
 
-    SilicaFlickable {
+    header: Label {
+        text: qsTr("About")
+    }
+
+    Flickable {
         anchors.fill: parent
 
         contentWidth: column.width
@@ -18,14 +24,9 @@ Page {
             width: page.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
-                title: qsTr("About")
-            }
-
             Label {
                 x: page.padding
                 text: "Slackfish 1.3"
-                color: Theme.highlightColor
                 font.pixelSize: Theme.fontSizeExtraLarge
             }
 
@@ -34,7 +35,6 @@ Page {
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
                 text: qsTr("Unoffical Slack client for Sailfish OS")
-                color: Theme.highlightColor
                 font.pixelSize: Theme.fontSizeSmall
             }
 
@@ -44,7 +44,6 @@ Page {
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.fontSizeSmall
                 text: qsTr("Browse channel and post new messages. Channels are updated real-time when new messages are posted.")
-                color: Theme.primaryColor
             }
 
             RichTextLabel {

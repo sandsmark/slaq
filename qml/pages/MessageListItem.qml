@@ -1,19 +1,21 @@
-import QtQuick 2.1
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+import QtQuick.Controls 2.2
+import QtQuick.Window 2.2
+import ".."
 
-ListItem {
+Item {
     id: item
     enabled: false
-    contentHeight: column.height + Theme.paddingMedium
+    height: column.height + Theme.paddingMedium
 
-    property color infoColor: item.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
-    property color textColor: item.highlighted ? Theme.highlightColor : Theme.primaryColor
+    property color infoColor: item.highlighted ? SystemPalette.highlightedText : SystemPalette.alternateBase
+    property color textColor: item.highlighted ? SystemPalette.highlightedText : SystemPalette.base
 
     Column {
         id: column
-        width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
+        width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 4 : 2)
         anchors.verticalCenter: parent.verticalCenter
-        x: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
+        x: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
 
         Item {
             width: parent.width
@@ -34,13 +36,13 @@ ListItem {
             }
         }
 
-        RichTextLabel {
+        Label {
             id: contentLabel
             width: parent.width
             font.pixelSize: Theme.fontSizeSmall
             color: textColor
             visible: text.length > 0
-            value: content
+            text: content
             onLinkActivated: handleLink(link)
         }
 
@@ -64,7 +66,7 @@ ListItem {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("Image.qml"), {"model": model})
+                        pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model})
                     }
                 }
             }

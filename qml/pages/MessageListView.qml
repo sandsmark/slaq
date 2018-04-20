@@ -1,9 +1,10 @@
-import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+import QtQuick.Controls 2.2
+import ".."
 import harbour.slackfish 1.0 as Slack
-import "Message.js" as Message
+import "../Message.js" as Message
 
-SilicaListView {
+ListView {
     property alias atBottom: listView.atYEnd
     property variant channel
 
@@ -18,7 +19,7 @@ SilicaListView {
     anchors.fill: parent
     spacing: Theme.paddingLarge
 
-    VerticalScrollDecorator {}
+    ScrollBar.vertical: ScrollBar { }
 
     Timer {
         id: readTimer
@@ -31,8 +32,8 @@ SilicaListView {
         }
     }
 
-    header: PageHeader {
-        title: channel.name
+    header: Label {
+        text: channel.name
     }
 
     model: ListModel {
@@ -44,8 +45,9 @@ SilicaListView {
     section {
         property: "day"
         criteria: ViewSection.FullString
-        delegate: SectionHeader {
+        delegate: Label {
             text: section
+            background: Rectangle { color: SystemPalette.alternateBase }
         }
     }
 
@@ -91,16 +93,19 @@ SilicaListView {
     }
 
     function handleReload() {
+        console.log("Handling reloading")
         inputEnabled = false
         loadStarted()
         loadMessages()
     }
 
     function loadMessages() {
+        console.log("loading messages")
         Slack.Client.loadMessages(channel.type, channel.id)
     }
 
     function handleLoadSuccess(channelId, messages) {
+        console.log("loading success")
         if (channelId === channel.id) {
             messages.sort(Message.compareByTime)
             messageListModel.clear()
@@ -120,6 +125,7 @@ SilicaListView {
     }
 
     function handleMessageReceived(message) {
+        console.log("message received")
         if (message.type === "message" && message.channel === channel.id) {
             var isAtBottom = atBottom
             message.day = Message.getDisplayDate(message)

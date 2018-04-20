@@ -1,25 +1,26 @@
 import QtQuick 2.2
-import Sailfish.Silica 1.0
+import QtQuick.Controls 2.2
+import ".."
 import harbour.slackfish 1.0 as Slack
-import "Channel.js" as Channel
+import "../Channel.js" as Channel
 
 Page {
     id: page
 
-    SilicaFlickable {
+    Flickable {
         anchors.fill: parent
 
-        PageHeader {
+        Label {
             id: header
-            title: qsTr("Open chat")
+            text: qsTr("Open chat")
         }
 
-        ViewPlaceholder {
+        Label {
             enabled: listView.count === 0
             text: qsTr("No available chats")
         }
 
-        SilicaListView {
+        ListView {
             id: listView
             spacing: Theme.paddingMedium
 
@@ -28,12 +29,12 @@ Page {
             anchors.left: parent.left
             anchors.right: parent.right
 
-            VerticalScrollDecorator {}
+            ScrollBar.vertical: ScrollBar { }
 
             // Prevent losing focus from search field
             currentIndex: -1
 
-            header: SearchField {
+            header: TextField {
                 id: searchField
                 width: parent.width
                 focus: true
@@ -66,33 +67,12 @@ Page {
                 }
             }
 
-            delegate: BackgroundItem {
+            delegate: ItemDelegate {
                 id: delegate
                 height: row.height + Theme.paddingLarge
-                property color textColor: delegate.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
-
-                Row {
-                    id: row
-                    width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
-                    spacing: Theme.paddingMedium
-
-                    Image {
-                        id: icon
-                        source: "image://theme/" + Channel.getIcon(model) + "?" + textColor
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Label {
-                        width: parent.width - icon.width - Theme.paddingMedium
-                        wrapMode: Text.Wrap
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.pixelSize: Theme.fontSizeMedium
-                        text: model.name
-                        color: textColor
-                    }
-                }
+                color: delegate.highlighted ? SystemPalette.highlight : SystemPalette.base
+                icon: Channel.getIcon(model)
+                text: model.name
 
                 onClicked: {
                     Slack.Client.openChat(model.id)

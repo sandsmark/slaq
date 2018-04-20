@@ -1,7 +1,9 @@
 import QtQuick 2.0
-import Sailfish.Silica 1.0
+//import Sailfish.Silica 1.0
 import harbour.slackfish 1.0 as Slack
-import "Settings.js" as Settings
+import QtQuick.Controls 2.2
+import ".."
+import "../Settings.js" as Settings
 
 Page {
     id: page
@@ -9,14 +11,16 @@ Page {
     property bool firstView: true
     property bool loading: true
     property string errorMessage: ""
+    onErrorMessageChanged: console.log("errorMessage: " + loadMessage)
     property string loadMessage: ""
+    onLoadMessageChanged: console.log("loadmessage: " + loadMessage)
 
-    SilicaFlickable {
+    Flickable {
         anchors.fill: parent
 
-        PageHeader { title: "Slackfish" }
+//        PageHeader { title: "Slackfish" }
 
-        PullDownMenu {
+        Menu {
             enabled: !page.loading
 
             MenuItem {
@@ -30,7 +34,6 @@ Page {
             anchors.bottom: loader.top
             anchors.horizontalCenter: loader.horizontalCenter
             anchors.bottomMargin: Theme.paddingLarge
-            color: Theme.highlightColor
             text: page.loadMessage
             font.pixelSize: Theme.fontSizeLarge
         }
@@ -39,14 +42,12 @@ Page {
             id: loader
             visible: loading && !errorMessageLabel.visible
             running: visible
-            size: BusyIndicatorSize.Large
             anchors.centerIn: parent
         }
 
-        Label {
+        Text {
             id: errorMessageLabel
             anchors.centerIn: parent
-            color: Theme.highlightColor
             visible: text.length > 0
             text: page.errorMessage
         }
@@ -66,26 +67,21 @@ Page {
         }
     }
 
-    onStatusChanged: {
-        if (status === PageStatus.Active) {
-            errorMessage = ""
-            if (firstView || Settings.hasUserInfo()) {
-                firstView = false
-                initLoading()
-            }
-            else {
-                loading = false
-                errorMessage = qsTr("Not logged in")
-            }
-        }
-    }
-
     Component.onCompleted: {
         Slack.Client.onTestLoginSuccess.connect(handleLoginTestSuccess)
         Slack.Client.onTestLoginFail.connect(handleLoginTestFail)
         Slack.Client.onInitSuccess.connect(handleInitSuccess)
         Slack.Client.onInitFail.connect(handleInitFail)
         Slack.Client.onTestConnectionFail.connect(handleConnectionFail)
+
+        errorMessage = ""
+        if (firstView || Settings.hasUserInfo()) {
+            firstView = false
+            initLoading()
+        } else {
+            loading = false
+            errorMessage = qsTr("Not logged in")
+        }
     }
 
     Component.onDestruction: {
@@ -115,20 +111,24 @@ Page {
     }
 
     function handleLoginTestFail() {
+        console.log("login test fail")
         pageStack.push(Qt.resolvedUrl("LoginPage.qml"))
     }
 
     function handleInitSuccess() {
+        console.log("init success")
         pageStack.replace(Qt.resolvedUrl("ChannelList.qml"))
     }
 
     function handleInitFail() {
+        console.log("init fail")
         loading = false
         errorMessage = qsTr("Error loading team information")
         initButton.visible = true
     }
 
     function handleConnectionFail() {
+        console.log("connection fail")
         loading = false
         errorMessage = qsTr("No network connection")
         initButton.visible = true

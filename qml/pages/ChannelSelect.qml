@@ -1,25 +1,26 @@
-import QtQuick 2.2
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+import QtQuick.Controls 2.2
+import ".."
 import harbour.slackfish 1.0 as Slack
-import "Channel.js" as Channel
+import "../Channel.js" as Channel
 
 Page {
     id: page
 
-    SilicaFlickable {
+    Flickable {
         anchors.fill: parent
 
-        PageHeader {
+        Label {
             id: header
-            title: qsTr("Join channel")
+            text: qsTr("Join channel")
         }
 
-        ViewPlaceholder {
+        Text {
             enabled: listView.count === 0
             text: qsTr("No available channels")
         }
 
-        SilicaListView {
+        ListView {
             id: listView
             spacing: Theme.paddingMedium
 
@@ -28,12 +29,12 @@ Page {
             anchors.left: parent.left
             anchors.right: parent.right
 
-            VerticalScrollDecorator {}
+            ScrollBar.vertical: ScrollBar { }
 
             // Prevent losing focus from search field
             currentIndex: -1
 
-            header: SearchField {
+            header: TextField {
                 id: searchField
                 width: parent.width
                 focus: true
@@ -66,10 +67,10 @@ Page {
                 }
             }
 
-            delegate: BackgroundItem {
+            delegate: MouseArea {
                 id: delegate
                 height: row.height + Theme.paddingLarge
-                property color textColor: delegate.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
+                property color textColor: delegate.highlighted ? SystemPalette.highlight : SystemPalette.alternateBase
 
                 Row {
                     id: row

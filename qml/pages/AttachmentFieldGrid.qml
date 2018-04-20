@@ -1,6 +1,7 @@
 import QtQuick 2.1
 import QtQuick.Layouts 1.1
-import Sailfish.Silica 1.0
+import QtQuick.Controls 2.2
+import ".."
 
 GridLayout {
     property alias fieldList: repeater.model
@@ -12,13 +13,13 @@ GridLayout {
     Repeater {
         id: repeater
 
-        RichTextLabel {
+        Label {
             Layout.columnSpan: model.isShort ? 1 : 2
             Layout.preferredWidth: model.isShort ? grid.width / 2 : grid.width
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             font.pixelSize: Theme.fontSizeExtraSmall
             font.weight: model.isTitle ? Font.Bold : Font.Normal
-            value: model.content
+            text: model.content
         }
     }
 }

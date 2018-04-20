@@ -1,18 +1,19 @@
-import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick 2.10
+//import Sailfish.Silica 1.0
+import QtQuick.Controls 2.2
 import harbour.slackfish 1.0 as Slack
-import "../pages/Settings.js" as Settings
+//import "../pages/Settings.js" as Settings
+import ".."
 
-CoverBackground {
+Item {
     property int unreadMessageCount: 0
-    property color unreadColor: unreadMessageCount === 0 ? Theme.secondaryColor : Theme.primaryColor
+    property color unreadColor: unreadMessageCount === 0 ? SystemPalette.text : SystemPalette.highlightedText
 
     Label {
         id: title
-        color: Theme.highlightColor
         width: parent.width - Theme.paddingLarge * 2
         text: "Slackfish"
-        truncationMode: TruncationMode.Fade
+//        truncationMode: TruncationMode.Fade
         anchors {
             top: parent.top
             left: parent.left
@@ -49,11 +50,9 @@ CoverBackground {
     Label {
         id: connectionMessage
         font.pixelSize: Theme.fontSizeSmall
-        color: Theme.highlightColor
         text: ""
         visible: text.length > 0
         width: parent.width - Theme.paddingLarge * 2
-        truncationMode: TruncationMode.Fade
         anchors {
             top: messageCount.bottom
             left: parent.left
@@ -63,15 +62,15 @@ CoverBackground {
         }
     }
 
-    CoverActionList {
-        id: disconnectedActions
-        enabled: false
+//    CoverActionList {
+//        id: disconnectedActions
+//        enabled: false
 
-        CoverAction {
-            iconSource: "image://theme/icon-cover-refresh"
-            onTriggered: Slack.Client.reconnect()
-        }
-    }
+//        CoverAction {
+//            iconSource: "image://theme/icon-cover-refresh"
+//            onTriggered: Slack.Client.reconnect()
+//        }
+//    }
 
     Component.onCompleted: {
         Slack.Client.onInitSuccess.connect(reloadChannelList)

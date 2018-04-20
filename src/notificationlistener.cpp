@@ -3,11 +3,17 @@
 #include <QDebug>
 #include <QtQuick/QQuickItem>
 
-NotificationListener::NotificationListener(QQuickView *view, QObject *parent) : QObject(parent) {
-  this->view = view;
+NotificationListener::NotificationListener(QQmlApplicationEngine *engine, QObject *parent) : QObject(parent),
+    m_engine(engine)
+{
 }
 
 void NotificationListener::activate(const QString &channelId) {
     qDebug() << "Activate notification received" << channelId;
-    QMetaObject::invokeMethod(view->rootObject(), "activateChannel", Q_ARG(QVariant, QVariant(channelId)));
+
+    if (!m_engine->rootObjects().isEmpty()) {
+        QMetaObject::invokeMethod(m_engine->rootObjects().first(), "activateChannel", Q_ARG(QVariant, QVariant(channelId)));
+    } else {
+        qWarning() << "No root objects";
+    }
 }

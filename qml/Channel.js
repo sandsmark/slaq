@@ -17,14 +17,28 @@ function isJoinableChat(channel) {
 }
 
 function getIcon(model) {
+    var ret = ""
     switch (model.type) {
         case "mpim":
         case "channel":
-            return "icon-s-group-chat"
+            if (model.presence === "active") {
+                return "irc-channel-active"
+            } else {
+                return "irc-channel-inactive"
+            }
+            break;
+//            return "icon-s-group-chat"
         case "group":
             return "icon-s-secure"
         case "im":
-            return "icon-s-chat"
+            if (model.presence === "active") {
+                return "im-user"
+            } else {
+                return "im-user-inactive"
+            }
+
+//            ret = "im-user"
+//            return "icon-s-chat"
     }
 }
 

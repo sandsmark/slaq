@@ -16,6 +16,8 @@ public:
     explicit SlackStream(QObject *parent = 0);
     ~SlackStream();
 
+    bool isConnected() const { return m_isConnected; }
+
 signals:
     void connected();
     void reconnecting();
@@ -33,8 +35,8 @@ private:
     QPointer<QtWebsocket::QWsSocket> webSocket;
     QPointer<QTimer> checkTimer;
 
-    bool isConnected;
-    int lastMessageId;
+    bool m_isConnected;
+    int m_lastMessageId;
 };
 
 #endif // SLACKSTREAM_H

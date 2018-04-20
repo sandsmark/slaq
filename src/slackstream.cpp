@@ -3,7 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-SlackStream::SlackStream(QObject *parent) : QObject(parent), isConnected(false), lastMessageId(0) {
+SlackStream::SlackStream(QObject *parent) : QObject(parent), m_isConnected(false), m_lastMessageId(0) {
     webSocket = new QtWebsocket::QWsSocket(this);
     checkTimer = new QTimer(this);
 
@@ -29,12 +29,13 @@ void SlackStream::listen(QUrl url) {
 }
 
 void SlackStream::checkConnection() {
-    if (isConnected) {
+    qDebug() << "check connection" << m_isConnected;
+    if (m_isConnected) {
         QJsonObject values;
-        values.insert("id", QJsonValue(++lastMessageId));
+        values.insert("id", QJsonValue(++m_lastMessageId));
         values.insert("type", QJsonValue(QString("ping")));
 
-        qDebug() << "Check connection" << lastMessageId;
+        qDebug() << "Check connection" << m_lastMessageId;
 
         QJsonDocument document(values);
         QByteArray data = document.toJson(QJsonDocument::Compact);
@@ -45,15 +46,15 @@ void SlackStream::checkConnection() {
 void SlackStream::handleListerStart() {
     qDebug() << "Socket connected";
     emit connected();
-    isConnected = true;
+    m_isConnected = true;
     checkTimer->start(15000);
 }
 
 void SlackStream::handleListerEnd() {
     qDebug() << "Socket disconnected";
     checkTimer->stop();
-    isConnected = false;
-    lastMessageId = 0;
+    m_isConnected = false;
+    m_lastMessageId = 0;
     emit disconnected();
 }
 

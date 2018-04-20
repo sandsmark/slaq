@@ -1,22 +1,24 @@
 import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick.Controls 2.2
+import ".."
 import harbour.slackfish 1.0 as Slack
 
 Page {
     id: page
 
+    visible: channelId !== ""
+    onChannelIdChanged: console.log("chan id: " + channelId)
     property string channelId
     property variant channel
     property bool initialized: false
 
-    SilicaFlickable {
+    Flickable {
         anchors.fill: parent
 
         BusyIndicator {
             id: loader
             visible: true
             running: visible
-            size: BusyIndicatorSize.Large
             anchors.centerIn: parent
         }
 
@@ -33,7 +35,7 @@ Page {
                 loader.visible = true
             }
 
-            PushUpMenu {
+            Menu {
                 id: bottomMenu
 
                 MenuItem {
@@ -52,16 +54,15 @@ Page {
         page.channel = Slack.Client.getChannel(page.channelId)
     }
 
-    onStatusChanged: {
-        if (status === PageStatus.Active) {
+    StackView.onStatusChanged: {
+        if (StackView.status === StackView.Active) {
             Slack.Client.setActiveWindow(page.channelId)
 
             if (!initialized) {
                 initialized = true
                 listView.loadMessages()
             }
-        }
-        else if (status === PageStatus.Deactivating) {
+        } else {
             Slack.Client.setActiveWindow("")
             listView.markLatest()
         }

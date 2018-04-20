@@ -1,5 +1,7 @@
 import QtQuick 2.0
-import Sailfish.Silica 1.0
+import QtQuick.Controls 2.2
+import QtQuick.Window 2.2
+import ".."
 import "../dialogs"
 
 Column {
@@ -8,7 +10,7 @@ Column {
 
     signal sendMessage(string content)
 
-    width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 1 : 0)
+    width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 1 : 0)
 
     Spacer {
         height: Theme.paddingLarge
@@ -22,16 +24,15 @@ Column {
             id: messageInput
             width: parent.width - sendButton.width
             enabled: enabled
-            label: placeholderText
         }
 
-        IconButton {
+        Button {
             id: sendButton
             anchors {
                 bottom: parent.bottom
                 bottomMargin: 30
             }
-            icon.source: "image://theme/icon-m-enter-accept"
+            icon.name: "document-send"
             enabled: messageInput.text.length > 0
             onClicked: handleSendMessage()
         }
