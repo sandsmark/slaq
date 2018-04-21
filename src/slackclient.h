@@ -46,7 +46,7 @@ signals:
     void loadMessagesSuccess(QString channelId, QVariantList messages);
     void loadMessagesFail();
 
-    void initFail();
+    void initFail(const QString &why);
     void initSuccess();
 
     void reconnectFail();

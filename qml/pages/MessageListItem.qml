@@ -7,6 +7,7 @@ import ".."
 Item {
     id: item
     height: column.height + Theme.paddingMedium
+    width: listView.width
 
     property color infoColor: item.highlighted ? palette.highlightedText : palette.text
     property color textColor: item.highlighted ? palette.highlightedText : palette.text
@@ -47,6 +48,7 @@ Item {
             visible: text.length > 0
             text: content
             onLinkActivated: handleLink(link)
+            wrapMode: Text.Wrap
         }
 
         Item {
@@ -59,19 +61,36 @@ Item {
             id: imageRepeater
             model: images
 
-            Image {
-                fillMode: Image.PreserveAspectFit
-                source: model.thumbUrl
-                sourceSize.width: width
-                sourceSize.height: height
+            Item {
+                property bool expanded: false
+
+                Image {
+                    id: thumbImage
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    source: model.thumbUrl
+                    sourceSize.width: model.thumbSize.width
+                    sourceSize.height: model.thumbSize.height
+
+                    visible: !expanded
+                }
+
+                Image {
+                    id: fullImage
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    sourceSize.width: model.size.width
+                    sourceSize.height: model.size.height
+                    visible: expanded
+                }
 
                 width: model.thumbSize.width
                 height: model.thumbSize.height
 
                 ProgressBar {
                     anchors.centerIn: parent
-                    opacity: parent.progress < 1
-                    value: parent.progress
+                    opacity: value < 1
+                    value: expanded ? fullImage.progress : thumbImage.progress
                     Behavior on opacity { NumberAnimation { duration: 250 } }
                 }
 
@@ -90,9 +109,18 @@ Item {
                         if (Slack.Client.isDevice) {
                             pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model})
                         } else {
-                            parent.width = listView.width - Theme.paddingLarge * 2
-                            parent.height = parent.width * parent.sourceSize.height / parent.sourceSize.height
-                            parent.source = model.url
+                            if (parent.expanded) {
+                                parent.width = model.thumbSize.width
+                                parent.height = model.thumbSize.height
+
+                                parent.expanded = false
+                            } else {
+                                parent.width = listView.width - Theme.paddingLarge * 2
+                                parent.height = parent.width * model.size.width / model.size.height
+                                fullImage.source = model.url
+
+                                parent.expanded = true
+                            }
                         }
                     }
                 }

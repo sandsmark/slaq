@@ -120,9 +120,9 @@ Page {
         }
     }
 
-    function handleInitFail() {
+    function handleInitFail(why) {
         loading = false
-        errorMessage = qsTr("Error loading team information")
+        errorMessage = qsTr("Error connecting: ") + why
         initButton.visible = true
     }
 

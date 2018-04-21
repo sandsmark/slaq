@@ -251,14 +251,22 @@ bool SlackClient::isOk(const QNetworkReply *reply) {
 
     if (statusCode / 100 == 2) {
         return true;
-    }
-    else {
+    } else {
+        if (statusCode == 429) {
+            qDebug() << "too many requests";
+            for (const QByteArray &h : reply->rawHeaderList()) {
+                qDebug() << h << reply->rawHeader(h);
+            }
+
+        }
+        qDebug() << statusCode << reply->errorString() << reply;
         return false;
     }
 }
 
 bool SlackClient::isError(const QJsonObject &data) {
     if (data.isEmpty()) {
+        qWarning() << "No data received";
         return true;
     }
     else {
@@ -279,6 +287,7 @@ QJsonObject SlackClient::getResult(QNetworkReply *reply) {
         }
     }
     else {
+        qWarning() << "bad";
         return QJsonObject();
     }
 }
@@ -403,6 +412,7 @@ void SlackClient::testLogin() {
 
     QString token = config->accessToken();
     if (token.isEmpty()) {
+        qDebug() << "Got empty token";
         emit testLoginFail();
         return;
     }
@@ -447,7 +457,13 @@ void SlackClient::handleStartReply() {
         qDebug() << "Start result error";
         reply->deleteLater();
         emit disconnected();
-        emit initFail();
+
+        if (data.isEmpty()) {
+            emit initFail(tr("No data received from server"));
+        } else {
+            qDebug() << data;
+            emit initFail(tr("Wat"));
+        }
         return;
     }
 
