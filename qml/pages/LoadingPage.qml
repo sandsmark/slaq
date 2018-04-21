@@ -1,6 +1,5 @@
 import QtQuick 2.0
-//import Sailfish.Silica 1.0
-import harbour.slackfish 1.0 as Slack
+import com.iskrembilen.slaq 1.0 as Slack
 import QtQuick.Controls 2.2
 import ".."
 import "../Settings.js" as Settings
@@ -18,7 +17,7 @@ Page {
     Flickable {
         anchors.fill: parent
 
-//        PageHeader { title: "Slackfish" }
+//        PageHeader { title: "Slaq" }
 
         Menu {
             enabled: !page.loading

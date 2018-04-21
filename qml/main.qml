@@ -1,7 +1,6 @@
 import QtQuick 2.10
-//import Sailfish.Silica 1.0
 import QtQuick.Controls 2.2
-import harbour.slackfish 1.0 as Slack
+import com.iskrembilen.slaq 1.0 as Slack
 
 import "Settings.js" as Settings
 import "ChannelList.js" as ChannelList

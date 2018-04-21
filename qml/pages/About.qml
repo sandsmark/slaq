@@ -26,7 +26,7 @@ Page {
 
             Label {
                 x: page.padding
-                text: "Slackfish 1.3"
+                text: "Slaq 1.3"
                 font.pixelSize: Theme.fontSizeExtraLarge
             }
 
@@ -34,7 +34,7 @@ Page {
                 x: page.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
-                text: qsTr("Unoffical Slack client for Sailfish OS")
+                text: qsTr("Unoffical Slack client which doesn't eat all your RAM")
                 font.pixelSize: Theme.fontSizeSmall
             }
 
@@ -50,7 +50,7 @@ Page {
                 x: page.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 font.pixelSize: Theme.fontSizeSmall
-                value: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/markussammallahti/harbour-slackfish")
+                value: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/sandsmark/slaq")
                 onLinkActivated: Qt.openUrlExternally(link)
             }
         }

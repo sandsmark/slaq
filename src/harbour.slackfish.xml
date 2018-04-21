@@ -1,7 +1,0 @@
-<node>
-  <interface name="harbour.slackfish">
-    <method name="activate">
-      <arg name="channelId" type="s" direction="in" />
-    </method>
- </interface>
-</node>

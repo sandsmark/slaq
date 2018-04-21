@@ -11,7 +11,7 @@ void MessageFormatter::replaceUserInfo(QString &message) {
         QString name = user.value("name").toString();
 
         QRegularExpression userIdPattern("<@" + id + "(\\|[^>]+)?>");
-        QString displayName = "<a href=\"slackfish://user/"+ id +"\">@" + name + "</a>";
+        QString displayName = "<a href=\"slaq://user/"+ id +"\">@" + name + "</a>";
 
         message.replace(userIdPattern, displayName);
     }
@@ -24,7 +24,7 @@ void MessageFormatter::replaceChannelInfo(QString &message) {
         QString name = channel.value("name").toString();
 
         QRegularExpression channelIdPattern("<#" + id + "(\\|[^>]+)?>");
-        QString displayName = "<a href=\"slackfish://channel/"+ id +"\">#" + name + "</a>";
+        QString displayName = "<a href=\"slaq://channel/"+ id +"\">#" + name + "</a>";
 
         message.replace(channelIdPattern, displayName);
     }
@@ -76,10 +76,10 @@ void MessageFormatter::replaceEmoji(QString &message) {
 
 void MessageFormatter::replaceTargetInfo(QString &message) {
     QRegularExpression variableLabelPattern("<!(here|channel|group|everyone)\\|([^>]+)>");
-    message.replace(variableLabelPattern, "<a href=\"slackfish://target/\\1\">\\2</a>");
+    message.replace(variableLabelPattern, "<a href=\"slaq://target/\\1\">\\2</a>");
 
     QRegularExpression variablePattern("<!(here|channel|group|everyone)>");
-    message.replace(variablePattern, "<a href=\"slackfish://target/\\1\">@\\1</a>");
+    message.replace(variablePattern, "<a href=\"slaq://target/\\1\">@\\1</a>");
 }
 
 void MessageFormatter::replaceSpecialCharacters(QString &message) {

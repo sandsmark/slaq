@@ -1,6 +1,6 @@
 import QtQuick 2.0
-import Sailfish.Silica 1.0
-import harbour.slackfish 1.0 as Slack
+import QtQuick.Controls 2.2
+import com.iskrembilen.slaq 1.0 as Slack
 
 Page {
     id: page
@@ -10,7 +10,7 @@ Page {
     property string selectedImage: ""
     property bool uploading: false
 
-    SilicaFlickable {
+    Flickable {
         anchors.fill: parent
         contentWidth: column.width
         contentHeight: column.height

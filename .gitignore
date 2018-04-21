@@ -1,2 +1,3 @@
-harbour-slackfish.pro.user
+slaq.pro.user
 .qmake.conf
+localconfig.pri

@@ -10,37 +10,39 @@
 #   - translation filenames have to be changed
 
 # App config
-TARGET = harbour-slackfish
-CONFIG += sailfishapp
-SAILFISHAPP_ICONS = 86x86 108x108 128x128 256x256
+TARGET = slaq
 
 # Translations
-CONFIG += sailfishapp_i18n
-TRANSLATIONS += translations/harbour-slackfish-fi.ts
+TRANSLATIONS += translations/slaq-fi.ts
 
 # Notifications
-QT += dbus quick widgets
-#PKGCONFIG += nemonotifications-qt5
+QT += quick widgets
 
 # Includes
 INCLUDEPATH += ./QtWebsocket
 
 # Check slack config
 
-CLIENT_ID = $$(slack_client_id)
-CLIENT_SECRET = $$(slack_client_secret)
+
+exists(localconfig.pri) {
+    include(localconfig.pri)
+} else {
+    CLIENT_ID = $$(slack_client_id)
+    CLIENT_SECRET = $$(slack_client_secret)
+}
+
+
 if(isEmpty(CLIENT_ID)) {
-    error("No client id defined")
+    error("No client id defined, ether define $slack_client_id or set up localconfig.pri")
 }
 
 if(isEmpty(CLIENT_SECRET)) {
-    error("No client secret defined")
+    error("No client secret defined, ether define $slack_client_secret or set up localconfig.pri")
 }
 DEFINES += SLACK_CLIENT_ID=\\\"$${CLIENT_ID}\\\"
 DEFINES += SLACK_CLIENT_SECRET=\\\"$${CLIENT_SECRET}\\\"
 
-
-SOURCES += src/harbour-slackfish.cpp \
+SOURCES += src/main.cpp \
     src/slackclient.cpp \
     src/slackconfig.cpp \
     src/QtWebsocket/QWsSocket.cpp \
@@ -53,17 +55,13 @@ SOURCES += src/harbour-slackfish.cpp \
     src/storage.cpp \
     src/messageformatter.cpp \
     src/notificationlistener.cpp \
-    src/dbusadaptor.cpp \
     src/filemodel.cpp
 
-OTHER_FILES += qml/harbour-slackfish.qml \
+OTHER_FILES += qml/main.qml \
     qml/cover/CoverPage.qml \
-    rpm/harbour-slackfish.changes.in \
-    rpm/harbour-slackfish.spec \
-    rpm/harbour-slackfish.yaml \
     translations/*.ts \
-    harbour-slackfish.desktop \
-    harbour-slackfish.png
+    slaq.desktop \
+    slaq.png
 
 HEADERS += \
     src/slackclient.h \
@@ -78,7 +76,6 @@ HEADERS += \
     src/storage.h \
     src/messageformatter.h \
     src/notificationlistener.h \
-    src/dbusadaptor.h \
     src/filemodel.h
 
 DISTFILES += \

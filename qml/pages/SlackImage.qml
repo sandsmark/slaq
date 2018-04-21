@@ -20,7 +20,6 @@ Page {
 //        text: model ? model.name : ""
 //    }
 
-//    SilicaFlickable {
     Flickable {
 //        anchors.fill: parent
         contentHeight: column.height

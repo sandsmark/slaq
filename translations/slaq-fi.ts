@@ -5,218 +5,218 @@
     <name>About</name>
     <message>
         <source>About</source>
-        <translation>About</translation>
+        <translation>Tietoja</translation>
     </message>
     <message>
         <source>Browse channel and post new messages. Channels are updated real-time when new messages are posted.</source>
-        <translation>Browse channel and post new messages. Channels are updated real-time when new messages are posted.</translation>
+        <translation>Selaa kanavia ja kirjoita viestejä. Kanavat päivittyvät automaattisesti kun uusia viestejä saapuu.</translation>
     </message>
     <message>
-        <source>Unoffical Slack client for Sailfish OS</source>
-        <translation>Unoffical Slack client for Sailfish OS</translation>
+        <source>Unoffical Slack client that doesn't eat all your RAM</source>
+        <translation>Epävirallinen löysä asiakas, joka ei syö kaikkia RAM-muistia</translation>
     </message>
     <message>
         <source>Source code and issues in &lt;a href=&apos;%1&apos;&gt;Github&lt;/a&gt;.</source>
-        <translation>Source code and issues in &lt;a href=&apos;%1&apos;&gt;Github&lt;/a&gt;.</translation>
+        <translation>Lähdekoodi ja vikailmoitukset &lt;a href=&apos;%1&apos;&gt;Githubissa&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
     <name>Channel</name>
     <message>
         <source>Upload image</source>
-        <translation>Upload image</translation>
+        <translation>Lähetä kuva</translation>
     </message>
 </context>
 <context>
     <name>ChannelList</name>
     <message>
         <source>About</source>
-        <translation>About</translation>
+        <translation>Tietoja</translation>
     </message>
     <message>
         <source>Join channel</source>
-        <translation>Join channel</translation>
+        <translation>Liity kanavalle</translation>
     </message>
     <message>
         <source>Open chat</source>
-        <translation>Open chat</translation>
+        <translation>Avaa keskustelu</translation>
     </message>
 </context>
 <context>
     <name>ChannelListView</name>
     <message>
         <source>Channels</source>
-        <translation>Channels</translation>
+        <translation>Kanavat</translation>
     </message>
     <message>
         <source>Direct messages</source>
-        <translation>Direct messages</translation>
+        <translation>Yksityisviestit</translation>
     </message>
     <message>
         <source>Leave</source>
-        <translation>Leave</translation>
+        <translation>Sulje</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation>Close</translation>
+        <translation>Sulje</translation>
     </message>
     <message>
         <source>Unreads</source>
-        <translation>Unreads</translation>
+        <translation>Lukemattomat</translation>
     </message>
 </context>
 <context>
     <name>ChannelSelect</name>
     <message>
         <source>Join channel</source>
-        <translation>Join channel</translation>
+        <translation>Liity kanavalle</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Search</translation>
+        <translation>Etsi</translation>
     </message>
     <message>
         <source>No available channels</source>
-        <translation>No available channels</translation>
+        <translation>Ei kanavia</translation>
     </message>
 </context>
 <context>
     <name>ChatSelect</name>
     <message>
         <source>Open chat</source>
-        <translation>Open chat</translation>
+        <translation>Avaa keskustelu</translation>
     </message>
     <message>
         <source>No available chats</source>
-        <translation>No available chats</translation>
+        <translation>Ei käyttäjiä</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Search</translation>
+        <translation>Etsi</translation>
     </message>
 </context>
 <context>
     <name>ConnectionPanel</name>
     <message>
         <source>Reconnecting</source>
-        <translation>Reconnecting</translation>
+        <translation>Yhdistetään</translation>
     </message>
     <message>
         <source>Disconnected</source>
-        <translation>Disconnected</translation>
+        <translation>Yheys katkennut</translation>
     </message>
     <message>
         <source>Reconnect</source>
-        <translation>Reconnect</translation>
+        <translation>Yhdistä</translation>
     </message>
     <message>
         <source>No network connection</source>
-        <translation>No network connection</translation>
+        <translation>Ei verkkoyhteyttä</translation>
     </message>
 </context>
 <context>
     <name>CoverPage</name>
     <message>
         <source>Reconnecting</source>
-        <translation>Reconnecting</translation>
+        <translation>Yhdistetään</translation>
     </message>
     <message>
         <source>Disconnected</source>
-        <translation>Disconnected</translation>
+        <translation>Yheys katkennut</translation>
     </message>
     <message>
         <source>No network connection</source>
-        <translation>No network connection</translation>
+        <translation>Ei verkkoyhteyttä</translation>
     </message>
 </context>
 <context>
     <name>FileSend</name>
     <message>
         <source>Upload image</source>
-        <translation>Upload image</translation>
+        <translation>Lähetä kuva</translation>
     </message>
     <message>
         <source>Select image</source>
-        <translation>Select image</translation>
+        <translation>Valitse kuva</translation>
     </message>
     <message>
         <source>Send</source>
-        <translation>Send</translation>
+        <translation>Lähetä</translation>
     </message>
     <message>
         <source>Uploading</source>
-        <translation>Uploading</translation>
+        <translation>Lähetetään</translation>
     </message>
 </context>
 <context>
     <name>GroupLeaveDialog</name>
     <message>
-        <source>Leave %1</source>
-        <translation>Leave %1</translation>
-    </message>
-    <message>
         <source>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
 
 Are you sure you wish to leave?</source>
-        <translation>If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
+        <translation>Jos suljet kanavan, et voi enää nähdä sen viestejä. Sinun pitää saada kutsu, että voit liittyä takaisin kanavalle.
 
-Are you sure you wish to leave?</translation>
+Oletko varma, että haluat sulkea kanavan?</translation>
+    </message>
+    <message>
+        <source>Leave %1</source>
+        <translation>Sulje %1</translation>
     </message>
 </context>
 <context>
     <name>ImagePicker</name>
     <message>
         <source>Select picture</source>
-        <translation>Select picture</translation>
+        <translation>Valitse kuva</translation>
     </message>
 </context>
 <context>
     <name>Loader</name>
     <message>
         <source>Login</source>
-        <translation>Login</translation>
+        <translation>Kirjaudu</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation>Retry</translation>
+        <translation>Yritä uudelleen</translation>
     </message>
     <message>
         <source>Loading</source>
-        <translation>Loading</translation>
+        <translation>Ladataan</translation>
     </message>
     <message>
         <source>Error loading team information</source>
-        <translation>Error loading team information</translation>
+        <translation>Virhe ladattaessa tietoja</translation>
     </message>
     <message>
         <source>No network connection</source>
-        <translation>No network connection</translation>
+        <translation>Ei verkkoyhteyttä</translation>
     </message>
     <message>
         <source>Not logged in</source>
-        <translation>Not logged in</translation>
+        <translation>Kirjaudu sisään</translation>
     </message>
 </context>
 <context>
     <name>MessageListView</name>
     <message>
         <source>Message %1%2</source>
-        <translation>Message %1%2</translation>
+        <translation>Lähetä viesti %1%2</translation>
     </message>
 </context>
 <context>
     <name>SlackClient</name>
     <message>
         <source>New message in %1</source>
-        <translation>New message in %1</translation>
+        <translation>Uusi viesti, %1</translation>
     </message>
     <message>
         <source>New message from %1</source>
-        <translation>New message from %1</translation>
+        <translation>Uusi viesti, %1</translation>
     </message>
     <message>
         <source>New message</source>
-        <translation>New message</translation>
+        <translation>Uusi viesti</translation>
     </message>
 </context>
 </TS>

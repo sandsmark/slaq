@@ -1,4 +1,4 @@
-.import harbour.slackfish 1.0 as Slack
+.import com.iskrembilen.slaq 1.0 as Slack
 .import "Channel.js" as Channel
 
 function init() {

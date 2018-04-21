@@ -85,7 +85,7 @@ Item {
     }
 
     function handleLink(link) {
-        if (link.indexOf("slackfish://") === 0) {
+        if (link.indexOf("slaq://") === 0) {
             console.log("local link", link)
         } else {
             console.log("external link", link)

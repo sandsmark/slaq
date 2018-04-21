@@ -1,3 +1,5 @@
-# harbour-slackfish
+# Slaq
 
-Unoffical [Slack](https://slack.com/) client for [Sailfish](https://sailfishos.org) available in _Jolla Store_. See Slackfish in [Slack App Directory](https://slack.com/apps/A1B4VFTKL-slackfish)
+Unoffical [Slack](https://slack.com/) client that doesn't eat all your RAM.
+
+Based on [Slackfish](https://github.com/markussammallahti/harbour-slackfish).

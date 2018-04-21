@@ -1,13 +1,12 @@
 import QtQuick 2.0
 import QtWebKit 3.0
-import harbour.slackfish 1.0 as Slack
+import com.iskrembilen.slaq 1.0 as Slack
 import QtQuick.Controls 2.2
 import "../Settings.js" as Settings
 
 Page {
     id: page
 
-//    property string startUrl: "https://google.com"
     property string startUrl: "https://slack.com/oauth/authorize?scope=client&client_id=11907327505.252375557155&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth%2Fcallback"
 
     header: Label {

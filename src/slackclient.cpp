@@ -48,7 +48,7 @@ void SlackClient::setActiveWindow(QString windowId) {
 void SlackClient::clearNotifications() {
 //  foreach (QObject* object, Notification::notifications()) {
 //      Notification* n = qobject_cast<Notification*>(object);
-//      if (n->hintValue("x-slackfish-channel").toString() == activeWindow) {
+//      if (n->hintValue("x-slaq-channel").toString() == activeWindow) {
 //          n->close();
 //      }
 
@@ -1084,16 +1084,16 @@ void SlackClient::sendNotification(QString channelId, QString title, QString tex
     arguments.append(channelId);
 
 //    Notification notification;
-//    notification.setAppName("Slackfish");
-//    notification.setAppIcon("harbour-slackfish");
+//    notification.setAppName("Slaq");
+//    notification.setAppIcon("slaq");
 //    notification.setBody(body);
 //    notification.setPreviewSummary(title);
 //    notification.setPreviewBody(preview);
 //    notification.setCategory("chat");
-//    notification.setHintValue("x-slackfish-channel", channelId);
+//    notification.setHintValue("x-slaq-channel", channelId);
 //    notification.setHintValue("x-nemo-feedback", "chat_exists");
 //    notification.setHintValue("x-nemo-priority", 100);
 //    notification.setHintValue("x-nemo-display-on", true);
-//    notification.setRemoteAction(Notification::remoteAction("default", "", "harbour.slackfish", "/", "harbour.slackfish", "activate", arguments));
+//    notification.setRemoteAction(Notification::remoteAction("default", "", "slaq", "/", "slaq", "activate", arguments));
 //    notification.publish();
 }
