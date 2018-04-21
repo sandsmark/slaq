@@ -17,7 +17,6 @@ ListView {
     signal loadCompleted()
     signal loadStarted()
 
-    anchors.fill: parent
     spacing: Theme.paddingLarge
 
     ScrollBar.vertical: ScrollBar { }

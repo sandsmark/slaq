@@ -24,6 +24,7 @@ Page {
     MessageListView {
         id: listView
         channel: page.channel
+
         anchors {
             top: parent.top
             left: parent.left

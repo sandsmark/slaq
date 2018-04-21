@@ -37,7 +37,10 @@ Rectangle {
 
     ChannelListView {
         id: listView
-        anchors.fill: parent
+        anchors {
+            fill: parent
+            margins: Theme.paddingMedium
+        }
     }
 
 
