@@ -1,5 +1,6 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.2
+import QtQuick.Layouts 1.3
 import com.iskrembilen.slaq 1.0 as Slack
 
 import "Settings.js" as Settings
@@ -20,101 +21,83 @@ ApplicationWindow {
         id: palette
     }
 
-//    ScrollView {
-//    Drawer {
+    Component {
+        id: channelComponent
+        Channel {}
+    }
+
+
+    header: ToolBar {
+        RowLayout {
+            anchors.fill: parent
+
+            ToolButton {
+                text: pageStack.depth > 0 ? ("›") : "<"
+                onClicked: channelList.item.open()
+//                visible: Slack.Client.isDevice
+            }
+
+            Label {
+                text: pageStack.currentItem.title
+                elide: Label.ElideRight
+                horizontalAlignment: Qt.AlignHCenter
+                verticalAlignment: Qt.AlignVCenter
+                Layout.fillWidth: true
+            }
+
+            ToolButton {
+                text: qsTr("⋮")
+                onClicked: menu.open()
+            }
+        }
+    }
+
     StackView {
         id: pageStack
-        anchors.fill: parent
+        anchors {
+            top: parent.top
+            left: channelListPermanent.active ? channelListPermanent.right : parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
 
         initialItem: LoadingPage {
             height: window.height
             width: window.width
         }
-    }
 
-    Item {
-        id: channelsView
-//        anchors {
-//            top: parent.top
-//            left: parent.left
-//            bottom: parent.bottom
-//            margins: 10
-//        }
-        width: parent.width * 0.33
-        height: parent.height
-        visible: Slack.Client.isOnline
-//        interactive: false
-//        modal: false
-
-//        background: Rectangle {
-//            border.color: channelsView.activeFocus ? "red" : "pink"
-//        }
-
-        ChannelListView {
-
+        transform: Translate {
+            x: Slack.Client.isDevice ? channelList.item.position * width * 0.33 : 0
         }
 
-
-
-//        Column {
-//            Label {
-//                text: qsTr("Channels")
-//            }
-
-//            Item { height: 5; width: height } // spacer
-
-//            Repeater {
-//                id: channelRepeater
-//                model: [ "#test1", "#test2" ]
-
-//                delegate: Item {
-//                    id: delegate
-//                    Row {
-//                        id: row
-////                        width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-//                        anchors.verticalCenter: parent.verticalCenter
-////                        x: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
-////                        spacing: Theme.paddingMedium
-
-////                        SlackImage {
-////                        Image {
-////                            id: icon
-//////                            source: "image://theme/" + Channel.getIcon(model) + "?" + (delegate.highlighted ? currentColor : Channel.getIconColor(model, currentColor))
-////                            anchors.verticalCenter: parent.verticalCenter
-////                        }
-
-//                        Label {
-//                            width: parent.width - icon.width - Theme.paddingMedium
-//                            wrapMode: Text.Wrap
-//                            anchors.verticalCenter: parent.verticalCenter
-//                            font.pointSize: Theme.fontSizeMedium
-//                            font.bold: channelRepeater.model.unreadCount > 0
-////                            text: model.name
-////                            color: currentColor
-//                        }
-//                    }
-//                }
-//            }
-//        }
     }
-//    CoverPage {
 
-//    }
+    Loader {
+        id: channelList
+        active: Slack.Client.isDevice
 
+        sourceComponent:  Drawer {
+            width: parent.width * 0.66
+            height: window.height
 
-//    initialItem: CoverPage {
-//    }
+            ChannelList {
+                anchors.fill: parent
+            }
+        }
+    }
 
-////    initialItem: Pages.CoverPage {} //Component { Loader { } }
-////    cover: Qt.resolvedUrl("cover/CoverPage.qml")
-////    allowedOrientations: Orientation.All
-////    _defaultPageOrientations: Orientation.All
+    Loader {
+        id: channelListPermanent
+        width: active ? parent.width * 0.33 : 0
+        active: false
+        height: window.height
+        onWidthChanged: console.log(width)
+        opacity: active ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 500 } }
 
-//    function activateChannel(channelId) {
-//        console.log("Navigate to", channelId);
-//        pageStack.clear()
-//        pageStack.push(Qt.resolvedUrl("pages/ChannelList.qml"), {}, true)
-//        activate()
-//        pageStack.push(Qt.resolvedUrl("pages/Channel.qml"), {"channelId": channelId})
-//    }
+        sourceComponent:   ChannelList {
+            width: Slack.Client.isOnline ? parent.width * 0.33 : 0
+            height: window.height
+        }
+    }
 }

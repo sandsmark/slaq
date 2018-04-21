@@ -32,6 +32,7 @@ SlackClient::SlackClient(QObject *parent) : QObject(parent), appActive(true), ac
     connect(stream, SIGNAL(messageReceived(QJsonObject)), this, SLOT(handleStreamMessage(QJsonObject)));
 
     connect(this, &SlackClient::connected, this, &SlackClient::isOnlineChanged);
+    connect(this, &SlackClient::initSuccess, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::disconnected, this, &SlackClient::isOnlineChanged);
 }
 
@@ -40,9 +41,15 @@ void SlackClient::setAppActive(bool active) {
     clearNotifications();
 }
 
-void SlackClient::setActiveWindow(QString windowId) {
+void SlackClient::setActiveWindow(QString windowId)
+{
     activeWindow = windowId;
     clearNotifications();
+
+    if (!windowId.isEmpty()) {
+        QSettings settings;
+        settings.setValue("LastChannel", windowId);
+    }
 }
 
 void SlackClient::clearNotifications() {
@@ -579,6 +586,30 @@ bool SlackClient::isOnline() const
     return stream && stream->isConnected();
 }
 
+bool SlackClient::isDevice() const
+{
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    return true;
+#else
+    return false;
+#endif
+}
+
+QString SlackClient::lastChannel() const
+{
+    if (Storage::channels().isEmpty()) {
+        return QString();
+    }
+
+    QSettings settings;
+    QString name = settings.value("LastChannel").toString();
+    if (name.isEmpty() || !Storage::channels().contains(name)) {
+        return Storage::channels().first().toMap()["id"].toString();
+    }
+
+    return name;
+}
+
 QString SlackClient::historyMethod(QString type) {
     if (type == "channel") {
         return "channels.history";
@@ -928,6 +959,7 @@ QVariantList SlackClient::getImages(QJsonObject message) {
             fileData.insert("thumbUrl", file.value("thumb_" + thumbItem).toVariant());
 
             images.append(fileData);
+            qDebug() << fileData;
         }
     }
 

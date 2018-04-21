@@ -5,6 +5,8 @@ import com.iskrembilen.slaq 1.0 as Slack
 import "../Message.js" as Message
 
 ListView {
+    id: listView
+
     property alias atBottom: listView.atYEnd
     property variant channel
 
@@ -15,7 +17,6 @@ ListView {
     signal loadCompleted()
     signal loadStarted()
 
-    id: listView
     anchors.fill: parent
     spacing: Theme.paddingLarge
 
@@ -32,10 +33,6 @@ ListView {
         }
     }
 
-    header: Label {
-        text: channel.name
-    }
-
     model: ListModel {
         id: messageListModel
     }
@@ -47,15 +44,8 @@ ListView {
         criteria: ViewSection.FullString
         delegate: Label {
             text: section
-            background: Rectangle { color: palette.alternateBase }
-        }
-    }
-
-    footer: MessageInput {
-        visible: inputEnabled
-        placeholder: qsTr("Message %1%2").arg("#").arg(channel.name)
-        onSendMessage: {
-            Slack.Client.postMessage(channel.id, content)
+            width: listView.width
+            horizontalAlignment: "AlignHCenter"
         }
     }
 

@@ -10,14 +10,12 @@ Page {
     property bool firstView: true
     property bool loading: true
     property string errorMessage: ""
-    onErrorMessageChanged: console.log("errorMessage: " + loadMessage)
-    property string loadMessage: ""
-    onLoadMessageChanged: console.log("loadmessage: " + loadMessage)
+    property string loadMessage: "Loading"
+
+    title: "Connecting"
 
     Flickable {
         anchors.fill: parent
-
-//        PageHeader { title: "Slaq" }
 
         Menu {
             enabled: !page.loading
@@ -110,24 +108,25 @@ Page {
     }
 
     function handleLoginTestFail() {
-        console.log("login test fail")
         pageStack.push(Qt.resolvedUrl("LoginPage.qml"))
     }
 
     function handleInitSuccess() {
-        console.log("init success")
-        pageStack.replace(Qt.resolvedUrl("ChannelList.qml"))
+        pageStack.replace(channelComponent, {"channelId" : Slack.Client.lastChannel() })
+        if (Slack.Client.isDevice) {
+            channelList.item.open()
+        } else {
+            channelListPermanent.active = true
+        }
     }
 
     function handleInitFail() {
-        console.log("init fail")
         loading = false
         errorMessage = qsTr("Error loading team information")
         initButton.visible = true
     }
 
     function handleConnectionFail() {
-        console.log("connection fail")
         loading = false
         errorMessage = qsTr("No network connection")
         initButton.visible = true

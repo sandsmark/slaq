@@ -3,7 +3,7 @@ import QtQuick.Controls 2.2
 import ".."
 import com.iskrembilen.slaq 1.0 as Slack
 
-Page {
+Rectangle {
     id: page
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
@@ -12,37 +12,34 @@ Page {
         Slack.Client.setAppActive(appActive)
     }
 
-    header: ToolBar {
-        id: topMenu
+//    header: ToolBar {
+//        id: topMenu
 
-        MenuItem {
-            text: qsTr("About")
-            onClicked: {
-                pageStack.push(Qt.resolvedUrl("About.qml"))
-            }
-        }
-        MenuItem {
-            text: qsTr("Open chat")
-            onClicked: {
-                pageStack.push(Qt.resolvedUrl("ChatSelect.qml"))
-            }
-        }
-        MenuItem {
-            text: qsTr("Join channel")
-            onClicked: {
-                pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))
-            }
-        }
-    }
+//        MenuItem {
+//            text: qsTr("About")
+//            onClicked: {
+//                pageStack.push(Qt.resolvedUrl("About.qml"))
+//            }
+//        }
+//        MenuItem {
+//            text: qsTr("Open chat")
+//            onClicked: {
+//                pageStack.push(Qt.resolvedUrl("ChatSelect.qml"))
+//            }
+//        }
+//        MenuItem {
+//            text: qsTr("Join channel")
+//            onClicked: {
+//                pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))
+//            }
+//        }
+//    }
 
-    Flickable {
+    ChannelListView {
+        id: listView
         anchors.fill: parent
-
-        ChannelListView {
-            id: listView
-            anchors.fill: parent
-        }
     }
+
 
     ConnectionPanel {}
 }

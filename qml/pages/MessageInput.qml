@@ -12,8 +12,9 @@ Column {
 
     width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 1 : 0)
 
-    Spacer {
+    Item {
         height: Theme.paddingLarge
+        width: height
     }
 
     Row {
@@ -22,19 +23,22 @@ Column {
 
         TextArea {
             id: messageInput
-            width: parent.width - sendButton.width
+            width: parent.width - sendButton.width - uploadButton.width
             enabled: enabled
         }
 
         Button {
             id: sendButton
-            anchors {
-                bottom: parent.bottom
-                bottomMargin: 30
-            }
             icon.name: "document-send"
             enabled: messageInput.text.length > 0
             onClicked: handleSendMessage()
+        }
+
+        Button {
+            id: uploadButton
+            icon.name: "upload-media"
+            enabled: messageInput.text.length > 0
+            onClicked: pageStack.push(Qt.resolvedUrl("FileSend.qml"), {"channelId": page.channelId})
         }
     }
 

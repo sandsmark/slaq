@@ -9,10 +9,7 @@ Page {
 
     property string startUrl: "https://slack.com/oauth/authorize?scope=client&client_id=11907327505.252375557155&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth%2Fcallback"
 
-    header: Label {
-        text: "Sign in with Slack"
-        horizontalAlignment: "AlignHCenter"
-    }
+    title: "Sign in with Slack"
 
     Rectangle {
         anchors {

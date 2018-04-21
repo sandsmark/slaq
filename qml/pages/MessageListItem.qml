@@ -1,11 +1,11 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.2
 import QtQuick.Window 2.2
+import com.iskrembilen.slaq 1.0 as Slack
 import ".."
 
 Item {
     id: item
-    enabled: false
     height: column.height + Theme.paddingMedium
 
     property color infoColor: item.highlighted ? palette.highlightedText : palette.text
@@ -17,21 +17,25 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         x: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
 
-        Item {
+        Row {
             width: parent.width
             height: childrenRect.height
+            spacing: Theme.paddingMedium
 
             Label {
+                id: nickLabel
                 text: user.name
-                font.pointSize: Theme.fontSizeTiny
-                color: infoColor
+                font.pointSize: Theme.fontSizeSmall
+                font.bold: true
+                color: textColor
             }
 
             Label {
-                anchors.right: parent.right
                 text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
                 font.pointSize: Theme.fontSizeTiny
                 color: infoColor
+                height: nickLabel.height
+                verticalAlignment: "AlignBottom"
             }
         }
 
@@ -56,17 +60,40 @@ Item {
             model: images
 
             Image {
-                width: parent.width
-                height: model.thumbSize.height
                 fillMode: Image.PreserveAspectFit
                 source: model.thumbUrl
-                sourceSize.width: model.thumbSize.width
-                sourceSize.height: model.thumbSize.height
+                sourceSize.width: width
+                sourceSize.height: height
+
+                width: model.thumbSize.width
+                height: model.thumbSize.height
+
+                ProgressBar {
+                    anchors.centerIn: parent
+                    opacity: parent.progress < 1
+                    value: parent.progress
+                    Behavior on opacity { NumberAnimation { duration: 250 } }
+                }
+
+                Rectangle {
+                    anchors.fill: imageMouseArea
+                    color: Qt.rgba(1, 1, 1, 0.1)
+                    visible: imageMouseArea.containsMouse
+                }
 
                 MouseArea {
+                    id: imageMouseArea
                     anchors.fill: parent
+                    hoverEnabled: true
+
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model})
+                        if (Slack.Client.isDevice) {
+                            pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model})
+                        } else {
+                            parent.width = listView.width - Theme.paddingLarge * 2
+                            parent.height = parent.width * parent.sourceSize.height / parent.sourceSize.height
+                            parent.source = model.url
+                        }
                     }
                 }
             }

@@ -6,22 +6,18 @@ Page {
 
     property variant model
 
-//    ProgressBar {
-//        width: parent.width
-//        anchors.centerIn: parent
-//        from: 0
-//        to: 1
-////        valueText: parseInt(value * 100) + "%"
-//        value: image.progress
-//        visible: image.status === Image.Loading
-//    }
+    ProgressBar {
+        opacity: parent.progress < 1
+        value: image.progress
+        Behavior on opacity { NumberAnimation { duration: 250 } }
+    }
 
-//    header: Text {
-//        text: model ? model.name : ""
-//    }
+    header: Text {
+        text: model ? model.name : ""
+    }
 
     Flickable {
-//        anchors.fill: parent
+        anchors.fill: parent
         contentHeight: column.height
 
         Column {
@@ -29,11 +25,8 @@ Page {
 
             width: page.width
 
-//            PageHeader { title: model.name }
-
             Image {
                 id: image
-                visible: status === Image.Ready
                 source: model.url
                 width: parent.width
                 fillMode: Image.PreserveAspectFit
