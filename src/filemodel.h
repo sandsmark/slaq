@@ -20,7 +20,6 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 
 */
 
-
 #ifndef FILEMODEL_H
 #define FILEMODEL_H
 
@@ -30,13 +29,15 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 #include <QFileInfoList>
 #include <QAbstractListModel>
 
-class FileInfo {
+class FileInfo
+{
 public:
     QString name;
     QString path;
     int size;
 
-    FileInfo(QString pname, QString ppath, int psize) {
+    FileInfo(QString pname, QString ppath, int psize)
+    {
         path = ppath;
         name = pname;
         size = psize;
@@ -55,8 +56,8 @@ public:
         SizeRole
     };
     explicit FileModel(QObject *parent = 0);
-    int rowCount(const QModelIndex & parent = QModelIndex()) const;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     QString getSearchPath();
     void setSearchPath(QString path);
 

@@ -109,7 +109,6 @@ public slots:
 
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 
-
     void handleStreamStart();
     void handleStreamEnd();
     void handleStreamMessage(QJsonObject message);
@@ -122,10 +121,10 @@ private:
     bool appActive;
     QString activeWindow;
 
-    QNetworkReply* executePost(QString method, const QMap<QString, QString> &data);
-    QNetworkReply *executePostWithFile(QString method, const QMap<QString, QString>&, QFile *file);
+    QNetworkReply *executePost(QString method, const QMap<QString, QString> &data);
+    QNetworkReply *executePostWithFile(QString method, const QMap<QString, QString> &, QFile *file);
 
-    QNetworkReply* executeGet(QString method, QMap<QString,QString> params = QMap<QString,QString>());
+    QNetworkReply *executeGet(QString method, QMap<QString, QString> params = QMap<QString, QString>());
 
     bool isOk(const QNetworkReply *reply);
     bool isError(const QJsonObject &data);

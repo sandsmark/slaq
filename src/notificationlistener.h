@@ -6,15 +6,15 @@
 
 class NotificationListener : public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 public:
-  explicit NotificationListener(QQmlApplicationEngine *engine, QObject *parent = 0);
+    explicit NotificationListener(QQmlApplicationEngine *engine, QObject *parent = 0);
 
 public slots:
-  void activate(const QString &channelId);
+    void activate(const QString &channelId);
 
 private:
-  QQmlApplicationEngine *m_engine;
+    QQmlApplicationEngine *m_engine;
 };
 
 #endif // NOTIFICATIONLISTENER_H

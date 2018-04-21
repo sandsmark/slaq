@@ -1,10 +1,13 @@
 #include "networkaccessmanager.h"
 
-NetworkAccessManager::NetworkAccessManager(QObject *parent): QNetworkAccessManager(parent) {
+NetworkAccessManager::NetworkAccessManager(QObject *parent) :
+    QNetworkAccessManager(parent)
+{
     config = new SlackConfig(this);
 }
 
-QNetworkReply* NetworkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData) {
+QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
+{
     if (request.url().host() == "files.slack.com") {
         QNetworkRequest copy(request);
 
@@ -14,8 +17,7 @@ QNetworkReply* NetworkAccessManager::createRequest(Operation op, const QNetworkR
         }
 
         return QNetworkAccessManager::createRequest(op, copy, outgoingData);
-    }
-    else {
+    } else {
         return QNetworkAccessManager::createRequest(op, request, outgoingData);
     }
 }

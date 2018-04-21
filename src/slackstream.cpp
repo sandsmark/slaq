@@ -3,7 +3,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-SlackStream::SlackStream(QObject *parent) : QObject(parent), m_isConnected(false), m_lastMessageId(0) {
+SlackStream::SlackStream(QObject *parent) :
+    QObject(parent), m_isConnected(false), m_lastMessageId(0)
+{
     webSocket = new QtWebsocket::QWsSocket(this);
     checkTimer = new QTimer(this);
 
@@ -13,7 +15,8 @@ SlackStream::SlackStream(QObject *parent) : QObject(parent), m_isConnected(false
     connect(checkTimer, SIGNAL(timeout()), this, SLOT(checkConnection()));
 }
 
-SlackStream::~SlackStream() {
+SlackStream::~SlackStream()
+{
     disconnect(webSocket, SIGNAL(disconnected()), this, SLOT(handleListerEnd()));
 
     if (!webSocket.isNull()) {
@@ -21,14 +24,16 @@ SlackStream::~SlackStream() {
     }
 }
 
-void SlackStream::listen(QUrl url) {
+void SlackStream::listen(QUrl url)
+{
     qDebug() << "Connect socket" << url;
     QString socketUrl = url.scheme() + "://" + url.host();
     webSocket->setResourceName(url.path());
     webSocket->connectToHost(socketUrl);
 }
 
-void SlackStream::checkConnection() {
+void SlackStream::checkConnection()
+{
     qDebug() << "check connection" << m_isConnected;
     if (m_isConnected) {
         QJsonObject values;
@@ -43,14 +48,16 @@ void SlackStream::checkConnection() {
     }
 }
 
-void SlackStream::handleListerStart() {
+void SlackStream::handleListerStart()
+{
     qDebug() << "Socket connected";
     emit connected();
     m_isConnected = true;
     checkTimer->start(15000);
 }
 
-void SlackStream::handleListerEnd() {
+void SlackStream::handleListerEnd()
+{
     qDebug() << "Socket disconnected";
     checkTimer->stop();
     m_isConnected = false;
@@ -58,7 +65,8 @@ void SlackStream::handleListerEnd() {
     emit disconnected();
 }
 
-void SlackStream::handleMessage(QString message) {
+void SlackStream::handleMessage(QString message)
+{
     qDebug() << "Got message" << message;
 
     QJsonParseError error;

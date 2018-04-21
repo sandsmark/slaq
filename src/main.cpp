@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
     SlackConfig::clearWebViewCache();
 
-    qmlRegisterSingletonType<SlackClient>("com.iskrembilen.slaq", 1, 0, "Client", [](QQmlEngine *, QJSEngine*) -> QObject* {
+    qmlRegisterSingletonType<SlackClient>("com.iskrembilen.slaq", 1, 0, "Client", [](QQmlEngine *, QJSEngine *) -> QObject * {
         return new SlackClient;
     });
 
@@ -27,16 +27,16 @@ int main(int argc, char *argv[])
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
     engine.load(QUrl("qrc:/qml/main.qml"));
-    if  (engine.rootObjects().isEmpty()) {
+    if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";
-//        return 1;
+        //        return 1;
     }
 
-//    NotificationListener* listener = new NotificationListener(&engine);
-//    new DBusAdaptor(listener);
-//    QDBusConnection connection = QDBusConnection::sessionBus();
-//    connection.registerService("slaq");
-//    connection.registerObject("/", listener);
+    //    NotificationListener* listener = new NotificationListener(&engine);
+    //    new DBusAdaptor(listener);
+    //    QDBusConnection connection = QDBusConnection::sessionBus();
+    //    connection.registerService("slaq");
+    //    connection.registerObject("/", listener);
 
     return app.exec();
 }
