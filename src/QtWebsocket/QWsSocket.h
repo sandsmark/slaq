@@ -145,7 +145,7 @@ private:
 	QByteArray key3;
 	QByteArray accept;
 
-	bool _secured;
+    bool _secured;
 
 	/*!
 	 * Sends pong response with `applicationData` appended.

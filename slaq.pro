@@ -15,8 +15,7 @@ TARGET = slaq
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
-# Notifications
-QT += quick widgets
+QT += quick widgets webview
 
 # Includes
 INCLUDEPATH += ./QtWebsocket

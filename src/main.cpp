@@ -2,11 +2,11 @@
 #include <QApplication>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
+#include <QtWebView>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
 #include "notificationlistener.h"
-#include "dbusadaptor.h"
 #include "storage.h"
 #include "filemodel.h"
 
@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
-    //QSettings settings; settings.remove("user/accessToken");
+    QtWebView::initialize();
+
     SlackConfig::clearWebViewCache();
 
     qmlRegisterSingletonType<SlackClient>("com.iskrembilen.slaq", 1, 0, "Client", [](QQmlEngine *, QJSEngine*) -> QObject* {

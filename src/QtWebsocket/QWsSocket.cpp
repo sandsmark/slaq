@@ -57,7 +57,7 @@ QWsSocket::QWsSocket(QObject* parent, QTcpSocket* socket, EWebsocketVersion ws_v
 	_hostPort(-1),
 	closingHandshakeSent(false),
 	closingHandshakeReceived(false),
-	_secured(false)
+    _secured(false)
 {
 	initTcpSocket();
 }
@@ -833,12 +833,12 @@ void QWsSocket::handlePing(QByteArray applicationData)
 
 QByteArray QWsSocket::generateNonce()
 {
-	QByteArray nonce;
+    QByteArray nonce;
 
 	int i = 16;
 	while(i--)
 	{
-		nonce.append(rand8());
+        nonce.append(rand8());
 	}
 
 	return nonce.toBase64();
@@ -846,10 +846,10 @@ QByteArray QWsSocket::generateNonce()
 
 QByteArray QWsSocket::generateKey1or2()
 {
-	QByteArray key;
+    QByteArray key;
 
-	// generate spaces number
-	quint32 spaces = rand8(2, 10);
+    // generate spaces number
+    quint32 spaces = rand8(2, 10);
 
 	// generate a correct random number
 	quint32 partMax = qFloor((double)UINT_MAX / (double)spaces);
@@ -858,7 +858,7 @@ QByteArray QWsSocket::generateKey1or2()
 	key = QByteArray::number(key_number);
 
 	// integrate some random characters
-	int i = rand8(10, 20);
+    int i = rand8(10, 20);
 	while (i--)
 	{
 		QChar car;

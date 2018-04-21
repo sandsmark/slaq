@@ -18,84 +18,68 @@ along with QtWebsocket.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <QtCore/qmath.h>
-#include <climits>
+
+#include <random>
+#include <limits>
 
 namespace QtWebsocket
 {
 
+static std::mt19937 &randomEngine()
+{
+    static std::random_device rd;
+    static std::mt19937 engine(rd());
+    return engine;
+}
+
 bool rand2()
 {
-	return (qrand() & 0x1) == 0x1;
+    static std::uniform_int_distribution<uint8_t> gen(0, 1);
+    return gen(randomEngine());
 }
 
 quint8 rand8(quint8 low, quint8 high)
 {
-	if (low == 0 && high == 0)
-	{
-		high = UCHAR_MAX;
+    if (low == 0 && high == 0) {
+        static std::uniform_int_distribution<quint8> gen;
+        return gen(randomEngine());
 	}
-	else if (low > high)
-	{
-		qSwap(low, high);
-	}
-	return low + (qrand() % (high - low + 1));
+
+    std::uniform_int_distribution<quint8> gen(std::min(low, high), std::max(low, high));
+    return gen(randomEngine());
 }
 
 quint16 rand16(quint16 low, quint16 high)
 {
-	if (low == 0 && high == 0)
-	{
-		high = USHRT_MAX;
+    if (low == 0 && high == 0) {
+        static std::uniform_int_distribution<quint16> gen;
+        return gen(randomEngine());
 	}
-	else if (low > high)
-	{
-		qSwap(low, high);
-	}
-	quint16 range = high - low;
-	if (range < RAND_MAX)
-	{
-		return low + (qrand() % (range + 1));
-	}
-	else
-	{
-		quint16 myRand = qrand();
-		myRand += (((quint16)qrand()) << 15);
-		return low + (myRand % (high - low + 1));
-	}
+
+    std::uniform_int_distribution<quint16> gen(std::min(low, high), std::max(low, high));
+    return gen(randomEngine());
 }
 
 quint32 rand32(quint32 low, quint32 high)
 {
-	if (low == 0 && high == 0)
-	{
-		high = ULONG_MAX;
-	}
-	else if (low > high)
-	{
-		qSwap(low, high);
-	}
-	quint32 myRand = qrand();
-	myRand += (((quint32)qrand()) << 15);
-	myRand += (((quint32)qrand()) << 30);
-	return low + (myRand % (high - low + 1));
+    if (low == 0 && high == 0) {
+        static std::uniform_int_distribution<quint32> gen;
+        return gen(randomEngine());
+    }
+
+    std::uniform_int_distribution<quint32> gen(std::min(low, high), std::max(low, high));
+    return gen(randomEngine());
 }
 
 quint64 rand64(quint64 low, quint64 high)
 {
-	if (low == 0 && high == 0)
-	{
-		high = ULLONG_MAX;
-	}
-	else if (low > high)
-	{
-		qSwap(low, high);
-	}
-	quint64 myRand = qrand();
-	myRand += (((quint64)qrand()) << 15);
-	myRand += (((quint64)qrand()) << 30);
-	myRand += (((quint64)qrand()) << 45);
-	myRand += (((quint64)qrand()) << 60);
-	return low + (myRand % (high - low + 1));
+    if (low == 0 && high == 0) {
+        static std::uniform_int_distribution<quint64> gen;
+        return gen(randomEngine());
+    }
+
+    std::uniform_int_distribution<quint64> gen(std::min(low, high), std::max(low, high));
+    return gen(randomEngine());
 }
 
 } // namespace QtWebsocket
