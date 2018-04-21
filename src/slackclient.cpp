@@ -27,12 +27,12 @@ SlackClient::SlackClient(QObject *parent) :
     reconnectTimer = new QTimer(this);
     networkAccessible = networkAccessManager->networkAccessible();
 
-    connect(networkAccessManager, SIGNAL(networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility)), this, SLOT(handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility)));
-    connect(reconnectTimer, SIGNAL(timeout()), this, SLOT(reconnect()));
+    connect(networkAccessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &SlackClient::handleNetworkAccessibleChanged);
+    connect(reconnectTimer.data(), &QTimer::timeout, this, &SlackClient::reconnect);
 
-    connect(stream, SIGNAL(connected()), this, SLOT(handleStreamStart()));
-    connect(stream, SIGNAL(disconnected()), this, SLOT(handleStreamEnd()));
-    connect(stream, SIGNAL(messageReceived(QJsonObject)), this, SLOT(handleStreamMessage(QJsonObject)));
+    connect(stream.data(), &SlackStream::connected, this, &SlackClient::handleStreamStart);
+    connect(stream.data(), &SlackStream::disconnected, this, &SlackClient::handleStreamEnd);
+    connect(stream.data(), &SlackStream::messageReceived, this, &SlackClient::handleStreamMessage);
 
     connect(this, &SlackClient::connected, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::initSuccess, this, &SlackClient::isOnlineChanged);
@@ -366,7 +366,7 @@ QNetworkReply *SlackClient::executePostWithFile(QString method, const QMap<QStri
     qDebug() << "POST" << url << dataParts;
 
     QNetworkReply *reply = networkAccessManager->post(request, dataParts);
-    connect(reply, SIGNAL(finished()), dataParts, SLOT(deleteLater()));
+    connect(reply, &QNetworkReply::finished, dataParts, &QObject::deleteLater);
 
     return reply;
 }
@@ -387,7 +387,7 @@ void SlackClient::fetchAccessToken(QUrl resultUrl)
     params.insert("code", code);
 
     QNetworkReply *reply = executeGet("oauth.access", params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleAccessTokenReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleAccessTokenReply);
 }
 
 void SlackClient::handleAccessTokenReply()
@@ -431,7 +431,7 @@ void SlackClient::testLogin()
     }
 
     QNetworkReply *reply = executeGet("auth.test");
-    connect(reply, SIGNAL(finished()), this, SLOT(handleTestLoginReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleTestLoginReply);
 }
 
 void SlackClient::handleTestLoginReply()
@@ -460,7 +460,7 @@ void SlackClient::start()
 {
     qDebug() << "Start init";
     QNetworkReply *reply = executeGet("rtm.start");
-    connect(reply, SIGNAL(finished()), this, SLOT(handleStartReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleStartReply);
 }
 
 void SlackClient::handleStartReply()
@@ -678,7 +678,7 @@ void SlackClient::joinChannel(QString channelId)
     params.insert("name", channel.value("name").toString());
 
     QNetworkReply *reply = executeGet("channels.join", params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleJoinChannelReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleJoinChannelReply);
 }
 
 void SlackClient::handleJoinChannelReply()
@@ -700,7 +700,7 @@ void SlackClient::leaveChannel(QString channelId)
     params.insert("channel", channelId);
 
     QNetworkReply *reply = executeGet("channels.leave", params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleLeaveChannelReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleLeaveChannelReply);
 }
 
 void SlackClient::handleLeaveChannelReply()
@@ -721,7 +721,7 @@ void SlackClient::leaveGroup(QString groupId)
     params.insert("channel", groupId);
 
     QNetworkReply *reply = executeGet("groups.leave", params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleLeaveGroupReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleLeaveGroupReply);
 }
 
 void SlackClient::handleLeaveGroupReply()
@@ -744,7 +744,7 @@ void SlackClient::openChat(QString chatId)
     params.insert("user", channel.value("userId").toString());
 
     QNetworkReply *reply = executeGet("im.open", params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleOpenChatReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleOpenChatReply);
 }
 
 void SlackClient::handleOpenChatReply()
@@ -766,7 +766,7 @@ void SlackClient::closeChat(QString chatId)
     params.insert("channel", chatId);
 
     QNetworkReply *reply = executeGet("im.close", params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleCloseChatReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleCloseChatReply);
 }
 
 void SlackClient::handleCloseChatReply()
@@ -794,7 +794,7 @@ void SlackClient::loadMessages(QString type, QString channelId)
 
     QNetworkReply *reply = executeGet(historyMethod(type), params);
     reply->setProperty("channelId", channelId);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleLoadMessagesReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleLoadMessagesReply);
 }
 
 void SlackClient::handleLoadMessagesReply()
@@ -846,7 +846,7 @@ void SlackClient::markChannel(QString type, QString channelId, QString time)
     params.insert("ts", time);
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
-    connect(reply, SIGNAL(finished()), this, SLOT(handleMarkChannelReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleMarkChannelReply);
 }
 
 void SlackClient::handleMarkChannelReply()
@@ -872,7 +872,7 @@ void SlackClient::postMessage(QString channelId, QString content)
     data.insert("parse", "full");
 
     QNetworkReply *reply = executePost("chat.postMessage", data);
-    connect(reply, SIGNAL(finished()), this, SLOT(handlePostMessageReply()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handlePostMessageReply);
 }
 
 void SlackClient::handlePostMessageReply()
@@ -907,8 +907,8 @@ void SlackClient::postImage(QString channelId, QString imagePath, QString title,
     qDebug() << "sending image" << imagePath;
     QNetworkReply *reply = executePostWithFile("files.upload", data, imageFile);
 
-    connect(reply, SIGNAL(finished()), this, SLOT(handlePostImage()));
-    connect(reply, SIGNAL(finished()), imageFile, SLOT(deleteLater()));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handlePostImage);
+    connect(reply, &QNetworkReply::finished, imageFile, &QObject::deleteLater);
 }
 
 void SlackClient::handlePostImage()
