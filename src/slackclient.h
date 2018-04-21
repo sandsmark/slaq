@@ -116,6 +116,8 @@ public slots:
 
     void reconnect();
 
+    QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
+
 private:
     bool appActive;
     QString activeWindow;
@@ -173,6 +175,7 @@ private:
     QPointer<QTimer> reconnectTimer;
 
     QNetworkAccessManager::NetworkAccessibility networkAccessible;
+    QHash<QString, QUrl> m_userAvatars;
 };
 
 #endif // SLACKCLIENT_H

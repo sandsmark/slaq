@@ -534,9 +534,14 @@ void SlackClient::parseUsers(QJsonObject data) {
         QJsonObject user = value.toObject();
 
         QVariantMap data;
-        data.insert("id", user.value("id").toVariant());
+        const QString userId = user.value("id").toString();
+        data.insert("id", userId);
         data.insert("name", user.value("name").toVariant());
         data.insert("presence", user.value("presence").toVariant());
+
+        QJsonObject profile = user.value("profile").toObject();
+        m_userAvatars[userId] = QUrl(profile["image_512"].toString());
+
         Storage::saveUser(data);
     }
 }
@@ -901,6 +906,7 @@ QVariantMap SlackClient::getMessageData(const QJsonObject message) {
 }
 
 QVariantMap SlackClient::user(const QJsonObject &data) {
+
     QString type = data.value("subtype").toString("default");
     QVariant userId;
 

@@ -23,6 +23,12 @@ Item {
             height: childrenRect.height
             spacing: Theme.paddingMedium
 
+            Image {
+                height: Theme.avatarSize
+                width: height
+                source: Slack.Client.avatarUrl(user.id)
+            }
+
             Label {
                 id: nickLabel
                 text: user.name
@@ -38,6 +44,11 @@ Item {
                 height: nickLabel.height
                 verticalAlignment: "AlignBottom"
             }
+        }
+
+        Item {
+            height: Theme.paddingMedium
+            width: height
         }
 
         Label {
@@ -82,6 +93,7 @@ Item {
                     sourceSize.width: model.size.width
                     sourceSize.height: model.size.height
                     visible: expanded
+                    smooth: true
                 }
 
                 width: model.thumbSize.width
@@ -115,7 +127,7 @@ Item {
 
                                 parent.expanded = false
                             } else {
-                                parent.width = listView.width - Theme.paddingLarge * 2
+                                parent.width = listView.width - Theme.paddingLarge * 4
                                 parent.height = parent.width * model.size.width / model.size.height
                                 fullImage.source = model.url
 
