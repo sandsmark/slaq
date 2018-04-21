@@ -11,14 +11,15 @@
 #include <QFile>
 #include <QHttpMultiPart>
 #include <QtNetwork/QNetworkConfigurationManager>
-//#include <nemonotifications-qt5/notification.h>
 
 #include "slackclient.h"
 #include "storage.h"
 #include "messageformatter.h"
 
 SlackClient::SlackClient(QObject *parent) :
-    QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible)
+    QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
+    m_clientId(QString::fromLatin1(QByteArray::fromBase64("MTE5MDczMjc1MDUuMjUyMzc1NTU3MTU1"))),
+    m_clientId2(QString::fromLatin1(QByteArray::fromBase64("MGJlNDA0M2Q2OGIxYjM0MzE4ODk5ZDEwYTNiYmM3ZTY=")))
 {
     networkAccessManager = new QNetworkAccessManager(this);
     config = new SlackConfig(this);
@@ -381,8 +382,8 @@ void SlackClient::fetchAccessToken(QUrl resultUrl)
     }
 
     QMap<QString, QString> params;
-    params.insert("client_id", SLACK_CLIENT_ID);
-    params.insert("client_secret", SLACK_CLIENT_SECRET);
+    params.insert("client_id", m_clientId);
+    params.insert("client_secret", m_clientId2);
     params.insert("code", code);
 
     QNetworkReply *reply = executeGet("oauth.access", params);

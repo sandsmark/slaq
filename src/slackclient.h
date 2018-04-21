@@ -175,6 +175,9 @@ private:
 
     QNetworkAccessManager::NetworkAccessibility networkAccessible;
     QHash<QString, QUrl> m_userAvatars;
+
+    QString m_clientId;
+    QString m_clientId2;
 };
 
 #endif // SLACKCLIENT_H

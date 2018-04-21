@@ -1,4 +1,0 @@
-# Get keys from slack and put them here
-
-CLIENT_ID = "123REPLACEME"
-CLIENT_SECRET = "456REPLACEMETOO"

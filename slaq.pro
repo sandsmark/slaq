@@ -20,27 +20,6 @@ QT += quick widgets webview
 # Includes
 INCLUDEPATH += ./QtWebsocket
 
-# Check slack config
-
-
-exists(localconfig.pri) {
-    include(localconfig.pri)
-} else {
-    CLIENT_ID = $$(slack_client_id)
-    CLIENT_SECRET = $$(slack_client_secret)
-}
-
-
-if(isEmpty(CLIENT_ID)) {
-    error("No client id defined, ether define $slack_client_id or set up localconfig.pri")
-}
-
-if(isEmpty(CLIENT_SECRET)) {
-    error("No client secret defined, ether define $slack_client_secret or set up localconfig.pri")
-}
-DEFINES += SLACK_CLIENT_ID=\\\"$${CLIENT_ID}\\\"
-DEFINES += SLACK_CLIENT_SECRET=\\\"$${CLIENT_SECRET}\\\"
-
 SOURCES += src/main.cpp \
     src/slackclient.cpp \
     src/slackconfig.cpp \
