@@ -15,24 +15,6 @@ Rectangle {
 //    header: ToolBar {
 //        id: topMenu
 
-//        MenuItem {
-//            text: qsTr("About")
-//            onClicked: {
-//                pageStack.push(Qt.resolvedUrl("About.qml"))
-//            }
-//        }
-//        MenuItem {
-//            text: qsTr("Open chat")
-//            onClicked: {
-//                pageStack.push(Qt.resolvedUrl("ChatSelect.qml"))
-//            }
-//        }
-//        MenuItem {
-//            text: qsTr("Join channel")
-//            onClicked: {
-//                pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))
-//            }
-//        }
 //    }
 
     ChannelListView {

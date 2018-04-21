@@ -19,12 +19,11 @@ Column {
 
     Row {
         width: parent.width
-        spacing: Theme.paddingSmall
+        spacing: Theme.paddingMedium
 
         TextArea {
             id: messageInput
-            width: parent.width - sendButton.width - uploadButton.width
-            enabled: enabled
+            width: parent.width - sendButton.width - uploadButton.width - Theme.paddingMedium * 3
         }
 
         Button {
@@ -37,7 +36,7 @@ Column {
         Button {
             id: uploadButton
             icon.name: "upload-media"
-            enabled: messageInput.text.length > 0
+
             onClicked: pageStack.push(Qt.resolvedUrl("FileSend.qml"), {"channelId": page.channelId})
         }
     }

@@ -1,14 +1,20 @@
 import QtQuick 2.0
 import QtQuick.Controls 2.2
+import QtQuick.Dialogs 1.3
+
 import com.iskrembilen.slaq 1.0 as Slack
+
+import ".."
 
 Page {
     id: page
 
     property variant channelId
-    property double padding: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
+    padding: Theme.paddingLarge
     property string selectedImage: ""
     property bool uploading: false
+
+    title: qsTr("Upload image")
 
     Flickable {
         anchors.fill: parent
@@ -20,14 +26,10 @@ Page {
             width: page.width
             spacing: Theme.paddingMedium
 
-            PageHeader {
-                title: qsTr("Upload image")
-            }
-
             Image {
                 id: image
                 x: page.padding
-                width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
+                width: parent.width - Theme.paddingLarge * 2
                 fillMode: Image.PreserveAspectFit
                 source: page.selectedImage
                 visible: page.selectedImage.length > 0
@@ -38,32 +40,24 @@ Page {
                 visible: !image.visible
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
-                    var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/ImagePicker.qml"))
-                    dialog.accepted.connect(function() {
-                        page.selectedImage = dialog.selectedPath
-                    })
+                    fileDialog.open()
                 }
             }
 
             TextField {
                 id: titleInput
                 x: page.padding
-                width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-                label: "Title (optional)"
-                placeholderText: label
-                EnterKey.enabled: text.length > 0
-                EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked: commentInput.focus = true
+                width: parent.width - Theme.paddingLarge * 2
+                placeholderText: "Title (optional)"
+                onAccepted: commentInput.focus = true
             }
 
             TextField {
                 id: commentInput
                 x: page.padding
-                width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-                label: "Comment (optional)"
-                placeholderText: label
-                EnterKey.iconSource: "image://theme/icon-m-enter-close"
-                EnterKey.onClicked: focus = false
+                width: parent.width - Theme.paddingLarge * 2
+                placeholderText: "Comment (optional)"
+                onAccepted: focus = false
             }
 
             Button {
@@ -79,7 +73,6 @@ Page {
 
             ProgressBar {
                 width: parent.width
-                label: qsTr("Uploading")
                 indeterminate: true
                 visible: page.uploading
             }
@@ -89,6 +82,21 @@ Page {
             }
         }
     }
+
+    FileDialog {
+        id: fileDialog
+        title: "Please choose an image file"
+        folder: shortcuts.home
+        visible: false
+        onAccepted: {
+            page.selectedImage = fileUrl
+        }
+        onRejected: {
+            page.selectedImage = fileUrl
+        }
+        Component.onCompleted: visible = true
+    }
+
 
     Component.onCompleted: {
         Slack.Client.onPostImageFail.connect(handleImagePostFail)

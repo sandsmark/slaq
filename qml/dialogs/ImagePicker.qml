@@ -28,120 +28,98 @@ import ".."
 //Thanks to mitakuuluu for this page
 
 
-Dialog {
-    id: page
-    objectName: "selectPicture"
-    canAccept: selectedPath.length > 0
-    allowedOrientations: Orientation.All
+GridView {
+    id: view
+    clip: true
 
-    property string selectedPath: ""
-    property int selectedRotation: 0
+    cellWidth: page.isPortrait ? (page.width / 4) : (page.width / 8)
+    cellHeight: cellWidth
+    cacheBuffer: cellHeight * 2
 
-    title: qsTr("Select picture")
+    model: fileModel
 
-    onStatusChanged: {
-        if (page.status === DialogStatus.Opened) {
-            selectedPath = ""
-            selectedRotation = 0
-            fileModel.searchPath="bar"
-        }
-    }
+    delegate: Item {
+        width: view.cellWidth - 1
+        height: view.cellHeight - 1
 
-    GridView {
-        id: view
-        clip: true
-        anchors.top: title.bottom
-        anchors.bottom: page.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        cellWidth: page.isPortrait ? (page.width / 4) : (page.width / 8)
-        cellHeight: cellWidth
-        cacheBuffer: cellHeight * 2
+        Image {
+            id: image
+            source: model.path
+            height: parent.height
+            width: parent.width
+            sourceSize.height: parent.height
+            anchors.centerIn: parent
+            fillMode: Image.PreserveAspectCrop
+            clip: true
+            smooth: true
+            cache: true
+            asynchronous: true
 
-        model: fileModel
-
-        delegate: Item {
-            width: view.cellWidth - 1
-            height: view.cellHeight - 1
-
-            Image {
-                id: image
-                source: model.path
-                height: parent.height
-                width: parent.width
-                sourceSize.height: parent.height
-                anchors.centerIn: parent
-                fillMode: Image.PreserveAspectCrop
-                clip: true
-                smooth: true
-                cache: true
-                asynchronous: true
-
-                states: [
-                    State {
-                        name: 'loaded'
-                        when: image.status == Image.Ready
-                        PropertyChanges {
-                            target: image
-                            opacity: 1
-                        }
-                    },
-                    State {
-                        name: 'loading'
-                        when: image.status != Image.Ready
-                        PropertyChanges {
-                            target: image
-                            opacity: 0
-                        }
+            states: [
+                State {
+                    name: 'loaded'
+                    when: image.status == Image.Ready
+                    PropertyChanges {
+                        target: image
+                        opacity: 1
                     }
-                ]
-
-                Behavior on opacity {
-                    NumberAnimation { duration: 100 }
+                },
+                State {
+                    name: 'loading'
+                    when: image.status != Image.Ready
+                    PropertyChanges {
+                        target: image
+                        opacity: 0
+                    }
                 }
-            }
-            Rectangle {
-                anchors.fill: parent
-                color: palette.highlight
-                visible: model.path === page.selectedPath
-                opacity: 0.5
-            }
-            Rectangle {
-                id: rec
-                color: Theme.secondaryHighlightColor
-                height: Theme.fontSizeExtraSmall
-                width: parent.width
-                anchors.bottom: parent.bottom
-                opacity: mArea.pressed ? 1.0 : 0.6
-            }
-            Label {
-                anchors.fill: rec
-                anchors.margins: 3
-                //height: 26
-                font.pointSize: Theme.fontSizeExtraSmall
-                text: model.name
-                wrapMode: Text.NoWrap
-                elide: Text.ElideRight
-                horizontalAlignment : Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
+            ]
 
-            MouseArea {
-                id: mArea
-                anchors.fill: parent
-                onClicked: {
-                    if (page.selectedPath === model.path) {
-                        page.selectedPath = ""
-                        page.selectedRotation = 0
-                    }
-                    else {
-                        page.selectedPath = model.path
-                        page.selectedRotation = image.rotation
-                    }
+            Behavior on opacity {
+                NumberAnimation { duration: 100 }
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: palette.highlight
+            visible: model.path === page.selectedPath
+            opacity: 0.5
+        }
+
+        Rectangle {
+            id: rec
+            color: Theme.secondaryHighlightColor
+            height: Theme.fontSizeExtraSmall
+            width: parent.width
+            anchors.bottom: parent.bottom
+            opacity: mArea.pressed ? 1.0 : 0.6
+        }
+
+        Label {
+            anchors.fill: rec
+            anchors.margins: 3
+            //height: 26
+            font.pointSize: Theme.fontSizeExtraSmall
+            text: model.name
+            wrapMode: Text.NoWrap
+            elide: Text.ElideRight
+            horizontalAlignment : Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        MouseArea {
+            id: mArea
+            anchors.fill: parent
+            onClicked: {
+                if (page.selectedPath === model.path) {
+                    page.selectedPath = ""
+                    page.selectedRotation = 0
+                }
+                else {
+                    page.selectedPath = model.path
+                    page.selectedRotation = image.rotation
                 }
             }
         }
     }
-
-    ScrollBar.vertical: ScrollBar { }
 }

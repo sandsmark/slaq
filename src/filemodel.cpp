@@ -27,6 +27,7 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 FileModel::FileModel(QObject *parent) :
     QAbstractListModel(parent)
 {
+    setSearchPath("foo");
 }
 
 QHash<int, QByteArray> FileModel::roleNames() const
@@ -49,13 +50,9 @@ void FileModel::searchFiles(QString path)
     QDir dir(path);
     QStringList accepted;
     accepted << "*.jpg"
-             << "*.JPG"
              << "*.jpeg"
-             << "*.JPEG"
              << "*.png"
-             << "*.PNG"
-             << "*.gif"
-             << "*.GIF";
+             << "*.gif";
     const QFileInfoList &list = dir.entryInfoList(accepted, QDir::AllDirs | QDir::NoDot | QDir::NoSymLinks | QDir::Files, QDir::DirsFirst | QDir::Time);
     foreach (const QFileInfo &info, list) {
         if (info.fileName() == "..") {
@@ -63,7 +60,7 @@ void FileModel::searchFiles(QString path)
         }
 
         if (info.isDir()) {
-            searchFiles(info.filePath());
+//            searchFiles(info.filePath());
         } else if (info.isFile()) {
             beginInsertRows(QModelIndex(), rowCount(), rowCount());
             fileList.append(new FileInfo(info.fileName(), info.absoluteFilePath(), info.size()));

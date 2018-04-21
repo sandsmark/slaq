@@ -32,9 +32,20 @@ ApplicationWindow {
             anchors.fill: parent
 
             ToolButton {
-                text: pageStack.depth > 0 ? ("›") : "<"
-                onClicked: channelList.item.open()
-//                visible: Slack.Client.isDevice
+                text: pageStack.depth > 1 ? "‹" : "›"
+                onClicked: {
+                    if (pageStack.depth > 1) {
+                        pageStack.pop()
+                        return;
+                    }
+
+                    if (channelList.active) {
+                        channelList.item.open()
+                    }
+                }
+
+                visible: Slack.Client.isDevice || pageStack.depth > 1
+                enabled: visible
             }
 
             Label {
@@ -48,6 +59,29 @@ ApplicationWindow {
             ToolButton {
                 text: qsTr("⋮")
                 onClicked: menu.open()
+
+                Menu {
+                    id: menu
+
+                    MenuItem {
+                        text: qsTr("About")
+                        onClicked: {
+                            pageStack.push(Qt.resolvedUrl("pages/About.qml"))
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Open chat")
+                        onClicked: {
+                            pageStack.push(Qt.resolvedUrl("ChatSelect.qml"))
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Join channel")
+                        onClicked: {
+                            pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))
+                        }
+                    }
+                }
             }
         }
     }

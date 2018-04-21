@@ -6,11 +6,7 @@ import ".."
 Page {
     id: page
 
-    property double padding: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
-
-    header: Label {
-        text: qsTr("About")
-    }
+    title: qsTr("About")
 
     Flickable {
         anchors.fill: parent
@@ -27,7 +23,7 @@ Page {
             Label {
                 x: page.padding
                 text: "Slaq 1.3"
-                font.pointSize: Theme.fontSizeExtraLarge
+                font.pointSize: Theme.fontSizeHuge
             }
 
             Label {

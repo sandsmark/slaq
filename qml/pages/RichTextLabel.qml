@@ -1,5 +1,5 @@
 import QtQuick 2.0
-
+import ".."
 import QtQuick.Controls 2.2
 
 Label {
