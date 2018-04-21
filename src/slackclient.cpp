@@ -47,12 +47,17 @@ void SlackClient::setAppActive(bool active)
 
 void SlackClient::setActiveWindow(QString windowId)
 {
+    if (windowId == activeWindow) {
+        return;
+    }
+
     activeWindow = windowId;
     clearNotifications();
 
     if (!windowId.isEmpty()) {
         QSettings settings;
         settings.setValue("LastChannel", windowId);
+        emit lastChannelChanged();
     }
 }
 
@@ -648,7 +653,7 @@ QString SlackClient::lastChannel() const
 
     QSettings settings;
     QString name = settings.value("LastChannel").toString();
-    if (name.isEmpty() || !Storage::channels().contains(name)) {
+    if (name.isEmpty()) {
         return Storage::channels().first().toMap()["id"].toString();
     }
 

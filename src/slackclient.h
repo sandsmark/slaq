@@ -20,6 +20,7 @@ class SlackClient : public QObject
 
     Q_PROPERTY(bool isOnline READ isOnline NOTIFY isOnlineChanged)
     Q_PROPERTY(bool isDevice READ isDevice CONSTANT)
+    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setActiveWindow NOTIFY lastChannelChanged)
 
 public:
     explicit SlackClient(QObject *parent = 0);
@@ -33,7 +34,7 @@ public:
     bool isOnline() const;
     bool isDevice() const;
 
-    Q_INVOKABLE QString lastChannel() const;
+    QString lastChannel() const;
 
 signals:
     void testConnectionFail();
@@ -69,6 +70,7 @@ signals:
     void connected();
 
     void isOnlineChanged();
+    void lastChannelChanged();
 
 public slots:
     void start();

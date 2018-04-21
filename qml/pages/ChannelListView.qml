@@ -12,6 +12,11 @@ ListView {
 
     ScrollBar.vertical: ScrollBar { }
 
+    function setIndex(ind) {
+        currentIndex = ind
+    }
+    interactive: true
+
     model: ListModel {
         id: channelListModel
     }
@@ -24,16 +29,18 @@ ListView {
         }
     }
 
+
     delegate: ItemDelegate {
         id: delegate
         text: model.name
         property color textColor: delegate.highlighted ? palette.base : palette.base
-        highlighted: model.unreadCount > 0
+        highlighted: Slack.Client.lastChannel === model.id
 
         icon.name: Channel.getIcon(model)
 
         onClicked: {
-            pageStack.push(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
+            Slack.Client.setActiveWindow(model.id)
+            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
         }
 
         property bool hasActions: model.category === "channel" || model.type === "im"

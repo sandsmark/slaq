@@ -112,7 +112,7 @@ Page {
     }
 
     function handleInitSuccess() {
-        pageStack.replace(channelComponent, {"channelId" : Slack.Client.lastChannel() })
+        pageStack.replace(channelComponent, {"channelId" : Slack.Client.lastChannel })
         if (Slack.Client.isDevice) {
             channelList.item.open()
         } else {

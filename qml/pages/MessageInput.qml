@@ -11,6 +11,7 @@ Column {
     signal sendMessage(string content)
 
     width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 1 : 0)
+    onFocusChanged: if (focus) { messageInput.focus = true; }
 
     Item {
         height: Theme.paddingLarge
@@ -21,7 +22,7 @@ Column {
         width: parent.width
         spacing: Theme.paddingMedium
 
-        TextArea {
+        TextField {
             id: messageInput
             width: parent.width - sendButton.width - uploadButton.width - Theme.paddingMedium * 3
         }

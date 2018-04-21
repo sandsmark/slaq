@@ -13,6 +13,8 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    app.setOrganizationName("Martin Sandsmark");
+    app.setApplicationName("Slaq");
     QQmlApplicationEngine engine;
 
     QtWebView::initialize();
