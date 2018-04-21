@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("fileModel", new FileModel());
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
-    engine.load(QUrl("qrc:/qml/slaq.qml"));
+    engine.load(QUrl("qrc:/qml/main.qml"));
     if  (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";
 //        return 1;

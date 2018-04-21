@@ -16,6 +16,10 @@ ApplicationWindow {
     id: window
     visible: true
 
+    SystemPalette {
+        id: palette
+    }
+
 //    ScrollView {
 //    Drawer {
     StackView {
@@ -83,7 +87,7 @@ ApplicationWindow {
 //                            width: parent.width - icon.width - Theme.paddingMedium
 //                            wrapMode: Text.Wrap
 //                            anchors.verticalCenter: parent.verticalCenter
-//                            font.pixelSize: Theme.fontSizeMedium
+//                            font.pointSize: Theme.fontSizeMedium
 //                            font.bold: channelRepeater.model.unreadCount > 0
 ////                            text: model.name
 ////                            color: currentColor

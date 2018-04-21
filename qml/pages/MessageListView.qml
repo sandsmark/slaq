@@ -47,7 +47,7 @@ ListView {
         criteria: ViewSection.FullString
         delegate: Label {
             text: section
-            background: Rectangle { color: SystemPalette.alternateBase }
+            background: Rectangle { color: palette.alternateBase }
         }
     }
 

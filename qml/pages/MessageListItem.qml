@@ -8,8 +8,8 @@ Item {
     enabled: false
     height: column.height + Theme.paddingMedium
 
-    property color infoColor: item.highlighted ? SystemPalette.highlightedText : SystemPalette.alternateBase
-    property color textColor: item.highlighted ? SystemPalette.highlightedText : SystemPalette.base
+    property color infoColor: item.highlighted ? palette.highlightedText : palette.text
+    property color textColor: item.highlighted ? palette.highlightedText : palette.text
 
     Column {
         id: column
@@ -23,15 +23,14 @@ Item {
 
             Label {
                 text: user.name
-                anchors.left: parent.left
-                font.pixelSize: Theme.fontSizeTiny
+                font.pointSize: Theme.fontSizeTiny
                 color: infoColor
             }
 
             Label {
                 anchors.right: parent.right
                 text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
-                font.pixelSize: Theme.fontSizeTiny
+                font.pointSize: Theme.fontSizeTiny
                 color: infoColor
             }
         }
@@ -39,15 +38,16 @@ Item {
         Label {
             id: contentLabel
             width: parent.width
-            font.pixelSize: Theme.fontSizeSmall
+            font.pointSize: Theme.fontSizeSmall
             color: textColor
             visible: text.length > 0
             text: content
             onLinkActivated: handleLink(link)
         }
 
-        Spacer {
+        Item {
             height: Theme.paddingMedium
+            width: height
             visible: contentLabel.visible && (imageRepeater.count > 0 || attachmentRepeater.count > 0)
         }
 

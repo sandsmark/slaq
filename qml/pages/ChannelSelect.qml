@@ -70,7 +70,7 @@ Page {
             delegate: MouseArea {
                 id: delegate
                 height: row.height + Theme.paddingLarge
-                property color textColor: delegate.highlighted ? SystemPalette.highlight : SystemPalette.alternateBase
+                property color textColor: delegate.highlighted ? palette.highlight : palette.alternateBase
 
                 Row {
                     id: row
@@ -89,7 +89,7 @@ Page {
                         width: parent.width - icon.width - Theme.paddingMedium
                         wrapMode: Text.Wrap
                         anchors.verticalCenter: parent.verticalCenter
-                        font.pixelSize: Theme.fontSizeMedium
+                        font.pointSize: Theme.fontSizeMedium
                         text: model.name
                         color: textColor
                     }

@@ -6,7 +6,7 @@ import ".."
 
 Item {
     property int unreadMessageCount: 0
-    property color unreadColor: unreadMessageCount === 0 ? SystemPalette.text : SystemPalette.highlightedText
+    property color unreadColor: unreadMessageCount === 0 ? palette.text : palette.highlightedText
 
     Label {
         id: title
@@ -26,7 +26,7 @@ Item {
         id: messageCount
         text: unreadMessageCount
         color: unreadColor
-        font.pixelSize: Theme.fontSizeHuge
+        font.pointSize: Theme.fontSizeHuge
         anchors {
             top: title.bottom
             left: parent.left
@@ -37,7 +37,7 @@ Item {
 
     Label {
         text: "Unread\nmessage" + (unreadMessageCount === 1 ? "" : "s")
-        font.pixelSize: Theme.fontSizeTiny
+        font.pointSize: Theme.fontSizeTiny
         color: unreadColor
         anchors {
             left: messageCount.right
@@ -48,7 +48,7 @@ Item {
 
     Label {
         id: connectionMessage
-        font.pixelSize: Theme.fontSizeSmall
+        font.pointSize: Theme.fontSizeSmall
         text: ""
         visible: text.length > 0
         width: parent.width - Theme.paddingLarge * 2

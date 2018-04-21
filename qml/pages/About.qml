@@ -27,7 +27,7 @@ Page {
             Label {
                 x: page.padding
                 text: "Slaq 1.3"
-                font.pixelSize: Theme.fontSizeExtraLarge
+                font.pointSize: Theme.fontSizeExtraLarge
             }
 
             Label {
@@ -35,21 +35,21 @@ Page {
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
                 text: qsTr("Unoffical Slack client which doesn't eat all your RAM")
-                font.pixelSize: Theme.fontSizeSmall
+                font.pointSize: Theme.fontSizeSmall
             }
 
             Label {
                 x: page.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
-                font.pixelSize: Theme.fontSizeSmall
+                font.pointSize: Theme.fontSizeSmall
                 text: qsTr("Browse channel and post new messages. Channels are updated real-time when new messages are posted.")
             }
 
             RichTextLabel {
                 x: page.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-                font.pixelSize: Theme.fontSizeSmall
+                font.pointSize: Theme.fontSizeSmall
                 value: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/sandsmark/slaq")
                 onLinkActivated: Qt.openUrlExternally(link)
             }

@@ -12,7 +12,7 @@ Column {
     Label {
         id: pretextLabel
         width: parent.width
-        font.pixelSize: Theme.fontSizeSmall
+        font.pointSize: Theme.fontSizeSmall
         visible: text.length > 0
         text: attachment.pretext
         onLinkActivated: linkClicked(link)
@@ -31,7 +31,7 @@ Column {
             id: color
             width: Theme.paddingSmall
             height: parent.height
-            color: attachment.indicatorColor === "theme" ? SystemPalette.highlight : attachment.indicatorColor
+            color: attachment.indicatorColor === "theme" ? palette.highlight : attachment.indicatorColor
         }
 
         Column {
@@ -40,7 +40,7 @@ Column {
 
             Label {
                 width: parent.width
-                font.pixelSize: Theme.fontSizeSmall
+                font.pointSize: Theme.fontSizeSmall
                 font.weight: Font.Bold
                 text: attachment.title
                 visible: text.length > 0
@@ -49,7 +49,7 @@ Column {
 
             Label {
                 width: parent.width
-                font.pixelSize: Theme.fontSizeSmall
+                font.pointSize: Theme.fontSizeSmall
                 text: attachment.content
                 visible: text.length > 0
                 onLinkActivated: linkClicked(link)

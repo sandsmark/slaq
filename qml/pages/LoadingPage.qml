@@ -34,7 +34,7 @@ Page {
             anchors.horizontalCenter: loader.horizontalCenter
             anchors.bottomMargin: Theme.paddingLarge
             text: page.loadMessage
-            font.pixelSize: Theme.fontSizeLarge
+            font.pointSize: Theme.fontSizeLarge
         }
 
         BusyIndicator {

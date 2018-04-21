@@ -19,7 +19,7 @@ Dialog {
             x: dialog.padding
             width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
             wrapMode: Text.Wrap
-            font.pixelSize: Theme.fontSizeSmall
+            font.pointSize: Theme.fontSizeSmall
             text: qsTr("If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
 
 Are you sure you wish to leave?")

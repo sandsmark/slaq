@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import QtWebKit 3.0
+import QtWebView 1.1
 import com.iskrembilen.slaq 1.0 as Slack
 import QtQuick.Controls 2.2
 import "../Settings.js" as Settings
@@ -29,14 +29,12 @@ Page {
         url: page.startUrl
         onUrlChanged: console.log("uirl changeD " + url)
 
-        onNavigationRequested: {
-            console.log("navigation request " + request.url.toString())
-            if (request.url.toString().indexOf('http://localhost:3000/oauth/callback') !== -1) {
+        onLoadingChanged: {
+            console.log("navigation request " + loadRequest.url.toString())
+            if (loadRequest.url.toString().indexOf('http://localhost:3000/oauth/callback') !== -1) {
+                webView.stop()
                 visible = false
-                request.action = WebView.IgnoreRequest
-                Slack.Client.fetchAccessToken(request.url)
-            } else {
-                request.action = WebView.AcceptRequest
+                Slack.Client.fetchAccessToken(loadRequest.url)
             }
         }
     }
@@ -53,7 +51,7 @@ Page {
 
     function handleAccessTokenSuccess(userId, teamId, teamName) {
         Settings.setUserInfo(userId, teamId, teamName)
-        view.pop(undefined, PageStackAction.Animated)
+        pageStack.pop(undefined, PageStackAction.Animated)
     }
 
     function handleAccessTokenFail() {

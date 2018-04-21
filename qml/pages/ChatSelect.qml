@@ -70,7 +70,7 @@ Page {
             delegate: ItemDelegate {
                 id: delegate
                 height: row.height + Theme.paddingLarge
-                color: delegate.highlighted ? SystemPalette.highlight : SystemPalette.base
+                color: delegate.highlighted ? palette.highlight : palette.base
                 icon: Channel.getIcon(model)
                 text: model.name
 

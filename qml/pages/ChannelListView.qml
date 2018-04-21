@@ -27,7 +27,7 @@ ListView {
     delegate: ItemDelegate {
         id: delegate
         text: model.name
-        property color textColor: delegate.highlighted ? SystemPalette.base : SystemPalette.base
+        property color textColor: delegate.highlighted ? palette.base : palette.base
         highlighted: model.unreadCount > 0
 
         icon.name: Channel.getIcon(model)

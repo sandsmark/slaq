@@ -102,7 +102,7 @@ Dialog {
             }
             Rectangle {
                 anchors.fill: parent
-                color: SystemPalette.highlight
+                color: palette.highlight
                 visible: model.path === page.selectedPath
                 opacity: 0.5
             }
@@ -118,7 +118,7 @@ Dialog {
                 anchors.fill: rec
                 anchors.margins: 3
                 //height: 26
-                font.pixelSize: Theme.fontSizeExtraSmall
+                font.pointSize: Theme.fontSizeExtraSmall
                 text: model.name
                 wrapMode: Text.NoWrap
                 elide: Text.ElideRight

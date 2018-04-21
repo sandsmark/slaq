@@ -17,7 +17,7 @@ GridLayout {
             Layout.columnSpan: model.isShort ? 1 : 2
             Layout.preferredWidth: model.isShort ? grid.width / 2 : grid.width
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-            font.pixelSize: Theme.fontSizeExtraSmall
+            font.pointSize: Theme.fontSizeExtraSmall
             font.weight: model.isTitle ? Font.Bold : Font.Normal
             text: model.content
         }
