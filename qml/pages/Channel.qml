@@ -41,10 +41,6 @@ Page {
         }
     }
 
-    Rectangle {
-        anchors.fill: input
-    }
-
     MessageInput {
         id: input
 

@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import QtQuick.Controls 2.2
+import QtQuick.Controls 2.3
 import QtQuick.Window 2.2
 import ".."
 import "../dialogs"
@@ -25,6 +25,7 @@ Column {
         TextField {
             id: messageInput
             width: parent.width - sendButton.width - uploadButton.width - Theme.paddingMedium * 3
+            onEditingFinished: handleSendMessage()
         }
 
         Button {
