@@ -87,27 +87,32 @@ Item {
 
             Item {
                 property bool expanded: false
+                width: expanded ? listView.width - Theme.paddingLarge * 4 : model.thumbSize.width
+                height: expanded ? width / (model.size.width / model.size.height) : model.thumbSize.height
 
                 Image {
                     id: thumbImage
                     anchors.fill: parent
+                    asynchronous: true
                     fillMode: Image.PreserveAspectFit
                     source: model.thumbUrl
                     sourceSize: Qt.size(model.thumbSize.width, model.thumbSize.height)
                     visible: !expanded
                 }
 
-                Image {
+                AnimatedImage {
                     id: fullImage
                     anchors.fill: parent
+                    //to preserve memory, cache is turned off, so to see animation again need to re-expand image
+                    //TODO: create settings to change the behavior
+                    source: expanded ? model.url : ""
+                    asynchronous: true
                     fillMode: Image.PreserveAspectFit
-                    sourceSize: Qt.size(model.size.width, model.size.height)
                     visible: expanded
+                    playing: expanded
+                    cache: false
                     smooth: true
                 }
-
-                width: model.thumbSize.width
-                height: model.thumbSize.height
 
                 ProgressBar {
                     anchors.centerIn: parent
@@ -131,18 +136,7 @@ Item {
                         if (Slack.Client.isDevice) {
                             pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model})
                         } else {
-                            if (parent.expanded) {
-                                parent.width = model.thumbSize.width
-                                parent.height = model.thumbSize.height
-
-                                parent.expanded = false
-                            } else {
-                                parent.width = listView.width - Theme.paddingLarge * 4
-                                parent.height = parent.width * model.size.width / model.size.height
-                                fullImage.source = model.url
-
-                                parent.expanded = true
-                            }
+                            parent.expanded = !parent.expanded
                         }
                     }
                 }

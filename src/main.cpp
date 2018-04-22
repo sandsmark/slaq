@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
 #include <QtWebView>
+#include <QNetworkProxyFactory>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
@@ -15,6 +16,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setOrganizationName("Martin Sandsmark");
     app.setApplicationName("Slaq");
+
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
     QQmlApplicationEngine engine;
 
     QtWebView::initialize();
