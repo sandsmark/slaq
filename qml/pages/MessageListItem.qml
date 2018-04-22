@@ -33,11 +33,12 @@ Item {
             Column {
                 height: childrenRect.height
                 width: parent.width
-                spacing: 5
+                spacing: Theme.paddingMedium/2
 
                 Row {
                     height: childrenRect.height
                     width: parent.width
+                    spacing: Theme.paddingMedium
 
                     Label {
                         id: nickLabel
