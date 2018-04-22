@@ -3,6 +3,8 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import com.iskrembilen.slaq 1.0 as Slack
 
+import Qt.labs.settings 1.0
+
 import "Settings.js" as Settings
 import "ChannelList.js" as ChannelList
 import "Channel.js" as Channel
@@ -16,10 +18,17 @@ import "cover"
 ApplicationWindow {
     id: window
     visible: true
+    width: 800
+    height: 600
 
-    SystemPalette {
-        id: palette
+    Settings {
+        property alias width: window.width
+        property alias height: window.height
     }
+
+    color: palette.window
+
+    SystemPalette { id: palette; }
 
     Component {
         id: channelComponent

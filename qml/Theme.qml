@@ -7,7 +7,7 @@ QtObject {
     readonly property int paddingMedium: 10
     readonly property int paddingSmall: 2
 
-    readonly property int avatarSize: 75
+    readonly property int avatarSize: 64
 
     readonly property int fontSizeHuge: 20
     readonly property int fontSizeLarge: 17
