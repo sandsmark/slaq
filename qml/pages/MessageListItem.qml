@@ -1,7 +1,8 @@
 import QtQuick 2.10
-import QtQuick.Controls 2.2
+import QtQuick.Controls 2.3
 import QtQuick.Window 2.2
 import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick.Layouts 1.3
 import ".."
 
 Item {
@@ -29,20 +30,41 @@ Item {
                 source: Slack.Client.avatarUrl(user.id)
             }
 
-            Label {
-                id: nickLabel
-                text: user.name
-                font.pointSize: Theme.fontSizeSmall
-                font.bold: true
-                color: textColor
-            }
+            Column {
+                height: childrenRect.height
+                width: parent.width
+                spacing: 5
 
-            Label {
-                text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
-                font.pointSize: Theme.fontSizeTiny
-                color: infoColor
-                height: nickLabel.height
-                verticalAlignment: "AlignBottom"
+                Row {
+                    height: childrenRect.height
+                    width: parent.width
+
+                    Label {
+                        id: nickLabel
+                        text: user.name
+                        font.pointSize: Theme.fontSizeSmall
+                        font.bold: true
+                        color: textColor
+                    }
+
+                    Label {
+                        text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
+                        font.pointSize: Theme.fontSizeTiny
+                        color: infoColor
+                        height: nickLabel.height
+                        verticalAlignment: "AlignBottom"
+                    }
+                }
+                Label {
+                    id: contentLabel
+                    width: parent.width
+                    font.pointSize: Theme.fontSizeSmall
+                    color: textColor
+                    visible: text.length > 0
+                    text: content
+                    onLinkActivated: handleLink(link)
+                    wrapMode: Text.Wrap
+                }
             }
         }
 
@@ -51,16 +73,6 @@ Item {
             width: height
         }
 
-        Label {
-            id: contentLabel
-            width: parent.width
-            font.pointSize: Theme.fontSizeSmall
-            color: textColor
-            visible: text.length > 0
-            text: content
-            onLinkActivated: handleLink(link)
-            wrapMode: Text.Wrap
-        }
 
         Item {
             height: Theme.paddingMedium
@@ -80,9 +92,7 @@ Item {
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectFit
                     source: model.thumbUrl
-                    sourceSize.width: model.thumbSize.width
-                    sourceSize.height: model.thumbSize.height
-
+                    sourceSize: Qt.size(model.thumbSize.width, model.thumbSize.height)
                     visible: !expanded
                 }
 
@@ -90,8 +100,7 @@ Item {
                     id: fullImage
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectFit
-                    sourceSize.width: model.size.width
-                    sourceSize.height: model.size.height
+                    sourceSize: Qt.size(model.size.width, model.size.height)
                     visible: expanded
                     smooth: true
                 }

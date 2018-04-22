@@ -3,7 +3,7 @@ import QtQuick.Controls 2.2
 import ".."
 import com.iskrembilen.slaq 1.0 as Slack
 
-Rectangle {
+Item {
     id: page
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
