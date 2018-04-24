@@ -15,7 +15,8 @@ TARGET = slaq
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
-QT += quick widgets webview
+QT += quick widgets webview xml
+CONFIG += c++11
 
 # Includes
 INCLUDEPATH += ./QtWebsocket
@@ -33,7 +34,9 @@ SOURCES += src/main.cpp \
     src/storage.cpp \
     src/messageformatter.cpp \
     src/notificationlistener.cpp \
-    src/filemodel.cpp
+    src/filemodel.cpp \
+    src/emojiprovider.cpp \
+    src/imagescache.cpp
 
 OTHER_FILES += qml/main.qml \
     qml/cover/CoverPage.qml \
@@ -54,7 +57,9 @@ HEADERS += \
     src/storage.h \
     src/messageformatter.h \
     src/notificationlistener.h \
-    src/filemodel.h
+    src/filemodel.h \
+    src/emojiprovider.h \
+    src/imagescache.h
 
 DISTFILES += \
     qml/pages/Settings.js \
@@ -84,3 +89,18 @@ DISTFILES += \
 
 RESOURCES += \
     qml.qrc
+
+SUBDIRS += libs/QGumboParser
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/QGumboParser/QGumboParser/release/ -lQGumboParser
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/QGumboParser/QGumboParser/debug/ -lQGumboParser
+else:unix: LIBS += -L$$PWD/libs/QGumboParser/QGumboParser/ -lQGumboParser
+
+INCLUDEPATH += $$PWD/libs/QGumboParser/QGumboParser
+DEPENDPATH += $$PWD/libs/QGumboParser/QGumboParser
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/release/libQGumboParser.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/debug/libQGumboParser.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/release/QGumboParser.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/debug/QGumboParser.lib
+else:unix: PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/libQGumboParser.a

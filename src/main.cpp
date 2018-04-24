@@ -10,6 +10,7 @@
 #include "notificationlistener.h"
 #include "storage.h"
 #include "filemodel.h"
+#include "emojiprovider.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("fileModel", new FileModel());
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
+    engine.addImageProvider("emoji", new EmojiProvider);
 
     engine.load(QUrl("qrc:/qml/main.qml"));
     if (engine.rootObjects().isEmpty()) {

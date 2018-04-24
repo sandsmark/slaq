@@ -986,7 +986,7 @@ QString SlackClient::getContent(QJsonObject message)
     MessageFormatter::replaceChannelInfo(content);
     MessageFormatter::replaceLinks(content);
     MessageFormatter::replaceSpecialCharacters(content);
-    MessageFormatter::replaceMarkdown(content);
+    //MessageFormatter::replaceMarkdown(content);
     MessageFormatter::replaceEmoji(content);
 
     return content;

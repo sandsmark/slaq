@@ -4,6 +4,8 @@
 
 #include "storage.h"
 
+#include <QDebug>
+
 void MessageFormatter::replaceUserInfo(QString &message)
 {
     foreach (const QVariant &value, Storage::users()) {
@@ -67,16 +69,19 @@ void MessageFormatter::replaceMarkdown(QString &message)
 
 void MessageFormatter::replaceEmoji(QString &message)
 {
-    QMap<QString, QString> alternatives;
-    alternatives.insert(":slightly_smiling_face:", ":grinning:");
-    alternatives.insert(":slightly_frowning_face:", ":confused:");
-
-    foreach (QString from, alternatives.keys()) {
-        message.replace(from, alternatives.value(from));
-    }
-
     QRegularExpression emojiPattern(":([\\w\\+\\-]+):(:[\\w\\+\\-]+:)?[\\?\\.!]?");
-    message.replace(emojiPattern, "<img src=\"http://www.tortue.me/emoji/\\1.png\" alt=\"\\1\" align=\"bottom\" width=\"32\" height=\"32\" />");
+    QRegularExpressionMatchIterator i = emojiPattern.globalMatch(message);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        const QString& captured = match.captured();
+        //qDebug() << "captured" << captured;
+        QString replacement = QString("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />")
+                .arg("slightly_smiling_face")
+                .arg("middle")
+                .arg(24)
+                .arg(24);
+        message.replace(captured, replacement);
+    }
 }
 
 void MessageFormatter::replaceTargetInfo(QString &message)
