@@ -19,12 +19,16 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
 {
     _cache = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     _imagesJsonFileName = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/emojiimages.json";
+    //check if images json database exist
+    if (!QFile(_imagesJsonFileName).exists()) {
+        qDebug() << "requesting data from SlackMojis";
+        requestSlackMojis();
+    }
 }
 
 void ImagesCache::loadImagesDatabase()
 {
     QFile f(_imagesJsonFileName);
-    qDebug() << "cache location" << _cache << f.fileName();
     if (f.open(QIODevice::ReadOnly)) {
         const QByteArray& a = f.readAll();
         parseJson(a);
