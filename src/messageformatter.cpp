@@ -73,14 +73,15 @@ void MessageFormatter::replaceEmoji(QString &message)
     QRegularExpressionMatchIterator i = emojiPattern.globalMatch(message);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
-        const QString& captured = match.captured();
-        //qDebug() << "captured" << captured;
+        QString captured = match.captured();
+
         QString replacement = QString("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />")
-                .arg("slightly_smiling_face")
+                .arg(captured.replace(":", ""))
                 .arg("middle")
                 .arg(24)
                 .arg(24);
-        message.replace(captured, replacement);
+        //qDebug() << "captured" << match.captured() << replacement;
+        message.replace(match.captured(), replacement);
     }
 }
 

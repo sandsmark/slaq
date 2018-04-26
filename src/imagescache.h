@@ -5,6 +5,7 @@
 #include <QUrl>
 #include <QMap>
 #include <QString>
+#include <QImage>
 #include <QDateTime>
 #include <QtNetwork/QNetworkAccessManager>
 
@@ -16,20 +17,32 @@ public:
     virtual ~ImagesCache() {}
 
     struct ImageInfo {
+        ImageInfo(): cached(false) {}
         QString pack;
         QString name;
+        QString fileName;
         QUrl url;
         bool cached;
     };
 
+    bool isExist(const QString &id);
+    bool isCached(const QString &id);
+    QImage image(const QString &id);
+    bool isImagesDatabaseLoaded() { return _images.size() > 0; }
+    void loadImagesDatabase();
+
 signals:
+    void imageLoaded(const QString &id);
+    void requestImageViaHttp(const QString &id);
 
 public slots:
 
 private slots:
-    void onImagesRequestFinished();
+    void onImagesListRequestFinished();
+    void onImageRequestedViaHttp(const QString &id);
+    void onImageRequestFinished();
 private:
-    void loadImagesDatabase();
+
     void parseJson(const QByteArray &data);
     bool parseSlackMojis(const QByteArray &data);
     void requestSlackMojis();

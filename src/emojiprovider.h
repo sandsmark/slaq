@@ -6,20 +6,25 @@
 #include <QDebug>
 #include <QImage>
 #include <QThreadPool>
+#include <QPointer>
 #include "imagescache.h"
 
 class AsyncImageResponse : public QQuickImageResponse, public QRunnable
 {
-    public:
-        AsyncImageResponse(const QString &id, const QSize &requestedSize);
+public:
+    AsyncImageResponse(const QString &id, const QSize &requestedSize, QPointer<ImagesCache> imageCache);
 
-        QQuickTextureFactory *textureFactory() const;
+    QQuickTextureFactory *textureFactory() const;
 
-        void run();
+    void run();
 
-        QString m_id;
-        QSize m_requestedSize;
-        QImage m_image;
+public slots:
+    void onImageLoaded(const QString& id);
+private:
+    QString m_id;
+    QSize m_requestedSize;
+    QImage m_image;
+    QPointer<ImagesCache> m_imageCache;
 };
 
 class EmojiProvider : public QQuickAsyncImageProvider
