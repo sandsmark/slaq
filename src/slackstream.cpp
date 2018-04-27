@@ -6,13 +6,16 @@
 SlackStream::SlackStream(QObject *parent) :
     QObject(parent), m_isConnected(false), m_lastMessageId(0)
 {
-    webSocket = new QtWebsocket::QWsSocket(this);
+    webSocket = new QWebSocket("", QWebSocketProtocol::VersionLatest);
     checkTimer = new QTimer(this);
 
-    connect(webSocket, SIGNAL(connected()), this, SLOT(handleListerStart()));
-    connect(webSocket, SIGNAL(disconnected()), this, SLOT(handleListerEnd()));
-    connect(webSocket, SIGNAL(frameReceived(QString)), this, SLOT(handleMessage(QString)));
-    connect(checkTimer, SIGNAL(timeout()), this, SLOT(checkConnection()));
+    connect(webSocket, &QWebSocket::connected, this, &SlackStream::handleListerStart);
+    connect(webSocket, &QWebSocket::disconnected, this, &SlackStream::handleListerEnd);
+    connect(webSocket, &QWebSocket::textMessageReceived, this, &SlackStream::handleMessage);
+    connect(webSocket, &QWebSocket::textFrameReceived, this, &SlackStream::handleFrame);
+    connect(webSocket, &QWebSocket::binaryMessageReceived, this, &SlackStream::handleBinaryMessage);
+    connect(webSocket, &QWebSocket::binaryFrameReceived, this, &SlackStream::handleBinaryFrame);
+    connect(checkTimer, &QTimer::timeout, this, &SlackStream::checkConnection);
 }
 
 SlackStream::~SlackStream()
@@ -20,16 +23,15 @@ SlackStream::~SlackStream()
     disconnect(webSocket, SIGNAL(disconnected()), this, SLOT(handleListerEnd()));
 
     if (!webSocket.isNull()) {
-        webSocket->disconnectFromHost();
+        handleListerEnd();
+        webSocket->deleteLater();
     }
 }
 
-void SlackStream::listen(QUrl url)
+void SlackStream::listen(const QUrl& url)
 {
     qDebug() << "Connect socket" << url;
-    QString socketUrl = url.scheme() + "://" + url.host();
-    webSocket->setResourceName(url.path());
-    webSocket->connectToHost(socketUrl);
+    webSocket->open(url);
 }
 
 void SlackStream::checkConnection()
@@ -44,7 +46,7 @@ void SlackStream::checkConnection()
 
         QJsonDocument document(values);
         QByteArray data = document.toJson(QJsonDocument::Compact);
-        webSocket->write(QString(data));
+        webSocket->sendBinaryMessage(data);
     }
 }
 
@@ -65,9 +67,9 @@ void SlackStream::handleListerEnd()
     emit disconnected();
 }
 
-void SlackStream::handleMessage(QString message)
+void SlackStream::handleMessage(const QString& message)
 {
-    qDebug() << "Got message" << message;
+    //qDebug() << "Got text message" << message;
 
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(message.toUtf8(), &error);
@@ -77,4 +79,19 @@ void SlackStream::handleMessage(QString message)
     }
 
     emit messageReceived(document.object());
+}
+
+void SlackStream::handleBinaryMessage(const QByteArray& message)
+{
+    Q_UNUSED(message)
+}
+
+void SlackStream::handleFrame(const QString& message)
+{
+    Q_UNUSED(message)
+}
+
+void SlackStream::handleBinaryFrame(const QByteArray &message)
+{
+    Q_UNUSED(message)
 }

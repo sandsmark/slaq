@@ -15,7 +15,7 @@ Item {
 
     Column {
         id: column
-        width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 4 : 2)
+        width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 4 : 2) - 20
         anchors.verticalCenter: parent.verticalCenter
         x: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
 
@@ -60,6 +60,7 @@ Item {
                     id: contentLabel
                     width: parent.width
                     font.pointSize: Theme.fontSizeSmall
+                    textFormat: Text.StyledText
                     color: textColor
                     visible: text.length > 0
                     text: content

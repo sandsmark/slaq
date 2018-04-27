@@ -65,7 +65,7 @@ Drawer {
     }
 
     function hideConnectionPanel() {
-        connectionPanel.hide()
+        connectionPanel.close()
     }
 
     function showReconnectingMessage() {

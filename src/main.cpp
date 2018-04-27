@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QtWebView>
 #include <QNetworkProxyFactory>
+#include <QThread>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
@@ -28,6 +29,8 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonType<SlackClient>("com.iskrembilen.slaq", 1, 0, "Client", [](QQmlEngine *, QJSEngine *) -> QObject * {
         return new SlackClient;
     });
+
+    qDebug() << "GUI thread" << QThread::currentThreadId();
 
     engine.rootContext()->setContextProperty("fileModel", new FileModel());
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
