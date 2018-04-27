@@ -16,17 +16,13 @@ TARGET = slaq
 TRANSLATIONS += translations/slaq-fi.ts
 
 QT += quick widgets webview
-
+QT += websockets
 # Includes
 INCLUDEPATH += ./QtWebsocket
 
 SOURCES += src/main.cpp \
     src/slackclient.cpp \
     src/slackconfig.cpp \
-    src/QtWebsocket/QWsSocket.cpp \
-    src/QtWebsocket/QWsFrame.cpp \
-    src/QtWebsocket/functions.cpp \
-    src/QtWebsocket/QWsHandshake.cpp \
     src/networkaccessmanagerfactory.cpp \
     src/networkaccessmanager.cpp \
     src/slackstream.cpp \
@@ -44,10 +40,6 @@ OTHER_FILES += qml/main.qml \
 HEADERS += \
     src/slackclient.h \
     src/slackconfig.h \
-    src/QtWebsocket/QWsSocket.h \
-    src/QtWebsocket/QWsFrame.h \
-    src/QtWebsocket/functions.h \
-    src/QtWebsocket/QWsHandshake.h \
     src/networkaccessmanagerfactory.h \
     src/networkaccessmanager.h \
     src/slackstream.h \
