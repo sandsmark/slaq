@@ -39,6 +39,12 @@ SlackClient::SlackClient(QObject *parent) :
     connect(this, &SlackClient::disconnected, this, &SlackClient::isOnlineChanged);
 }
 
+SlackClient::~SlackClient()
+{
+    QSettings settings;
+    settings.setValue("LastChannel", m_lastChannel);
+}
+
 void SlackClient::setAppActive(bool active)
 {
     appActive = active;
@@ -55,8 +61,7 @@ void SlackClient::setActiveWindow(QString windowId)
     clearNotifications();
 
     if (!windowId.isEmpty()) {
-        QSettings settings;
-        settings.setValue("LastChannel", windowId);
+        m_lastChannel = windowId;
         emit lastChannelChanged();
     }
 }
@@ -645,19 +650,17 @@ bool SlackClient::isDevice() const
 #endif
 }
 
-QString SlackClient::lastChannel() const
+QString SlackClient::lastChannel()
 {
-    if (Storage::channels().isEmpty()) {
-        return QString();
-    }
+    if (m_lastChannel.isEmpty()) {
+        QSettings settings;
+        m_lastChannel = settings.value("LastChannel").toString();
+        if (m_lastChannel.isEmpty() && !Storage::channels().isEmpty()) {
+            m_lastChannel = Storage::channels().first().toMap()["id"].toString();
+        }
 
-    QSettings settings;
-    QString name = settings.value("LastChannel").toString();
-    if (name.isEmpty()) {
-        return Storage::channels().first().toMap()["id"].toString();
     }
-
-    return name;
+    return m_lastChannel;
 }
 
 QString SlackClient::historyMethod(QString type)
