@@ -1,6 +1,6 @@
-import QtQuick 2.0
+import QtQuick 2.7
 import com.iskrembilen.slaq 1.0 as Slack
-import QtQuick.Controls 2.2
+import QtQuick.Controls 2.3
 import ".."
 import "../Settings.js" as Settings
 

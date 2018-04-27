@@ -24,6 +24,7 @@ class SlackClient : public QObject
 
 public:
     explicit SlackClient(QObject *parent = 0);
+    virtual ~SlackClient();
 
     Q_INVOKABLE void setAppActive(bool active);
     Q_INVOKABLE void setActiveWindow(QString windowId);
@@ -34,7 +35,7 @@ public:
     bool isOnline() const;
     bool isDevice() const;
 
-    QString lastChannel() const;
+    QString lastChannel();
 
 signals:
     void testConnectionFail();
@@ -180,6 +181,8 @@ private:
 
     QString m_clientId;
     QString m_clientId2;
+
+    QString m_lastChannel;
 };
 
 #endif // SLACKCLIENT_H
