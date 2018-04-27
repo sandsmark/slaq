@@ -1,5 +1,5 @@
 import QtQuick 2.10
-import QtQuick.Controls 2.2
+import QtQuick.Controls 2.3
 import ".."
 
 Column {
@@ -51,6 +51,7 @@ Column {
                 width: parent.width
                 font.pointSize: Theme.fontSizeSmall
                 text: attachment.content
+                wrapMode: Text.Wrap
                 visible: text.length > 0
                 onLinkActivated: linkClicked(link)
             }
@@ -61,13 +62,12 @@ Column {
 
             Repeater {
                 model: attachment.images
+                anchors.left: parent.left
 
                 Image {
-                    width: parent.width
                     fillMode: Image.PreserveAspectFit
                     source: model.url
-                    sourceSize.width: model.size.width
-                    sourceSize.height: model.size.height
+                    sourceSize: Qt.size(model.size.width, model.size.height)
                 }
             }
         }

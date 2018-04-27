@@ -131,15 +131,15 @@ ApplicationWindow {
 
     Loader {
         id: channelListPermanent
-        width: active ? parent.width * 0.33 : 0
+        width: active ? Math.min(parent.width * 0.33, 200) : 0
         active: false
         height: window.height
         onWidthChanged: console.log(width)
         opacity: active ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 500 } }
 
-        sourceComponent:   ChannelList {
-            width: Slack.Client.isOnline ? parent.width * 0.33 : 0
+        sourceComponent: ChannelList {
+            width: Slack.Client.isOnline ? Math.min(parent.width * 0.33, 200) : 0
             height: window.height
         }
     }
