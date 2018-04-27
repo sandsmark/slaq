@@ -51,7 +51,7 @@ void SlackClient::setAppActive(bool active)
     clearNotifications();
 }
 
-void SlackClient::setActiveWindow(QString windowId)
+void SlackClient::setActiveWindow(const QString& windowId)
 {
     if (windowId == activeWindow) {
         return;
@@ -113,8 +113,7 @@ void SlackClient::handleStreamEnd()
 
 void SlackClient::handleStreamMessage(QJsonObject message)
 {
-    qDebug() << "stream message" << message;
-    QString type = message.value("type").toString();
+    const QString& type = message.value("type").toString();
 
     if (type == "message") {
         parseMessageUpdate(message);
