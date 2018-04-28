@@ -7,18 +7,18 @@ class Storage : public QObject
 {
     Q_OBJECT
 public:
-    static QVariantMap user(QVariant id);
+    static QVariantMap user(const QVariant& id);
     static QVariantList users();
-    static void saveUser(QVariantMap user);
+    static void saveUser(const QVariantMap& user);
 
-    static QVariantMap channel(QVariant id);
+    static QVariantMap channel(const QVariant& id);
     static QVariantList channels();
-    static void saveChannel(QVariantMap channel);
+    static void saveChannel(const QVariantMap& channel);
 
-    static QVariantList channelMessages(QVariant channelId);
-    static bool channelMessagesExist(QVariant channelId);
-    static void setChannelMessages(QVariant channelId, QVariantList messages);
-    static void appendChannelMessage(QVariant channelId, QVariantMap message);
+    static QVariantList channelMessages(const QVariant& channelId);
+    static bool channelMessagesExist(const QVariant& channelId);
+    static void setChannelMessages(const QVariant& channelId, const QVariantList& messages);
+    static void appendChannelMessage(const QVariant& channelId, const QVariantMap& message);
     static void clearChannelMessages();
 
 signals:
