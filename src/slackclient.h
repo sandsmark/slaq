@@ -13,6 +13,7 @@
 
 #include "slackconfig.h"
 #include "slackstream.h"
+#include "messageformatter.h"
 
 class SlackClient : public QObject
 {
@@ -121,9 +122,6 @@ public slots:
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
 
 private:
-    void replaceEmojis(QString *input);
-    void loadEmojis();
-
     bool appActive;
     QString activeWindow;
 
@@ -186,7 +184,7 @@ private:
     QString m_clientId2;
 
     QString m_lastChannel;
-    QHash<QString, QString> m_emojis;
+    MessageFormatter m_formatter;
 };
 
 #endif // SLACKCLIENT_H
