@@ -5,6 +5,7 @@
 #include <QtWebView>
 #include <QNetworkProxyFactory>
 #include <QThread>
+#include <QFontDatabase>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
@@ -20,6 +21,10 @@ int main(int argc, char *argv[])
 
     QNetworkProxyFactory::setUseSystemConfiguration(true);
     QQmlApplicationEngine engine;
+
+
+    int emojiFont = QFontDatabase::addApplicationFont(":/fonts/NotoColorEmoji.ttf");
+    qDebug() << emojiFont;
 
     QtWebView::initialize();
 
