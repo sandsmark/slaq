@@ -14,7 +14,6 @@
 
 #include "slackclient.h"
 #include "storage.h"
-#include "messageformatter.h"
 
 SlackClient::SlackClient(QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
@@ -95,49 +94,6 @@ void SlackClient::reconnect()
     qDebug() << "Reconnecting";
     emit reconnecting();
     start();
-}
-
-void SlackClient::replaceEmojis(QString *message)
-{
-    Q_ASSERT(message);
-    if (!message->contains(':')) {
-        return;
-    }
-
-    QStringList parts = message->split(':');
-    message->clear();
-    for (const QString &part : parts) {
-        if (m_emojis.contains(part)) {
-            message->append(m_emojis[part]);
-        } else {
-            message->append(':' + part);
-        }
-    }
-
-}
-
-void SlackClient::loadEmojis()
-{
-    QFile emojiFile(":/data/emojis.json");
-    if (!emojiFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Failed to open emoji file for reading";
-        return;
-    }
-    const QJsonObject emojisObject = QJsonDocument::fromJson(emojiFile.readAll()).object();
-    if (emojisObject.isEmpty()) {
-        qWarning() << "Failed to parse emojis file";
-        return;
-    }
-
-    for (const QString &emojiName : emojisObject.keys()) {
-        QJsonObject emoji = emojisObject[emojiName].toObject();
-        m_emojis[emojiName] = emoji["moji"].toString();
-        for (const QJsonValue &alias : emoji["aliases"].toArray()) {
-            m_emojis[alias.toString()] = emoji["moji"].toString();
-        }
-    }
-
-    qDebug() << "Loaded" << m_emojis.count() << "emojis";
 }
 
 void SlackClient::handleStreamStart()
@@ -912,9 +868,9 @@ void SlackClient::handleMarkChannelReply()
 
 void SlackClient::postMessage(QString channelId, QString content)
 {
-    content.replace(QRegularExpression("&"), "&amp;");
-    content.replace(QRegularExpression(">"), "&gt;");
-    content.replace(QRegularExpression("<"), "&lt;");
+    content.replace("&", "&amp;");
+    content.replace(">", "&gt;");
+    content.replace("<", "&lt;");
 
     QMap<QString, QString> data;
     data.insert("channel", channelId);
@@ -1027,13 +983,13 @@ QString SlackClient::getContent(QJsonObject message)
     QString content = message.value("text").toString();
 
     findNewUsers(content);
-    MessageFormatter::replaceUserInfo(content);
-    MessageFormatter::replaceTargetInfo(content);
-    MessageFormatter::replaceChannelInfo(content);
-    MessageFormatter::replaceLinks(content);
-    MessageFormatter::replaceSpecialCharacters(content);
-    MessageFormatter::replaceMarkdown(content);
-    MessageFormatter::replaceEmoji(content);
+    m_formatter.replaceUserInfo(content);
+    m_formatter.replaceTargetInfo(content);
+    m_formatter.replaceChannelInfo(content);
+    m_formatter.replaceLinks(content);
+    m_formatter.replaceSpecialCharacters(content);
+    m_formatter.replaceMarkdown(content);
+    m_formatter.replaceEmoji(content);
 
     return content;
 }
@@ -1095,10 +1051,10 @@ QVariantList SlackClient::getAttachments(QJsonObject message)
         QVariantList fields = getAttachmentFields(attachment);
         QVariantList images = getAttachmentImages(attachment);
 
-        MessageFormatter::replaceLinks(pretext);
-        MessageFormatter::replaceLinks(text);
-        MessageFormatter::replaceLinks(fallback);
-        MessageFormatter::replaceEmoji(text);
+        m_formatter.replaceLinks(pretext);
+        m_formatter.replaceLinks(text);
+        m_formatter.replaceLinks(fallback);
+        m_formatter.replaceEmoji(text);
 
         int index = text.indexOf(' ', 250);
         if (index > 0) {
@@ -1155,8 +1111,8 @@ QVariantList SlackClient::getAttachmentFields(QJsonObject attachment)
             bool isShort = field.value("short").toBool();
 
             if (!title.isEmpty()) {
-                MessageFormatter::replaceLinks(title);
-                MessageFormatter::replaceMarkdown(title);
+                m_formatter.replaceLinks(title);
+                m_formatter.replaceMarkdown(title);
 
                 QVariantMap titleData;
                 titleData.insert("isTitle", QVariant(true));
@@ -1166,8 +1122,8 @@ QVariantList SlackClient::getAttachmentFields(QJsonObject attachment)
             }
 
             if (!value.isEmpty()) {
-                MessageFormatter::replaceLinks(value);
-                MessageFormatter::replaceMarkdown(value);
+                m_formatter.replaceLinks(value);
+                m_formatter.replaceMarkdown(value);
 
                 QVariantMap valueData;
                 valueData.insert("isTitle", QVariant(false));

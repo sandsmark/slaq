@@ -22,9 +22,8 @@ int main(int argc, char *argv[])
     QNetworkProxyFactory::setUseSystemConfiguration(true);
     QQmlApplicationEngine engine;
 
-
-    int emojiFont = QFontDatabase::addApplicationFont(":/fonts/NotoColorEmoji.ttf");
-    qDebug() << emojiFont;
+    // In case there's no system emoji font
+    QFontDatabase::addApplicationFont(":/fonts/NotoColorEmoji.ttf");
 
     QtWebView::initialize();
 
