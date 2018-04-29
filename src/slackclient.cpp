@@ -97,6 +97,49 @@ void SlackClient::reconnect()
     start();
 }
 
+void SlackClient::replaceEmojis(QString *message)
+{
+    Q_ASSERT(message);
+    if (!message->contains(':')) {
+        return;
+    }
+
+    QStringList parts = message->split(':');
+    message->clear();
+    for (const QString &part : parts) {
+        if (m_emojis.contains(part)) {
+            message->append(m_emojis[part]);
+        } else {
+            message->append(':' + part);
+        }
+    }
+
+}
+
+void SlackClient::loadEmojis()
+{
+    QFile emojiFile(":/data/emojis.json");
+    if (!emojiFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open emoji file for reading";
+        return;
+    }
+    const QJsonObject emojisObject = QJsonDocument::fromJson(emojiFile.readAll()).object();
+    if (emojisObject.isEmpty()) {
+        qWarning() << "Failed to parse emojis file";
+        return;
+    }
+
+    for (const QString &emojiName : emojisObject.keys()) {
+        QJsonObject emoji = emojisObject[emojiName].toObject();
+        m_emojis[emojiName] = emoji["moji"].toString();
+        for (const QJsonValue &alias : emoji["aliases"].toArray()) {
+            m_emojis[alias.toString()] = emoji["moji"].toString();
+        }
+    }
+
+    qDebug() << "Loaded" << m_emojis.count() << "emojis";
+}
+
 void SlackClient::handleStreamStart()
 {
     qDebug() << "Stream started";
@@ -296,6 +339,7 @@ QJsonObject SlackClient::getResult(QNetworkReply *reply)
     if (isOk(reply)) {
         QJsonParseError error;
         QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
+//        qDebug().noquote() << document.toJson();
 
         if (error.error == QJsonParseError::NoError) {
             return document.object();
