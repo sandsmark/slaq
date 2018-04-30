@@ -8,7 +8,7 @@ class Storage : public QObject
     Q_OBJECT
 public:
     static QVariantMap user(const QVariant& id);
-    static QVariantList users();
+    static const QVariantList &users();
     static void saveUser(const QVariantMap& user);
 
     static QVariantMap channel(const QVariant& id);
@@ -29,6 +29,7 @@ private:
     static QVariantMap userMap;
     static QVariantMap channelMap;
     static QVariantMap channelMessageMap;
+    static QVariantList userList;
 };
 
 #endif // STORAGE_H

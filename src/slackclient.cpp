@@ -875,9 +875,9 @@ void SlackClient::handleMarkChannelReply()
 
 void SlackClient::postMessage(const QString& channelId, QString content)
 {
-    content.replace("&", "&amp;");
-    content.replace(">", "&gt;");
-    content.replace("<", "&lt;");
+    content.replace(QLatin1Char('&'), QStringLiteral("&amp;"));
+    content.replace(QLatin1Char('>'), QStringLiteral("&gt;"));
+    content.replace(QLatin1Char('<'), QStringLiteral("&lt;"));
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
