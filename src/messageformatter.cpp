@@ -1,8 +1,40 @@
 #include "messageformatter.h"
 
 #include <QRegularExpression>
+#include <QFile>
+#include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #include "storage.h"
+
+
+MessageFormatter::MessageFormatter() :
+    m_labelPattern(QRegularExpression ("<(http[^\\|>]+)\\|([^>]+)>")),
+    m_plainPattern(QRegularExpression("<(http[^>]+)>")),
+    m_mailtoPattern(QRegularExpression("<(mailto:[^\\|>]+)\\|([^>]+)>")),
+    m_italicPattern(QRegularExpression("(^|\\s)_([^_]+)_(\\s|\\.|\\?|!|,|$)")),
+    m_boldPattern(QRegularExpression("(^|\\s)\\*([^\\*]+)\\*(\\s|\\.|\\?|!|,|$)")),
+    m_strikePattern(QRegularExpression("(^|\\s)~([^~]+)~(\\s|\\.|\\?|!|,|$)")),
+    m_codePattern(QRegularExpression("(^|\\s)`([^`]+)`(\\s|\\.|\\?|!|,|$)")),
+    m_codeBlockPattern(QRegularExpression("```([^`]+)```")),
+    m_variableLabelPattern(QRegularExpression("<!(here|channel|group|everyone)\\|([^>]+)>")),
+    m_variablePattern(QRegularExpression("<!(here|channel|group|everyone)>"))
+{
+    m_labelPattern.optimize();
+    m_plainPattern.optimize();
+    m_mailtoPattern.optimize();
+    m_italicPattern.optimize();
+    m_boldPattern.optimize();
+    m_strikePattern.optimize();
+    m_codePattern.optimize();
+    m_codeBlockPattern.optimize();
+    m_variableLabelPattern.optimize();
+    m_variablePattern.optimize();
+
+    loadEmojis();
+}
 
 void MessageFormatter::replaceUserInfo(QString &message)
 {
@@ -34,63 +66,71 @@ void MessageFormatter::replaceChannelInfo(QString &message)
 
 void MessageFormatter::replaceLinks(QString &message)
 {
-    QRegularExpression labelPattern("<(http[^\\|>]+)\\|([^>]+)>");
-    message.replace(labelPattern, "<a href=\"\\1\">\\2</a>");
-
-    QRegularExpression plainPattern("<(http[^>]+)>");
-    message.replace(plainPattern, "<a href=\"\\1\">\\1</a>");
-
-    QRegularExpression mailtoPattern("<(mailto:[^\\|>]+)\\|([^>]+)>");
-    message.replace(mailtoPattern, "<a href=\"\\1\">\\2</a>");
+    message.replace(m_labelPattern, "<a href=\"\\1\">\\2</a>");
+    message.replace(m_plainPattern, "<a href=\"\\1\">\\1</a>");
+    message.replace(m_mailtoPattern, "<a href=\"\\1\">\\2</a>");
 }
 
 void MessageFormatter::replaceMarkdown(QString &message)
 {
-    QRegularExpression italicPattern("(^|\\s)_([^_]+)_(\\s|\\.|\\?|!|,|$)");
-    message.replace(italicPattern, "\\1<i>\\2</i>\\3");
+    message.replace(m_italicPattern, "\\1<i>\\2</i>\\3");
+    message.replace(m_boldPattern, "\\1<b>\\2</b>\\3");
+    message.replace(m_strikePattern, "\\1<s>\\2</s>\\3");
+    message.replace(m_codePattern, "\\1<code>\\2</code>\\3");
+    message.replace(m_codeBlockPattern, "<br/><code>\\1</code><br/>");
 
-    QRegularExpression boldPattern("(^|\\s)\\*([^\\*]+)\\*(\\s|\\.|\\?|!|,|$)");
-    message.replace(boldPattern, "\\1<b>\\2</b>\\3");
-
-    QRegularExpression strikePattern("(^|\\s)~([^~]+)~(\\s|\\.|\\?|!|,|$)");
-    message.replace(strikePattern, "\\1<s>\\2</s>\\3");
-
-    QRegularExpression codePattern("(^|\\s)`([^`]+)`(\\s|\\.|\\?|!|,|$)");
-    message.replace(codePattern, "\\1<code>\\2</code>\\3");
-
-    QRegularExpression codeBlockPattern("```([^`]+)```");
-    message.replace(codeBlockPattern, "<br/><code>\\1</code><br/>");
-
-    QRegularExpression newLinePattern("\n");
-    message.replace(newLinePattern, "<br/>");
+    message.replace("\n", "<br/>");
 }
 
 void MessageFormatter::replaceEmoji(QString &message)
 {
-    QMap<QString, QString> alternatives;
-    alternatives.insert(":slightly_smiling_face:", ":grinning:");
-    alternatives.insert(":slightly_frowning_face:", ":confused:");
-
-    foreach (QString from, alternatives.keys()) {
-        message.replace(from, alternatives.value(from));
+    if (!message.contains(':')) {
+        return;
     }
 
-    QRegularExpression emojiPattern(":([\\w\\+\\-]+):(:[\\w\\+\\-]+:)?[\\?\\.!]?");
-    message.replace(emojiPattern, "<img src=\"http://www.tortue.me/emoji/\\1.png\" alt=\"\\1\" align=\"bottom\" width=\"32\" height=\"32\" />");
+    QStringList parts = message.split(':');
+
+    for (const QString &part : parts) {
+        if (m_emojis.contains(part)) {
+            message.replace(":" + part + ":", m_emojis[part]);
+        }
+    }
+}
+
+void MessageFormatter::loadEmojis()
+{
+    QFile emojiFile(":/data/emojis.json");
+    if (!emojiFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open emoji file for reading";
+        return;
+    }
+    const QJsonObject emojisObject = QJsonDocument::fromJson(emojiFile.readAll()).object();
+    if (emojisObject.isEmpty()) {
+        qWarning() << "Failed to parse emojis file";
+        return;
+    }
+
+    for (const QString &emojiName : emojisObject.keys()) {
+        QJsonObject emoji = emojisObject[emojiName].toObject();
+        m_emojis[emojiName] = emoji["moji"].toString();
+        for (const QJsonValue &alias : emoji["aliases"].toArray()) {
+            m_emojis[alias.toString().remove(":")] = emoji["moji"].toString();
+        }
+    }
+    // TODO: ascii aliases like :) :(
+
+    qDebug() << "Loaded" << m_emojis.count() << "emojis";
 }
 
 void MessageFormatter::replaceTargetInfo(QString &message)
 {
-    QRegularExpression variableLabelPattern("<!(here|channel|group|everyone)\\|([^>]+)>");
-    message.replace(variableLabelPattern, "<a href=\"slaq://target/\\1\">\\2</a>");
-
-    QRegularExpression variablePattern("<!(here|channel|group|everyone)>");
-    message.replace(variablePattern, "<a href=\"slaq://target/\\1\">@\\1</a>");
+    message.replace(m_variableLabelPattern, "<a href=\"slaq://target/\\1\">\\2</a>");
+    message.replace(m_variablePattern, "<a href=\"slaq://target/\\1\">@\\1</a>");
 }
 
 void MessageFormatter::replaceSpecialCharacters(QString &message)
 {
-    message.replace(QRegularExpression("&gt;"), ">");
-    message.replace(QRegularExpression("&lt;"), "<");
-    message.replace(QRegularExpression("&amp;"), "&");
+    message.replace("&gt;", ">");
+    message.replace("&lt;", "<");
+    message.replace("&amp;", "&");
 }

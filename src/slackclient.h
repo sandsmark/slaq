@@ -13,6 +13,7 @@
 
 #include "slackconfig.h"
 #include "slackstream.h"
+#include "messageformatter.h"
 
 class SlackClient : public QObject
 {
@@ -86,7 +87,7 @@ public slots:
     void loadMessages(const QString& type, const QString& channelId);
     void handleLoadMessagesReply();
 
-    void postMessage(const QString& channelId, QString &content);
+    void postMessage(const QString& channelId, QString content);
     void handlePostMessageReply();
 
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
@@ -183,6 +184,7 @@ private:
     QString m_clientId2;
 
     QString m_lastChannel;
+    MessageFormatter m_formatter;
 };
 
 #endif // SLACKCLIENT_H

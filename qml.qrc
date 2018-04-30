@@ -29,5 +29,7 @@
         <file alias="qml/Settings.js">qml/Settings.js</file>
         <file>qml/pages/SlackImage.qml</file>
         <file>qml/pages/LoadingPage.qml</file>
+        <file>fonts/NotoColorEmoji.ttf</file>
+        <file>data/emojis.json</file>
     </qresource>
 </RCC>
