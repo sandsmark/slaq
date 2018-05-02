@@ -79,13 +79,13 @@ ApplicationWindow {
                     MenuItem {
                         text: qsTr("Open chat")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("ChatSelect.qml"))
+                            pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
                         }
                     }
                     MenuItem {
                         text: qsTr("Join channel")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("ChannelSelect.qml"))
+                            pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
                         }
                     }
                 }

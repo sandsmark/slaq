@@ -12,12 +12,7 @@ Page {
 
         Label {
             id: header
-            text: qsTr("Open chat")
-        }
-
-        Label {
-            enabled: listView.count === 0
-            text: qsTr("No available chats")
+            text: listView.count !== 0 ? qsTr("Open chat") : qsTr("No available chats")
         }
 
         ListView {
@@ -69,8 +64,6 @@ Page {
 
             delegate: ItemDelegate {
                 id: delegate
-                height: row.height + Theme.paddingLarge
-                color: delegate.highlighted ? palette.highlight : palette.base
                 icon: Channel.getIcon(model)
                 text: model.name
 
