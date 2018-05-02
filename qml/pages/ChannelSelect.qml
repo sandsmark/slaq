@@ -1,5 +1,6 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
+import QtQuick.Window 2.3
 import ".."
 import com.iskrembilen.slaq 1.0 as Slack
 import "../Channel.js" as Channel
@@ -12,12 +13,7 @@ Page {
 
         Label {
             id: header
-            text: qsTr("Join channel")
-        }
-
-        Text {
-            enabled: listView.count === 0
-            text: qsTr("No available channels")
+            text: listView.count !== 0 ? qsTr("Join channel") : qsTr("No available channels")
         }
 
         ListView {
@@ -67,34 +63,11 @@ Page {
                 }
             }
 
-            delegate: MouseArea {
+            delegate: ItemDelegate {
                 id: delegate
-                height: row.height + Theme.paddingLarge
                 property color textColor: delegate.highlighted ? palette.highlight : palette.alternateBase
-
-                Row {
-                    id: row
-                    width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
-                    spacing: Theme.paddingMedium
-
-                    Image {
-                        id: icon
-                        source: "image://theme/" + Channel.getIcon(model) + "?" + textColor
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Label {
-                        width: parent.width - icon.width - Theme.paddingMedium
-                        wrapMode: Text.Wrap
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.pointSize: Theme.fontSizeMedium
-                        text: model.name
-                        color: textColor
-                    }
-                }
-
+                icon.name: Channel.getIcon(model)
+                text: model.name
                 onClicked: {
                     Slack.Client.joinChannel(model.id)
                     pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})

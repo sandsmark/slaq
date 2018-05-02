@@ -16,6 +16,7 @@ ListView {
 
     signal loadCompleted()
     signal loadStarted()
+    clip: true
 
     spacing: Theme.paddingLarge
 
