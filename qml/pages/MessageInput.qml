@@ -25,7 +25,7 @@ Column {
         TextField {
             id: messageInput
             width: parent.width - sendButton.width - uploadButton.width - Theme.paddingMedium * 3
-            onEditingFinished: handleSendMessage()
+            onAccepted: handleSendMessage()
         }
 
         Button {
