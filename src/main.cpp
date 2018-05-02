@@ -13,6 +13,7 @@
 #include "storage.h"
 #include "filemodel.h"
 #include "emojiprovider.h"
+#include "imagescache.h"
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +30,8 @@ int main(int argc, char *argv[])
     QtWebView::initialize();
 
     SlackConfig::clearWebViewCache();
+    //instantiate ImageCache
+    ImagesCache::instance();
 
     qmlRegisterSingletonType<SlackClient>("com.iskrembilen.slaq", 1, 0, "Client", [](QQmlEngine *, QJSEngine *) -> QObject * {
         return new SlackClient;

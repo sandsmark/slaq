@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include "imagescache.h"
 
 #include "storage.h"
 
@@ -91,25 +92,26 @@ void MessageFormatter::replaceEmoji(QString &message)
     }
 
 	QRegularExpression emojiPattern(":([\\w\\+\\-]+):(:[\\w\\+\\-]+:)?[\\?\\.!]?");
-    QStringList parts = message.split(':');
 
-    for (const QString &part : parts) {
-        if (m_emojis.contains(part)) {
-            message.replace(":" + part + ":", m_emojis[part]);
-        }
-    }
 	QRegularExpressionMatchIterator i = emojiPattern.globalMatch(message);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         QString captured = match.captured();
+        captured.replace(":", "");
+        qDebug() << "captured" << captured;
+        if (ImagesCache::instance()->isExist(captured)) {
+            QString replacement = QString("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />")
+                    .arg(captured)
+                    .arg("middle")
+                    .arg(24)
+                    .arg(24);
 
-        QString replacement = QString("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />")
-                .arg(captured.replace(":", ""))
-                .arg("middle")
-                .arg(24)
-                .arg(24);
-        //qDebug() << "captured" << match.captured() << replacement;
-        message.replace(match.captured(), replacement);
+            message.replace(match.captured(), replacement);
+        } else {
+            if (m_emojis.contains(captured)) {
+                message.replace(":" + captured + ":", m_emojis[captured]);
+            }
+        }
     }
 }
 

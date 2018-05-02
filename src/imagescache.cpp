@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QDir>
 #include <QStandardPaths>
+#include <QThread>
 
 #include <QtNetwork/QNetworkReply>
 #include "qgumbodocument.h"
@@ -29,7 +30,15 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
         qDebug() << "requesting data from SlackMojis";
         requestSlackMojis();
     }
+    QThread *thread = QThread::create([&]{ loadImagesDatabase(); qDebug() << "database loaded";});
+    thread->start();
     connect(this, &ImagesCache::requestImageViaHttp, this, &ImagesCache::onImageRequestedViaHttp, Qt::QueuedConnection);
+}
+
+ImagesCache *ImagesCache::instance()
+{
+    static ImagesCache imageCache;
+    return &imageCache;
 }
 
 bool ImagesCache::isExist(const QString &id)

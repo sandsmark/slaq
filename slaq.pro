@@ -16,10 +16,8 @@ TARGET = slaq
 TRANSLATIONS += translations/slaq-fi.ts
 
 QT += quick widgets webview xml
-CONFIG += c++11
+CONFIG += c++1
 QT += websockets
-# Includes
-INCLUDEPATH += ./QtWebsocket
 
 SOURCES += src/main.cpp \
     src/slackclient.cpp \

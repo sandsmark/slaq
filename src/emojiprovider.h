@@ -12,7 +12,7 @@
 class AsyncImageResponse : public QQuickImageResponse, public QRunnable
 {
 public:
-    AsyncImageResponse(const QString &id, const QSize &requestedSize, QPointer<ImagesCache> imageCache);
+    AsyncImageResponse(const QString &id, const QSize &requestedSize);
 
     QQuickTextureFactory *textureFactory() const;
 
@@ -36,7 +36,6 @@ public:
 
 private:
     QThreadPool pool;
-    ImagesCache imageCache;
 };
 
 #endif // EMOJIPROVIDER_H

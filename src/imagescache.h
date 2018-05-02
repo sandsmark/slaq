@@ -13,7 +13,8 @@ class ImagesCache : public QObject
 {
     Q_OBJECT
 public:
-    explicit ImagesCache(QObject *parent = nullptr);
+
+    static ImagesCache* instance();
     virtual ~ImagesCache() {}
 
     struct ImageInfo {
@@ -42,7 +43,7 @@ private slots:
     void onImageRequestedViaHttp(const QString &id);
     void onImageRequestFinished();
 private:
-
+    explicit ImagesCache(QObject *parent = nullptr);
     void parseJson(const QByteArray &data);
     bool parseSlackMojis(const QByteArray &data);
     void requestSlackMojis();

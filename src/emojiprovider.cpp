@@ -7,16 +7,16 @@ EmojiProvider::EmojiProvider()
 
 QQuickImageResponse *EmojiProvider::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    AsyncImageResponse *response = new AsyncImageResponse(id, requestedSize, QPointer<ImagesCache>(&imageCache));
+    AsyncImageResponse *response = new AsyncImageResponse(id, requestedSize);
     pool.start(response);
     return response;
 }
 
-AsyncImageResponse::AsyncImageResponse(const QString &id, const QSize &requestedSize, QPointer<ImagesCache> imageCache)
-    : m_id(id), m_requestedSize(requestedSize), m_imageCache(imageCache)
+AsyncImageResponse::AsyncImageResponse(const QString &id, const QSize &requestedSize)
+    : m_id(id), m_requestedSize(requestedSize), m_imageCache(ImagesCache::instance())
 {
     setAutoDelete(false);
-    connect(imageCache.data(), &ImagesCache::imageLoaded, this, &AsyncImageResponse::onImageLoaded);
+    connect(m_imageCache, &ImagesCache::imageLoaded, this, &AsyncImageResponse::onImageLoaded);
 }
 
 QQuickTextureFactory *AsyncImageResponse::textureFactory() const
@@ -27,6 +27,7 @@ QQuickTextureFactory *AsyncImageResponse::textureFactory() const
 void AsyncImageResponse::run()
 {
     //preload database from cache
+
     if (!m_imageCache->isImagesDatabaseLoaded()) {
         m_imageCache->loadImagesDatabase();
     }
