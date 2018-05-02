@@ -18,7 +18,7 @@ function disconnect() {
 
 function reloadChannels() {
     var channels = Slack.Client.getChannels().filter(Channel.isOpen)
-    channels.sort(compareChannels)
+    channels.sort(compareByCategory)
 
     channelListModel.clear()
     channels.forEach(function(c) {
@@ -48,8 +48,7 @@ function handleChannelLeft(channel) {
 function getChannelSection(channel) {
     if (channel.unreadCount > 0) {
         return "unread"
-    }
-    else {
+    } else {
         return channel.category
     }
 }
@@ -57,18 +56,14 @@ function getChannelSection(channel) {
 function compareChannels(a, b) {
     if (a.unreadCount === 0 && b.unreadCount === 0) {
         return compareByCategory(a, b)
-    }
-    else {
+    } else {
         if (a.unreadCount > 0 && b.unreadCount > 0) {
             return Channel.compareByName(a, b)
-        }
-        else if (a.unreadCount > 0) {
+        } else if (a.unreadCount > 0) {
             return -1
-        }
-        else if (b.unreadCount > 0) {
+        } else if (b.unreadCount > 0) {
             return 1
-        }
-        else {
+        } else {
             return Channel.compareByName(a, b)
         }
     }
@@ -76,17 +71,12 @@ function compareChannels(a, b) {
 
 function compareByCategory(a, b) {
     if (a.category === b.category) {
-        return Channel.compareByName(a, b)
+        return Channel.compareByName(a, b);
     }
-    else {
-        if (a.category === "channel") {
-            return -1
-        }
-        else if (b.category === "channel") {
-            return 1
-        }
-        else {
-            return Channel.compareByName(a, b)
-        }
+    if (a.category === "chat" && b.category === "channel") {
+        return 1;
     }
+    return -1;
 }
+
+
