@@ -526,6 +526,7 @@ QVariantMap SlackClient::parseChannel(const QJsonObject& channel)
     data.insert(QStringLiteral("isOpen"), channel.value(QStringLiteral("is_member")).toVariant());
     data.insert(QStringLiteral("lastRead"), channel.value(QStringLiteral("last_read")).toVariant());
     data.insert(QStringLiteral("unreadCount"), channel.value(QStringLiteral("unread_count_display")).toVariant());
+    data.insert(QStringLiteral("members"), channel.value(QStringLiteral("members")).toVariant());
     data.insert(QStringLiteral("userId"), QVariant());
     return data;
 }
@@ -641,6 +642,35 @@ QVariantList SlackClient::getChannels()
 QVariant SlackClient::getChannel(const QString& channelId)
 {
     return Storage::channel(QVariant(channelId));
+}
+
+QStringList SlackClient::getNickSuggestions(const QString &currentText, const int cursorPosition)
+{
+    int whitespaceAfter = currentText.indexOf(' ', cursorPosition, Qt::CaseInsensitive);
+    if (whitespaceAfter < cursorPosition) {
+        whitespaceAfter = currentText.length();
+    }
+
+    int whitespaceBefore = currentText.lastIndexOf(' ', cursorPosition - 1, Qt::CaseInsensitive);
+    if (whitespaceBefore < 0) {
+        whitespaceBefore = 0;
+    } else {
+        whitespaceBefore++;
+    }
+
+    const QString relevant = currentText.mid(whitespaceBefore, whitespaceAfter- whitespaceBefore);
+
+    QStringList nicks;
+    for (const QString &memberId : Storage::channel(m_lastChannel).value("members").toStringList()) {
+        const QString nick = Storage::user(memberId).value("name").toString();
+        if (relevant.isEmpty()) {
+            nicks.append(nick);
+        } else if (nick.contains(relevant, Qt::CaseInsensitive)) {
+            nicks.append(nick);
+        }
+    }
+
+    return nicks;
 }
 
 bool SlackClient::isOnline() const
