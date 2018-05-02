@@ -1,23 +1,42 @@
 #ifndef MESSAGEFORMATTER_H
 #define MESSAGEFORMATTER_H
 
-#include <QObject>
+#include <QString>
+#include <QRegularExpression>
 
-class MessageFormatter : public QObject
+class MessageFormatter
 {
-    Q_OBJECT
 public:
-    static void replaceUserInfo(QString &message);
-    static void replaceTargetInfo(QString &message);
-    static void replaceChannelInfo(QString &message);
-    static void replaceSpecialCharacters(QString &message);
-    static void replaceLinks(QString &message);
-    static void replaceMarkdown(QString &message);
-    static void replaceEmoji(QString &message);
+    MessageFormatter();
+
+    void replaceUserInfo(QString &message);
+    void replaceTargetInfo(QString &message);
+    void replaceChannelInfo(QString &message);
+    void replaceSpecialCharacters(QString &message);
+    void replaceLinks(QString &message);
+    void replaceMarkdown(QString &message);
+    void replaceEmoji(QString &message);
 
 signals:
 
 public slots:
+private:
+    void loadEmojis();
+
+    QRegularExpression m_labelPattern;
+    QRegularExpression m_plainPattern;
+    QRegularExpression m_mailtoPattern;
+
+    QRegularExpression m_italicPattern;
+    QRegularExpression m_boldPattern;
+    QRegularExpression m_strikePattern;
+    QRegularExpression m_codePattern;
+    QRegularExpression m_codeBlockPattern;
+
+    QRegularExpression m_variableLabelPattern;
+    QRegularExpression m_variablePattern;
+
+    QHash<QString, QString> m_emojis;
 };
 
 #endif // MESSAGEFORMATTER_H

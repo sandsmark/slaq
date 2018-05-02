@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtWebView 1.1
 import com.iskrembilen.slaq 1.0 as Slack
-import QtQuick.Controls 2.2
+import QtQuick.Controls 2.3
 import "../Settings.js" as Settings
 
 Page {

@@ -79,6 +79,8 @@ DISTFILES += \
     qml/pages/SlackImage.qml \
     qml/pages/LoadingPage.qml
 
+target.path = /usr/bin/
+
 RESOURCES += \
     qml.qrc
 

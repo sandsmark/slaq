@@ -3,30 +3,32 @@
 #include <QDebug>
 
 QVariantMap Storage::userMap = QVariantMap();
+QVariantList Storage::userList = QVariantList();
 QVariantMap Storage::channelMap = QVariantMap();
 QVariantMap Storage::channelMessageMap = QVariantMap();
 
-void Storage::saveUser(QVariantMap user)
+void Storage::saveUser(const QVariantMap& user)
 {
     userMap.insert(user.value("id").toString(), user);
+    userList = userMap.values();
 }
 
-QVariantMap Storage::user(QVariant id)
+QVariantMap Storage::user(const QVariant& id)
 {
     return userMap.value(id.toString()).toMap();
 }
 
-QVariantList Storage::users()
+const QVariantList& Storage::users()
 {
-    return userMap.values();
+    return userList;
 }
 
-void Storage::saveChannel(QVariantMap channel)
+void Storage::saveChannel(const QVariantMap& channel)
 {
     channelMap.insert(channel.value("id").toString(), channel);
 }
 
-QVariantMap Storage::channel(QVariant id)
+QVariantMap Storage::channel(const QVariant& id)
 {
     return channelMap.value(id.toString()).toMap();
 }
@@ -36,22 +38,22 @@ QVariantList Storage::channels()
     return channelMap.values();
 }
 
-QVariantList Storage::channelMessages(QVariant channelId)
+QVariantList Storage::channelMessages(const QVariant& channelId)
 {
     return channelMessageMap.value(channelId.toString()).toList();
 }
 
-bool Storage::channelMessagesExist(QVariant channelId)
+bool Storage::channelMessagesExist(const QVariant& channelId)
 {
     return channelMessageMap.contains(channelId.toString());
 }
 
-void Storage::setChannelMessages(QVariant channelId, QVariantList messages)
+void Storage::setChannelMessages(const QVariant& channelId, const QVariantList& messages)
 {
     channelMessageMap.insert(channelId.toString(), messages);
 }
 
-void Storage::appendChannelMessage(QVariant channelId, QVariantMap message)
+void Storage::appendChannelMessage(const QVariant& channelId, const QVariantMap& message)
 {
     QVariantList messages = channelMessages(channelId);
     messages.append(message);

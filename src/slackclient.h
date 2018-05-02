@@ -13,6 +13,7 @@
 
 #include "slackconfig.h"
 #include "slackstream.h"
+#include "messageformatter.h"
 
 class SlackClient : public QObject
 {
@@ -30,7 +31,9 @@ public:
     Q_INVOKABLE void setActiveWindow(const QString &windowId);
 
     Q_INVOKABLE QVariantList getChannels();
-    Q_INVOKABLE QVariant getChannel(QString channelId);
+    Q_INVOKABLE QVariant getChannel(const QString& channelId);
+
+    Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
 
     bool isOnline() const;
     bool isDevice() const;
@@ -77,44 +80,44 @@ public slots:
     void start();
     void handleStartReply();
 
-    void fetchAccessToken(QUrl url);
+    void fetchAccessToken(const QUrl& url);
     void handleAccessTokenReply();
 
     void testLogin();
     void handleTestLoginReply();
 
-    void loadMessages(QString type, QString channelId);
+    void loadMessages(const QString& type, const QString& channelId);
     void handleLoadMessagesReply();
 
-    void postMessage(QString channelId, QString content);
+    void postMessage(const QString& channelId, QString content);
     void handlePostMessageReply();
 
-    void postImage(QString channelId, QString imagePath, QString title, QString comment);
+    void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void handlePostImage();
 
-    void markChannel(QString type, QString channelId, QString time);
+    void markChannel(const QString& type, const QString& channelId, const QString& time);
     void handleMarkChannelReply();
 
-    void joinChannel(QString channelId);
+    void joinChannel(const QString& channelId);
     void handleJoinChannelReply();
 
-    void leaveChannel(QString channelId);
+    void leaveChannel(const QString& channelId);
     void handleLeaveChannelReply();
 
-    void leaveGroup(QString groupId);
+    void leaveGroup(const QString& groupId);
     void handleLeaveGroupReply();
 
-    void openChat(QString chatId);
+    void openChat(const QString& chatId);
     void handleOpenChatReply();
 
-    void closeChat(QString chatId);
+    void closeChat(const QString& chatId);
     void handleCloseChatReply();
 
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 
     void handleStreamStart();
     void handleStreamEnd();
-    void handleStreamMessage(QJsonObject message);
+    void handleStreamMessage(const QJsonObject& message);
 
     void reconnect();
 
@@ -124,52 +127,52 @@ private:
     bool appActive;
     QString activeWindow;
 
-    QNetworkReply *executePost(QString method, const QMap<QString, QString> &data);
-    QNetworkReply *executePostWithFile(QString method, const QMap<QString, QString> &, QFile *file);
+    QNetworkReply *executePost(const QString& method, const QMap<QString, QString> &data);
+    QNetworkReply *executePostWithFile(const QString& method, const QMap<QString, QString> &, QFile *file);
 
-    QNetworkReply *executeGet(QString method, QMap<QString, QString> params = QMap<QString, QString>());
+    QNetworkReply *executeGet(const QString& method, const QMap<QString, QString>& params = QMap<QString, QString>());
 
     bool isOk(const QNetworkReply *reply);
     bool isError(const QJsonObject &data);
     QJsonObject getResult(QNetworkReply *reply);
 
-    void parseMessageUpdate(QJsonObject message);
-    void parseChannelUpdate(QJsonObject message);
-    void parseChannelJoin(QJsonObject message);
-    void parseChannelLeft(QJsonObject message);
-    void parseGroupJoin(QJsonObject message);
-    void parseChatOpen(QJsonObject message);
-    void parseChatClose(QJsonObject message);
-    void parsePresenceChange(QJsonObject message);
-    void parseNotification(QJsonObject message);
+    void parseMessageUpdate(const QJsonObject& message);
+    void parseChannelUpdate(const QJsonObject& message);
+    void parseChannelJoin(const QJsonObject& message);
+    void parseChannelLeft(const QJsonObject& message);
+    void parseGroupJoin(const QJsonObject& message);
+    void parseChatOpen(const QJsonObject& message);
+    void parseChatClose(const QJsonObject& message);
+    void parsePresenceChange(const QJsonObject& message);
+    void parseNotification(const QJsonObject& message);
 
-    QVariantMap getMessageData(const QJsonObject message);
+    QVariantMap getMessageData(const QJsonObject& message);
 
-    QString getContent(QJsonObject message);
-    QVariantList getAttachments(QJsonObject message);
-    QVariantList getImages(QJsonObject message);
-    QString getAttachmentColor(QJsonObject attachment);
-    QVariantList getAttachmentFields(QJsonObject attachment);
-    QVariantList getAttachmentImages(QJsonObject attachment);
+    QString getContent(const QJsonObject& message);
+    QVariantList getAttachments(const QJsonObject& message);
+    QVariantList getImages(const QJsonObject& message);
+    QString getAttachmentColor(const QJsonObject& attachment);
+    QVariantList getAttachmentFields(const QJsonObject& attachment);
+    QVariantList getAttachmentImages(const QJsonObject& attachment);
 
-    QVariantMap parseChannel(QJsonObject data);
-    QVariantMap parseGroup(QJsonObject group);
+    QVariantMap parseChannel(const QJsonObject& data);
+    QVariantMap parseGroup(const QJsonObject& group);
 
-    void parseUsers(QJsonObject data);
-    void parseBots(QJsonObject data);
-    void parseChannels(QJsonObject data);
-    void parseGroups(QJsonObject data);
-    void parseChats(QJsonObject data);
+    void parseUsers(const QJsonObject& data);
+    void parseBots(const QJsonObject& data);
+    void parseChannels(const QJsonObject& data);
+    void parseGroups(const QJsonObject& data);
+    void parseChats(const QJsonObject& data);
 
     void findNewUsers(const QString &message);
 
-    void sendNotification(QString channelId, QString title, QString content);
+    void sendNotification(const QString& channelId, const QString& title, const QString& content);
     void clearNotifications();
 
     QVariantMap user(const QJsonObject &data);
 
-    QString historyMethod(QString type);
-    QString markMethod(QString type);
+    QString historyMethod(const QString& type);
+    QString markMethod(const QString& type);
 
     QPointer<QNetworkAccessManager> networkAccessManager;
     QPointer<SlackConfig> config;
@@ -183,6 +186,7 @@ private:
     QString m_clientId2;
 
     QString m_lastChannel;
+    MessageFormatter m_formatter;
 };
 
 #endif // SLACKCLIENT_H
