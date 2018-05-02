@@ -25,6 +25,7 @@ Item {
             spacing: Theme.paddingMedium
 
             Image {
+                id: avatarImage
                 height: Theme.avatarSize
                 width: height
                 source: Slack.Client.avatarUrl(user.id)
@@ -56,9 +57,10 @@ Item {
                         verticalAlignment: "AlignBottom"
                     }
                 }
+
                 Label {
                     id: contentLabel
-                    width: parent.width
+                    width: parent.width - avatarImage.width - parent.spacing
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.StyledText
                     color: textColor
