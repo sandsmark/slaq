@@ -33,7 +33,7 @@ ListView {
     delegate: ItemDelegate {
         id: delegate
         text: model.name
-        property color textColor: delegate.highlighted ? palette.base : palette.base
+        property color textColor: delegate.highlighted ? palette.highlightedText: palette.text
         highlighted: Slack.Client.lastChannel === model.id
 
         icon.name: Channel.getIcon(model)

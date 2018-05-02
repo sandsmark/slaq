@@ -28,8 +28,6 @@ ApplicationWindow {
 
     color: palette.window
 
-    SystemPalette { id: palette; }
-
     Component {
         id: channelComponent
         Channel {}
