@@ -41,6 +41,20 @@ Page {
         }
     }
 
+    Rectangle {
+        anchors {
+            top: nickPopup.top
+            left: nickPopup.left
+            right: nickPopup.right
+            bottom: input.verticalCenter
+            margins: -10
+        }
+        radius: 10
+        visible: nickPopup.visible
+
+        border.color: "lightGray"
+    }
+
     MessageInput {
         id: input
 
@@ -54,6 +68,34 @@ Page {
         placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
         onSendMessage: {
             Slack.Client.postMessage(channel.id, content)
+        }
+
+        nickPopupVisible: nickPopup.visible
+        onShowNickPopup: {
+            nickPopup.visible = true
+        }
+
+        onHideNickPopup: {
+            nickPopup.visible = false
+        }
+    }
+
+    Column {
+        id: nickPopup
+        anchors {
+            bottom: input.top
+        }
+        visible: false
+        x: input.cursorX
+
+        Repeater {
+            id: nickSuggestions
+            model: input.nickSuggestions
+
+            delegate: Text {
+                text: modelData
+                font.bold: index === input.currentNickSuggestionIndex
+            }
         }
     }
 
