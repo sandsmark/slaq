@@ -28,7 +28,8 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
     //check if images json database exist
     if (!QFile(_imagesJsonFileName).exists()) {
         qDebug() << "requesting data from SlackMojis";
-        requestSlackMojis();
+        //requestSlackMojis();
+        requestEmojiCheactSheet();
     }
     QThread *thread = QThread::create([&]{ loadImagesDatabase(); qDebug() << "database loaded";});
     thread->start();
@@ -91,25 +92,25 @@ bool ImagesCache::parseSlackMojis(const QByteArray &data)
 {
     auto doc = QGumboDocument::parse(data.data());
     auto root = doc.rootNode();
-    auto nodes = root.getElementsByClassName("group");
+    auto nodes = root.getElementsByClassName(QStringLiteral("group"));
     //    qDebug() << "groups" << nodes.size();
 
     for (const auto& node: nodes) {
-        QString title_ = node.getElementsByClassName("title").at(0).innerText().trimmed();
+        QString title_ = node.getElementsByClassName(QStringLiteral("title")).at(0).innerText().trimmed();
         //qDebug() << "title" << title_;
-        auto emojis = node.getElementsByClassName("emojis").front().children();
+        auto emojis = node.getElementsByClassName(QStringLiteral("emojis")).front().children();
         //qDebug() << "emojis" << emojis.size();
         for (const auto& emoji: emojis) {
             auto aclass = emoji.getElementsByTagName(HtmlTag::A).front();
             ImageInfo info_;
             info_.pack = title_;
-            info_.name = emoji.getAttribute("title").trimmed();
-            QString url_ = aclass.getAttribute("href").trimmed();
-            if (!url_.startsWith("http")) {
+            info_.name = emoji.getAttribute(QStringLiteral("title")).trimmed();
+            QString url_ = aclass.getAttribute(QStringLiteral("href")).trimmed();
+            if (!url_.startsWith(QStringLiteral("http"))) {
                 url_.prepend("https://slackmojis.com");
             }
             info_.url = QUrl(url_);
-            info_.fileName = aclass.getAttribute("download").trimmed();
+            info_.fileName = aclass.getAttribute(QStringLiteral("download")).trimmed();
             info_.cached = false; //to check later
             _images[info_.name] = info_;
             //qDebug() << "adding emoji:" << info_.pack << info_.name << info_.url << info_.fileName;
@@ -119,9 +120,56 @@ bool ImagesCache::parseSlackMojis(const QByteArray &data)
     return true;
 }
 
+bool ImagesCache::parseEmojiCheactSheet(const QByteArray &data)
+{
+    auto doc = QGumboDocument::parse(data.data());
+    auto root = doc.rootNode();
+    auto nodes = root.getElementsByTagName(HtmlTag::UL);
+    //qDebug() << "emojis" << nodes.size();
+
+    for (const auto& node: nodes) {
+        const QStringList & list_ = node.classList();
+        if (list_.isEmpty()) {
+            continue;
+        }
+        QString title_ = node.classList().at(0).trimmed();
+        //qDebug() << "title" << title_;
+        auto emojis = node.getElementsByClassName(QStringLiteral("emoji"));
+        auto emojisnames = node.getElementsByClassName(QStringLiteral("name"));
+        if (emojis.size() != emojisnames.size()) {
+            qDebug() << "emojis parse something wrong" << emojis.size() << emojisnames.size();
+            continue;
+        }
+        for (ulong i = 0; i < emojis.size(); i++) {
+            const auto& emoji = emojis.at(i);
+            const auto& name = emojisnames.at(i);
+
+            ImageInfo info_;
+            info_.pack = title_;
+            info_.name = name.innerText().trimmed();
+            QString url_ = emoji.getAttribute(QStringLiteral("data-src")).trimmed();
+            if (!url_.startsWith(QStringLiteral("http"))) {
+                url_.prepend("https://www.webpagefx.com/tools/emoji-cheat-sheet/");
+            }
+            info_.url = QUrl(url_);
+            info_.fileName = info_.url.fileName();
+            info_.cached = false; //to check later
+            _images[info_.name] = info_;
+            //qDebug() << "adding emoji:" << info_.pack << info_.name << info_.url << info_.fileName;
+        }
+    }
+    return (_images.size() > 0);
+}
+
 void ImagesCache::requestSlackMojis()
 {
-    QNetworkReply *reply = _qnam.get(QNetworkRequest(QUrl("https://slackmojis.com/")));
+    QNetworkReply *reply = _qnam.get(QNetworkRequest(QUrl(QStringLiteral("https://slackmojis.com/"))));
+    connect(reply, &QNetworkReply::finished, this, &ImagesCache::onImagesListRequestFinished);
+}
+
+void ImagesCache::requestEmojiCheactSheet()
+{
+    QNetworkReply *reply = _qnam.get(QNetworkRequest(QUrl(QStringLiteral("https://www.webpagefx.com/tools/emoji-cheat-sheet/"))));
     connect(reply, &QNetworkReply::finished, this, &ImagesCache::onImagesListRequestFinished);
 }
 
@@ -131,8 +179,8 @@ void ImagesCache::parseJson(const QByteArray &data) {
     QJsonObject obj = jsonDoc.object();
 
     qDebug() << "Images DB version" << obj.value("version").toString();
-    _lastUpdate = QDateTime::fromString(obj.value("updated").toString(), "yyyy-MM-ddThh:mm:ss.zzzZ");
-    QJsonArray packsList = obj.value("packs").toArray();
+    _lastUpdate = QDateTime::fromString(obj.value(QStringLiteral("updated")).toString(), "yyyy-MM-ddThh:mm:ss.zzzZ");
+    QJsonArray packsList = obj.value(QStringLiteral("packs")).toArray();
 
     foreach (const QJsonValue& value, packsList) {
         QJsonObject obj1 = value.toObject();
@@ -199,10 +247,19 @@ void ImagesCache::onImagesListRequestFinished()
     QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
     reply->deleteLater();
     const QByteArray &arr = reply->readAll();
+    bool parsed_ = false;
     if(reply->error() == QNetworkReply::NoError){
         //qDebug() << "readed" << arr;
-        parseSlackMojis(arr);
-        saveJson();
+        if (reply->url().host().contains(QStringLiteral("slackmojis.com"))) {
+            parsed_ = parseSlackMojis(arr);
+        } else {
+            parsed_ = parseEmojiCheactSheet(arr);
+        }
+        if (parsed_) {
+            saveJson();
+        } else {
+            qDebug() << "Nothing gets parsed";
+        }
     } else {
         qDebug() << "Error request images data" << reply->error() << reply->url();
         qDebug() << "error content: " << arr;

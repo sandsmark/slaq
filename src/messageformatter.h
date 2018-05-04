@@ -35,6 +35,7 @@ private:
 
     QRegularExpression m_variableLabelPattern;
     QRegularExpression m_variablePattern;
+    QRegularExpression m_emojiPattern;
 
     QHash<QString, QString> m_emojis;
 };

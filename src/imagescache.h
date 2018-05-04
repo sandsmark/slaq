@@ -42,11 +42,14 @@ private slots:
     void onImagesListRequestFinished();
     void onImageRequestedViaHttp(const QString &id);
     void onImageRequestFinished();
+    void requestEmojiCheactSheet();
+    void requestSlackMojis();
+
 private:
     explicit ImagesCache(QObject *parent = nullptr);
     void parseJson(const QByteArray &data);
     bool parseSlackMojis(const QByteArray &data);
-    void requestSlackMojis();
+    bool parseEmojiCheactSheet(const QByteArray &data);
     void saveJson();
 
 private:
