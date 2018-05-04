@@ -98,7 +98,7 @@ void MessageFormatter::replaceEmoji(QString &message)
         QRegularExpressionMatch match = i.next();
         QString captured = match.captured();
         captured.replace(QStringLiteral(":"), QStringLiteral(""));
-        qDebug() << "captured" << captured;
+        //qDebug() << "captured" << captured;
         if (ImagesCache::instance()->isExist(captured)) {
             QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
                     .arg(captured)
