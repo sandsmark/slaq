@@ -48,7 +48,7 @@ Page {
 
     function handleAccessTokenSuccess(userId, teamId, teamName) {
         Settings.setUserInfo(userId, teamId, teamName)
-        pageStack.pop(undefined, PageStackAction.Animated)
+        pageStack.pop(undefined, StackView.Transition)
     }
 
     function handleAccessTokenFail() {
