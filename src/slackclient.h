@@ -13,6 +13,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 
+#include "storage.h"
 #include "slackconfig.h"
 #include "slackstream.h"
 #include "messageformatter.h"

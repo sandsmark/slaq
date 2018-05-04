@@ -89,6 +89,7 @@ Column {
             }
 
             Keys.onTabPressed: {
+                console.log("pressed tab")
                 if (nickPopupVisible) {
                     currentNickSuggestionIndex =  (currentNickSuggestionIndex + 1) % nickSuggestions.length
                 } else {

@@ -13,7 +13,6 @@
 #include <QtNetwork/QNetworkConfigurationManager>
 
 #include "slackclient.h"
-#include "storage.h"
 
 SlackClient::SlackClient(const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
@@ -668,7 +667,6 @@ void SlackClient::parseChannels(const QJsonObject& data)
     qDebug() << "parse channels";
     foreach (const QJsonValue &value, data.value(QStringLiteral("channels")).toArray()) {
         QVariantMap data = parseChannel(value.toObject());
-        //qDebug() << "parsed channel" << data;
         m_storage.saveChannel(data);
     }
 }
