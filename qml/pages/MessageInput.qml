@@ -135,7 +135,6 @@ Column {
             return
         }
 
-        messageInput.focus = false
         Qt.inputMethod.hide()
         sendMessage(input)
     }
