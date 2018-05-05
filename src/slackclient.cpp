@@ -27,7 +27,7 @@ SlackClient::SlackClient(QObject *parent) :
     networkAccessible = networkAccessManager->networkAccessible();
 
     connect(networkAccessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &SlackClient::handleNetworkAccessibleChanged);
-    connect(reconnectTimer.data(), &QTimer::timeout, this, &SlackClient::reconnect);
+    connect(reconnectTimer.data(), &QTimer::timeout, this, &SlackClient::reconnectClient);
 
     connect(stream.data(), &SlackStream::connected, this, &SlackClient::handleStreamStart);
     connect(stream.data(), &SlackStream::disconnected, this, &SlackClient::handleStreamEnd);
@@ -36,6 +36,7 @@ SlackClient::SlackClient(QObject *parent) :
     connect(this, &SlackClient::connected, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::initSuccess, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::disconnected, this, &SlackClient::isOnlineChanged);
+    qDebug() << "client ctor finished";
 }
 
 SlackClient::~SlackClient()
@@ -89,11 +90,11 @@ void SlackClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkA
     }
 }
 
-void SlackClient::reconnect()
+void SlackClient::reconnectClient()
 {
     qDebug() << "Reconnecting";
     emit reconnecting();
-    start();
+    startClient();
 }
 
 void SlackClient::handleStreamStart()
@@ -473,7 +474,7 @@ void SlackClient::handleTestLoginReply()
     reply->deleteLater();
 }
 
-void SlackClient::start()
+void SlackClient::startClient()
 {
     qDebug() << "Start init";
     QNetworkReply *reply = executeGet(QStringLiteral("rtm.start"));
@@ -485,10 +486,10 @@ void SlackClient::handleStartReply()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     QJsonObject data = getResult(reply);
+    reply->deleteLater();
 
     if (isError(data)) {
         qDebug() << "Start result error";
-        reply->deleteLater();
         emit disconnected();
 
         if (data.isEmpty()) {
@@ -511,8 +512,6 @@ void SlackClient::handleStartReply()
 
     Storage::clearChannelMessages();
     emit initSuccess();
-
-    reply->deleteLater();
 }
 
 QVariantMap SlackClient::parseChannel(const QJsonObject& channel)
@@ -676,15 +675,6 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
 bool SlackClient::isOnline() const
 {
     return stream && stream->isConnected();
-}
-
-bool SlackClient::isDevice() const
-{
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    return true;
-#else
-    return false;
-#endif
 }
 
 QString SlackClient::lastChannel()

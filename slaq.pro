@@ -29,7 +29,8 @@ SOURCES += src/main.cpp \
     src/storage.cpp \
     src/messageformatter.cpp \
     src/notificationlistener.cpp \
-    src/filemodel.cpp
+    src/filemodel.cpp \
+    src/slackclientthreadspawner.cpp
 
 OTHER_FILES += qml/main.qml \
     qml/cover/CoverPage.qml \
@@ -46,7 +47,8 @@ HEADERS += \
     src/storage.h \
     src/messageformatter.h \
     src/notificationlistener.h \
-    src/filemodel.h
+    src/filemodel.h \
+    src/slackclientthreadspawner.h
 
 DISTFILES += \
     qml/pages/Settings.js \

@@ -1,6 +1,5 @@
-import QtQuick 2.0
-import QtWebView 1.1
-import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick 2.8
+import QtWebView 1.5
 import QtQuick.Controls 2.3
 import "../Settings.js" as Settings
 
@@ -31,19 +30,19 @@ Page {
             if (loadRequest.url.toString().indexOf('http://localhost:3000/oauth/callback') !== -1) {
                 webView.stop()
                 visible = false
-                Slack.Client.fetchAccessToken(loadRequest.url)
+                SlackClient.fetchAccessToken(loadRequest.url)
             }
         }
     }
 
     Component.onCompleted: {
-        Slack.Client.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
-        Slack.Client.onAccessTokenFail.connect(handleAccessTokenFail)
+        SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
+        SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
     }
 
     Component.onDestruction: {
-        Slack.Client.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
-        Slack.Client.onAccessTokenFail.disconnect(handleAccessTokenFail)
+        SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
+        SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
     }
 
     function handleAccessTokenSuccess(userId, teamId, teamName) {

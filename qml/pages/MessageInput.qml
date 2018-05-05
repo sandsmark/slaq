@@ -1,7 +1,6 @@
-import QtQuick 2.0
+import QtQuick 2.8
 import QtQuick.Controls 2.3
-import QtQuick.Window 2.2
-import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick.Window 2.3
 import ".."
 import "../dialogs"
 
@@ -36,7 +35,7 @@ Column {
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]
-                nickSuggestions = Slack.Client.getNickSuggestions(text, cursorPosition)
+                nickSuggestions = SlackClient.getNickSuggestions(text, cursorPosition)
                 var nickPosition = nickSuggestions.indexOf(selectedNick)
                 if (nickPosition > 0) {
                     currentNickSuggestionIndex = nickPosition

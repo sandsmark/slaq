@@ -1,8 +1,7 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.2
-import QtQuick.Window 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
+import QtQuick.Window 2.3
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 
 Drawer {
     id: connectionPanel
@@ -43,25 +42,25 @@ Drawer {
             anchors.horizontalCenter: parent.horizontalCenter
             text: qsTr("Reconnect")
             onClicked: {
-                Slack.Client.reconnect()
+                SlackClient.reconnect()
             }
         }
     }
 
     Component.onCompleted: {
-        Slack.Client.onConnected.connect(hideConnectionPanel)
-        Slack.Client.onReconnecting.connect(showReconnectingMessage)
-        Slack.Client.onDisconnected.connect(showDisconnectedMessage)
-        Slack.Client.onNetworkOff.connect(showNoNetworkMessage)
-        Slack.Client.onNetworkOn.connect(hideConnectionPanel)
+        SlackClient.onConnected.connect(hideConnectionPanel)
+        SlackClient.onReconnecting.connect(showReconnectingMessage)
+        SlackClient.onDisconnected.connect(showDisconnectedMessage)
+        SlackClient.onNetworkOff.connect(showNoNetworkMessage)
+        SlackClient.onNetworkOn.connect(hideConnectionPanel)
     }
 
     Component.onDestruction: {
-        Slack.Client.onConnected.disconnect(hideConnectionPanel)
-        Slack.Client.onReconnecting.disconnect(showReconnectingMessage)
-        Slack.Client.onDisconnected.disconnect(showDisconnectedMessage)
-        Slack.Client.onNetworkOff.disconnect(showNoNetworkMessage)
-        Slack.Client.onNetworkOn.disconnect(hideConnectionPanel)
+        SlackClient.onConnected.disconnect(hideConnectionPanel)
+        SlackClient.onReconnecting.disconnect(showReconnectingMessage)
+        SlackClient.onDisconnected.disconnect(showDisconnectedMessage)
+        SlackClient.onNetworkOff.disconnect(showNoNetworkMessage)
+        SlackClient.onNetworkOn.disconnect(hideConnectionPanel)
     }
 
     function hideConnectionPanel() {

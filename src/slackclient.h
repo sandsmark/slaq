@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QUrl>
 #include <QTimer>
+#include <QThread>
+#include <QtQml>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 
@@ -19,12 +21,8 @@ class SlackClient : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool isOnline READ isOnline NOTIFY isOnlineChanged)
-    Q_PROPERTY(bool isDevice READ isDevice CONSTANT)
-    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setActiveWindow NOTIFY lastChannelChanged)
-
 public:
-    explicit SlackClient(QObject *parent = 0);
+    explicit SlackClient(QObject *parent = nullptr);
     virtual ~SlackClient();
 
     Q_INVOKABLE void setAppActive(bool active);
@@ -32,13 +30,7 @@ public:
 
     Q_INVOKABLE QVariantList getChannels();
     Q_INVOKABLE QVariant getChannel(const QString& channelId);
-
     Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
-
-    bool isOnline() const;
-    bool isDevice() const;
-
-    QString lastChannel();
 
 signals:
     void testConnectionFail();
@@ -77,51 +69,40 @@ signals:
     void lastChannelChanged();
 
 public slots:
-    void start();
-    void handleStartReply();
-
+    void startClient();
     void fetchAccessToken(const QUrl& url);
-    void handleAccessTokenReply();
-
     void testLogin();
-    void handleTestLoginReply();
-
     void loadMessages(const QString& type, const QString& channelId);
-    void handleLoadMessagesReply();
-
     void postMessage(const QString& channelId, QString content);
-    void handlePostMessageReply();
-
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
-    void handlePostImage();
-
     void markChannel(const QString& type, const QString& channelId, const QString& time);
-    void handleMarkChannelReply();
-
     void joinChannel(const QString& channelId);
-    void handleJoinChannelReply();
-
     void leaveChannel(const QString& channelId);
-    void handleLeaveChannelReply();
-
     void leaveGroup(const QString& groupId);
-    void handleLeaveGroupReply();
-
     void openChat(const QString& chatId);
-    void handleOpenChatReply();
-
     void closeChat(const QString& chatId);
+    QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
+    QString lastChannel();
+    bool isOnline() const;
+
+private slots:
+    void handleStartReply();
+    void handleAccessTokenReply();
+    void handleTestLoginReply();
+    void handleLoadMessagesReply();
+    void handlePostMessageReply();
+    void handlePostImage();
+    void handleMarkChannelReply();
+    void handleJoinChannelReply();
+    void handleLeaveChannelReply();
+    void handleLeaveGroupReply();
+    void handleOpenChatReply();
     void handleCloseChatReply();
-
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
-
     void handleStreamStart();
     void handleStreamEnd();
     void handleStreamMessage(const QJsonObject& message);
-
-    void reconnect();
-
-    QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
+    void reconnectClient();
 
 private:
     bool appActive;
@@ -188,5 +169,7 @@ private:
     QString m_lastChannel;
     MessageFormatter m_formatter;
 };
+
+QML_DECLARE_TYPE(SlackClient)
 
 #endif // SLACKCLIENT_H

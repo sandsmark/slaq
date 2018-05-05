@@ -1,5 +1,4 @@
-import QtQuick 2.7
-import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick 2.8
 import QtQuick.Controls 2.3
 import ".."
 import "../Settings.js" as Settings
@@ -65,11 +64,11 @@ Page {
     }
 
     Component.onCompleted: {
-        Slack.Client.onTestLoginSuccess.connect(handleLoginTestSuccess)
-        Slack.Client.onTestLoginFail.connect(handleLoginTestFail)
-        Slack.Client.onInitSuccess.connect(handleInitSuccess)
-        Slack.Client.onInitFail.connect(handleInitFail)
-        Slack.Client.onTestConnectionFail.connect(handleConnectionFail)
+        SlackClient.onTestLoginSuccess.connect(handleLoginTestSuccess)
+        SlackClient.onTestLoginFail.connect(handleLoginTestFail)
+        SlackClient.onInitSuccess.connect(handleInitSuccess)
+        SlackClient.onInitFail.connect(handleInitFail)
+        SlackClient.onTestConnectionFail.connect(handleConnectionFail)
 
         errorMessage = ""
         if (firstView || Settings.hasUserInfo()) {
@@ -82,11 +81,11 @@ Page {
     }
 
     Component.onDestruction: {
-        Slack.Client.onTestLoginSuccess.disconnect(handleLoginTestSuccess)
-        Slack.Client.onTestLoginFail.disconnect(handleLoginTestFail)
-        Slack.Client.onInitSuccess.disconnect(handleInitSuccess)
-        Slack.Client.onInitFail.disconnect(handleInitFail)
-        Slack.Client.onTestConnectionFail.disconnect(handleConnectionFail)
+        SlackClient.onTestLoginSuccess.disconnect(handleLoginTestSuccess)
+        SlackClient.onTestLoginFail.disconnect(handleLoginTestFail)
+        SlackClient.onInitSuccess.disconnect(handleInitSuccess)
+        SlackClient.onInitFail.disconnect(handleInitFail)
+        SlackClient.onTestConnectionFail.disconnect(handleConnectionFail)
     }
 
     function initLoading() {
@@ -94,17 +93,17 @@ Page {
 
         if (Settings.hasUserInfo()) {
             loadMessage = qsTr("Loading")
-            Slack.Client.start()
+            SlackClient.startClient()
         }
         else {
-            Slack.Client.testLogin()
+            SlackClient.testLogin()
         }
     }
 
     function handleLoginTestSuccess(userId, teamId, teamName) {
         loadMessage = qsTr("Loading")
         Settings.setUserInfo(userId, teamId, teamName)
-        Slack.Client.start()
+        SlackClient.startClient()
     }
 
     function handleLoginTestFail() {
@@ -112,8 +111,8 @@ Page {
     }
 
     function handleInitSuccess() {
-        pageStack.replace(channelComponent, {"channelId" : Slack.Client.lastChannel })
-        if (Slack.Client.isDevice) {
+        pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
+        if (SlackClient.isDevice) {
             channelList.item.open()
         } else {
             channelListPermanent.active = true

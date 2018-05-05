@@ -1,7 +1,6 @@
-import QtQuick 2.2
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 
 Rectangle {
     id: page
@@ -11,7 +10,7 @@ Rectangle {
     property bool appActive: Qt.application.state === Qt.ApplicationActive
 
     onAppActiveChanged: {
-        Slack.Client.setAppActive(appActive)
+        SlackClient.setAppActive(appActive)
     }
 
 //    header: ToolBar {

@@ -1,7 +1,6 @@
-import QtQuick 2.10
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 import "../Message.js" as Message
 
 ListView {
@@ -64,20 +63,20 @@ ListView {
     }
 
     Component.onCompleted: {
-        Slack.Client.onInitSuccess.connect(handleReload)
-        Slack.Client.onLoadMessagesSuccess.connect(handleLoadSuccess)
-        Slack.Client.onMessageReceived.connect(handleMessageReceived)
+        SlackClient.onInitSuccess.connect(handleReload)
+        SlackClient.onLoadMessagesSuccess.connect(handleLoadSuccess)
+        SlackClient.onMessageReceived.connect(handleMessageReceived)
     }
 
     Component.onDestruction: {
-        Slack.Client.onInitSuccess.disconnect(handleReload)
-        Slack.Client.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
-        Slack.Client.onMessageReceived.disconnect(handleMessageReceived)
+        SlackClient.onInitSuccess.disconnect(handleReload)
+        SlackClient.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
+        SlackClient.onMessageReceived.disconnect(handleMessageReceived)
     }
 
     function markLatest() {
         if (latestRead != "") {
-            Slack.Client.markChannel(channel.type, channel.id, latestRead)
+            SlackClient.markChannel(channel.type, channel.id, latestRead)
             latestRead = ""
         }
     }
@@ -91,7 +90,7 @@ ListView {
 
     function loadMessages() {
         console.log("loading messages")
-        Slack.Client.loadMessages(channel.type, channel.id)
+        SlackClient.loadMessages(channel.type, channel.id)
     }
 
     function handleLoadSuccess(channelId, messages) {
