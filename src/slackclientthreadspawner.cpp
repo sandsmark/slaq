@@ -95,6 +95,12 @@ QUrl SlackClientThreadSpawner::avatarUrl(const QString &userId)
     return retVal;
 }
 
+void SlackClientThreadSpawner::fetchAccessToken(const QUrl &url)
+{
+    QMetaObject::invokeMethod(m_slackClient, "fetchAccessToken", Qt::QueuedConnection,
+                              Q_ARG(QUrl, url));
+}
+
 void SlackClientThreadSpawner::markChannel(const QString &type, const QString &channelId, const QString &time)
 {
     QMetaObject::invokeMethod(m_slackClient, "markChannel", Qt::QueuedConnection,

@@ -74,6 +74,7 @@ public slots:
     QString lastChannel();
 
     QUrl avatarUrl(const QString &userId);
+    void fetchAccessToken(const QUrl& url);
     //channels
     void markChannel(const QString& type, const QString& channelId, const QString& time);
     void joinChannel(const QString& channelId);

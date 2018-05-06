@@ -1,5 +1,5 @@
 import QtQuick 2.8
-import QtWebView 1.5
+import QtWebView 1.1
 import QtQuick.Controls 2.3
 import "../Settings.js" as Settings
 
