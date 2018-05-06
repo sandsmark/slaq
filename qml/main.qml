@@ -20,6 +20,7 @@ ApplicationWindow {
     width: 800
     height: 600
 
+    property alias pageStack: pageStack
     Settings {
         property alias width: window.width
         property alias height: window.height

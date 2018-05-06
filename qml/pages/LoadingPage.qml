@@ -73,7 +73,6 @@ Page {
         errorMessage = ""
         if (firstView || Settings.hasUserInfo()) {
             firstView = false
-            initLoading()
         } else {
             loading = false
             errorMessage = qsTr("Not logged in")
@@ -88,14 +87,17 @@ Page {
         SlackClient.onTestConnectionFail.disconnect(handleConnectionFail)
     }
 
+    StackView.onActivating: {
+        initLoading()
+    }
+
     function initLoading() {
         loading = true
 
         if (Settings.hasUserInfo()) {
             loadMessage = qsTr("Loading")
             SlackClient.startClient()
-        }
-        else {
+        } else {
             SlackClient.testLogin()
         }
     }

@@ -413,8 +413,8 @@ void SlackClient::handleAccessTokenReply()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
 
+    reply->deleteLater();
     if (isError(data)) {
-        reply->deleteLater();
         emit accessTokenFail();
         return;
     }
@@ -429,8 +429,6 @@ void SlackClient::handleAccessTokenReply()
     config->setUserId(userId);
 
     emit accessTokenSuccess(userId, teamId, teamName);
-
-    reply->deleteLater();
 }
 
 void SlackClient::testLogin()
