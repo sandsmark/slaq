@@ -9,6 +9,8 @@
 #include <QVariantMap>
 #include <QPointer>
 #include <QAbstractListModel>
+#include <QJsonArray>
+
 
 class User : public QObject
 {
@@ -48,6 +50,37 @@ private:
     Presence m_presence = Unknown;
 };
 
+class UsersModel : public QAbstractListModel
+{
+    Q_OBJECT
+
+public:
+    enum Fields {
+        UserObject,
+
+        FieldsCount
+    };
+
+    enum Presence {
+        Unknown,
+        Active,
+        Away
+    };
+    Q_ENUM(Presence)
+
+    UsersModel(QObject *parent);
+
+    int rowCount(const QModelIndex &/*parent*/) const override { return m_users.count(); }
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    void addUser(User *user);
+    void addUsers(const QJsonArray &usersData);
+
+private:
+    QList<QPointer<User>> m_users;
+};
+
 struct Message {
     QString text;
     QPointer<User> user;
@@ -82,48 +115,59 @@ private:
     QList<Message> m_messages;
 };
 
-class Chat : public QObject
+class ChatsModel : public QAbstractListModel
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString channelId MEMBER m_channelId CONSTANT)
-    Q_PROPERTY(Type type MEMBER m_type CONSTANT)
-    Q_PROPERTY(QList<User*> members READ members NOTIFY membersChanged)
-
 public:
-    enum Type {
+    enum ChatFields {
+        Id,
+        Type,
+        Name,
+        IsOpen,
+        LastReadId,
+        UnreadCount,
+        MembersModel,
+        MessagesModel,
+
+        WorkspaceFieldsCount
+    };
+
+    enum ChatType {
         Channel,
         Group,
         Conversation,
     };
-    Q_ENUM(Type)
+    Q_ENUM(ChatType)
 
-    Chat(const QJsonObject &data, QObject *parent);
-    void setMembers(const QList<QPointer<User>> &members);
-    void addMember(QPointer<User> user);
-    void removeMember(const QString &id);
+    struct Chat
+    {
 
-    QList<User*> members(); // for QML
+        Chat(const QJsonObject &data);
 
-    MessageListModel *messageModel() { return m_messages; }
+        QString id;
+        QString presence;
+        ChatType type;
+        QString name;
+        bool isOpen = false;
+        QString lastReadId;
+        int unreadCount = 0;
+        QHash<QString, QPointer<User>> membersModel;
+        MessageListModel *messagesModel;
+    };
 
-signals:
-    void isOpenChanged();
-    void lastReadIdChanged();
-    void unreadCountChanged();
-    void membersChanged();
+    ChatsModel(QObject *parent);
+
+    int rowCount(const QModelIndex &/*parent*/) const override { return m_chats.count(); }
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    void addChat(const Chat &chat);
 
 private:
-    QString m_channelId;
-    QString m_presence;
-    Type m_type;
-    QString m_name;
-    bool m_isOpen = false;
-    QString m_lastReadId;
-    int m_unreadCount = 0;
-    QHash<QString, QPointer<User>> m_members;
-    MessageListModel *m_messages;
+    QList<Chat> m_chats;
 };
+
 
 class Storage
 {
