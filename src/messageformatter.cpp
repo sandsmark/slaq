@@ -99,7 +99,9 @@ void MessageFormatter::replaceEmoji(QString &message)
         QString captured = match.captured();
         captured.replace(QStringLiteral(":"), QStringLiteral(""));
         //qDebug() << "captured" << captured;
-        if (ImagesCache::instance()->isExist(captured)) {
+        if (m_emojis.contains(captured)) {
+            message.replace(":" + captured + ":", m_emojis[captured]);
+        } else if (ImagesCache::instance()->isExist(captured)) {
             QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
                     .arg(captured)
                     .arg(QStringLiteral("middle"))
@@ -107,10 +109,6 @@ void MessageFormatter::replaceEmoji(QString &message)
                     .arg(24);
 
             message.replace(match.captured(), replacement);
-        } else {
-            if (m_emojis.contains(captured)) {
-                message.replace(":" + captured + ":", m_emojis[captured]);
-            }
         }
     }
 }
