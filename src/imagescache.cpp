@@ -20,13 +20,13 @@
 
 ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
 {
-    _cache = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/images";
-    if (!QDir().mkpath(_cache)) {
-        qWarning() << "Cant create images cache folder" << _cache;
+    m_cache = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/images";
+    if (!QDir().mkpath(m_cache)) {
+        qWarning() << "Cant create images cache folder" << m_cache;
     }
-    _imagesJsonFileName = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/emojiimages.json";
+    m_imagesJsonFileName = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/emojiimages.json";
     //check if images json database exist
-    if (!QFile(_imagesJsonFileName).exists()) {
+    if (!QFile(m_imagesJsonFileName).exists()) {
         qDebug() << "requesting data from SlackMojis";
         //requestSlackMojis();
         requestEmojiCheactSheet();
@@ -44,12 +44,12 @@ ImagesCache *ImagesCache::instance()
 
 bool ImagesCache::isExist(const QString &id)
 {
-    return _images.contains(id);
+    return m_images.contains(id);
 }
 
 void ImagesCache::loadImagesDatabase()
 {
-    QFile f(_imagesJsonFileName);
+    QFile f(m_imagesJsonFileName);
     if (f.open(QIODevice::ReadOnly)) {
         const QByteArray& a = f.readAll();
         parseJson(a);
@@ -60,7 +60,7 @@ void ImagesCache::loadImagesDatabase()
 }
 
 bool ImagesCache::isCached(const QString& id) {
-    return _images.value(id).cached;
+    return m_images.value(id).cached;
 }
 
 //suppose to be run in non-gui thread
@@ -68,9 +68,9 @@ QImage ImagesCache::image(const QString &id)
 {
     QImage image_;
     //qDebug() << "request for image" << id << _images.contains(id) << _images.value(id).cached;
-    if (_images.contains(id)) {
-        if (_images.value(id).cached) {
-            image_.load(_cache + QDir::separator() + _images.value(id).fileName);
+    if (m_images.contains(id)) {
+        if (m_images.value(id).cached) {
+            image_.load(m_cache + QDir::separator() + m_images.value(id).fileName);
         } else {
             emit requestImageViaHttp(id);
         }
@@ -82,26 +82,26 @@ QImage ImagesCache::image(const QString &id)
 
 void ImagesCache::onImageRequestedViaHttp(const QString &id)
 {
-    QNetworkRequest req_ = QNetworkRequest(QUrl(_images.value(id).url));
+    QNetworkRequest req_ = QNetworkRequest(QUrl(m_images.value(id).url));
     req_.setAttribute(QNetworkRequest::User, QVariant(id));
-    QNetworkReply* reply = _qnam.get(req_);
+    QNetworkReply* reply = m_qnam.get(req_);
     connect(reply, &QNetworkReply::finished, this, &ImagesCache::onImageRequestFinished);
 }
 
 bool ImagesCache::parseSlackMojis(const QByteArray &data)
 {
-    auto doc = QGumboDocument::parse(data.data());
-    auto root = doc.rootNode();
-    auto nodes = root.getElementsByClassName(QStringLiteral("group"));
+    QGumboDocument doc = QGumboDocument::parse(data.data());
+    QGumboNode root = doc.rootNode();
+    QGumboNodes nodes = root.getElementsByClassName(QStringLiteral("group"));
     //    qDebug() << "groups" << nodes.size();
 
-    for (const auto& node: nodes) {
+    for (const QGumboNode& node: nodes) {
         QString title_ = node.getElementsByClassName(QStringLiteral("title")).at(0).innerText().trimmed();
         //qDebug() << "title" << title_;
-        auto emojis = node.getElementsByClassName(QStringLiteral("emojis")).front().children();
+        QGumboNodes emojis = node.getElementsByClassName(QStringLiteral("emojis")).front().children();
         //qDebug() << "emojis" << emojis.size();
         for (const auto& emoji: emojis) {
-            auto aclass = emoji.getElementsByTagName(HtmlTag::A).front();
+            QGumboNode aclass = emoji.getElementsByTagName(HtmlTag::A).front();
             ImageInfo info_;
             info_.pack = title_;
             info_.name = emoji.getAttribute(QStringLiteral("title")).trimmed();
@@ -112,7 +112,7 @@ bool ImagesCache::parseSlackMojis(const QByteArray &data)
             info_.url = QUrl(url_);
             info_.fileName = aclass.getAttribute(QStringLiteral("download")).trimmed();
             info_.cached = false; //to check later
-            _images[info_.name] = info_;
+            m_images[info_.name] = info_;
             //qDebug() << "adding emoji:" << info_.pack << info_.name << info_.url << info_.fileName;
         }
 
@@ -120,29 +120,29 @@ bool ImagesCache::parseSlackMojis(const QByteArray &data)
     return true;
 }
 
-bool ImagesCache::parseEmojiCheactSheet(const QByteArray &data)
+bool ImagesCache::parseEmojiCheatSheet(const QByteArray &data)
 {
     auto doc = QGumboDocument::parse(data.data());
-    auto root = doc.rootNode();
-    auto nodes = root.getElementsByTagName(HtmlTag::UL);
+    QGumboNode root = doc.rootNode();
+    QGumboNodes nodes = root.getElementsByTagName(HtmlTag::UL);
     //qDebug() << "emojis" << nodes.size();
 
-    for (const auto& node: nodes) {
+    for (const QGumboNode& node: nodes) {
         const QStringList & list_ = node.classList();
         if (list_.isEmpty()) {
             continue;
         }
         QString title_ = node.classList().at(0).trimmed();
         //qDebug() << "title" << title_;
-        auto emojis = node.getElementsByClassName(QStringLiteral("emoji"));
-        auto emojisnames = node.getElementsByClassName(QStringLiteral("name"));
+        QGumboNodes emojis = node.getElementsByClassName(QStringLiteral("emoji"));
+        QGumboNodes emojisnames = node.getElementsByClassName(QStringLiteral("name"));
         if (emojis.size() != emojisnames.size()) {
             qDebug() << "emojis parse something wrong" << emojis.size() << emojisnames.size();
             continue;
         }
         for (ulong i = 0; i < emojis.size(); i++) {
-            const auto& emoji = emojis.at(i);
-            const auto& name = emojisnames.at(i);
+            const QGumboNode& emoji = emojis.at(i);
+            const QGumboNode& name = emojisnames.at(i);
 
             ImageInfo info_;
             info_.pack = title_;
@@ -154,22 +154,22 @@ bool ImagesCache::parseEmojiCheactSheet(const QByteArray &data)
             info_.url = QUrl(url_);
             info_.fileName = info_.url.fileName();
             info_.cached = false; //to check later
-            _images[info_.name] = info_;
+            m_images[info_.name] = info_;
             //qDebug() << "adding emoji:" << info_.pack << info_.name << info_.url << info_.fileName;
         }
     }
-    return (_images.size() > 0);
+    return (m_images.size() > 0);
 }
 
 void ImagesCache::requestSlackMojis()
 {
-    QNetworkReply *reply = _qnam.get(QNetworkRequest(QUrl(QStringLiteral("https://slackmojis.com/"))));
+    QNetworkReply *reply = m_qnam.get(QNetworkRequest(QUrl(QStringLiteral("https://slackmojis.com/"))));
     connect(reply, &QNetworkReply::finished, this, &ImagesCache::onImagesListRequestFinished);
 }
 
 void ImagesCache::requestEmojiCheactSheet()
 {
-    QNetworkReply *reply = _qnam.get(QNetworkRequest(QUrl(QStringLiteral("https://www.webpagefx.com/tools/emoji-cheat-sheet/"))));
+    QNetworkReply *reply = m_qnam.get(QNetworkRequest(QUrl(QStringLiteral("https://www.webpagefx.com/tools/emoji-cheat-sheet/"))));
     connect(reply, &QNetworkReply::finished, this, &ImagesCache::onImagesListRequestFinished);
 }
 
@@ -179,7 +179,7 @@ void ImagesCache::parseJson(const QByteArray &data) {
     QJsonObject obj = jsonDoc.object();
 
     qDebug() << "Images DB version" << obj.value("version").toString();
-    _lastUpdate = QDateTime::fromString(obj.value(QStringLiteral("updated")).toString(), "yyyy-MM-ddThh:mm:ss.zzzZ");
+    m_lastUpdate = QDateTime::fromString(obj.value(QStringLiteral("updated")).toString(), "yyyy-MM-ddThh:mm:ss.zzzZ");
     QJsonArray packsList = obj.value(QStringLiteral("packs")).toArray();
 
     foreach (const QJsonValue& value, packsList) {
@@ -197,7 +197,7 @@ void ImagesCache::parseJson(const QByteArray &data) {
                     info_.url = QUrl(imageObj.value("url").toString());
                     info_.fileName = imageObj.value("filename").toString();
                     info_.cached = false; //to check later
-                    _images[info_.name] = info_;
+                    m_images[info_.name] = info_;
                     //qDebug() << "appended" << iData.name << iData.url << iData.category;
                 }
             }
@@ -214,7 +214,7 @@ void ImagesCache::saveJson()
     QJsonArray packs;
 
     QMap<QString, QJsonArray> packsMap;
-    foreach(ImageInfo info, _images) {
+    foreach(ImageInfo info, m_images) {
         QJsonObject imgo;
         imgo.insert("name", info.name);
         imgo.insert("filename", info.fileName);
@@ -233,7 +233,7 @@ void ImagesCache::saveJson()
 
     QJsonDocument jdoc = QJsonDocument(o);
     QByteArray ba = jdoc.toJson(QJsonDocument::Compact);
-    QFile f(_imagesJsonFileName);
+    QFile f(m_imagesJsonFileName);
     if (f.open(QIODevice::WriteOnly)) {
         f.write(ba);
         f.close();
@@ -253,7 +253,7 @@ void ImagesCache::onImagesListRequestFinished()
         if (reply->url().host().contains(QStringLiteral("slackmojis.com"))) {
             parsed_ = parseSlackMojis(arr);
         } else {
-            parsed_ = parseEmojiCheactSheet(arr);
+            parsed_ = parseEmojiCheatSheet(arr);
         }
         if (parsed_) {
             saveJson();
@@ -274,11 +274,11 @@ void ImagesCache::onImageRequestFinished()
         const QByteArray &arr = reply->readAll();
         QString id = reply->request().attribute(QNetworkRequest::User).toString();
         if (!id.isEmpty()) {
-            QFile f(_cache + QDir::separator() + _images.value(id).fileName);
+            QFile f(m_cache + QDir::separator() + m_images.value(id).fileName);
             f.open(QIODevice::WriteOnly);
             f.write(arr);
             f.close();
-            _images[id].cached = true;
+            m_images[id].cached = true;
             emit imageLoaded(id);
         } else {
             qWarning() << "id is empty";

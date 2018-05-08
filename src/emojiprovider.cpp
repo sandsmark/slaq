@@ -2,13 +2,13 @@
 
 EmojiProvider::EmojiProvider()
 {
-    pool.setMaxThreadCount(QThread::idealThreadCount());
+    m_pool.setMaxThreadCount(QThread::idealThreadCount());
 }
 
 QQuickImageResponse *EmojiProvider::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
     AsyncImageResponse *response = new AsyncImageResponse(id, requestedSize);
-    pool.start(response);
+    m_pool.start(response);
     return response;
 }
 

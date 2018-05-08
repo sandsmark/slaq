@@ -29,7 +29,7 @@ public:
     bool isExist(const QString &id);
     bool isCached(const QString &id);
     QImage image(const QString &id);
-    bool isImagesDatabaseLoaded() { return _images.size() > 0; }
+    bool isImagesDatabaseLoaded() { return m_images.size() > 0; }
     void loadImagesDatabase();
 
 signals:
@@ -49,16 +49,16 @@ private:
     explicit ImagesCache(QObject *parent = nullptr);
     void parseJson(const QByteArray &data);
     bool parseSlackMojis(const QByteArray &data);
-    bool parseEmojiCheactSheet(const QByteArray &data);
+    bool parseEmojiCheatSheet(const QByteArray &data);
     void saveJson();
 
 private:
-    QMap<QString, ImageInfo> _images;
-    QDateTime _lastUpdate;
-    QNetworkAccessManager _qnam;
+    QMap<QString, ImageInfo> m_images;
+    QDateTime m_lastUpdate;
+    QNetworkAccessManager m_qnam;
 
-    QString _cache;
-    QString _imagesJsonFileName;
+    QString m_cache;
+    QString m_imagesJsonFileName;
 };
 
 #endif // IMAGESCACHE_H

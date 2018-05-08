@@ -35,7 +35,7 @@ public:
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize);
 
 private:
-    QThreadPool pool;
+    QThreadPool m_pool;
 };
 
 #endif // EMOJIPROVIDER_H
