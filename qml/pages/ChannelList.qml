@@ -27,6 +27,4 @@ Rectangle {
         }
     }
 
-
-    ConnectionPanel {}
 }

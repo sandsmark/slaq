@@ -37,6 +37,17 @@ ApplicationWindow {
     header: ToolBar {
         RowLayout {
             anchors.fill: parent
+            Rectangle {
+                color: Slack.Client.isOnline ? "green" : "red"
+                Layout.leftMargin: Theme.paddingMedium
+                height: parent.height/3
+                width: height
+                radius: width/2
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: connectionPanel.open()
+                }
+            }
 
             ToolButton {
                 text: pageStack.depth > 1 ? "‹" : "›"
@@ -92,6 +103,8 @@ ApplicationWindow {
             }
         }
     }
+
+    ConnectionPanel { id: connectionPanel; }
 
     StackView {
         id: pageStack
