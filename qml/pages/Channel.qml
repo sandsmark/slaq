@@ -99,8 +99,6 @@ Page {
         }
     }
 
-    ConnectionPanel {}
-
     Component.onCompleted: {
         page.channel = Slack.Client.getChannel(page.channelId)
         input.forceActiveFocus()

@@ -75,6 +75,4 @@ Page {
             }
         }
     }
-
-    ConnectionPanel {}
 }
