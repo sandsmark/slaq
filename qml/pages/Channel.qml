@@ -14,6 +14,19 @@ Page {
 
     title: channel.name
 
+    header: Rectangle {
+        height: Theme.headerSize
+        border.color: "#00050505"
+        border.width: 1
+        radius: 5
+        Label {
+            text: "#" + page.title
+            anchors.centerIn: parent
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
+
     BusyIndicator {
         id: loader
         visible: true
@@ -26,12 +39,9 @@ Page {
         channel: page.channel
 
         anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            bottom: input.top
+            top: parent.top; bottom: input.top; left: parent.left; right: parent.right
+            margins: Theme.paddingSmall
         }
-
         onLoadCompleted: {
             loader.visible = false
         }
