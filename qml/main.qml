@@ -33,7 +33,6 @@ ApplicationWindow {
         Channel {}
     }
 
-
     header: ToolBar {
         RowLayout {
             anchors.fill: parent
@@ -51,6 +50,7 @@ ApplicationWindow {
 
             ToolButton {
                 text: pageStack.depth > 1 ? "‹" : "›"
+                font.pixelSize: parent.height/2
                 onClicked: {
                     if (pageStack.depth > 1) {
                         pageStack.pop()
@@ -66,17 +66,11 @@ ApplicationWindow {
                 enabled: visible
             }
 
-            Label {
-                text: pageStack.currentItem.title
-                elide: Label.ElideRight
-                horizontalAlignment: Qt.AlignHCenter
-                verticalAlignment: Qt.AlignVCenter
-                Layout.fillWidth: true
-            }
-
             ToolButton {
                 text: qsTr("⋮")
                 onClicked: menu.open()
+
+                Layout.alignment: Qt.AlignRight
 
                 Menu {
                     id: menu
