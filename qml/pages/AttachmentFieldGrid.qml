@@ -1,6 +1,6 @@
-import QtQuick 2.1
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.3
 import ".."
 
 GridLayout {
@@ -17,7 +17,7 @@ GridLayout {
             Layout.columnSpan: model.isShort ? 1 : 2
             Layout.preferredWidth: model.isShort ? grid.width / 2 : grid.width
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-            font.pointSize: Theme.fontSizeExtraSmall
+            font.pointSize: Theme.fontSizeTiny
             font.weight: model.isTitle ? Font.Bold : Font.Normal
             text: model.content
         }

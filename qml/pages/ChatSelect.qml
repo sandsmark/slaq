@@ -1,7 +1,7 @@
 import QtQuick 2.2
 import QtQuick.Controls 2.2
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
+//import com.iskrembilen.slaq 1.0 as Slack
 import "../Channel.js" as Channel
 
 Page {
@@ -43,7 +43,7 @@ Page {
             model: ListModel {
                 id: channelListModel
 
-                property var available: Slack.Client.getChannels().filter(Channel.isJoinableChat)
+                property var available: SlackClient.getChannels().filter(Channel.isJoinableChat)
 
                 Component.onCompleted: update()
 
@@ -68,12 +68,10 @@ Page {
                 text: model.name
 
                 onClicked: {
-                    Slack.Client.openChat(model.id)
+                    SlackClient.openChat(model.id)
                     pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
                 }
             }
         }
     }
-
-    ConnectionPanel {}
 }

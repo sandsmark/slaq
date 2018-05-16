@@ -1,9 +1,8 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 
 Page {
     id: page
@@ -13,6 +12,19 @@ Page {
     property bool initialized: false
 
     title: channel.name
+
+    header: Rectangle {
+        height: Theme.headerSize
+        border.color: "#00050505"
+        border.width: 1
+        radius: 5
+        Label {
+            text: "#" + page.title
+            anchors.centerIn: parent
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
 
     BusyIndicator {
         id: loader
@@ -26,12 +38,9 @@ Page {
         channel: page.channel
 
         anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            bottom: input.top
+            top: parent.top; bottom: input.top; left: parent.left; right: parent.right
+            margins: Theme.paddingSmall
         }
-
         onLoadCompleted: {
             loader.visible = false
         }
@@ -67,7 +76,7 @@ Page {
         visible: listView.inputEnabled
         placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
         onSendMessage: {
-            Slack.Client.postMessage(channel.id, content)
+            SlackClient.postMessage(channel.id, content)
         }
 
         nickPopupVisible: nickPopup.visible
@@ -99,23 +108,21 @@ Page {
         }
     }
 
-    ConnectionPanel {}
-
     Component.onCompleted: {
-        page.channel = Slack.Client.getChannel(page.channelId)
+        page.channel = SlackClient.getChannel(page.channelId)
         input.forceActiveFocus()
     }
 
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
-            Slack.Client.setActiveWindow(page.channelId)
+            SlackClient.setActiveWindow(page.channelId)
 
             if (!initialized) {
                 initialized = true
                 listView.loadMessages()
             }
         } else {
-            Slack.Client.setActiveWindow("")
+            SlackClient.setActiveWindow("")
             listView.markLatest()
         }
     }

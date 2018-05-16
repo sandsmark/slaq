@@ -1,7 +1,6 @@
-import QtQuick 2.10
+import QtQuick 2.8
 import QtQuick.Controls 2.3
-import QtQuick.Window 2.2
-import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 import ".."
 
@@ -28,7 +27,7 @@ Item {
                 id: avatarImage
                 height: Theme.avatarSize
                 width: height
-                source: Slack.Client.avatarUrl(user.id)
+                source: SlackClient.avatarUrl(user.id)
             }
 
             Column {
@@ -136,7 +135,7 @@ Item {
                     hoverEnabled: true
 
                     onClicked: {
-                        if (Slack.Client.isDevice) {
+                        if (SlackClient.isDevice) {
                             pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model})
                         } else {
                             parent.expanded = !parent.expanded

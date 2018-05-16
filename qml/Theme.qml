@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick 2.10
+import QtQuick 2.8
 
 QtObject {
     readonly property int paddingLarge: 20
@@ -8,6 +8,8 @@ QtObject {
     readonly property int paddingSmall: 2
 
     readonly property int avatarSize: 64
+
+    readonly property int headerSize: 32
 
     readonly property int fontSizeHuge: 20
     readonly property int fontSizeLarge: 17

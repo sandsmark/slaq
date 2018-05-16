@@ -1,8 +1,6 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 import QtQuick.Dialogs 1.3
-
-import com.iskrembilen.slaq 1.0 as Slack
 
 import ".."
 
@@ -67,7 +65,7 @@ Page {
                 visible: !page.uploading
                 onClicked: {
                     page.uploading = true
-                    Slack.Client.postImage(channelId, page.selectedImage, titleInput.text, commentInput.text)
+                    SlackClient.postImage(channelId, page.selectedImage, titleInput.text, commentInput.text)
                 }
             }
 
@@ -99,13 +97,13 @@ Page {
 
 
     Component.onCompleted: {
-        Slack.Client.onPostImageFail.connect(handleImagePostFail)
-        Slack.Client.onPostImageSuccess.connect(handleImagePostSuccess)
+        SlackClient.onPostImageFail.connect(handleImagePostFail)
+        SlackClient.onPostImageSuccess.connect(handleImagePostSuccess)
     }
 
     Component.onDestruction: {
-        Slack.Client.onPostImageFail.disconnect(handleImagePostFail)
-        Slack.Client.onPostImageSuccess.disconnect(handleImagePostSuccess)
+        SlackClient.onPostImageFail.disconnect(handleImagePostFail)
+        SlackClient.onPostImageSuccess.disconnect(handleImagePostSuccess)
     }
 
     function handleImagePostFail() {

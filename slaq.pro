@@ -30,7 +30,8 @@ SOURCES += src/main.cpp \
     src/notificationlistener.cpp \
     src/filemodel.cpp \
     src/emojiprovider.cpp \
-    src/imagescache.cpp
+    src/imagescache.cpp \
+    src/slackclientthreadspawner.cpp
 
 OTHER_FILES += qml/main.qml \
     qml/cover/CoverPage.qml \
@@ -49,7 +50,8 @@ HEADERS += \
     src/notificationlistener.h \
     src/filemodel.h \
     src/emojiprovider.h \
-    src/imagescache.h
+    src/imagescache.h \
+    src/slackclientthreadspawner.h
 
 DISTFILES += \
     qml/pages/Settings.js \

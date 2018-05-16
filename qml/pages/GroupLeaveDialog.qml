@@ -1,5 +1,5 @@
-import QtQuick 2.2
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 
 Dialog {
     id: dialog
