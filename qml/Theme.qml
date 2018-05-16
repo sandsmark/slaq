@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick 2.10
+import QtQuick 2.8
 
 QtObject {
     readonly property int paddingLarge: 20

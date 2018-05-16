@@ -1,9 +1,8 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 
 Page {
     id: page
@@ -77,7 +76,7 @@ Page {
         visible: listView.inputEnabled
         placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
         onSendMessage: {
-            Slack.Client.postMessage(channel.id, content)
+            SlackClient.postMessage(channel.id, content)
         }
 
         nickPopupVisible: nickPopup.visible
@@ -110,20 +109,20 @@ Page {
     }
 
     Component.onCompleted: {
-        page.channel = Slack.Client.getChannel(page.channelId)
+        page.channel = SlackClient.getChannel(page.channelId)
         input.forceActiveFocus()
     }
 
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
-            Slack.Client.setActiveWindow(page.channelId)
+            SlackClient.setActiveWindow(page.channelId)
 
             if (!initialized) {
                 initialized = true
                 listView.loadMessages()
             }
         } else {
-            Slack.Client.setActiveWindow("")
+            SlackClient.setActiveWindow("")
             listView.markLatest()
         }
     }

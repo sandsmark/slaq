@@ -21,7 +21,7 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
-import QtQuick 2.10
+import QtQuick 2.8
 import QtQuick.Controls 2.3
 import ".."
 

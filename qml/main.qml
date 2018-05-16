@@ -1,7 +1,6 @@
-import QtQuick 2.10
-import QtQuick.Controls 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
-import com.iskrembilen.slaq 1.0 as Slack
 
 import Qt.labs.settings 1.0
 
@@ -21,6 +20,7 @@ ApplicationWindow {
     width: 800
     height: 600
 
+    property alias pageStack: pageStack
     Settings {
         property alias width: window.width
         property alias height: window.height
@@ -33,11 +33,18 @@ ApplicationWindow {
         Channel {}
     }
 
+    Connections {
+        target: SlackClient
+        onThreadStarted: {
+            console.log("qml: thread started")
+            pageStack.push(loadingPage)
+        }
+    }
     header: ToolBar {
         RowLayout {
             anchors.fill: parent
             Rectangle {
-                color: Slack.Client.isOnline ? "green" : "red"
+                color: SlackClient.isOnline ? "green" : "red"
                 Layout.leftMargin: Theme.paddingMedium
                 height: parent.height/3
                 width: height
@@ -62,7 +69,7 @@ ApplicationWindow {
                     }
                 }
 
-                visible: Slack.Client.isDevice || pageStack.depth > 1
+                visible: SlackClient.isDevice || pageStack.depth > 1
                 enabled: visible
             }
 
@@ -100,6 +107,11 @@ ApplicationWindow {
 
     ConnectionPanel { id: connectionPanel; }
 
+    Component {
+        id: loadingPage
+        LoadingPage {}
+    }
+
     StackView {
         id: pageStack
         anchors {
@@ -109,30 +121,25 @@ ApplicationWindow {
             bottom: parent.bottom
         }
 
-        initialItem: LoadingPage {
-            height: window.height
-            width: window.width
-        }
-
         transform: Translate {
-            x: Slack.Client.isDevice ? channelList.item.position * width * 0.33 : 0
+            x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
         }
 
     }
 
-    Loader {
-        id: channelList
-        active: Slack.Client.isDevice
+//    Loader {
+//        id: channelList
+//        active: SlackClient.isDevice
 
-        sourceComponent:  Drawer {
-            width: parent.width * 0.66
-            height: window.height
+//        sourceComponent:  Drawer {
+//            width: parent.width * 0.66
+//            height: window.height
 
-            ChannelList {
-                anchors.fill: parent
-            }
-        }
-    }
+//            ChannelList {
+//                anchors.fill: parent
+//            }
+//        }
+//    }
 
     Loader {
         id: channelListPermanent
@@ -144,7 +151,7 @@ ApplicationWindow {
         Behavior on opacity { NumberAnimation { duration: 500 } }
 
         sourceComponent: ChannelList {
-            width: Slack.Client.isOnline ? Math.min(parent.width * 0.33, 200) : 0
+            width: SlackClient.isOnline ? Math.min(parent.width * 0.33, 200) : 0
             height: window.height
         }
     }

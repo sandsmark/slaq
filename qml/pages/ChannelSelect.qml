@@ -1,8 +1,7 @@
-import QtQuick 2.10
+import QtQuick 2.8
 import QtQuick.Controls 2.3
 import QtQuick.Window 2.3
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 import "../Channel.js" as Channel
 
 Page {
@@ -44,7 +43,7 @@ Page {
             model: ListModel {
                 id: channelListModel
 
-                property var available: Slack.Client.getChannels().filter(Channel.isJoinableChannel)
+                property var available: SlackClient.getChannels().filter(Channel.isJoinableChannel)
 
                 Component.onCompleted: update()
 
@@ -69,7 +68,7 @@ Page {
                 icon.name: Channel.getIcon(model)
                 text: model.name
                 onClicked: {
-                    Slack.Client.joinChannel(model.id)
+                    SlackClient.joinChannel(model.id)
                     pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
                 }
             }

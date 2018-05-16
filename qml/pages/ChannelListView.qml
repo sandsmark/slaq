@@ -1,5 +1,4 @@
-import QtQuick 2.10
-import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick 2.8
 import QtQuick.Controls 2.3
 import ".."
 
@@ -34,12 +33,12 @@ ListView {
         id: delegate
         text: model.name
         property color textColor: delegate.highlighted ? palette.highlightedText: palette.text
-        highlighted: Slack.Client.lastChannel === model.id
+        highlighted: SlackClient.lastChannel === model.id
 
         icon.name: Channel.getIcon(model)
 
         onClicked: {
-            Slack.Client.setActiveWindow(model.id)
+            SlackClient.setActiveWindow(model.id)
             pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
         }
 
@@ -60,18 +59,18 @@ ListView {
                 onClicked: {
                     switch (model.type) {
                         case "channel":
-                            Slack.Client.leaveChannel(model.id)
+                            SlackClient.leaveChannel(model.id)
                             break
 
                         case "group":
                             var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
                             dialog.accepted.connect(function() {
-                                Slack.Client.leaveGroup(model.id)
+                                SlackClient.leaveGroup(model.id)
                             })
                             break
 
                         case "im":
-                            Slack.Client.closeChat(model.id)
+                            SlackClient.closeChat(model.id)
                     }
                 }
             }

@@ -12,6 +12,7 @@
 #include "notificationlistener.h"
 #include "storage.h"
 #include "filemodel.h"
+#include "slackclientthreadspawner.h"
 
 int main(int argc, char *argv[])
 {
@@ -21,34 +22,35 @@ int main(int argc, char *argv[])
 
     QNetworkProxyFactory::setUseSystemConfiguration(true);
     QQmlApplicationEngine engine;
+    engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
     // In case there's no system emoji font
     QFontDatabase::addApplicationFont(":/fonts/NotoColorEmoji.ttf");
 
     QtWebView::initialize();
+    qDebug() << "GUI thread" << QThread::currentThreadId();
+    qRegisterMetaType<SlackClient*>("SlackClient*");
 
     SlackConfig::clearWebViewCache();
+    SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
+    engine.rootContext()->setContextProperty("SlackClient", _slackThread);
+    _slackThread->start();
 
-    qmlRegisterSingletonType<SlackClient>("com.iskrembilen.slaq", 1, 0, "Client", [](QQmlEngine *, QJSEngine *) -> QObject * {
-        return new SlackClient;
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
+        _slackThread->quit();
     });
-
-    qDebug() << "GUI thread" << QThread::currentThreadId();
-
-    engine.rootContext()->setContextProperty("fileModel", new FileModel());
-    engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
-
-    engine.load(QUrl("qrc:/qml/main.qml"));
-    if (engine.rootObjects().isEmpty()) {
-        qWarning() << "No root objects?";
-        //        return 1;
-    }
-
     //    NotificationListener* listener = new NotificationListener(&engine);
     //    new DBusAdaptor(listener);
     //    QDBusConnection connection = QDBusConnection::sessionBus();
     //    connection.registerService("slaq");
     //    connection.registerObject("/", listener);
+
+    engine.rootContext()->setContextProperty("fileModel", new FileModel());
+    engine.load(QUrl("qrc:/qml/main.qml"));
+    if (engine.rootObjects().isEmpty()) {
+        qWarning() << "No root objects?";
+        //        return 1;
+    }
 
     return app.exec();
 }

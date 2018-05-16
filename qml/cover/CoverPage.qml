@@ -1,6 +1,5 @@
-import QtQuick 2.10
-import QtQuick.Controls 2.2
-import com.iskrembilen.slaq 1.0 as Slack
+import QtQuick 2.8
+import QtQuick.Controls 2.3
 //import "../pages/Settings.js" as Settings
 import ".."
 
@@ -67,18 +66,18 @@ Item {
 
 //        CoverAction {
 //            iconSource: "image://theme/icon-cover-refresh"
-//            onTriggered: Slack.Client.reconnect()
+//            onTriggered: SlackClient.reconnect()
 //        }
 //    }
 
     Component.onCompleted: {
-        Slack.Client.onInitSuccess.connect(reloadChannelList)
-        Slack.Client.onChannelUpdated.connect(reloadChannelList)
-        Slack.Client.onConnected.connect(hideConnectionMessage)
-        Slack.Client.onReconnecting.connect(showReconnectingMessage)
-        Slack.Client.onDisconnected.connect(showDisconnectedMessage)
-        Slack.Client.onNetworkOff.connect(showNoNetworkMessage)
-        Slack.Client.onNetworkOn.connect(hideNetworkMessage)
+        SlackClient.onInitSuccess.connect(reloadChannelList)
+        SlackClient.onChannelUpdated.connect(reloadChannelList)
+        SlackClient.onConnected.connect(hideConnectionMessage)
+        SlackClient.onReconnecting.connect(showReconnectingMessage)
+        SlackClient.onDisconnected.connect(showDisconnectedMessage)
+        SlackClient.onNetworkOff.connect(showNoNetworkMessage)
+        SlackClient.onNetworkOn.connect(hideNetworkMessage)
     }
 
     function hideConnectionMessage() {
@@ -110,7 +109,7 @@ Item {
         title.text = Settings.getUserInfo().teamName
         unreadMessageCount = 0
 
-        Slack.Client.getChannels().forEach(function(channel) {
+        SlackClient.getChannels().forEach(function(channel) {
             if (channel.isOpen && channel.unreadCount > 0) {
                 unreadMessageCount += channel.unreadCount
             }

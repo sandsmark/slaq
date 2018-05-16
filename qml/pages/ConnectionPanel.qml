@@ -1,8 +1,7 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.2
-import QtQuick.Window 2.2
+import QtQuick 2.8
+import QtQuick.Controls 2.3
+import QtQuick.Window 2.3
 import ".."
-import com.iskrembilen.slaq 1.0 as Slack
 
 Drawer {
     id: connectionPanel
@@ -24,7 +23,7 @@ Drawer {
         }
 
         BusyIndicator {
-            running: connectionPanel.opened && !Slack.Client.isOnline
+            running: connectionPanel.opened && !SlackClient.isOnline
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -33,13 +32,13 @@ Drawer {
             text: qsTr("Reconnect")
             anchors.verticalCenter: parent.verticalCenter
             onClicked: {
-                Slack.Client.reconnect()
+                SlackClient.reconnect()
             }
         }
     }
 
     Connections {
-        target: Slack.Client
+        target: SlackClient
         onConnected: {
             statusMessage.text = qsTr("Connected")
             connectionPanel.close()

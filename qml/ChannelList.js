@@ -3,21 +3,21 @@
 
 function init() {
     reloadChannels()
-    Slack.Client.onInitSuccess.connect(reloadChannels)
-    Slack.Client.onChannelUpdated.connect(handleChannelUpdate)
-    Slack.Client.onChannelJoined.connect(handleChannelJoined)
-    Slack.Client.onChannelLeft.connect(handleChannelLeft)
+    SlackClient.onInitSuccess.connect(reloadChannels)
+    SlackClient.onChannelUpdated.connect(handleChannelUpdate)
+    SlackClient.onChannelJoined.connect(handleChannelJoined)
+    SlackClient.onChannelLeft.connect(handleChannelLeft)
 }
 
 function disconnect() {
-    Slack.Client.onInitSuccess.disconnect(reloadChannels)
-    Slack.Client.onChannelUpdated.disconnect(handleChannelUpdate)
-    Slack.Client.onChannelJoined.disconnect(handleChannelJoined)
-    Slack.Client.onChannelLeft.disconnect(handleChannelLeft)
+    SlackClient.onInitSuccess.disconnect(reloadChannels)
+    SlackClient.onChannelUpdated.disconnect(handleChannelUpdate)
+    SlackClient.onChannelJoined.disconnect(handleChannelJoined)
+    SlackClient.onChannelLeft.disconnect(handleChannelLeft)
 }
 
 function reloadChannels() {
-    var channels = Slack.Client.getChannels().filter(Channel.isOpen)
+    var channels = SlackClient.getChannels().filter(Channel.isOpen)
     channels.sort(compareByCategory)
 
     channelListModel.clear()
