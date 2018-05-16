@@ -8,85 +8,56 @@ Drawer {
     width: parent.width
     height: content.height + Theme.paddingLarge
 
-    edge: Qt.BottomEdge
+    edge: Qt.TopEdge
 
-    Column {
+    Row {
         id: content
         width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio >= 90 ? 4 : 2)
         anchors.centerIn: parent
         spacing: Theme.paddingMedium
 
-        Row {
-            id: reconnectingMessage
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Theme.paddingMedium
-
-            BusyIndicator {
-                running: reconnectingMessage.visible
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Label {
-                text: qsTr("Reconnecting")
-            }
+        Label {
+            id: statusMessage
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Disconnected")
         }
 
-        Label {
-            id: disconnectedMessage
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Disconnected")
+        BusyIndicator {
+            running: connectionPanel.opened && !Slack.Client.isOnline
+            anchors.verticalCenter: parent.verticalCenter
         }
 
         Button {
             id: reconnectButton
-            anchors.horizontalCenter: parent.horizontalCenter
             text: qsTr("Reconnect")
+            anchors.verticalCenter: parent.verticalCenter
             onClicked: {
                 SlackClient.reconnect()
             }
         }
     }
 
-    Component.onCompleted: {
-        SlackClient.onConnected.connect(hideConnectionPanel)
-        SlackClient.onReconnecting.connect(showReconnectingMessage)
-        SlackClient.onDisconnected.connect(showDisconnectedMessage)
-        SlackClient.onNetworkOff.connect(showNoNetworkMessage)
-        SlackClient.onNetworkOn.connect(hideConnectionPanel)
-    }
+    Connections {
+        target: Slack.Client
+        onConnected: {
+            statusMessage.text = qsTr("Connected")
+            connectionPanel.close()
+        }
 
-    Component.onDestruction: {
-        SlackClient.onConnected.disconnect(hideConnectionPanel)
-        SlackClient.onReconnecting.disconnect(showReconnectingMessage)
-        SlackClient.onDisconnected.disconnect(showDisconnectedMessage)
-        SlackClient.onNetworkOff.disconnect(showNoNetworkMessage)
-        SlackClient.onNetworkOn.disconnect(hideConnectionPanel)
-    }
+        onReconnecting: {
+            statusMessage.text = qsTr("Reconnecting")
+            connectionPanel.open()
+        }
 
-    function hideConnectionPanel() {
-        connectionPanel.close()
-    }
+        onDisconnected: {
+            statusMessage.text = qsTr("Disconnected")
+            connectionPanel.open()
 
-    function showReconnectingMessage() {
-        disconnectedMessage.visible = false
-        reconnectButton.visible = false
-        reconnectingMessage.visible = true
-        connectionPanel.show()
-    }
+        }
 
-    function showDisconnectedMessage() {
-        disconnectedMessage.text = qsTr("Disconnected")
-        disconnectedMessage.visible = true
-        reconnectButton.visible = true
-        reconnectingMessage.visible = false
-        connectionPanel.show()
-    }
-
-    function showNoNetworkMessage() {
-        disconnectedMessage.text = qsTr("No network connection")
-        disconnectedMessage.visible = true
-        reconnectButton.visible = false
-        reconnectingMessage.visible = false
-        connectionPanel.show()
+        onNetworkOff: {
+            statusMessage.text = qsTr("No network connection")
+            connectionPanel.open()
+        }
     }
 }

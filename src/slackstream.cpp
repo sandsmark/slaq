@@ -36,13 +36,13 @@ void SlackStream::listen(const QUrl& url)
 
 void SlackStream::checkConnection()
 {
-    qDebug() << "check connection" << m_isConnected;
+    //qDebug() << "check connection" << m_isConnected;
     if (m_isConnected) {
         QJsonObject values;
         values.insert(QStringLiteral("id"), QJsonValue(++m_lastMessageId));
         values.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("ping")));
 
-        qDebug() << "Check connection" << m_lastMessageId;
+        //qDebug() << "Check connection" << m_lastMessageId;
 
         QJsonDocument document(values);
         QByteArray data = document.toJson(QJsonDocument::Compact);
@@ -53,8 +53,8 @@ void SlackStream::checkConnection()
 void SlackStream::handleListerStart()
 {
     qDebug() << "Socket connected";
-    emit connected();
     m_isConnected = true;
+    emit connected();
     checkTimer->start(15000);
 }
 
