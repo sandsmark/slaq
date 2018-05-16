@@ -69,7 +69,7 @@ void SlackStream::handleListerEnd()
 
 void SlackStream::handleMessage(const QString& message)
 {
-    //qDebug() << "Got text message" << message;
+    qDebug() << "Got text message" << message;
 
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(message.toUtf8(), &error);

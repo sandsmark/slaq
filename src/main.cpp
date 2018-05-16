@@ -12,8 +12,9 @@
 #include "notificationlistener.h"
 #include "storage.h"
 #include "filemodel.h"
+#include "emojiprovider.h"
+#include "imagescache.h"
 #include "slackclientthreadspawner.h"
-
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -32,6 +33,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<SlackClient*>("SlackClient*");
 
     SlackConfig::clearWebViewCache();
+    //instantiate ImageCache
+    ImagesCache::instance();
     SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
     engine.rootContext()->setContextProperty("SlackClient", _slackThread);
     _slackThread->start();
@@ -46,6 +49,8 @@ int main(int argc, char *argv[])
     //    connection.registerObject("/", listener);
 
     engine.rootContext()->setContextProperty("fileModel", new FileModel());
+    engine.addImageProvider("emoji", new EmojiProvider);
+    engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
     engine.load(QUrl("qrc:/qml/main.qml"));
     if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";

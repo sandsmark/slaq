@@ -14,6 +14,7 @@
 
 #include "slackclient.h"
 #include "storage.h"
+#include "messageformatter.h"
 
 SlackClient::SlackClient(QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
@@ -111,6 +112,10 @@ void SlackClient::handleStreamEnd()
     reconnectTimer->start(1000);
 }
 
+//TODO:
+//json of reaction added
+//"{\"type\":\"reaction_added\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C09PZTN5S\",\"ts\":\"1525437188.000435\"},\"reaction\":\"slightly_smiling_face\",\"item_user\":\"U3ZC1RYJG\",\"event_ts\":\"1525437431.000236\",\"ts\":\"1525437431.000236\"}"
+//"{\"type\":\"pref_change\",\"name\":\"emoji_use\",\"value\":\"{\\\"+1\\\":16,\\\"slightly_smiling_face\\\":11,\\\"stuck_out_tongue_winking_eye\\\":1,\\\"disappointed\\\":2,\\\"stuck_out_tongue\\\":2,\\\"grinning\\\":1,\\\"ok_hand\\\":1,\\\"sunglasses\\\":1,\\\"coffee\\\":1}\",\"event_ts\":\"1525437431.000226\"}"
 void SlackClient::handleStreamMessage(const QJsonObject& message)
 {
     const QString& type = message.value(QStringLiteral("type")).toString();

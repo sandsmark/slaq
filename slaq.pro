@@ -15,10 +15,9 @@ TARGET = slaq
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
-QT += quick widgets webview
+QT += quick widgets webview xml
+CONFIG += c++1
 QT += websockets
-# Includes
-INCLUDEPATH += ./QtWebsocket
 
 SOURCES += src/main.cpp \
     src/slackclient.cpp \
@@ -30,6 +29,8 @@ SOURCES += src/main.cpp \
     src/messageformatter.cpp \
     src/notificationlistener.cpp \
     src/filemodel.cpp \
+    src/emojiprovider.cpp \
+    src/imagescache.cpp \
     src/slackclientthreadspawner.cpp
 
 OTHER_FILES += qml/main.qml \
@@ -48,6 +49,8 @@ HEADERS += \
     src/messageformatter.h \
     src/notificationlistener.h \
     src/filemodel.h \
+    src/emojiprovider.h \
+    src/imagescache.h \
     src/slackclientthreadspawner.h
 
 DISTFILES += \
@@ -80,3 +83,9 @@ target.path = /usr/bin/
 
 RESOURCES += \
     qml.qrc
+
+#gumbo parser
+
+include(src/QGumboParser/QGumboParser.pri)
+INCLUDEPATH += src/QGumboParser
+

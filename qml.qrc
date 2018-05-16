@@ -31,5 +31,6 @@
         <file>qml/pages/LoadingPage.qml</file>
         <file>fonts/NotoColorEmoji.ttf</file>
         <file>data/emojis.json</file>
+	<file>icons/smile.gif</file>
     </qresource>
 </RCC>

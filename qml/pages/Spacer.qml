@@ -1,6 +1,5 @@
 import QtQuick 2.8
 
-Rectangle {
-    color: "transparent"
+Item {
     width: parent.width
 }
