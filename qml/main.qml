@@ -44,7 +44,7 @@ ApplicationWindow {
         RowLayout {
             anchors.fill: parent
             Rectangle {
-                color: Slack.Client.isOnline ? "green" : "red"
+                color: SlackClient.isOnline ? "green" : "red"
                 Layout.leftMargin: Theme.paddingMedium
                 height: parent.height/3
                 width: height

@@ -23,7 +23,7 @@ Drawer {
         }
 
         BusyIndicator {
-            running: connectionPanel.opened && !Slack.Client.isOnline
+            running: connectionPanel.opened && !SlackClient.isOnline
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -38,7 +38,7 @@ Drawer {
     }
 
     Connections {
-        target: Slack.Client
+        target: SlackClient
         onConnected: {
             statusMessage.text = qsTr("Connected")
             connectionPanel.close()
