@@ -84,17 +84,8 @@ target.path = /usr/bin/
 RESOURCES += \
     qml.qrc
 
-SUBDIRS += libs/QGumboParser
+#gumbo parser
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/QGumboParser/QGumboParser/release/ -lQGumboParser
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/QGumboParser/QGumboParser/debug/ -lQGumboParser
-else:unix: LIBS += -L$$PWD/libs/QGumboParser/QGumboParser/ -lQGumboParser
+include(src/QGumboParser/QGumboParser.pri)
+INCLUDEPATH += src/QGumboParser
 
-INCLUDEPATH += $$PWD/libs/QGumboParser/QGumboParser
-DEPENDPATH += $$PWD/libs/QGumboParser/QGumboParser
-
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/release/libQGumboParser.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/debug/libQGumboParser.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/release/QGumboParser.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/debug/QGumboParser.lib
-else:unix: PRE_TARGETDEPS += $$PWD/libs/QGumboParser/QGumboParser/libQGumboParser.a
