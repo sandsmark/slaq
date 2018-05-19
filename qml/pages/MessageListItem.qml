@@ -85,6 +85,10 @@ Item {
                             height: Theme.headerSize
                             text: emoji
                             width: contentItem.contentWidth + Theme.paddingMedium*3 + countLabel.contentWidth
+                            onClicked: {
+                                SlackClient.deleteReaction(channel.id, time, name)
+                            }
+
                             contentItem: Label {
                                 text: control.text
                                 font: control.font

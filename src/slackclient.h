@@ -74,6 +74,7 @@ public slots:
     void fetchAccessToken(const QUrl& url);
     void testLogin();
     void loadMessages(const QString& type, const QString& channelId);
+    void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void markChannel(const QString& type, const QString& channelId, const QString& time);
@@ -91,6 +92,7 @@ private slots:
     void handleAccessTokenReply();
     void handleTestLoginReply();
     void handleLoadMessagesReply();
+    void handleDeleteReactionReply();
     void handlePostMessageReply();
     void handlePostImage();
     void handleMarkChannelReply();
