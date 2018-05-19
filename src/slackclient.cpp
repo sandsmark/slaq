@@ -112,10 +112,6 @@ void SlackClient::handleStreamEnd()
     reconnectTimer->start(1000);
 }
 
-//TODO:
-//json of reaction added
-//"{\"type\":\"reaction_added\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C09PZTN5S\",\"ts\":\"1525437188.000435\"},\"reaction\":\"slightly_smiling_face\",\"item_user\":\"U3ZC1RYJG\",\"event_ts\":\"1525437431.000236\",\"ts\":\"1525437431.000236\"}"
-//"{\"type\":\"pref_change\",\"name\":\"emoji_use\",\"value\":\"{\\\"+1\\\":16,\\\"slightly_smiling_face\\\":11,\\\"stuck_out_tongue_winking_eye\\\":1,\\\"disappointed\\\":2,\\\"stuck_out_tongue\\\":2,\\\"grinning\\\":1,\\\"ok_hand\\\":1,\\\"sunglasses\\\":1,\\\"coffee\\\":1}\",\"event_ts\":\"1525437431.000226\"}"
 void SlackClient::handleStreamMessage(const QJsonObject& message)
 {
     const QString& type = message.value(QStringLiteral("type")).toString();
@@ -141,6 +137,10 @@ void SlackClient::handleStreamMessage(const QJsonObject& message)
         parsePresenceChange(message);
     } else if (type == QStringLiteral("desktop_notification")) {
         parseNotification(message);
+    } else if (type == QStringLiteral("reaction_added") || type == QStringLiteral("reaction_removed")) {
+        parseReactionUpdate(message);
+    } else if (type == QStringLiteral("user_typing")) {
+        qDebug() << "user typing" << message;
     }
 }
 
@@ -223,6 +223,29 @@ void SlackClient::parseMessageUpdate(const QJsonObject& message)
     }
 
     emit messageReceived(data);
+}
+
+void SlackClient::parseReactionUpdate(const QJsonObject &message)
+{
+    //"{\"type\":\"reaction_added\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C09PZTN5S\",\"ts\":\"1525437188.000435\"},\"reaction\":\"slightly_smiling_face\",\"item_user\":\"U3ZC1RYJG\",\"event_ts\":\"1525437431.000236\",\"ts\":\"1525437431.000236\"}"
+    //"{\"type\":\"reaction_removed\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C0CK10FA9\",\"ts\":\"1526478339.000316\"},\"reaction\":\"+1\",\"item_user\":\"U1WTHK18E\",\"event_ts\":\"1526736040.000047\",\"ts\":\"1526736040.000047\"}"
+    QVariantMap data;
+    QJsonObject item = message.value(QStringLiteral("item")).toObject();
+    const QString& reaction = message.value(QStringLiteral("reaction")).toString();
+
+    QString emojiPrepare = QString(":%1:").arg(reaction);
+    m_formatter.replaceEmoji(emojiPrepare);
+
+    data.insert(QStringLiteral("type"), message.value(QStringLiteral("type")).toVariant());
+    data.insert(QStringLiteral("reaction"), reaction);
+    data.insert(QStringLiteral("emoji"), emojiPrepare);
+    data.insert(QStringLiteral("user"),
+                Storage::user(message.value(QStringLiteral("user")).toString()).
+                value(QStringLiteral("name")).toString());
+    data.insert(QStringLiteral("channel"), item.value(QStringLiteral("channel")).toVariant());
+    data.insert(QStringLiteral("ts"), item.value(QStringLiteral("ts")).toVariant());
+
+    emit messageUpdated(data);
 }
 
 void SlackClient::parsePresenceChange(const QJsonObject& message)
@@ -308,8 +331,15 @@ QJsonObject SlackClient::getResult(QNetworkReply *reply)
     if (isOk(reply)) {
         QJsonParseError error;
         QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
-//        qDebug().noquote() << document.toJson();
-
+#if 0 //dump initial
+        {
+            QFile f("statup_dumps.json");
+            if (f.open(QIODevice::Append)) {
+                f.write(document.toJson(QJsonDocument::Indented));
+                f.close();
+            }
+        }
+#endif
         if (error.error == QJsonParseError::NoError) {
             return document.object();
         } else {
@@ -975,6 +1005,7 @@ QVariantMap SlackClient::getMessageData(const QJsonObject& message)
     data.insert(QStringLiteral("attachments"), getAttachments(message));
     data.insert(QStringLiteral("images"), getImages(message));
     data.insert(QStringLiteral("content"), QVariant(getContent(message)));
+    data.insert(QStringLiteral("reactions"), getReactions(message));
 
     return data;
 }
@@ -1187,6 +1218,41 @@ QVariantList SlackClient::getAttachmentImages(const QJsonObject& attachment)
     }
 
     return images;
+}
+
+QVariantList SlackClient::getReactions(const QJsonObject &message)
+{
+    QJsonArray reactionsList = message.value(QStringLiteral("reactions")).toArray();
+    QVariantList reactions;
+
+    foreach (const QJsonValue &value, reactionsList) {
+        QJsonObject reaction = value.toObject();
+        QVariantMap data;
+
+        QString name = reaction.value(QStringLiteral("name")).toString();
+        int count = reaction.value(QStringLiteral("count")).toInt();
+        QJsonArray usersList = reaction.value(QStringLiteral("users")).toArray();
+        QString users;
+        for (int i = 0; i < usersList.count(); i++) {
+            const QJsonValue &uservalue = usersList.at(i);
+            users.append(Storage::user(uservalue.toString()).value("name").toString());
+            if (i < usersList.count() - 1) {
+                users.append("\n");
+            }
+        }
+
+        QString emojiPrepare = QString(":%1:").arg(name);
+        m_formatter.replaceEmoji(emojiPrepare);
+
+        data.insert(QStringLiteral("name"), QVariant(name));
+        data.insert(QStringLiteral("emoji"), QVariant(emojiPrepare));
+        data.insert(QStringLiteral("reactionscount"), QVariant(count));
+        data.insert(QStringLiteral("users"), QVariant(users));
+
+        reactions.append(data);
+    }
+
+    return reactions;
 }
 
 void SlackClient::findNewUsers(const QString &message)

@@ -40,6 +40,7 @@ signals:
     void reconnectAccessTokenFail();
 
     void messageReceived(QVariantMap message);
+    void messageUpdated(QVariantMap message);
     void channelUpdated(QVariantMap channel);
     void channelJoined(QVariantMap channel);
     void channelLeft(QVariantMap channel);

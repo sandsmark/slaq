@@ -32,6 +32,7 @@ ListView {
         }
     }
 
+    //TODO: move messages model to C++
     model: ListModel {
         id: messageListModel
     }
@@ -66,12 +67,14 @@ ListView {
         SlackClient.onInitSuccess.connect(handleReload)
         SlackClient.onLoadMessagesSuccess.connect(handleLoadSuccess)
         SlackClient.onMessageReceived.connect(handleMessageReceived)
+        SlackClient.onMessageUpdated.connect(handleMessageUpdated)
     }
 
     Component.onDestruction: {
         SlackClient.onInitSuccess.disconnect(handleReload)
         SlackClient.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
         SlackClient.onMessageReceived.disconnect(handleMessageReceived)
+        SlackClient.onMessageUpdated.disconnect(handleMessageUpdated)
     }
 
     function markLatest() {
@@ -109,6 +112,42 @@ ListView {
             if (messageListModel.count) {
                 latestRead = messageListModel.get(messageListModel.count - 1).time
                 readTimer.restart()
+            }
+        }
+    }
+
+    function handleMessageUpdated(message) {
+        if (message.channel === channel.id) {
+            for (var msgi = 0; msgi < messageListModel.count; msgi++) {
+                var msg = messageListModel.get(msgi);
+                if (msg.time === message.ts) {
+                    var updated = false;
+                    var reactions = msg.reactions;
+                    var reaction = { "emoji": message.emoji, "reactionscount": 1,
+                        "name": message.reaction, "users": message.user }
+                    for (var rctni = 0; rctni < reactions.count; rctni++) {
+                        var rcn = reactions.get(rctni);
+                        if (rcn.name === message.reaction) {
+                            if (message.type === "reaction_removed") {
+                                reaction.reactionscount = rcn.reactionscount - 1
+                            } else {
+                                reaction.reactionscount = rcn.reactionscount + 1
+                            }
+                            if (reaction.reactionscount <= 0) {
+                                reactions.remove(rctni, 1);
+                            } else {
+                                reactions.set(rctni, reaction);
+                            }
+                            updated = true;
+                            break;
+                        }
+                    }
+                    if (updated === false) {
+                        reactions.append(reaction)
+                    }
+                    messageListModel.set(msgi, {"reactions": reactions});
+                    break;
+                }
             }
         }
     }

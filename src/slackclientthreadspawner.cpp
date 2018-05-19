@@ -176,6 +176,7 @@ void SlackClientThreadSpawner::run()
     connect(m_slackClient, &SlackClient::reconnectAccessTokenFail, this, &SlackClientThreadSpawner::reconnectAccessTokenFail, Qt::QueuedConnection);
 
     connect(m_slackClient, &SlackClient::messageReceived, this, &SlackClientThreadSpawner::messageReceived, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::messageUpdated, this, &SlackClientThreadSpawner::messageUpdated, Qt::QueuedConnection);
     connect(m_slackClient, &SlackClient::channelUpdated, this, &SlackClientThreadSpawner::channelUpdated, Qt::QueuedConnection);
     connect(m_slackClient, &SlackClient::channelJoined, this, &SlackClientThreadSpawner::channelJoined, Qt::QueuedConnection);
     connect(m_slackClient, &SlackClient::channelLeft, this, &SlackClientThreadSpawner::channelLeft , Qt::QueuedConnection);

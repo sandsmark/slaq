@@ -50,6 +50,7 @@ signals:
     void reconnectAccessTokenFail();
 
     void messageReceived(QVariantMap message);
+    void messageUpdated(QVariantMap message);
     void channelUpdated(QVariantMap channel);
     void channelJoined(QVariantMap channel);
     void channelLeft(QVariantMap channel);
@@ -118,6 +119,7 @@ private:
     QJsonObject getResult(QNetworkReply *reply);
 
     void parseMessageUpdate(const QJsonObject& message);
+    void parseReactionUpdate(const QJsonObject& message);
     void parseChannelUpdate(const QJsonObject& message);
     void parseChannelJoin(const QJsonObject& message);
     void parseChannelLeft(const QJsonObject& message);
@@ -135,6 +137,8 @@ private:
     QString getAttachmentColor(const QJsonObject& attachment);
     QVariantList getAttachmentFields(const QJsonObject& attachment);
     QVariantList getAttachmentImages(const QJsonObject& attachment);
+
+    QVariantList getReactions(const QJsonObject& message);
 
     QVariantMap parseChannel(const QJsonObject& data);
     QVariantMap parseGroup(const QJsonObject& group);
