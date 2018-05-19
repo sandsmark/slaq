@@ -68,6 +68,53 @@ Item {
                     onLinkActivated: handleLink(link)
                     wrapMode: Text.Wrap
                 }
+                Row {
+                    spacing: 5
+                    Repeater {
+                        id: reactionsRepeater
+                        model: reactions
+                        Button {
+                            //TODO: check for Theme
+                            id: control
+
+                            hoverEnabled: true
+                            ToolTip.text: users
+                            ToolTip.delay: 500
+                            ToolTip.timeout: 5000
+                            ToolTip.visible: hovered
+                            height: Theme.headerSize
+                            text: emoji
+                            width: contentItem.contentWidth + Theme.paddingMedium*3 + countLabel.contentWidth
+                            contentItem: Label {
+                                text: control.text
+                                font: control.font
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                                textFormat: Text.StyledText
+                            }
+
+                            background: Rectangle {
+                                implicitWidth: 100
+                                implicitHeight: 40
+                                opacity: enabled ? 1 : 0.3
+                                border.color: "#bdbdbd"
+                                border.width: 1
+                                radius: 3
+                                Label {
+                                    id: countLabel
+                                    anchors.right: parent.right; anchors.rightMargin: Theme.paddingSmall
+                                    anchors.top: parent.top; anchors.topMargin: Theme.paddingSmall
+                                    font.pointSize: Theme.fontSizeSmall
+                                    textFormat: Text.StyledText
+                                    color: "#0f0f0f"
+                                    text: reactionscount
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
         }
 
