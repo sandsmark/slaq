@@ -926,6 +926,17 @@ void SlackClient::handleMarkChannelReply()
     reply->deleteLater();
 }
 
+void SlackClient::deleteReaction(const QString& channelId, const QString& ts, const QString& reaction)
+{
+    QMap<QString, QString> data;
+    data.insert(QStringLiteral("channel"), channelId);
+    data.insert(QStringLiteral("name"), reaction);
+    data.insert(QStringLiteral("timestamp"), ts);
+
+    QNetworkReply *reply = executePost(QStringLiteral("reactions.remove"), data);
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleDeleteReactionReply);
+}
+
 void SlackClient::postMessage(const QString& channelId, QString content)
 {
     content.replace(QLatin1Char('&'), QStringLiteral("&amp;"));
@@ -940,6 +951,16 @@ void SlackClient::postMessage(const QString& channelId, QString content)
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.postMessage"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackClient::handlePostMessageReply);
+}
+
+void SlackClient::handleDeleteReactionReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+
+    QJsonObject data = getResult(reply);
+    qDebug() << "Delete reaction result" << data;
+
+    reply->deleteLater();
 }
 
 void SlackClient::handlePostMessageReply()

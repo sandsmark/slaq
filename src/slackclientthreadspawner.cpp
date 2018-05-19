@@ -143,6 +143,14 @@ void SlackClientThreadSpawner::postImage(const QString &channelId, const QString
                               Q_ARG(QString, comment));
 }
 
+void SlackClientThreadSpawner::deleteReaction(const QString &channelId, const QString &ts, const QString &reaction)
+{
+    QMetaObject::invokeMethod(m_slackClient, "deleteReaction", Qt::QueuedConnection,
+                              Q_ARG(QString, channelId),
+                              Q_ARG(QString, ts),
+                              Q_ARG(QString, reaction));
+}
+
 void SlackClientThreadSpawner::openChat(const QString &chatId)
 {
     QMetaObject::invokeMethod(m_slackClient, "openChat", Qt::QueuedConnection,

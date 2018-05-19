@@ -88,6 +88,7 @@ public slots:
     void loadMessages(const QString& type, const QString& channelId);
     void postMessage(const QString& channelId, const QString& content);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
+    void deleteReaction(const QString& channelId, const QString& ts, const QString& reaction);
 
     //chats
     void openChat(const QString& chatId);
