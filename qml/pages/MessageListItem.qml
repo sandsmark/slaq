@@ -9,10 +9,11 @@ ItemDelegate {
     height: column.height + Theme.paddingMedium
     width: listView.width
     hoverEnabled: true
+    highlighted: hovered
     property bool emojiSelectorCalled: false
 
-    property color infoColor: item.highlighted ? palette.highlightedText : palette.text
-    property color textColor: item.highlighted ? palette.highlightedText : palette.text
+    property color infoColor: palette.text
+    property color textColor: palette.text
 
     Connections {
         target: emojiSelector

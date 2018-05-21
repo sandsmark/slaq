@@ -132,7 +132,10 @@ Column {
 
         Button {
             id: sendButton
-            icon.name: "document-send"
+            //icon.name: "document-send"
+            font.bold: true
+            width: height
+            text: "📨"
             enabled: messageInput.text.length > 0
             onClicked: handleSendMessage()
         }
