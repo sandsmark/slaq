@@ -16,6 +16,8 @@ public:
     void replaceLinks(QString &message);
     void replaceMarkdown(QString &message);
     void replaceEmoji(QString &message);
+    QMultiMap<QString, QString> emojiCategories() const;
+    QString emojiNameByEmoji(const QString &emoji) const;
 
 signals:
 
@@ -38,6 +40,7 @@ private:
     QRegularExpression m_emojiPattern;
 
     QHash<QString, QString> m_emojis;
+    QMultiMap<QString, QString> m_emojiCategories;
 };
 
 #endif // MESSAGEFORMATTER_H

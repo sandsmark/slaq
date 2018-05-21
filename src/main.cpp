@@ -5,7 +5,7 @@
 #include <QtWebView>
 #include <QNetworkProxyFactory>
 #include <QThread>
-#include <QFontDatabase>
+#include <QTextCodec>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
@@ -21,12 +21,10 @@ int main(int argc, char *argv[])
     app.setOrganizationName("Martin Sandsmark");
     app.setApplicationName("Slaq");
 
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QNetworkProxyFactory::setUseSystemConfiguration(true);
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
-
-    // In case there's no system emoji font
-    QFontDatabase::addApplicationFont(":/fonts/NotoColorEmoji.ttf");
 
     QtWebView::initialize();
     qDebug() << "GUI thread" << QThread::currentThreadId();

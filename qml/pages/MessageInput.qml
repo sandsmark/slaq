@@ -31,7 +31,7 @@ Column {
 
         TextField {
             id: messageInput
-            width: parent.width - sendButton.width - uploadButton.width - Theme.paddingMedium * 3
+            width: parent.width - sendButton.width - uploadButton.width - emojiButton.width - Theme.paddingMedium * 4
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]
@@ -66,6 +66,16 @@ Column {
                 var cursorBefore = cursorPosition
                 text = before + "@" + nickSuggestions[currentNickSuggestionIndex] + after
                 cursorPosition = cursorBefore - (lastSpace - firstSpace) + nickSuggestions[currentNickSuggestionIndex].length + 1
+            }
+
+            Connections {
+                target: emojiSelector
+                onEmojiSelected: {
+                    if (emojiSelector.state === "input" && emoji !== "") {
+                        messageInput.insert(messageInput.cursorPosition, emoji)
+                        messageInput.forceActiveFocus()
+                    }
+                }
             }
 
             onAccepted: {
@@ -104,6 +114,19 @@ Column {
                 if (nickPopupVisible) {
                     updateSuggestions()
                 }
+            }
+        }
+
+        Button {
+            id: emojiButton
+            width: height
+            text: "😎"
+            font.bold: true
+            onClicked: {
+                emojiSelector.x = emojiButton.x
+                emojiSelector.y = emojiButton.y
+                emojiSelector.state = "input"
+                emojiSelector.open()
             }
         }
 

@@ -128,15 +128,35 @@ void MessageFormatter::loadEmojis()
 
     for (const QString &emojiName : emojisObject.keys()) {
         QJsonObject emoji = emojisObject[emojiName].toObject();
-        m_emojis[emojiName] = emoji.value(QStringLiteral("moji")).toString();
-        for (const QJsonValue &alias : emoji["aliases"].toArray()) {
-            m_emojis[alias.toString().remove(QStringLiteral(":"))] =
-                    emoji.value(QStringLiteral("moji")).toString();
+        const QString& emojiCategory = emoji.value(QStringLiteral("category")).toString();
+        const QString& moji_ = emoji.value(QStringLiteral("moji")).toString();
+        m_emojis[emojiName] = moji_;
+        if (!m_emojiCategories.contains(emojiCategory, moji_)) {
+            m_emojiCategories.insertMulti(emojiCategory, moji_);
+        }
+        for (const QJsonValue &alias : emoji["aliases"].toArray()) {            
+            m_emojis[alias.toString().remove(QStringLiteral(":"))] = moji_;
         }
     }
     // TODO: ascii aliases like :) :(
 
     qDebug() << "Loaded" << m_emojis.count() << "emojis";
+    qDebug() << "Loaded emoji categories:" << m_emojiCategories.uniqueKeys();
+}
+
+QString MessageFormatter::emojiNameByEmoji(const QString& emoji) const {
+    foreach(const QString &key, m_emojis.keys()) {
+        if (m_emojis.value(key) == emoji) {
+            return key;
+        }
+    }
+    return QString("");
+}
+
+
+QMultiMap<QString, QString> MessageFormatter::emojiCategories() const
+{
+    return m_emojiCategories;
 }
 
 void MessageFormatter::replaceTargetInfo(QString &message)

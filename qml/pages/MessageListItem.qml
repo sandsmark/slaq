@@ -4,13 +4,26 @@ import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 import ".."
 
-Item {
+ItemDelegate {
     id: item
     height: column.height + Theme.paddingMedium
     width: listView.width
+    hoverEnabled: true
+    property bool emojiSelectorCalled: false
 
     property color infoColor: item.highlighted ? palette.highlightedText : palette.text
     property color textColor: item.highlighted ? palette.highlightedText : palette.text
+
+    Connections {
+        target: emojiSelector
+        enabled: item.emojiSelectorCalled
+        onEmojiSelected: {
+            emojiSelectorCalled = false
+            if (emojiSelector.state === "reaction" && emoji !== "") {
+                SlackClient.addReaction(channel.id, time, SlackClient.emojiNameByEmoji(emoji));
+            }
+        }
+    }
 
     Column {
         id: column
@@ -55,6 +68,29 @@ Item {
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"
                     }
+                    Button {
+                        id: emojiButton
+                        visible: item.hovered
+                        height: 22
+                        width: height
+                        text: "😎"
+                        contentItem: Text {
+                            text: emojiButton.text
+                            font.family: "Twitter Color Emoji"
+                            font.bold: true
+                            font.pixelSize: parent.height/2
+                            renderType: Text.QtRendering
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+                        onClicked: {
+                            emojiSelector.x = emojiButton.x
+                            emojiSelector.y = emojiButton.y
+                            emojiSelector.state = "reaction"
+                            item.emojiSelectorCalled = true
+                            emojiSelector.open()
+                        }
+                    }
                 }
 
                 Label {
@@ -68,11 +104,13 @@ Item {
                     onLinkActivated: handleLink(link)
                     wrapMode: Text.Wrap
                 }
+
                 Row {
                     spacing: 5
                     Repeater {
                         id: reactionsRepeater
                         model: reactions
+
                         Button {
                             //TODO: check for Theme
                             id: control
@@ -84,18 +122,18 @@ Item {
                             ToolTip.visible: hovered
                             height: Theme.headerSize
                             text: emoji
-                            width: contentItem.contentWidth + Theme.paddingMedium*3 + countLabel.contentWidth
+
+                            width: contentItem.contentWidth + Theme.paddingMedium*2 + countLabel.contentWidth
                             onClicked: {
                                 SlackClient.deleteReaction(channel.id, time, name)
                             }
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: control.text
-                                font: control.font
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                textFormat: Text.StyledText
+                                font.family: "Twitter Color Emoji"
+                                font.pixelSize: parent.height/2
+                                renderType: Text.QtRendering
+
                             }
 
                             background: Rectangle {
@@ -105,12 +143,12 @@ Item {
                                 border.color: "#bdbdbd"
                                 border.width: 1
                                 radius: 3
-                                Label {
+                                Text {
                                     id: countLabel
                                     anchors.right: parent.right; anchors.rightMargin: Theme.paddingSmall
                                     anchors.top: parent.top; anchors.topMargin: Theme.paddingSmall
                                     font.pointSize: Theme.fontSizeSmall
-                                    textFormat: Text.StyledText
+                                    renderType: Text.QtRendering
                                     color: "#0f0f0f"
                                     text: reactionscount
                                 }

@@ -31,6 +31,9 @@ public:
     Q_INVOKABLE QVariantList getChannels();
     Q_INVOKABLE QVariant getChannel(const QString& channelId);
     Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
+    Q_INVOKABLE QStringList getEmojiCategories();
+    Q_INVOKABLE QStringList getEmojisByCategory(const QString &category);
+    Q_INVOKABLE QString emojiNameByEmoji(const QString &emoji) const;
 
 signals:
     void testConnectionFail();
@@ -75,6 +78,7 @@ public slots:
     void testLogin();
     void loadMessages(const QString& type, const QString& channelId);
     void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
+    void addReaction(const QString &channelId, const QString &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void markChannel(const QString& type, const QString& channelId, const QString& time);
@@ -93,6 +97,7 @@ private slots:
     void handleTestLoginReply();
     void handleLoadMessagesReply();
     void handleDeleteReactionReply();
+    void handleAddReactionReply();
     void handlePostMessageReply();
     void handlePostImage();
     void handleMarkChannelReply();
