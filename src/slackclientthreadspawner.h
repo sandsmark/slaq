@@ -68,7 +68,9 @@ public slots:
 
 
     QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
-
+    QStringList getEmojiCategories();
+    QStringList getEmojisByCategory(const QString &category);
+    QString emojiNameByEmoji(const QString &emoji) const;
 
     bool isOnline() const;
     bool isDevice() const;
@@ -89,6 +91,7 @@ public slots:
     void postMessage(const QString& channelId, const QString& content);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& channelId, const QString& ts, const QString& reaction);
+    void addReaction(const QString& channelId, const QString& ts, const QString& reaction);
 
     //chats
     void openChat(const QString& chatId);

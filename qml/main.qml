@@ -21,12 +21,18 @@ ApplicationWindow {
     height: 600
 
     property alias pageStack: pageStack
+    property alias emojiSelector: emojiSelector
+
     Settings {
         property alias width: window.width
         property alias height: window.height
     }
 
     color: palette.window
+
+    EmojiSelector  {
+        id: emojiSelector
+    }
 
     Component {
         id: channelComponent

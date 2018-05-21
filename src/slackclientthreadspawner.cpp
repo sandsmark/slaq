@@ -55,6 +55,32 @@ QStringList SlackClientThreadSpawner::getNickSuggestions(const QString &currentT
     return retVal;
 }
 
+QStringList SlackClientThreadSpawner::getEmojiCategories()
+{
+    QStringList retVal;
+    QMetaObject::invokeMethod(m_slackClient, "getEmojiCategories", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QStringList, retVal));
+    return retVal;
+}
+
+QStringList SlackClientThreadSpawner::getEmojisByCategory(const QString &category)
+{
+    QStringList retVal;
+    QMetaObject::invokeMethod(m_slackClient, "getEmojisByCategory", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QStringList, retVal),
+                              Q_ARG(QString, category));
+    return retVal;
+}
+
+QString SlackClientThreadSpawner::emojiNameByEmoji(const QString &emoji) const
+{
+    QString retVal;
+    QMetaObject::invokeMethod(m_slackClient, "emojiNameByEmoji", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QString, retVal),
+                              Q_ARG(QString, emoji));
+    return retVal;
+}
+
 void SlackClientThreadSpawner::loadMessages(const QString &type, const QString &channelId)
 {
     QMetaObject::invokeMethod(m_slackClient, "loadMessages", Qt::QueuedConnection,
@@ -146,6 +172,14 @@ void SlackClientThreadSpawner::postImage(const QString &channelId, const QString
 void SlackClientThreadSpawner::deleteReaction(const QString &channelId, const QString &ts, const QString &reaction)
 {
     QMetaObject::invokeMethod(m_slackClient, "deleteReaction", Qt::QueuedConnection,
+                              Q_ARG(QString, channelId),
+                              Q_ARG(QString, ts),
+                              Q_ARG(QString, reaction));
+}
+
+void SlackClientThreadSpawner::addReaction(const QString &channelId, const QString &ts, const QString &reaction)
+{
+    QMetaObject::invokeMethod(m_slackClient, "addReaction", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
                               Q_ARG(QString, ts),
                               Q_ARG(QString, reaction));

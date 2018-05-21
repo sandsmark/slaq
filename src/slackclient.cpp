@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QHttpMultiPart>
 #include <QtNetwork/QNetworkConfigurationManager>
+#include <QFontDatabase>
 
 #include "slackclient.h"
 #include "storage.h"
@@ -21,6 +22,13 @@ SlackClient::SlackClient(QObject *parent) :
     m_clientId(QString::fromLatin1(QByteArray::fromBase64("MTE5MDczMjc1MDUuMjUyMzc1NTU3MTU1"))),
     m_clientId2(QString::fromLatin1(QByteArray::fromBase64("MGJlNDA0M2Q2OGIxYjM0MzE4ODk5ZDEwYTNiYmM3ZTY=")))
 {
+
+    // In case there's no system emoji font
+    //int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/emojione-android.ttf");
+    //int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/emojione-svg.otf");
+    int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/TwitterColorEmoji.ttf");
+    qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
+
     networkAccessManager = new QNetworkAccessManager(this);
     config = new SlackConfig(this);
     stream = new SlackStream(this);
@@ -705,6 +713,21 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
     return nicks;
 }
 
+QStringList SlackClient::getEmojiCategories()
+{
+    return m_formatter.emojiCategories().uniqueKeys();
+}
+
+QStringList SlackClient::getEmojisByCategory(const QString &category)
+{
+    return m_formatter.emojiCategories().values(category);
+}
+
+QString SlackClient::emojiNameByEmoji(const QString &emoji) const
+{
+    return m_formatter.emojiNameByEmoji(emoji);
+}
+
 bool SlackClient::isOnline() const
 {
     return stream && stream->isConnected();
@@ -937,6 +960,17 @@ void SlackClient::deleteReaction(const QString& channelId, const QString& ts, co
     connect(reply, &QNetworkReply::finished, this, &SlackClient::handleDeleteReactionReply);
 }
 
+void SlackClient::addReaction(const QString &channelId, const QString &ts, const QString &reaction)
+{
+    QMap<QString, QString> data;
+    data.insert(QStringLiteral("channel"), channelId);
+    data.insert(QStringLiteral("name"), reaction);
+    data.insert(QStringLiteral("timestamp"), ts);
+
+    QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleAddReactionReply);
+}
+
 void SlackClient::postMessage(const QString& channelId, QString content)
 {
     content.replace(QLatin1Char('&'), QStringLiteral("&amp;"));
@@ -959,6 +993,16 @@ void SlackClient::handleDeleteReactionReply()
 
     QJsonObject data = getResult(reply);
     qDebug() << "Delete reaction result" << data;
+
+    reply->deleteLater();
+}
+
+void SlackClient::handleAddReactionReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+
+    QJsonObject data = getResult(reply);
+    qDebug() << "Add reaction result" << data;
 
     reply->deleteLater();
 }
