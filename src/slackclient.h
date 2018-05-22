@@ -74,7 +74,8 @@ signals:
 
 public slots:
     void startClient();
-    void fetchAccessToken(const QUrl& url);
+    bool handleAccessTokenReply(const QJsonObject &bootData);
+
     void testLogin();
     void loadMessages(const QString& type, const QString& channelId);
     void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
@@ -93,7 +94,6 @@ public slots:
 
 private slots:
     void handleStartReply();
-    void handleAccessTokenReply();
     void handleTestLoginReply();
     void handleLoadMessagesReply();
     void handleDeleteReactionReply();
