@@ -123,8 +123,8 @@ Column {
             text: "😎"
             font.bold: true
             onClicked: {
-                emojiSelector.x = emojiButton.x
-                emojiSelector.y = emojiButton.y
+                emojiSelector.x = x
+                emojiSelector.y = mapToGlobal(x, y).y - emojiSelector.height - emojiButton.height
                 emojiSelector.state = "input"
                 emojiSelector.open()
             }
