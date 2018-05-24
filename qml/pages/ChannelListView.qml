@@ -36,9 +36,11 @@ ListView {
         highlighted: SlackClient.lastChannel === model.id
 
         icon.name: Channel.getIcon(model)
+        width: listView.width
 
         onClicked: {
             SlackClient.setActiveWindow(model.id)
+
             pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
         }
 

@@ -51,6 +51,30 @@ Page {
     }
 
     Rectangle {
+        width: listView.width
+        height: 50
+        opacity: listView.contentY > listView.originY ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 100 } }
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.5) }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+    }
+
+    Rectangle {
+        width: listView.width
+        height: 50
+        anchors.bottom: listView.bottom
+        opacity: listView.contentY - listView.originY < listView.contentHeight - listView.height ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 100 } }
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "transparent" }
+            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.5) }
+        }
+    }
+
+
+    Rectangle {
         anchors {
             top: nickPopup.top
             left: nickPopup.left
@@ -109,8 +133,14 @@ Page {
     }
 
     Component.onCompleted: {
+        console.log("fetching")
         page.channel = SlackClient.getChannel(page.channelId)
         input.forceActiveFocus()
+
+        if (!initialized) {
+            initialized = true
+            listView.loadMessages()
+        }
     }
 
     StackView.onStatusChanged: {

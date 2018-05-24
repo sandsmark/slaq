@@ -18,6 +18,7 @@ ListView {
     clip: true
 
     spacing: Theme.paddingLarge
+    verticalLayoutDirection: ListView.BottomToTop
 
     ScrollBar.vertical: ScrollBar { }
 
@@ -103,14 +104,13 @@ ListView {
             messageListModel.clear()
             messages.forEach(function(message) {
                 message.day = Message.getDisplayDate(message)
-                messageListModel.append(message)
+                messageListModel.insert(0, message)
             })
-            listView.positionViewAtEnd()
             inputEnabled = true
             loadCompleted()
 
             if (messageListModel.count) {
-                latestRead = messageListModel.get(messageListModel.count - 1).time
+                latestRead = messageListModel.get(0).time
                 readTimer.restart()
             }
         }
@@ -157,11 +157,9 @@ ListView {
         if (message.type === "message" && message.channel === channel.id) {
             var isAtBottom = atBottom
             message.day = Message.getDisplayDate(message)
-            messageListModel.append(message)
+            messageListModel.insert(0, message)
 
             if (isAtBottom) {
-                listView.positionViewAtEnd()
-
                 if (appActive) {
                     latestRead = message.time
                     readTimer.restart()

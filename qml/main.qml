@@ -143,7 +143,6 @@ ApplicationWindow {
         transform: Translate {
             x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
         }
-
     }
 
 //    Loader {
@@ -162,16 +161,15 @@ ApplicationWindow {
 
     Loader {
         id: channelListPermanent
+
         width: active ? Math.min(parent.width * 0.33, 200) : 0
-        active: false
         height: window.height
+
+        active: false
         onWidthChanged: console.log(width)
         opacity: active ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 500 } }
 
-        sourceComponent: ChannelList {
-            width: SlackClient.isOnline ? Math.min(parent.width * 0.33, 200) : 0
-            height: window.height
-        }
+        sourceComponent: ChannelList { }
     }
 }
