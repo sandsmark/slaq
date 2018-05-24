@@ -432,46 +432,40 @@ QNetworkReply *SlackClient::executePostWithFile(const QString& method, const QMa
     return reply;
 }
 
-void SlackClient::fetchAccessToken(const QUrl& resultUrl)
+bool SlackClient::handleAccessTokenReply(const QJsonObject &bootData)
 {
-    QUrlQuery resultQuery(resultUrl);
-    QString code = resultQuery.queryItemValue(QStringLiteral("code"));
-
-    if (code.isEmpty()) {
-        emit accessTokenFail();
-        return;
+    QString accessToken = bootData[QStringLiteral("api_token")].toString();
+    if (accessToken.isEmpty()) {
+        qWarning() << "Missing access token";
+        return false;
     }
 
-    QMap<QString, QString> params;
-    params.insert(QStringLiteral("client_id"), m_clientId);
-    params.insert(QStringLiteral("client_secret"), m_clientId2);
-    params.insert(QStringLiteral("code"), code);
-
-    QNetworkReply *reply = executeGet(QStringLiteral("oauth.access"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleAccessTokenReply);
-}
-
-void SlackClient::handleAccessTokenReply()
-{
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-
-    reply->deleteLater();
-    if (isError(data)) {
-        emit accessTokenFail();
-        return;
+    QString teamId = bootData[QStringLiteral("team_id")].toString();
+    if (teamId.isEmpty()) {
+        qWarning() << "Missing team id";
+        return false;
     }
 
-    QString accessToken = data.value(QStringLiteral("access_token")).toString();
-    QString teamId = data.value(QStringLiteral("team_id")).toString();
-    QString userId = data.value(QStringLiteral("user_id")).toString();
-    QString teamName = data.value(QStringLiteral("team_name")).toString();
+    QString userId = bootData[QStringLiteral("user_id")].toString();
+    if (userId.isEmpty()) {
+        qWarning() << "Missing user id";
+        return false;
+    }
+
+    QString teamName = bootData[QStringLiteral("team_url")].toString();
+    if (teamName.isEmpty()) {
+        qWarning() << "Missing team name";
+        return false;
+    }
+
     qDebug() << "Access token success" << accessToken << userId << teamId << teamName;
 
     config->setAccessToken(accessToken);
     config->setUserId(userId);
 
     emit accessTokenSuccess(userId, teamId, teamName);
+
+    return true;
 }
 
 void SlackClient::testLogin()
