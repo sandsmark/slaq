@@ -22,8 +22,8 @@ Popup {
         }
 
         onEmojisSetsIndexChanged: {
+            ldr.reloading = true
             ldr.sourceComponent = undefined
-            ldr.sourceComponent = lvComponent
         }
     }
 
@@ -46,9 +46,6 @@ Popup {
                 id: col
                 spacing: 5
                 height: title.implicitHeight + grid.implicitHeight + spacing
-//                Component.onCompleted: {
-//                    grid.forceLayout()
-//                }
 
                 Text {
                     id: title
@@ -81,6 +78,7 @@ Popup {
                                     anchors.margins: 2
                                     visible: !ImagesCache.isUnicode
                                     smooth: true
+                                    cache: false
                                     source: "image://emoji/" + model.modelData.shortNames[0]
                                 }
 
@@ -109,7 +107,16 @@ Popup {
     Loader {
         id: ldr
         active: false
+        property bool reloading: false
+        asynchronous: true
         anchors.fill: parent
         sourceComponent: lvComponent
+        onStatusChanged: {
+            if (reloading && status === Loader.Null) {
+                console.log("unloaded. loading back")
+                ldr.sourceComponent = lvComponent
+                reloading = false
+            }
+        }
     }
 }

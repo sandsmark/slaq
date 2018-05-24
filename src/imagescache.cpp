@@ -187,14 +187,23 @@ void ImagesCache::setEmojiImagesSet(const QString& setName)
     }
     QSettings settings;
     settings.setValue("emojisSet", m_imagesSetsNames.at(m_currentImagesSetIndex));
-    checkImagesPresence();
-    m_requestsListMutex.lock();
-    for(QNetworkReply* reply: m_activeRequests) {
-        reply->abort();
-    }
-    m_requestsListMutex.unlock();
-    emit emojisSetsIndexChanged(m_currentImagesSetIndex);
-    emit isUnicodeChanged(isUnicode());
+    //check asyncronously
+    QThread *thread = QThread::create([&]{
+        checkImagesPresence();
+        m_requestsListMutex.lock();
+        for(QNetworkReply* reply: m_activeRequests) {
+            reply->abort();
+        }
+        m_requestsListMutex.unlock();
+        QMetaObject::invokeMethod(this, "emojisSetsIndexChanged",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(int, m_currentImagesSetIndex));
+        QMetaObject::invokeMethod(this, "isUnicodeChanged",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(bool, isUnicode()));
+
+    });
+    thread->start();
     qDebug() << "image set index" << m_currentImagesSetIndex;
 }
 
@@ -247,14 +256,18 @@ void ImagesCache::checkImagesPresence()
     if (isUnicode()) {
         return;
     }
+    const QList<EmojiInfo *> vals = m_emojiList.values();
+    for (EmojiInfo *ei: vals) {
+        ei->setCached(false);
+    }
     QDir imagesCacheDir(m_cache + QDir::separator() + m_imagesSetsFolders.at(m_currentImagesSetIndex));
     if (!imagesCacheDir.exists()) {
         imagesCacheDir.mkpath(imagesCacheDir.path());
         return;
     }
-    const QList<EmojiInfo *> vals = m_emojiList.values();
-    for (const QFileInfo& fi: imagesCacheDir.entryInfoList()) {
-        for (EmojiInfo *ei: vals) {
+
+    for (EmojiInfo *ei: vals) {
+        for (const QFileInfo& fi: imagesCacheDir.entryInfoList()) {
             if (ei->image() == fi.fileName() && fi.size() > 0) {
                 ei->setCached(true);
                 break;
