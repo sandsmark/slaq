@@ -11,14 +11,34 @@ Popup {
 
     signal emojiSelected(string emoji)
 
+    opacity: visible ? 1 : 0
+
+    Behavior on opacity { NumberAnimation { duration: 150 } }
+
     onAboutToHide: {
         emojiSelected("")
+    }
+
+    background.transform: Rotation {
+            origin.x: listView.width/2
+        axis.x: 1; axis.y: 0; axis.z: 0
+        angle: visible ? 0 : 5
+
+        Behavior on angle { NumberAnimation { duration: 100 } }
     }
 
     ListView {
         id: listView
         anchors.fill: parent
         ScrollBar.vertical: ScrollBar { }
+
+        transform: Rotation {
+            origin.x: listView.width/2
+            axis.x: 1; axis.y: 0; axis.z: 0
+            angle: visible ? 0 : 5
+
+            Behavior on angle { NumberAnimation { duration: 100 } }
+        }
 
         model: SlackClient.getEmojiCategories();
         interactive: true

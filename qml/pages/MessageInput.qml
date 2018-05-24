@@ -122,11 +122,31 @@ Column {
             width: height
             text: "😎"
             font.bold: true
+            checkable: true
+//            property bool emojiSelectorOpen: emojiSelector.visible
+//            onEmojiSelectorOpenChanged: {
+//                if (!emojiSelectorOpen) {
+//                    checked = false
+//                }
+//            }
+
+            Connections {
+                target: emojiSelector
+                onClosed: emojiButton.checked = false
+            }
+
             onClicked: {
-                emojiSelector.x = x
-                emojiSelector.y = mapToGlobal(x, y).y - emojiSelector.height - emojiButton.height
-                emojiSelector.state = "input"
-                emojiSelector.open()
+//                if (emojiSelectorOpen) {
+//                    emojiSelector.close()
+//                } else {
+                if (!emojiSelector.visible) {
+                    emojiSelector.x = x
+                    emojiSelector.y = mapToGlobal(x, y).y - emojiSelector.height - emojiButton.height
+                    emojiSelector.state = "input"
+                    emojiSelector.open()
+                } else {
+                    emojiSelector.close()
+                }
             }
         }
 
