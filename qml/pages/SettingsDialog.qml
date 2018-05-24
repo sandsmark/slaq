@@ -14,7 +14,6 @@ Dialog {
 
     standardButtons: Dialog.Ok | Dialog.Cancel
     onAccepted: {
-        settings.emojisSet = setsBox.displayText
         ImagesCache.setEmojiImagesSet(setsBox.displayText)
         settingsDialog.close()
     }
