@@ -15,68 +15,101 @@ Popup {
         emojiSelected("")
     }
 
-    ListView {
-        id: listView
-        anchors.fill: parent
-        ScrollBar.vertical: ScrollBar { }
+    Connections {
+        target: ImagesCache
+        onEmojiReaded: {
+            ldr.active = true
+        }
 
-        model: SlackClient.getEmojiCategories();
-        interactive: true
-        clip: true
-        spacing: 10
+        onEmojisSetsIndexChanged: {
+            ldr.sourceComponent = undefined
+            ldr.sourceComponent = lvComponent
+        }
+    }
 
-        delegate: Column {
-            id: col
-            spacing: 5
-            height: title.implicitHeight + grid.implicitHeight + spacing
+    Component {
+        id: lvComponent
+        ListView {
+            id: listView
+            anchors.fill: parent
+            ScrollBar.vertical: ScrollBar { }
+
             Component.onCompleted: {
-                grid.forceLayout()
+                listView.model = ImagesCache.getEmojiCategories();
             }
 
-            Text {
-                id: title
-                font.capitalization: Font.Capitalize
-                text: modelData
-                font.pixelSize: 24
-                font.bold: true
-            }
-            Grid {
-                id: grid
-                width: listView.width
-                columns: 10
-                rows: rep.count/columns + 1
-                spacing: 0
-                Repeater {
-                    id: rep
-                    model: SlackClient.getEmojisByCategory(modelData)
+            interactive: true
+            clip: true
+            spacing: 10
 
-                    delegate: ItemDelegate {
-                        id: control
-                        text: modelData
-                        //text: "\xE2\x9D\x93"//"<li>&#x33;&#x20E3;</li>"
-                        padding: 0
-                        font.family: "Twitter Color Emoji"
-                        font.pixelSize: Theme.headerSize - 2
-                        //font.bold: true
-                        display: AbstractButton.TextOnly
-                        width: Theme.headerSize
-                        height: Theme.headerSize
-                        contentItem: Text {
-                            text: control.text
-                            font: control.font
-                            //textFormat: Text.RichText
-                            //renderType: Text.NativeRendering
-                            renderType: Text.QtRendering
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-                        onClicked: {
-                            emojiSelected(modelData)
-                            popup.close()
+            delegate: Column {
+                id: col
+                spacing: 5
+                height: title.implicitHeight + grid.implicitHeight + spacing
+//                Component.onCompleted: {
+//                    grid.forceLayout()
+//                }
+
+                Text {
+                    id: title
+                    font.capitalization: Font.Capitalize
+                    text: modelData
+                    font.pixelSize: 24
+                    font.bold: true
+                }
+                Grid {
+                    id: grid
+                    width: listView.width
+                    columns: 10
+                    rows: rep.count/columns + 1
+                    spacing: 0
+                    Repeater {
+                        id: rep
+                        model: ImagesCache.getEmojisByCategory(modelData)
+                        delegate: ItemDelegate {
+                            id: control
+                            text: model.modelData.unified
+                            padding: 0
+                            font.family: "Twitter Color Emoji"
+                            font.pixelSize: Theme.headerSize - 2
+                            display: AbstractButton.IconOnly
+                            width: Theme.headerSize
+                            height: Theme.headerSize
+                            contentItem: Item {
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    visible: !ImagesCache.isUnicode
+                                    smooth: true
+                                    source: "image://emoji/" + model.modelData.shortNames[0]
+                                }
+
+                                Text {
+                                    visible: ImagesCache.isUnicode
+                                    anchors.fill: parent
+                                    text: control.text
+                                    font: control.font
+                                    renderType: Text.QtRendering
+                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                            }
+                            onClicked: {
+                                emojiSelected(model.modelData.unified)
+                                popup.close()
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    //List we have to have possibility to recreate list, so it will be redrawed from scratch
+    Loader {
+        id: ldr
+        active: false
+        anchors.fill: parent
+        sourceComponent: lvComponent
     }
 }

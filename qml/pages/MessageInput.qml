@@ -32,6 +32,7 @@ Column {
         TextField {
             id: messageInput
             width: parent.width - sendButton.width - uploadButton.width - emojiButton.width - Theme.paddingMedium * 4
+            selectByMouse: true
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]

@@ -68,8 +68,6 @@ public slots:
 
 
     QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
-    QStringList getEmojiCategories();
-    QStringList getEmojisByCategory(const QString &category);
     QString emojiNameByEmoji(const QString &emoji) const;
 
     bool isOnline() const;

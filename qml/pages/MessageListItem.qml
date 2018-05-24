@@ -124,23 +124,40 @@ ItemDelegate {
                             height: Theme.headerSize
                             text: emoji
 
-                            width: contentItem.contentWidth + Theme.paddingMedium*2 + countLabel.contentWidth
+                            width: (ImagesCache.isUnicode ? contentItem.contentWidth : Theme.headerSize - 4)
+                                   + Theme.paddingMedium*2
+                                   + countLabel.contentWidth
+
                             onClicked: {
                                 SlackClient.deleteReaction(channel.id, time, name)
                             }
 
-                            contentItem: Text {
-                                text: control.text
-                                font.family: "Twitter Color Emoji"
-                                font.pixelSize: parent.height/2
-                                renderType: Text.QtRendering
+                            contentItem: Item {
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: Theme.headerSize - 4
+                                    height: Theme.headerSize - 4
+                                    smooth: true
+                                    visible: !ImagesCache.isUnicode
+                                    source: "image://emoji/" + name
+                                }
 
+                                Text {
+                                    visible: ImagesCache.isUnicode
+                                    anchors.centerIn: parent
+                                    text: control.text
+                                    font.family: "Twitter Color Emoji"
+                                    font.pixelSize: Theme.headerSize - 6
+                                    renderType: Text.QtRendering
+                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
                             }
 
                             background: Rectangle {
+                                color: "#eaf4f5"
                                 implicitWidth: 100
                                 implicitHeight: 40
-                                opacity: enabled ? 1 : 0.3
                                 border.color: "#bdbdbd"
                                 border.width: 1
                                 radius: 3
