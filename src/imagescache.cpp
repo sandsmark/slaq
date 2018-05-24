@@ -37,10 +37,8 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
                       << "Messenger 128px" << "Messenger 64px"
                       << "Twitter 64px" << "Twitter 72px";
     QSettings settings;
-    m_currentImagesSetIndex = m_imagesSetsNames.indexOf(settings.value("emojisSet", "Unicode").toString()); //Unicode
-    if (m_currentImagesSetIndex < 0) {
-        m_currentImagesSetIndex = 0;
-    }
+    const QString imagesSet = settings.value("emojisSet", "Unicode").toString();
+    setEmojiImagesSet(imagesSet);
     qDebug() << "readed emojis set index" << m_currentImagesSetIndex;
 
     QThread *thread = QThread::create([&]{
@@ -60,8 +58,6 @@ ImagesCache *ImagesCache::instance()
 }
 
 ImagesCache::~ImagesCache() {
-    QSettings settings;
-    settings.setValue("emojisSet", m_imagesSetsNames.at(m_currentImagesSetIndex));
 }
 
 bool ImagesCache::isExist(const QString &id)
@@ -186,6 +182,11 @@ void ImagesCache::parseSlackJson()
 void ImagesCache::setEmojiImagesSet(const QString& setName)
 {
     m_currentImagesSetIndex = m_imagesSetsNames.indexOf(setName);
+    if (m_currentImagesSetIndex < 0 || m_currentImagesSetIndex >= m_imagesSetsNames.size()) {
+        m_currentImagesSetIndex = 0;
+    }
+    QSettings settings;
+    settings.setValue("emojisSet", m_imagesSetsNames.at(m_currentImagesSetIndex));
     checkImagesPresence();
     m_requestsListMutex.lock();
     for(QNetworkReply* reply: m_activeRequests) {
