@@ -22,10 +22,17 @@ ApplicationWindow {
 
     property alias pageStack: pageStack
     property alias emojiSelector: emojiSelector
+    property alias settings: settings
 
     Settings {
+        id: settings
+        property string emojisSet
         property alias width: window.width
         property alias height: window.height
+    }
+
+    SettingsDialog {
+        id: settingsDialog
     }
 
     color: palette.window
@@ -104,6 +111,12 @@ ApplicationWindow {
                         text: qsTr("Join channel")
                         onClicked: {
                             pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Settings")
+                        onClicked: {
+                            settingsDialog.open()
                         }
                     }
                 }

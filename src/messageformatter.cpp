@@ -92,6 +92,7 @@ void MessageFormatter::replaceEmoji(QString &message)
     if (!message.contains(':')) {
         return;
     }
+    ImagesCache* imageCache = ImagesCache::instance();
 
     QRegularExpressionMatchIterator i = m_emojiPattern.globalMatch(message);
     while (i.hasNext()) {
@@ -99,9 +100,9 @@ void MessageFormatter::replaceEmoji(QString &message)
         QString captured = match.captured();
         captured.replace(QStringLiteral(":"), QStringLiteral(""));
         //qDebug() << "captured" << captured;
-        if (m_emojis.contains(captured)) {
+        if (imageCache->isUnicode() && m_emojis.contains(captured)) {
             message.replace(":" + captured + ":", m_emojis[captured]);
-        } else if (ImagesCache::instance()->isExist(captured)) {
+        } else if (imageCache->isExist(captured)) {
             QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
                     .arg(captured)
                     .arg(QStringLiteral("middle"))

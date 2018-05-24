@@ -8,57 +8,63 @@
 #include <QImage>
 #include <QDateTime>
 #include <QtNetwork/QNetworkAccessManager>
+#include <QMutexLocker>
+
+#include "emojiinfo.h"
 
 class ImagesCache : public QObject
 {
     Q_OBJECT
+
+    Q_PROPERTY(bool isUnicode READ isUnicode NOTIFY isUnicodeChanged)
+
 public:
 
     static ImagesCache* instance();
     virtual ~ImagesCache() {}
 
-    struct ImageInfo {
-        ImageInfo(): cached(false) {}
-        QString pack;
-        QString name;
-        QString fileName;
-        QUrl url;
-        bool cached;
-    };
-
     bool isExist(const QString &id);
     bool isCached(const QString &id);
     QImage image(const QString &id);
-    bool isImagesDatabaseLoaded() { return m_images.size() > 0; }
+    bool isImagesDatabaseLoaded() { return m_emojiList.size() > 0; }
     void loadImagesDatabase();
+    void parseSlackJson();
+    Q_INVOKABLE void setEmojiImagesSet(const QString& setName);
+    Q_INVOKABLE QString getEmojiImagesSet();
+    Q_INVOKABLE int getEmojiImagesSetIndex();
+    Q_INVOKABLE QStringList getEmojiImagesSetsNames();
+    Q_INVOKABLE QStringList getEmojiCategories();
+    Q_INVOKABLE QVariant getEmojisByCategory(const QString &category);
+    bool isUnicode() const;
 
 signals:
     void imageLoaded(const QString &id);
     void requestImageViaHttp(const QString &id);
-
-public slots:
+    void emojiReaded();
+    void emojisSetsIndexChanged(int emojisIndex);
+    void isUnicodeChanged(bool isUnicode);
 
 private slots:
-    void onImagesListRequestFinished();
     void onImageRequestedViaHttp(const QString &id);
     void onImageRequestFinished();
-    void requestEmojiCheactSheet();
-    void requestSlackMojis();
 
 private:
     explicit ImagesCache(QObject *parent = nullptr);
-    void parseJson(const QByteArray &data);
-    bool parseSlackMojis(const QByteArray &data);
-    bool parseEmojiCheatSheet(const QByteArray &data);
-    void saveJson();
+    void checkImagesPresence();
 
 private:
-    QMap<QString, ImageInfo> m_images;
     QDateTime m_lastUpdate;
     QNetworkAccessManager m_qnam;
 
+    QStringList m_imagesSetsFolders;
+    QStringList m_imagesSetsNames;
+    int m_currentImagesSetIndex; //represents current images set. Might be several in images cache folder
     QString m_cache;
-    QString m_imagesJsonFileName;
+    QHash<QString, EmojiInfo *> m_emojiList;
+    QMultiMap<QString, EmojiInfo *> m_emojiCategories;
+
+    QList<QNetworkReply*> m_activeRequests;
+    QMutex m_requestsListMutex;
 };
 
 #endif // IMAGESCACHE_H

@@ -15,6 +15,8 @@
 #include "emojiprovider.h"
 #include "imagescache.h"
 #include "slackclientthreadspawner.h"
+#include "emojiinfo.h"
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -29,10 +31,12 @@ int main(int argc, char *argv[])
     QtWebView::initialize();
     qDebug() << "GUI thread" << QThread::currentThreadId();
     qRegisterMetaType<SlackClient*>("SlackClient*");
+    qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
+    qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
 
     SlackConfig::clearWebViewCache();
     //instantiate ImageCache
-    ImagesCache::instance();
+    engine.rootContext()->setContextProperty("ImagesCache", ImagesCache::instance());
     SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
     engine.rootContext()->setContextProperty("SlackClient", _slackThread);
     _slackThread->start();

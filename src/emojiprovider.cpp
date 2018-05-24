@@ -28,9 +28,6 @@ void AsyncImageResponse::run()
 {
     //preload database from cache
 
-    if (!m_imageCache->isImagesDatabaseLoaded()) {
-        m_imageCache->loadImagesDatabase();
-    }
     m_image = m_imageCache->image(m_id);
 
     if (!m_image.isNull()) {
