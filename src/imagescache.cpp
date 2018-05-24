@@ -15,8 +15,6 @@
 #include <QSettings>
 
 #include <QtNetwork/QNetworkReply>
-#include "qgumbodocument.h"
-#include <qgumbonode.h>
 
 ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
 {

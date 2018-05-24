@@ -85,9 +85,3 @@ target.path = /usr/bin/
 
 RESOURCES += \
     qml.qrc
-
-#gumbo parser
-
-include(src/QGumboParser/QGumboParser.pri)
-INCLUDEPATH += src/QGumboParser
-
