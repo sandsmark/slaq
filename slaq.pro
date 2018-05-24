@@ -15,7 +15,7 @@ TARGET = slaq
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
-QT += quick widgets webview xml
+QT += quick widgets webview xml quickcontrols2
 CONFIG += c++1x
 QT += websockets
 

@@ -11,7 +11,6 @@
 #include <QFile>
 #include <QHttpMultiPart>
 #include <QtNetwork/QNetworkConfigurationManager>
-#include <QFontDatabase>
 
 #include "slackclient.h"
 #include "storage.h"
@@ -25,8 +24,6 @@ SlackClient::SlackClient(QObject *parent) :
     // In case there's no system emoji font
     //int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/emojione-android.ttf");
     //int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/emojione-svg.otf");
-    int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/TwitterColorEmoji.ttf");
-    qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     networkAccessManager = new QNetworkAccessManager(this);
     config = new SlackConfig(this);

@@ -108,6 +108,7 @@ ItemDelegate {
 
                 Row {
                     spacing: 5
+
                     Repeater {
                         id: reactionsRepeater
                         model: reactions
@@ -157,14 +158,15 @@ ItemDelegate {
                             background: Rectangle {
                                 color: "#eaf4f5"
                                 implicitWidth: 100
-                                implicitHeight: 40
+                                implicitHeight: parent.height
+                                opacity: enabled ? 1 : 0.3
                                 border.color: "#bdbdbd"
                                 border.width: 1
                                 radius: 3
                                 Text {
                                     id: countLabel
                                     anchors.right: parent.right; anchors.rightMargin: Theme.paddingSmall
-                                    anchors.top: parent.top; anchors.topMargin: Theme.paddingSmall
+                                    anchors.verticalCenter: parent.verticalCenter
                                     font.pointSize: Theme.fontSizeSmall
                                     renderType: Text.QtRendering
                                     color: "#0f0f0f"
