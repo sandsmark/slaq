@@ -38,6 +38,9 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
                       << "Twitter 64px" << "Twitter 72px";
     QSettings settings;
     m_currentImagesSetIndex = m_imagesSetsNames.indexOf(settings.value("emojisSet", "Unicode").toString()); //Unicode
+    if (m_currentImagesSetIndex < 0) {
+        m_currentImagesSetIndex = 0;
+    }
     qDebug() << "readed emojis set index" << m_currentImagesSetIndex;
 
     QThread *thread = QThread::create([&]{
@@ -54,6 +57,11 @@ ImagesCache *ImagesCache::instance()
 {
     static ImagesCache imageCache;
     return &imageCache;
+}
+
+ImagesCache::~ImagesCache() {
+    QSettings settings;
+    settings.setValue("emojisSet", m_imagesSetsNames.at(m_currentImagesSetIndex));
 }
 
 bool ImagesCache::isExist(const QString &id)

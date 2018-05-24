@@ -21,7 +21,7 @@ class ImagesCache : public QObject
 public:
 
     static ImagesCache* instance();
-    virtual ~ImagesCache() {}
+    virtual ~ImagesCache();
 
     bool isExist(const QString &id);
     bool isCached(const QString &id);
