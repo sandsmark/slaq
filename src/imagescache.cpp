@@ -296,3 +296,24 @@ bool ImagesCache::isUnicode() const
 {
     return (m_currentImagesSetIndex == 0);
 }
+
+QString ImagesCache::getEmojiByName(const QString &name) const
+{
+    EmojiInfo *ei = m_emojiList.value(name, nullptr);
+    if (ei) {
+        return ei->unified();
+    }
+    return "";
+}
+
+QString ImagesCache::getNameByEmoji(const QString &emoji) const
+{
+    const QList<EmojiInfo*>& eiList = m_emojiList.values();
+    for (EmojiInfo* ei : eiList) {
+        if (ei->unified() == emoji) {
+            return ei->shortNames().at(0);
+        }
+    }
+    return "";
+
+}

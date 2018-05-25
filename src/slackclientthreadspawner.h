@@ -66,9 +66,7 @@ public slots:
     void setAppActive(bool active);
     void setActiveWindow(const QString &windowId);
 
-
     QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
-    QString emojiNameByEmoji(const QString &emoji) const;
 
     bool isOnline() const;
     bool isDevice() const;
