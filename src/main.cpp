@@ -1,5 +1,5 @@
 #include <QQuickView>
-#include <QApplication>
+#include <QGuiApplication>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
 #include <QtWebView>
@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
     app.setOrganizationName("Martin Sandsmark");
     app.setApplicationName("Slaq");
 
