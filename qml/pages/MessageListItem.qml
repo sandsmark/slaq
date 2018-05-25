@@ -21,7 +21,7 @@ ItemDelegate {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(channel.id, time, SlackClient.emojiNameByEmoji(emoji));
+                SlackClient.addReaction(channel.id, time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }

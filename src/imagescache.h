@@ -36,6 +36,8 @@ public:
     Q_INVOKABLE QStringList getEmojiCategories();
     Q_INVOKABLE QVariant getEmojisByCategory(const QString &category);
     bool isUnicode() const;
+    Q_INVOKABLE QString getEmojiByName(const QString& name) const;
+    Q_INVOKABLE QString getNameByEmoji(const QString& emoji) const;
 
 signals:
     void imageLoaded(const QString &id);

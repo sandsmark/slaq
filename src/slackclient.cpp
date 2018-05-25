@@ -707,11 +707,6 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
     return nicks;
 }
 
-QString SlackClient::emojiNameByEmoji(const QString &emoji) const
-{
-    return m_formatter.emojiNameByEmoji(emoji);
-}
-
 bool SlackClient::isOnline() const
 {
     return stream && stream->isConnected();

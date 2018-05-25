@@ -31,7 +31,6 @@ public:
     Q_INVOKABLE QVariantList getChannels();
     Q_INVOKABLE QVariant getChannel(const QString& channelId);
     Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
-    Q_INVOKABLE QString emojiNameByEmoji(const QString &emoji) const;
 
 signals:
     void testConnectionFail();
