@@ -38,6 +38,7 @@ public:
     bool isUnicode() const;
     Q_INVOKABLE QString getEmojiByName(const QString& name) const;
     Q_INVOKABLE QString getNameByEmoji(const QString& emoji) const;
+    Q_INVOKABLE QStringList getCategoriesSymbols() const;
 
 signals:
     void imageLoaded(const QString &id);
@@ -60,6 +61,7 @@ private:
 
     QStringList m_imagesSetsFolders;
     QStringList m_imagesSetsNames;
+    QStringList m_categoriesSymbols;
     int m_currentImagesSetIndex; //represents current images set. Might be several in images cache folder
     QString m_cache;
     QHash<QString, EmojiInfo *> m_emojiList;

@@ -36,6 +36,8 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
                       << "Google 136px" << "Google 64px"
                       << "Messenger 128px" << "Messenger 64px"
                       << "Twitter 64px" << "Twitter 72px";
+    //need for quick access
+    m_categoriesSymbols << "🏈" << "🐶"<< "🏴" << "🥂" << "🔦" << "🏿" << "🙂" << "©️" <<"✈️";
     QSettings settings;
     const QString imagesSet = settings.value("emojisSet", "Unicode").toString();
     setEmojiImagesSet(imagesSet);
@@ -276,6 +278,11 @@ void ImagesCache::checkImagesPresence()
     }
 }
 
+QStringList ImagesCache::getCategoriesSymbols() const
+{
+    return m_categoriesSymbols;
+}
+
 //QML model data
 QStringList ImagesCache::getEmojiCategories()
 {
@@ -315,5 +322,4 @@ QString ImagesCache::getNameByEmoji(const QString &emoji) const
         }
     }
     return "";
-
 }
