@@ -1,5 +1,6 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.3
 import ".."
 
 Popup {
@@ -103,19 +104,68 @@ Popup {
         }
     }
 
-    //List we have to have possibility to recreate list, so it will be redrawed from scratch
-    Loader {
-        id: ldr
-        active: false
-        property bool reloading: false
-        asynchronous: true
+    Page {
         anchors.fill: parent
-        sourceComponent: lvComponent
-        onStatusChanged: {
-            if (reloading && status === Loader.Null) {
-                console.log("unloaded. loading back")
-                ldr.sourceComponent = lvComponent
-                reloading = false
+        header: ToolBar {
+            background: Item{}
+            RowLayout {
+                anchors.fill: parent
+                Repeater {
+                    model:ImagesCache.getCategoriesSymbols()
+                    ToolButton {
+                        text: modelData
+                        Layout.fillWidth: true
+                        onClicked: {
+                            ldr.item.positionViewAtIndex(index, ListView.Beginning)
+                        }
+                    }
+                }
+            }
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 3
+            RowLayout {
+                spacing: 10
+
+                Label {
+                    text: "Select Emojis:"
+                }
+
+                ComboBox {
+                    id: setsBox
+                    property int setIndex: 0
+                    model: ImagesCache.getEmojiImagesSetsNames();
+                    Component.onCompleted: {
+                        setIndex = find(settings.emojisSet, Qt.MatchFixedString)
+                        if (setIndex !== -1)
+                            currentIndex = setIndex
+                    }
+                    Layout.fillWidth: true
+                    onCurrentIndexChanged: {
+                        if (currentIndex !== -1) {
+                            console.log("index", currentIndex, displayText)
+                            ImagesCache.setEmojiImagesSet(textAt(currentIndex))
+                        }
+                    }
+                }
+            }
+
+            Loader {
+                id: ldr
+                active: false
+                property bool reloading: false
+                asynchronous: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                sourceComponent: lvComponent
+                onStatusChanged: {
+                    if (reloading && status === Loader.Null) {
+                        console.log("unloaded. loading back")
+                        ldr.sourceComponent = lvComponent
+                        reloading = false
+                    }
+                }
             }
         }
     }
