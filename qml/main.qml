@@ -47,6 +47,7 @@ ApplicationWindow {
         }
     }
     header: ToolBar {
+        id: toolbar
         RowLayout {
             anchors.fill: parent
             Rectangle {
@@ -63,7 +64,7 @@ ApplicationWindow {
 
             ToolButton {
                 text: pageStack.depth > 1 ? "‹" : "›"
-                font.pixelSize: parent.height/2
+                font.pixelSize: height/1.5
                 onClicked: {
                     if (pageStack.depth > 1) {
                         pageStack.pop()
@@ -78,9 +79,17 @@ ApplicationWindow {
                 visible: SlackClient.isDevice || pageStack.depth > 1
                 enabled: visible
             }
+            RowLayout {
+                Layout.fillWidth: true
+                ToolButton {
+                    text: "➕"
+                    font.pixelSize: height/1.5
+                }
+            }
 
             ToolButton {
                 text: qsTr("⋮")
+                font.pixelSize: height/1.5
                 onClicked: menu.open()
 
                 Layout.alignment: Qt.AlignRight

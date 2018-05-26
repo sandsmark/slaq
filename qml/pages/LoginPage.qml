@@ -8,6 +8,8 @@ Page {
 
     property string startUrl: "https://slack.com/signin"
 
+    StackView.onRemoved: destroy()
+
     title: "Sign in with Slack"
 
     Rectangle {
