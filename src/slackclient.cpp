@@ -15,7 +15,6 @@
 
 #include "slackclient.h"
 #include "storage.h"
-#include "messageformatter.h"
 
 SlackClient::SlackClient(QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
@@ -45,6 +44,7 @@ SlackClient::SlackClient(QObject *parent) :
     connect(this, &SlackClient::connected, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::initSuccess, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::disconnected, this, &SlackClient::isOnlineChanged);
+
     qDebug() << "client ctor finished";
 }
 
@@ -705,21 +705,6 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
     }
 
     return nicks;
-}
-
-QStringList SlackClient::getEmojiCategories()
-{
-    return m_formatter.emojiCategories().uniqueKeys();
-}
-
-QStringList SlackClient::getEmojisByCategory(const QString &category)
-{
-    return m_formatter.emojiCategories().values(category);
-}
-
-QString SlackClient::emojiNameByEmoji(const QString &emoji) const
-{
-    return m_formatter.emojiNameByEmoji(emoji);
 }
 
 bool SlackClient::isOnline() const

@@ -55,32 +55,6 @@ QStringList SlackClientThreadSpawner::getNickSuggestions(const QString &currentT
     return retVal;
 }
 
-QStringList SlackClientThreadSpawner::getEmojiCategories()
-{
-    QStringList retVal;
-    QMetaObject::invokeMethod(m_slackClient, "getEmojiCategories", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QStringList, retVal));
-    return retVal;
-}
-
-QStringList SlackClientThreadSpawner::getEmojisByCategory(const QString &category)
-{
-    QStringList retVal;
-    QMetaObject::invokeMethod(m_slackClient, "getEmojisByCategory", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QStringList, retVal),
-                              Q_ARG(QString, category));
-    return retVal;
-}
-
-QString SlackClientThreadSpawner::emojiNameByEmoji(const QString &emoji) const
-{
-    QString retVal;
-    QMetaObject::invokeMethod(m_slackClient, "emojiNameByEmoji", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QString, retVal),
-                              Q_ARG(QString, emoji));
-    return retVal;
-}
-
 void SlackClientThreadSpawner::loadMessages(const QString &type, const QString &channelId)
 {
     QMetaObject::invokeMethod(m_slackClient, "loadMessages", Qt::QueuedConnection,
