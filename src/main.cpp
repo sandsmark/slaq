@@ -16,6 +16,8 @@
 #include "imagescache.h"
 #include "slackclientthreadspawner.h"
 #include "emojiinfo.h"
+#include "teaminfo.h"
+#include "QQmlGadgetListModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,13 +34,17 @@ int main(int argc, char *argv[])
     qDebug() << "GUI thread" << QThread::currentThreadId();
     qRegisterMetaType<SlackClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
+    qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
+    qmlRegisterUncreatableType<QQmlGadgetListModelBase> ("SlaqQmlModels", 1, 0, "QQmlGadgetListModelBase",  "!!!");
 
     SlackConfig::clearWebViewCache();
     //instantiate ImageCache
-    engine.rootContext()->setContextProperty("ImagesCache", ImagesCache::instance());
+    engine.rootContext()->setContextProperty(QStringLiteral("ImagesCache"), ImagesCache::instance());
     SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
-    engine.rootContext()->setContextProperty("SlackClient", _slackThread);
+    engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), _slackThread);
+    engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), _slackThread->teamsModel());
+    engine.rootContext()->setContextProperty(QStringLiteral("SlackConfig"), SlackConfig::instance());
     _slackThread->start();
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {

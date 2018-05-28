@@ -76,7 +76,20 @@ QImage ImagesCache::image(const QString &id)
 {
     QImage image_;
     //qDebug() << "request for image" << id << m_emojiList.contains(id) << m_emojiList.value(id)->cached();
-    if (m_emojiList.contains(id)) {
+    if (id.startsWith(QStringLiteral("icon/"))) {
+        //icons ids started with icon/following by url:
+        // icon/https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-10-19/259793453543_4b3c2e1f2d0926ea6415_original.png
+        QString iconPath = id;
+        iconPath.remove(0, 5);
+        QUrl iconUrl(iconPath);
+
+        if (m_iconsCached.contains(iconUrl.fileName())) {
+            image_.load(m_cache + QDir::separator() + QStringLiteral("icons")
+                        + QDir::separator() + iconUrl.fileName());
+        } else {
+            emit requestImageViaHttp(id);
+        }
+    } else if (m_emojiList.contains(id)) {
         if (m_emojiList.value(id)->cached()) {
             image_.load(m_cache + QDir::separator() +
                         m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
@@ -93,12 +106,22 @@ QImage ImagesCache::image(const QString &id)
 void ImagesCache::onImageRequestedViaHttp(const QString &id)
 {
     // doesnt makes sense for unicode
-    if (isUnicode()) {
-        return;
+
+    QUrl url;
+    if (id.startsWith(QStringLiteral("icon/"))) {
+        QString iconPath = id;
+        iconPath.remove(0, 5);
+        url.setUrl(iconPath);
+
+    } else {
+        if (isUnicode()) {
+            return;
+        }
+        url.setUrl("https://github.com/iamcal/emoji-data/raw/master/"
+                   + m_imagesSetsFolders.at(m_currentImagesSetIndex)
+                   + "/" + m_emojiList.value(id)->image());
     }
-    QNetworkRequest req_ = QNetworkRequest(QUrl("https://github.com/iamcal/emoji-data/raw/master/"
-                                                + m_imagesSetsFolders.at(m_currentImagesSetIndex)
-                                                + "/" + m_emojiList.value(id)->image()));
+    QNetworkRequest req_ = QNetworkRequest(url);
 
     //qDebug() << "reqesting image" << req_.url();
     req_.setAttribute(QNetworkRequest::User, QVariant(id));
@@ -235,13 +258,29 @@ void ImagesCache::onImageRequestFinished()
         const QByteArray &arr = reply->readAll();
         const QString& id = reply->request().attribute(QNetworkRequest::User).toString();
         if (!id.isEmpty()) {
-            QFile f(m_cache + QDir::separator() +
-                    m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
-                    m_emojiList.value(id)->image());
+            QFile f;
+            if (id.startsWith(QStringLiteral("icon/"))) {
+                QString iconPath = id;
+                iconPath.remove(0, 5);
+                QUrl url(iconPath);
+                const QString& filename = url.fileName();
+                f.setFileName(m_cache + QDir::separator() +
+                              "icons" + QDir::separator() +
+                              filename);
+                if (!m_iconsCached.contains(filename)) {
+                    m_iconsCached << filename;
+                }
+
+            } else {
+                f.setFileName(m_cache + QDir::separator() +
+                              m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
+                              m_emojiList.value(id)->image());
+                m_emojiList.value(id)->setCached(true);
+            }
             f.open(QIODevice::WriteOnly);
             f.write(arr);
             f.close();
-            m_emojiList.value(id)->setCached(true);
+
             emit imageLoaded(id);
         } else {
             qWarning() << "id is empty";
@@ -254,6 +293,16 @@ void ImagesCache::onImageRequestFinished()
 
 void ImagesCache::checkImagesPresence()
 {
+    QDir iconsCacheDir(m_cache + QDir::separator() + "icons");
+    if (!iconsCacheDir.exists()) {
+        iconsCacheDir.mkpath(iconsCacheDir.path());
+    }
+    //readout icons
+    for (const QFileInfo& fi: iconsCacheDir.entryInfoList()) {
+        if (fi.isFile() && fi.size() > 0) {
+            m_iconsCached << fi.fileName();
+        }
+    }
     // doesnt makes sense for unicode
     if (isUnicode()) {
         return;

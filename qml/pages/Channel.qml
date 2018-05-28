@@ -11,7 +11,7 @@ Page {
     property variant channel
     property bool initialized: false
 
-    title: channel.name
+    title: channel !== undefined ? channel.name : ""
 
     header: Rectangle {
         height: Theme.headerSize
@@ -109,6 +109,7 @@ Page {
     }
 
     Component.onCompleted: {
+        console.log("before get channel", page.channelId, SlackClient.getChannel(page.channelId).name)
         page.channel = SlackClient.getChannel(page.channelId)
         input.forceActiveFocus()
     }

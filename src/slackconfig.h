@@ -4,26 +4,40 @@
 #include <QObject>
 #include <QSettings>
 
+class TeamInfo;
+
 class SlackConfig : public QObject
 {
     Q_OBJECT
 public:
-    explicit SlackConfig(QObject *parent = 0);
 
-    QString accessToken();
-    void setAccessToken(QString accessToken);
     QString userId();
-    void setUserId(QString userId);
+    void setUserInfo(const QString &userId, const QString &teamId, const QString &teamName);
+    QList<TeamInfo*> teams();
+    void setTeams(const QList<TeamInfo*>& list);
 
     static void clearWebViewCache();
+    static SlackConfig *instance();
+
+    Q_INVOKABLE QString teamId() { return m_currentTeamId; }
+    Q_INVOKABLE QString teamName() { return m_currentTeamName; }
+
+    Q_INVOKABLE bool hasUserInfo() { return (!m_currentUserId.isEmpty()
+                                 && !m_currentTeamId.isEmpty()
+                                 && !m_currentTeamName.isEmpty());
+    }
 
 signals:
 
 public slots:
+private:
+    explicit SlackConfig(QObject *parent = nullptr);
 
 private:
-    QSettings settings;
-    QString currentUserId;
+    QSettings m_settings;
+    QString m_currentUserId;
+    QString m_currentTeamId;
+    QString m_currentTeamName;
 };
 
 #endif // SLACKCONFIG_H

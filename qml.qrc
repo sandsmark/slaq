@@ -26,7 +26,6 @@
         <file>qml/Channel.js</file>
         <file>qml/ChannelList.js</file>
         <file>qml/Message.js</file>
-        <file alias="qml/Settings.js">qml/Settings.js</file>
         <file>qml/pages/SlackImage.qml</file>
         <file>qml/pages/LoadingPage.qml</file>
         <file>icons/smile.gif</file>

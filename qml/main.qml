@@ -1,15 +1,14 @@
 import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
+import QtQuick.Window 2.3
 
 import Qt.labs.settings 1.0
 
-import "Settings.js" as Settings
 import "ChannelList.js" as ChannelList
 import "Channel.js" as Channel
 import "."
 
-//import QtQuick.Window 2.3
 import "pages"
 import "dialogs"
 import "cover"
@@ -71,7 +70,6 @@ ApplicationWindow {
 
             ToolButton {
                 text: pageStack.depth > 1 ? "‹" : "›"
-                font.pixelSize: height/1.5
                 onClicked: {
                     if (pageStack.depth > 1) {
                         pageStack.pop()
@@ -88,15 +86,29 @@ ApplicationWindow {
             }
             RowLayout {
                 Layout.fillWidth: true
+                Repeater {
+                    model: teamsModel
+                    ToolButton {
+                        hoverEnabled: true
+                        ToolTip.text: name
+                        icon.source: "image://emoji/icon/" + icons[icons.length - 2]
+                        icon.color: "transparent"
+                        onClicked: {
+                            SlackClient.connectToTeam(teamId)
+                        }
+                    }
+                }
+
                 ToolButton {
                     text: "➕"
-                    font.pixelSize: height/1.5
+                    onClicked: {
+                        pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))
+                    }
                 }
             }
 
             ToolButton {
                 text: qsTr("⋮")
-                font.pixelSize: height/1.5
                 onClicked: menu.open()
 
                 Layout.alignment: Qt.AlignRight

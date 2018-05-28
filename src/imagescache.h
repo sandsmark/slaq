@@ -66,6 +66,7 @@ private:
     QString m_cache;
     QHash<QString, EmojiInfo *> m_emojiList;
     QMultiMap<QString, EmojiInfo *> m_emojiCategories;
+    QSet<QString> m_iconsCached;
 
     QList<QNetworkReply*> m_activeRequests;
     QMutex m_requestsListMutex;

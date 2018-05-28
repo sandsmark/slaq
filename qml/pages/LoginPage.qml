@@ -1,14 +1,11 @@
 import QtQuick 2.8
 import QtWebView 1.1
 import QtQuick.Controls 2.3
-import "../Settings.js" as Settings
 
 Page {
     id: page
 
     property string startUrl: "https://slack.com/signin"
-
-    StackView.onRemoved: destroy()
 
     title: "Sign in with Slack"
 
@@ -49,7 +46,6 @@ Page {
     }
 
     function handleAccessTokenSuccess(userId, teamId, teamName) {
-        Settings.setUserInfo(userId, teamId, teamName)
         pageStack.pop(undefined, StackView.Transition)
     }
 

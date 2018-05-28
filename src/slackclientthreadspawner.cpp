@@ -6,6 +6,11 @@ SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
 
 SlackClient *SlackClientThreadSpawner::slackClient() { return m_slackClient; }
 
+QQmlGadgetListModel<TeamInfo> *SlackClientThreadSpawner::teamsModel()
+{
+    return &m_teamsModel;
+}
+
 void SlackClientThreadSpawner::startClient()
 {
     QMetaObject::invokeMethod(m_slackClient, "startClient", Qt::QueuedConnection);
@@ -174,6 +179,21 @@ void SlackClientThreadSpawner::closeChat(const QString &chatId)
                               Q_ARG(QString, chatId));
 }
 
+void SlackClientThreadSpawner::onTeamInfoChanged()
+{
+    QList<TeamInfo *> list = m_slackClient->getKnownTeams();
+    m_teamsModel.clear();
+    for (TeamInfo *ti : list) {
+        m_teamsModel.append(*ti);
+    }
+}
+
+void SlackClientThreadSpawner::connectToTeam(const QString &teamId)
+{
+    QMetaObject::invokeMethod(m_slackClient, "connectToTeam", Qt::QueuedConnection,
+                              Q_ARG(QString, teamId));
+}
+
 void SlackClientThreadSpawner::run()
 {
     m_slackClient = new SlackClient;
@@ -198,21 +218,22 @@ void SlackClientThreadSpawner::run()
     connect(m_slackClient, &SlackClient::messageUpdated, this, &SlackClientThreadSpawner::messageUpdated, Qt::QueuedConnection);
     connect(m_slackClient, &SlackClient::channelUpdated, this, &SlackClientThreadSpawner::channelUpdated, Qt::QueuedConnection);
     connect(m_slackClient, &SlackClient::channelJoined, this, &SlackClientThreadSpawner::channelJoined, Qt::QueuedConnection);
-    connect(m_slackClient, &SlackClient::channelLeft, this, &SlackClientThreadSpawner::channelLeft , Qt::QueuedConnection);
-    connect(m_slackClient, &SlackClient::userUpdated, this, &SlackClientThreadSpawner::userUpdated , Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::channelLeft, this, &SlackClientThreadSpawner::channelLeft, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::userUpdated, this, &SlackClientThreadSpawner::userUpdated, Qt::QueuedConnection);
 
-    connect(m_slackClient, &SlackClient::postImageSuccess, this, &SlackClientThreadSpawner::postImageSuccess , Qt::QueuedConnection);
-    connect(m_slackClient, &SlackClient::postImageFail, this, &SlackClientThreadSpawner::postImageFail , Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::postImageSuccess, this, &SlackClientThreadSpawner::postImageSuccess, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::postImageFail, this, &SlackClientThreadSpawner::postImageFail, Qt::QueuedConnection);
 
-    connect(m_slackClient, &SlackClient::networkOff, this, &SlackClientThreadSpawner::networkOff , Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::networkOff, this, &SlackClientThreadSpawner::networkOff, Qt::QueuedConnection);
     connect(m_slackClient, &SlackClient::networkOn, this, &SlackClientThreadSpawner::networkOn, Qt::QueuedConnection);
 
-    connect(m_slackClient, &SlackClient::reconnecting, this, &SlackClientThreadSpawner::reconnecting , Qt::QueuedConnection);
-    connect(m_slackClient, &SlackClient::disconnected, this, &SlackClientThreadSpawner::disconnected , Qt::QueuedConnection);
-    connect(m_slackClient, &SlackClient::connected, this, &SlackClientThreadSpawner::connected , Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::reconnecting, this, &SlackClientThreadSpawner::reconnecting, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::disconnected, this, &SlackClientThreadSpawner::disconnected, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::connected, this, &SlackClientThreadSpawner::connected, Qt::QueuedConnection);
 
-    connect(m_slackClient, &SlackClient::isOnlineChanged, this, &SlackClientThreadSpawner::isOnlineChanged , Qt::QueuedConnection);
-    connect(m_slackClient, &SlackClient::lastChannelChanged, this, &SlackClientThreadSpawner::lastChannelChanged , Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::isOnlineChanged, this, &SlackClientThreadSpawner::isOnlineChanged, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::lastChannelChanged, this, &SlackClientThreadSpawner::lastChannelChanged, Qt::QueuedConnection);
+    connect(m_slackClient, &SlackClient::teamInfoChanged, this, &SlackClientThreadSpawner::onTeamInfoChanged, Qt::QueuedConnection);
 
     //make sure signal will be delivered to QML
     QMetaObject::invokeMethod(this, "threadStarted", Qt::QueuedConnection);

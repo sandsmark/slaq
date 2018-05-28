@@ -52,7 +52,8 @@ HEADERS += \
     src/emojiprovider.h \
     src/imagescache.h \
     src/slackclientthreadspawner.h \
-    src/emojiinfo.h
+    src/emojiinfo.h \
+    src/teaminfo.h
 
 DISTFILES += \
     qml/pages/Settings.js \
@@ -85,3 +86,5 @@ target.path = /usr/bin/
 
 RESOURCES += \
     qml.qrc
+
+include (src/modelshelper/QtQmlModels.pri)

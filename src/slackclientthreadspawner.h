@@ -19,6 +19,8 @@ public:
     virtual ~SlackClientThreadSpawner() {}
     SlackClient *slackClient();
 
+    Q_INVOKABLE QQmlGadgetListModel<TeamInfo>* teamsModel();
+
 signals:
     void threadStarted();
 
@@ -94,11 +96,17 @@ public slots:
     void openChat(const QString& chatId);
     void closeChat(const QString& chatId);
 
+    //teams
+    void onTeamInfoChanged();
+    void connectToTeam(const QString& teamId);
+
 protected:
     void run();
 
 private:
     SlackClient *m_slackClient;
+    QQmlGadgetListModel<TeamInfo> m_teamsModel;
+
 };
 
 #endif

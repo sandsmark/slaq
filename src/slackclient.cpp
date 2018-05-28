@@ -29,7 +29,7 @@ SlackClient::SlackClient(QObject *parent) :
     qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     networkAccessManager = new QNetworkAccessManager(this);
-    config = new SlackConfig(this);
+    config = SlackConfig::instance();
     stream = new SlackStream(this);
     reconnectTimer = new QTimer(this);
     networkAccessible = networkAccessManager->networkAccessible();
@@ -45,13 +45,25 @@ SlackClient::SlackClient(QObject *parent) :
     connect(this, &SlackClient::initSuccess, this, &SlackClient::isOnlineChanged);
     connect(this, &SlackClient::disconnected, this, &SlackClient::isOnlineChanged);
 
+    m_knownTeams = config->teams();
+    QSettings settings;
+    QString _lastTeam = settings.value(QStringLiteral("LastTeam")).toString();
+    for(TeamInfo *ti : m_knownTeams) {
+        if (ti->teamId() == _lastTeam) {
+            m_currentTeamInfo = ti;
+            m_lastAccessToken = ti->teamToken();
+            break;
+        }
+    }
+
     qDebug() << "client ctor finished";
 }
 
 SlackClient::~SlackClient()
 {
     QSettings settings;
-    settings.setValue(QStringLiteral("LastChannel"), m_lastChannel);
+    settings.setValue(QStringLiteral("LastTeam"), m_currentTeamInfo->teamId());
+    config->setTeams(m_knownTeams);
 }
 
 void SlackClient::setAppActive(bool active)
@@ -70,7 +82,7 @@ void SlackClient::setActiveWindow(const QString& windowId)
     clearNotifications();
 
     if (!windowId.isEmpty()) {
-        m_lastChannel = windowId;
+        m_currentTeamInfo->m_channel = windowId;
         emit lastChannelChanged();
     }
 }
@@ -362,7 +374,7 @@ QJsonObject SlackClient::getResult(QNetworkReply *reply)
 QNetworkReply *SlackClient::executeGet(const QString& method, const QMap<QString, QString>& params)
 {
     QUrlQuery query;
-    query.addQueryItem(QStringLiteral("token"), config->accessToken());
+    query.addQueryItem(QStringLiteral("token"), m_lastAccessToken);
 
     foreach (const QString key, params.keys()) {
         query.addQueryItem(key, params.value(key));
@@ -379,7 +391,7 @@ QNetworkReply *SlackClient::executeGet(const QString& method, const QMap<QString
 QNetworkReply *SlackClient::executePost(const QString& method, const QMap<QString, QString> &data)
 {
     QUrlQuery query;
-    query.addQueryItem(QStringLiteral("token"), config->accessToken());
+    query.addQueryItem(QStringLiteral("token"), m_lastAccessToken);
 
     foreach (const QString key, data.keys()) {
         query.addQueryItem(key, data.value(key));
@@ -405,7 +417,7 @@ QNetworkReply *SlackClient::executePostWithFile(const QString& method, const QMa
 
     QHttpPart tokenPart;
     tokenPart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("from-data; name=\"token\""));
-    tokenPart.setBody(config->accessToken().toUtf8());
+    tokenPart.setBody(m_lastAccessToken.toUtf8());
     dataParts->append(tokenPart);
 
     QHttpPart filePart;
@@ -434,8 +446,8 @@ QNetworkReply *SlackClient::executePostWithFile(const QString& method, const QMa
 
 bool SlackClient::handleAccessTokenReply(const QJsonObject &bootData)
 {
-    QString accessToken = bootData[QStringLiteral("api_token")].toString();
-    if (accessToken.isEmpty()) {
+    m_lastAccessToken = bootData[QStringLiteral("api_token")].toString();
+    if (m_lastAccessToken.isEmpty()) {
         qWarning() << "Missing access token";
         return false;
     }
@@ -458,11 +470,13 @@ bool SlackClient::handleAccessTokenReply(const QJsonObject &bootData)
         return false;
     }
 
-    qDebug() << "Access token success" << accessToken << userId << teamId << teamName;
+    qDebug() << "Access token success" << m_lastAccessToken << userId << teamId << teamName;
 
-    config->setAccessToken(accessToken);
-    config->setUserId(userId);
-
+    if (m_currentTeamInfo != nullptr) {
+        m_currentTeamInfo->m_token = m_lastAccessToken;
+    }
+    config->setUserInfo(userId, teamId, teamName);
+    teamInfo();
     emit accessTokenSuccess(userId, teamId, teamName);
 
     return true;
@@ -476,7 +490,7 @@ void SlackClient::testLogin()
         return;
     }
 
-    QString token = config->accessToken();
+    QString token = m_lastAccessToken;
     if (token.isEmpty()) {
         qDebug() << "Got empty token";
         emit testLoginFail();
@@ -491,9 +505,9 @@ void SlackClient::handleTestLoginReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
+    reply->deleteLater();
 
     if (isError(data)) {
-        reply->deleteLater();
         emit testLoginFail();
         return;
     }
@@ -503,10 +517,10 @@ void SlackClient::handleTestLoginReply()
     QString teamName = data.value(QStringLiteral("team")).toString();
     qDebug() << "Login success" << userId << teamId << teamName;
 
-    config->setUserId(userId);
-
+    config->setUserInfo(userId, teamId, teamName);
+    teamInfo();
     emit testLoginSuccess(userId, teamId, teamName);
-    reply->deleteLater();
+    startClient();
 }
 
 void SlackClient::startClient()
@@ -546,6 +560,7 @@ void SlackClient::handleStartReply()
     stream->listen(url);
 
     Storage::clearChannelMessages();
+    qDebug() << "init success";
     emit initSuccess();
 }
 
@@ -610,7 +625,7 @@ void SlackClient::parseUsers(const QJsonObject& data)
         data.insert(QStringLiteral("presence"), user.value(QStringLiteral("presence")).toVariant());
 
         QJsonObject profile = user.value(QStringLiteral("profile")).toObject();
-        m_userAvatars[userId] = QUrl(profile[QStringLiteral("image_512")].toString());
+        m_userAvatars[userId] = QUrl(profile[QStringLiteral("image_192")].toString());
 
         Storage::saveUser(data);
     }
@@ -631,8 +646,10 @@ void SlackClient::parseBots(const QJsonObject& data)
 
 void SlackClient::parseChannels(const QJsonObject& data)
 {
+    qDebug() << "parse channels";
     foreach (const QJsonValue &value, data.value(QStringLiteral("channels")).toArray()) {
         QVariantMap data = parseChannel(value.toObject());
+        //qDebug() << "parsed channel" << data;
         Storage::saveChannel(data);
     }
 }
@@ -695,7 +712,7 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
     const QString relevant = currentText.mid(whitespaceBefore, whitespaceAfter- whitespaceBefore);
 
     QStringList nicks;
-    for (const QString &memberId : Storage::channel(m_lastChannel).value("members").toStringList()) {
+    for (const QString &memberId : Storage::channel(m_currentTeamInfo->channel()).value("members").toStringList()) {
         const QString nick = Storage::user(memberId).value("name").toString();
         if (relevant.isEmpty()) {
             nicks.append(nick);
@@ -707,22 +724,37 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
     return nicks;
 }
 
+
 bool SlackClient::isOnline() const
 {
     return stream && stream->isConnected();
 }
 
+void SlackClient::connectToTeam(const QString &teamId)
+{
+    for (TeamInfo *ti : m_knownTeams) {
+        if (ti->m_id == teamId) {
+            m_currentTeamInfo = ti;
+            m_lastAccessToken = ti->teamToken();
+            stream->stopStream();
+            startClient();
+            return;
+        }
+    }
+}
+
 QString SlackClient::lastChannel()
 {
-    if (m_lastChannel.isEmpty()) {
-        QSettings settings;
-        m_lastChannel = settings.value(QStringLiteral("LastChannel")).toString();
-        if (m_lastChannel.isEmpty() && !Storage::channels().isEmpty()) {
-            m_lastChannel = Storage::channels().first().toMap()["id"].toString();
-        }
+    QString _lastChannel;
 
+    if (m_currentTeamInfo != nullptr) {
+        _lastChannel = m_currentTeamInfo->channel();
+        if (_lastChannel.isEmpty()) {
+            _lastChannel = Storage::channels().first().toMap()["id"].toString();
+            m_currentTeamInfo->m_channel = _lastChannel;
+        }
     }
-    return m_lastChannel;
+    return _lastChannel;
 }
 
 QString SlackClient::historyMethod(const QString& type)
@@ -839,6 +871,7 @@ void SlackClient::closeChat(const QString& chatId)
     connect(reply, &QNetworkReply::finished, this, &SlackClient::handleCloseChatReply);
 }
 
+
 void SlackClient::handleCloseChatReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -849,6 +882,60 @@ void SlackClient::handleCloseChatReply()
     }
 
     reply->deleteLater();
+}
+
+void SlackClient::teamInfo()
+{
+    QNetworkReply *reply = executeGet(QStringLiteral("team.info"));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleTeamInfoReply);
+}
+
+void SlackClient::handleTeamInfoReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    QJsonObject data = getResult(reply);
+    reply->deleteLater();
+
+    if (isError(data)) {
+        qDebug() << "Team info failed";
+    }
+    qDebug() << "teaminfo:" << data;
+    QJsonObject teamObj = data.value(QStringLiteral("team")).toObject();
+
+    QString _id = teamObj.value(QStringLiteral("id")).toString();
+    bool _found = false;
+    for(TeamInfo *ti : m_knownTeams) {
+        if (ti->teamId() == _id) {
+            m_currentTeamInfo = ti;
+            _found = true;
+            break;
+        }
+    }
+    if (!_found) {
+        qDebug() << "adding new tem id:" << _id;
+        m_currentTeamInfo = new TeamInfo;
+        m_knownTeams.append(m_currentTeamInfo);
+    }
+
+    m_currentTeamInfo->m_id = _id;
+    m_currentTeamInfo->m_name = teamObj.value(QStringLiteral("name")).toString();
+    m_currentTeamInfo->m_domain = teamObj.value(QStringLiteral("domain")).toString();
+    m_currentTeamInfo->m_email_domain = teamObj.value(QStringLiteral("email_domain")).toString();
+    m_currentTeamInfo->m_enterprise_id = teamObj.value(QStringLiteral("enterprise_id")).toString();
+    m_currentTeamInfo->m_enterprise_name = teamObj.value(QStringLiteral("enterprise_name")).toString();
+    QJsonObject teamIconObj = teamObj.value(QStringLiteral("icon")).toObject();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_34")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_44")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_68")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_88")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_102")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_132")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_230")).toString();
+    m_currentTeamInfo->m_icons << teamIconObj.value(QStringLiteral("image_original")).toString();
+    m_currentTeamInfo->m_token = m_lastAccessToken;
+
+    config->setTeams(m_knownTeams);
+    emit teamInfoChanged();
 }
 
 void SlackClient::loadMessages(const QString& type, const QString& channelId)
@@ -906,6 +993,16 @@ QString SlackClient::markMethod(const QString& type)
     } else {
         return "";
     }
+}
+
+QList<TeamInfo *> SlackClient::getKnownTeams() const
+{
+    return m_knownTeams;
+}
+
+TeamInfo *SlackClient::getCurrentTeamInfo()
+{
+    return m_currentTeamInfo;
 }
 
 void SlackClient::markChannel(const QString& type, const QString& channelId, const QString& time)

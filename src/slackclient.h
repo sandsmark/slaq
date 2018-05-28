@@ -16,6 +16,8 @@
 #include "slackconfig.h"
 #include "slackstream.h"
 #include "messageformatter.h"
+#include "teaminfo.h"
+#include "QQmlGadgetListModel.h"
 
 class SlackClient : public QObject
 {
@@ -31,6 +33,10 @@ public:
     Q_INVOKABLE QVariantList getChannels();
     Q_INVOKABLE QVariant getChannel(const QString& channelId);
     Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
+
+    TeamInfo* getCurrentTeamInfo();
+
+    QList<TeamInfo *> getKnownTeams() const;
 
 signals:
     void testConnectionFail();
@@ -69,6 +75,8 @@ signals:
     void isOnlineChanged();
     void lastChannelChanged();
 
+    void teamInfoChanged();
+
 public slots:
     void startClient();
     bool handleAccessTokenReply(const QJsonObject &bootData);
@@ -85,9 +93,13 @@ public slots:
     void leaveGroup(const QString& groupId);
     void openChat(const QString& chatId);
     void closeChat(const QString& chatId);
+    void teamInfo();
+
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
     QString lastChannel();
     bool isOnline() const;
+
+    void connectToTeam(const QString& teamId);
 
 private slots:
     void handleStartReply();
@@ -108,6 +120,7 @@ private slots:
     void handleStreamEnd();
     void handleStreamMessage(const QJsonObject& message);
     void reconnectClient();
+    void handleTeamInfoReply();
 
 private:
     bool appActive;
@@ -174,8 +187,10 @@ private:
     QString m_clientId;
     QString m_clientId2;
 
-    QString m_lastChannel;
     MessageFormatter m_formatter;
+    TeamInfo* m_currentTeamInfo { nullptr };
+    QList<TeamInfo*> m_knownTeams;
+    QString m_lastAccessToken;
 };
 
 QML_DECLARE_TYPE(SlackClient)

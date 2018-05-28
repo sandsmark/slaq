@@ -95,3 +95,8 @@ void SlackStream::handleBinaryFrame(const QByteArray &message)
 {
     Q_UNUSED(message)
 }
+
+void SlackStream::stopStream()
+{
+    webSocket->abort();
+}

@@ -1,6 +1,5 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
-//import "../pages/Settings.js" as Settings
 import ".."
 
 Item {
@@ -106,7 +105,7 @@ Item {
     }
 
     function reloadChannelList() {
-        title.text = Settings.getUserInfo().teamName
+        title.text = SlackConfig.teamName()
         unreadMessageCount = 0
 
         SlackClient.getChannels().forEach(function(channel) {

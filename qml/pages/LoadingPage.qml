@@ -1,7 +1,6 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
 import ".."
-import "../Settings.js" as Settings
 
 Page {
     id: page
@@ -71,7 +70,7 @@ Page {
         SlackClient.onTestConnectionFail.connect(handleConnectionFail)
 
         errorMessage = ""
-        if (firstView || Settings.hasUserInfo()) {
+        if (firstView || SlackConfig.hasUserInfo()) {
             firstView = false
         } else {
             loading = false
@@ -94,7 +93,7 @@ Page {
     function initLoading() {
         loading = true
 
-        if (Settings.hasUserInfo()) {
+        if (SlackConfig.hasUserInfo()) {
             loadMessage = qsTr("Loading")
             SlackClient.startClient()
         } else {
@@ -104,8 +103,6 @@ Page {
 
     function handleLoginTestSuccess(userId, teamId, teamName) {
         loadMessage = qsTr("Loading")
-        Settings.setUserInfo(userId, teamId, teamName)
-        SlackClient.startClient()
     }
 
     function handleLoginTestFail() {
@@ -113,6 +110,7 @@ Page {
     }
 
     function handleInitSuccess() {
+        console.log("loading page. adding channel component:", SlackClient.lastChannel)
         pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
         if (SlackClient.isDevice) {
             channelList.item.open()
