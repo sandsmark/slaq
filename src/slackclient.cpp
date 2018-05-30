@@ -480,9 +480,9 @@ bool SlackClient::handleAccessTokenReply(const QJsonObject &bootData)
 
     qDebug() << "Access token success" << m_lastAccessToken << userId << teamId << teamName;
 
-    if (m_currentTeamInfo != nullptr) {
-        m_currentTeamInfo->m_token = m_lastAccessToken;
-    }
+//    if (m_currentTeamInfo != nullptr) {
+//        m_currentTeamInfo->m_token = m_lastAccessToken;
+//    }
     config->setUserInfo(userId, teamId, teamName);
     requestTeamInfo();
     emit accessTokenSuccess(userId, teamId, teamName);
@@ -661,7 +661,7 @@ void SlackClient::parseChannels(const QJsonObject& data)
     qDebug() << "parse channels";
     foreach (const QJsonValue &value, data.value(QStringLiteral("channels")).toArray()) {
         QVariantMap data = parseChannel(value.toObject());
-        //qDebug() << "parsed channel" << data;
+        qDebug() << "parsed channel" << data;
         Storage::saveChannel(data);
     }
 }
@@ -744,6 +744,7 @@ bool SlackClient::isOnline() const
 
 void SlackClient::connectToTeam(const QString &teamId)
 {
+    qDebug() << "connecting to tem id:" << teamId << getState();
     setState(ClientStates::TEAM_CHANGE);
     Storage::clearChannelMessages();
     Storage::clearChannels();
@@ -753,6 +754,7 @@ void SlackClient::connectToTeam(const QString &teamId)
         if (ti->m_id == teamId) {
             m_currentTeamInfo = ti;
             m_lastAccessToken = ti->teamToken();
+            startClient();
             return;
         }
     }
@@ -767,10 +769,8 @@ QString SlackClient::lastChannel()
         _lastChannel = chList.first().toMap()[QStringLiteral("id")].toString();
     }
 
-    if (getState() != ClientStates::TEAM_CHANGE) {
-        if (m_currentTeamInfo != nullptr && !m_currentTeamInfo->channel().isEmpty()) {
-            _lastChannel = m_currentTeamInfo->channel();
-        }
+    if (m_currentTeamInfo != nullptr && !m_currentTeamInfo->channel().isEmpty()) {
+        _lastChannel = m_currentTeamInfo->channel();
     }
     qDebug() << "last channel" << _lastChannel;
     return _lastChannel;

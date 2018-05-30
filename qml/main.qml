@@ -54,11 +54,19 @@ ApplicationWindow {
         target: SlackClient
         onThreadStarted: {
             console.log("qml: thread started")
-            pageStack.push(loadingPage)
+            //pageStack.push(loadingPage)
+            if (!SlackConfig.hasUserInfo()) {
+                SlackClient.testLogin()
+            }
         }
         onInitSuccess: {
             channelListPermanent.sourceComponent = channelsListComponent
-            pageStack.push(loadingPage)
+            console.log("loading page. adding channel component:", SlackClient.lastChannel)
+            pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
+            //pageStack.push(loadingPage)
+        }
+        onTestLoginFail: {
+            pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))
         }
     }
 
@@ -200,7 +208,7 @@ ApplicationWindow {
     Loader {
         id: channelListPermanent
         width: active ? Math.min(parent.width * 0.33, 200) : 0
-        active: false
+        active: true
         height: window.height
         opacity: active ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 500 } }

@@ -30,6 +30,8 @@ void Storage::saveChannel(const QVariantMap& channel)
 
 QVariantMap Storage::channel(const QVariant& id)
 {
+    qDebug() << "Storage::channel" << channelMap.size()
+             << channelMap.contains(id.toString()) << channelMap.value(id.toString()).toMap();
     return channelMap.value(id.toString()).toMap();
 }
 

@@ -110,9 +110,7 @@ Page {
     }
 
     function handleInitSuccess() {
-        console.log("loading page. adding channel component:", SlackClient.lastChannel)
-        pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
-        channelListPermanent.active = true
+
     }
 
     function handleInitFail(why) {

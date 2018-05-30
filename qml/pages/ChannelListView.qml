@@ -77,7 +77,7 @@ ListView {
     }
 
     Component.onCompleted: {
-        console.log("channel lust view component completed",SlackClient.getChannels().length)
+        console.log("channel list view component completed",SlackClient.getChannels().length)
         ChannelList.init()
     }
 
