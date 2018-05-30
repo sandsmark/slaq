@@ -1,11 +1,13 @@
 #include <QQuickView>
-#include <QApplication>
+#include <QGuiApplication>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
 #include <QtWebView>
 #include <QNetworkProxyFactory>
 #include <QThread>
 #include <QTextCodec>
+#include <QQuickStyle>
+#include <QFontDatabase>
 
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
@@ -21,12 +23,16 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
     app.setOrganizationName("Martin Sandsmark");
     app.setApplicationName("Slaq");
 
+    int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/TwitterColorEmoji.ttf");
+    qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
+
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QNetworkProxyFactory::setUseSystemConfiguration(true);
+    QQuickStyle::setStyle("Material");
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
