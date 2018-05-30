@@ -45,13 +45,23 @@ ApplicationWindow {
         Channel {}
     }
 
+    Component {
+        id: channelsListComponent
+        ChannelList {}
+    }
+
     Connections {
         target: SlackClient
         onThreadStarted: {
             console.log("qml: thread started")
             pageStack.push(loadingPage)
         }
+        onInitSuccess: {
+            channelListPermanent.sourceComponent = channelsListComponent
+            pageStack.push(loadingPage)
+        }
     }
+
     header: ToolBar {
         id: toolbar
         RowLayout {
@@ -94,6 +104,9 @@ ApplicationWindow {
                         icon.source: "image://emoji/icon/" + icons[icons.length - 2]
                         icon.color: "transparent"
                         onClicked: {
+                            pageStack.clear()
+                            channelListPermanent.sourceComponent = undefined
+                            pageStack.push(loadingPage)
                             SlackClient.connectToTeam(teamId)
                         }
                     }
@@ -102,6 +115,9 @@ ApplicationWindow {
                 ToolButton {
                     text: "➕"
                     onClicked: {
+                        pageStack.clear()
+                        channelListPermanent.sourceComponent = undefined
+                        SlackClient.connectToTeam("")
                         pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))
                     }
                 }
@@ -186,13 +202,7 @@ ApplicationWindow {
         width: active ? Math.min(parent.width * 0.33, 200) : 0
         active: false
         height: window.height
-        onWidthChanged: console.log(width)
         opacity: active ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 500 } }
-
-        sourceComponent: ChannelList {
-            width: SlackClient.isOnline ? Math.min(parent.width * 0.33, 200) : 0
-            height: window.height
-        }
     }
 }

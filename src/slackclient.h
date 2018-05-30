@@ -38,6 +38,18 @@ public:
 
     QList<TeamInfo *> getKnownTeams() const;
 
+    enum ClientStates {
+        UNINITIALIZED = -1,
+        DISCONNECTED = 0,
+        CONNECTING,
+        CONNECTED,
+        RECONNECTING,
+        TEAM_CHANGE
+    };
+
+    ClientStates getState() const;
+    void setState(ClientStates state);
+
 signals:
     void testConnectionFail();
     void testLoginSuccess(QString userId, QString teamId, QString team);
@@ -76,6 +88,7 @@ signals:
     void lastChannelChanged();
 
     void teamInfoChanged();
+    void stateChanged();
 
 public slots:
     void startClient();
@@ -93,7 +106,7 @@ public slots:
     void leaveGroup(const QString& groupId);
     void openChat(const QString& chatId);
     void closeChat(const QString& chatId);
-    void teamInfo();
+    void requestTeamInfo();
 
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
     QString lastChannel();
@@ -191,6 +204,7 @@ private:
     TeamInfo* m_currentTeamInfo { nullptr };
     QList<TeamInfo*> m_knownTeams;
     QString m_lastAccessToken;
+    ClientStates m_state { ClientStates::UNINITIALIZED };
 };
 
 QML_DECLARE_TYPE(SlackClient)

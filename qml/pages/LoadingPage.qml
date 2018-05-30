@@ -95,13 +95,13 @@ Page {
 
         if (SlackConfig.hasUserInfo()) {
             loadMessage = qsTr("Loading")
-            SlackClient.startClient()
         } else {
             SlackClient.testLogin()
         }
     }
 
     function handleLoginTestSuccess(userId, teamId, teamName) {
+        SlackClient.startClient()
         loadMessage = qsTr("Loading")
     }
 
@@ -112,11 +112,7 @@ Page {
     function handleInitSuccess() {
         console.log("loading page. adding channel component:", SlackClient.lastChannel)
         pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
-        if (SlackClient.isDevice) {
-            channelList.item.open()
-        } else {
-            channelListPermanent.active = true
-        }
+        channelListPermanent.active = true
     }
 
     function handleInitFail(why) {

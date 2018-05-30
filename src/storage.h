@@ -20,7 +20,7 @@ public:
     static void setChannelMessages(const QVariant& channelId, const QVariantList& messages);
     static void appendChannelMessage(const QVariant& channelId, const QVariantMap& message);
     static void clearChannelMessages();
-
+    static void clearChannels();
 signals:
 
 public slots:

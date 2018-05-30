@@ -116,15 +116,21 @@ Page {
 
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
+            console.log("channel active", page.title)
             SlackClient.setActiveWindow(page.channelId)
 
             if (!initialized) {
                 initialized = true
+                console.log("channel loading messages", page.title)
                 listView.loadMessages()
             }
         } else {
             SlackClient.setActiveWindow("")
             listView.markLatest()
         }
+    }
+    StackView.onRemoved: {
+        console.log("channels destroying")
+        initialized = false
     }
 }

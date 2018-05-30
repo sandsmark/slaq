@@ -56,13 +56,16 @@ SlackClient::SlackClient(QObject *parent) :
         }
     }
 
+    setState(ClientStates::DISCONNECTED);
     qDebug() << "client ctor finished";
 }
 
 SlackClient::~SlackClient()
 {
-    QSettings settings;
-    settings.setValue(QStringLiteral("LastTeam"), m_currentTeamInfo->teamId());
+    if (m_currentTeamInfo) {
+        QSettings settings;
+        settings.setValue(QStringLiteral("LastTeam"), m_currentTeamInfo->teamId());
+    }
     config->setTeams(m_knownTeams);
 }
 
@@ -107,6 +110,7 @@ void SlackClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkA
     if (networkAccessible == QNetworkAccessManager::Accessible) {
         emit networkOn();
     } else {
+        setState(ClientStates::DISCONNECTED);
         emit networkOff();
     }
 }
@@ -114,6 +118,7 @@ void SlackClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkA
 void SlackClient::reconnectClient()
 {
     qDebug() << "Reconnecting";
+    setState(ClientStates::RECONNECTING);
     emit reconnecting();
     startClient();
 }
@@ -121,15 +126,18 @@ void SlackClient::reconnectClient()
 void SlackClient::handleStreamStart()
 {
     qDebug() << "Stream started";
+    setState(ClientStates::CONNECTED);
     emit connected();
 }
 
-void SlackClient::handleStreamEnd()
-{
+void SlackClient::handleStreamEnd(){
     qDebug() << "Stream ended";
-    emit reconnecting();
-    reconnectTimer->setSingleShot(true);
-    reconnectTimer->start(1000);
+    if (getState() != ClientStates::TEAM_CHANGE) {
+        setState(ClientStates::RECONNECTING);
+        emit reconnecting();
+        reconnectTimer->setSingleShot(true);
+        reconnectTimer->start(1000);
+    }
 }
 
 void SlackClient::handleStreamMessage(const QJsonObject& message)
@@ -476,8 +484,9 @@ bool SlackClient::handleAccessTokenReply(const QJsonObject &bootData)
         m_currentTeamInfo->m_token = m_lastAccessToken;
     }
     config->setUserInfo(userId, teamId, teamName);
-    teamInfo();
+    requestTeamInfo();
     emit accessTokenSuccess(userId, teamId, teamName);
+    startClient();
 
     return true;
 }
@@ -518,7 +527,7 @@ void SlackClient::handleTestLoginReply()
     qDebug() << "Login success" << userId << teamId << teamName;
 
     config->setUserInfo(userId, teamId, teamName);
-    teamInfo();
+    requestTeamInfo();
     emit testLoginSuccess(userId, teamId, teamName);
     startClient();
 }
@@ -560,6 +569,9 @@ void SlackClient::handleStartReply()
     stream->listen(url);
 
     Storage::clearChannelMessages();
+    if (m_currentTeamInfo && m_currentTeamInfo->m_channel.isEmpty()) {
+        m_currentTeamInfo->m_channel = lastChannel();
+    }
     qDebug() << "init success";
     emit initSuccess();
 }
@@ -732,12 +744,15 @@ bool SlackClient::isOnline() const
 
 void SlackClient::connectToTeam(const QString &teamId)
 {
+    setState(ClientStates::TEAM_CHANGE);
+    Storage::clearChannelMessages();
+    Storage::clearChannels();
+    stream->stopStream();
+
     for (TeamInfo *ti : m_knownTeams) {
         if (ti->m_id == teamId) {
             m_currentTeamInfo = ti;
             m_lastAccessToken = ti->teamToken();
-            stream->stopStream();
-            startClient();
             return;
         }
     }
@@ -746,14 +761,18 @@ void SlackClient::connectToTeam(const QString &teamId)
 QString SlackClient::lastChannel()
 {
     QString _lastChannel;
+    const QVariantList& chList = Storage::channels();
 
-    if (m_currentTeamInfo != nullptr) {
-        _lastChannel = m_currentTeamInfo->channel();
-        if (_lastChannel.isEmpty()) {
-            _lastChannel = Storage::channels().first().toMap()["id"].toString();
-            m_currentTeamInfo->m_channel = _lastChannel;
+    if (!chList.isEmpty()) {
+        _lastChannel = chList.first().toMap()[QStringLiteral("id")].toString();
+    }
+
+    if (getState() != ClientStates::TEAM_CHANGE) {
+        if (m_currentTeamInfo != nullptr && !m_currentTeamInfo->channel().isEmpty()) {
+            _lastChannel = m_currentTeamInfo->channel();
         }
     }
+    qDebug() << "last channel" << _lastChannel;
     return _lastChannel;
 }
 
@@ -884,7 +903,7 @@ void SlackClient::handleCloseChatReply()
     reply->deleteLater();
 }
 
-void SlackClient::teamInfo()
+void SlackClient::requestTeamInfo()
 {
     QNetworkReply *reply = executeGet(QStringLiteral("team.info"));
     connect(reply, &QNetworkReply::finished, this, &SlackClient::handleTeamInfoReply);
@@ -912,7 +931,7 @@ void SlackClient::handleTeamInfoReply()
         }
     }
     if (!_found) {
-        qDebug() << "adding new tem id:" << _id;
+        qDebug() << "adding new team id:" << _id;
         m_currentTeamInfo = new TeamInfo;
         m_knownTeams.append(m_currentTeamInfo);
     }
@@ -992,6 +1011,19 @@ QString SlackClient::markMethod(const QString& type)
         return QStringLiteral("im.mark");
     } else {
         return "";
+    }
+}
+
+SlackClient::ClientStates SlackClient::getState() const
+{
+    return m_state;
+}
+
+void SlackClient::setState(ClientStates state)
+{
+    if (state != m_state) {
+        m_state = state;
+        emit stateChanged();
     }
 }
 

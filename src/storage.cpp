@@ -64,3 +64,8 @@ void Storage::clearChannelMessages()
 {
     channelMessageMap.clear();
 }
+
+void Storage::clearChannels()
+{
+    channelMap.clear();
+}
