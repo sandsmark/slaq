@@ -658,7 +658,7 @@ void SlackClient::parseChannels(const QJsonObject& data)
     qDebug() << "parse channels";
     foreach (const QJsonValue &value, data.value(QStringLiteral("channels")).toArray()) {
         QVariantMap data = parseChannel(value.toObject());
-        qDebug() << "parsed channel" << data;
+        //qDebug() << "parsed channel" << data;
         Storage::saveChannel(data);
     }
 }
@@ -741,7 +741,7 @@ bool SlackClient::isOnline() const
 
 void SlackClient::connectToTeam(const QString &teamId)
 {
-    qDebug() << "connecting to tem id:" << teamId << getState();
+    qDebug() << "connecting to team id:" << teamId << getState();
     setState(ClientStates::TEAM_CHANGE);
     Storage::clearChannelMessages();
     Storage::clearChannels();
@@ -769,7 +769,7 @@ QString SlackClient::lastChannel()
     if (m_currentTeamInfo != nullptr && !m_currentTeamInfo->channel().isEmpty()) {
         _lastChannel = m_currentTeamInfo->channel();
     }
-    qDebug() << "last channel" << _lastChannel;
+    //qDebug() << "last channel" << _lastChannel;
     return _lastChannel;
 }
 
@@ -784,7 +784,7 @@ QString SlackClient::historyMethod(const QString& type)
     } else if (type == QStringLiteral("im")) {
         return QStringLiteral("im.history");
     } else {
-        return "";
+        return QStringLiteral("");
     }
 }
 
@@ -795,7 +795,7 @@ void SlackClient::joinChannel(const QString& channelId)
     QMap<QString, QString> params;
     params.insert(QStringLiteral("name"), channel.value(QStringLiteral("name")).toString());
 
-    QNetworkReply *reply = executeGet("channels.join", params);
+    QNetworkReply *reply = executeGet(QStringLiteral("channels.join"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackClient::handleJoinChannelReply);
 }
 

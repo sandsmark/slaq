@@ -118,7 +118,7 @@ Column {
             }
         }
 
-        Button {
+        EmojiButton {
             id: emojiButton
             width: height
             text: "😎"
@@ -131,9 +131,8 @@ Column {
             }
         }
 
-        Button {
+        EmojiButton {
             id: sendButton
-            //icon.name: "document-send"
             font.bold: true
             width: height
             text: "📨"
@@ -144,7 +143,6 @@ Column {
         Button {
             id: uploadButton
             icon.name: "upload-media"
-
             onClicked: pageStack.push(Qt.resolvedUrl("FileSend.qml"), {"channelId": page.channelId})
         }
     }

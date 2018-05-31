@@ -112,7 +112,6 @@ void ImagesCache::onImageRequestedViaHttp(const QString &id)
         QString iconPath = id;
         iconPath.remove(0, 5);
         url.setUrl(iconPath);
-
     } else {
         if (isUnicode()) {
             return;

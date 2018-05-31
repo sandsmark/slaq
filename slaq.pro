@@ -80,7 +80,9 @@ DISTFILES += \
     qml/pages/FileSend.qml \
     qml/pages/SlackImage.qml \
     qml/pages/LoadingPage.qml \
-    qml/pages/SettingsDialog.qml
+    qml/pages/SettingsDialog.qml \
+    qml/EmojiButton.qml \
+    qml/EmojiToolButton.qml
 
 target.path = /usr/bin/
 

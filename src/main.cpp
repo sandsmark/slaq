@@ -27,12 +27,12 @@ int main(int argc, char *argv[])
     app.setOrganizationName("Martin Sandsmark");
     app.setApplicationName("Slaq");
 
-    int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/TwitterColorEmoji.ttf");
-    qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
-
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QNetworkProxyFactory::setUseSystemConfiguration(true);
     QQuickStyle::setStyle("Material");
+    int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/TwitterColorEmoji.ttf");
+    qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
+
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 

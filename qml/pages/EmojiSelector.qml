@@ -1,5 +1,5 @@
 import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import ".."
 
@@ -64,38 +64,39 @@ Popup {
                     Repeater {
                         id: rep
                         model: ImagesCache.getEmojisByCategory(modelData)
-                        delegate: ItemDelegate {
-                            id: control
-                            text: model.modelData.unified
-                            padding: 0
-                            font.family: "Twitter Color Emoji"
-                            font.pixelSize: Theme.headerSize - 2
-                            display: AbstractButton.IconOnly
+                        delegate: Rectangle {
                             width: Theme.headerSize
                             height: Theme.headerSize
-                            contentItem: Item {
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: 2
-                                    visible: !ImagesCache.isUnicode
-                                    smooth: true
-                                    cache: false
-                                    source: "image://emoji/" + model.modelData.shortNames[0]
+                            color: mouseArea.containsMouse ? "#bbbbbb" : "transparent"
+                            radius: 2
+                            Image {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                visible: !ImagesCache.isUnicode
+                                smooth: true
+                                cache: false
+                                source: "image://emoji/" + model.modelData.shortNames[0]
+                            }
+
+                            Text {
+                                visible: ImagesCache.isUnicode
+                                anchors.fill: parent
+                                text: model.modelData.unified
+                                font.family: "Twitter Color Emoji"
+                                font.pixelSize: Theme.headerSize - 2
+                                renderType: Text.QtRendering
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            MouseArea {
+                                id: mouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    emojiSelected(model.modelData.unified)
+                                    popup.close()
                                 }
 
-                                Text {
-                                    visible: ImagesCache.isUnicode
-                                    anchors.fill: parent
-                                    text: control.text
-                                    font: control.font
-                                    renderType: Text.QtRendering
-                                    verticalAlignment: Text.AlignVCenter
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                            }
-                            onClicked: {
-                                emojiSelected(model.modelData.unified)
-                                popup.close()
                             }
                         }
                     }
@@ -111,9 +112,10 @@ Popup {
             RowLayout {
                 anchors.fill: parent
                 Repeater {
-                    model:ImagesCache.getCategoriesSymbols()
-                    ToolButton {
+                    model: ImagesCache.getCategoriesSymbols()
+                    EmojiToolButton {
                         text: modelData
+                        font.bold: true
                         Layout.fillWidth: true
                         onClicked: {
                             ldr.item.positionViewAtIndex(index, ListView.Beginning)
@@ -138,13 +140,14 @@ Popup {
                     model: ImagesCache.getEmojiImagesSetsNames();
                     Component.onCompleted: {
                         setIndex = find(settings.emojisSet, Qt.MatchFixedString)
+                        console.log("emoji set index found", setIndex, settings.emojisSet)
                         if (setIndex !== -1)
                             currentIndex = setIndex
                     }
                     Layout.fillWidth: true
                     onCurrentIndexChanged: {
                         if (currentIndex !== -1) {
-                            console.log("index", currentIndex, displayText)
+                            console.log("emoji set index", currentIndex, displayText)
                             ImagesCache.setEmojiImagesSet(textAt(currentIndex))
                         }
                     }

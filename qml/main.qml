@@ -122,6 +122,7 @@ ApplicationWindow {
 
                 ToolButton {
                     text: "➕"
+                    font.family: "Twitter Color Emoji"
                     onClicked: {
                         pageStack.clear()
                         channelListPermanent.sourceComponent = undefined
@@ -190,23 +191,8 @@ ApplicationWindow {
         }
     }
 
-//    Loader {
-//        id: channelList
-//        active: SlackClient.isDevice
-
-//        sourceComponent:  Drawer {
-//            width: parent.width * 0.66
-//            height: window.height
-
-//            ChannelList {
-//                anchors.fill: parent
-//            }
-//        }
-//    }
-
     Loader {
         id: channelListPermanent
-
         width: active ? Math.min(parent.width * 0.33, 200) : 0
         height: window.height
         opacity: active ? 1 : 0

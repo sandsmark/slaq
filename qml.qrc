@@ -33,5 +33,7 @@
         <file>qml/pages/EmojiSelector.qml</file>
         <file>data/emojis-slack.json</file>
         <file>qml/pages/SettingsDialog.qml</file>
+        <file>qml/EmojiButton.qml</file>
+        <file>qml/EmojiToolButton.qml</file>
     </qresource>
 </RCC>
