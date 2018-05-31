@@ -65,14 +65,12 @@ ListView {
     }
 
     Component.onCompleted: {
-        SlackClient.onInitSuccess.connect(handleReload)
         SlackClient.onLoadMessagesSuccess.connect(handleLoadSuccess)
         SlackClient.onMessageReceived.connect(handleMessageReceived)
         SlackClient.onMessageUpdated.connect(handleMessageUpdated)
     }
 
     Component.onDestruction: {
-        SlackClient.onInitSuccess.disconnect(handleReload)
         SlackClient.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
         SlackClient.onMessageReceived.disconnect(handleMessageReceived)
         SlackClient.onMessageUpdated.disconnect(handleMessageUpdated)
@@ -83,13 +81,6 @@ ListView {
             SlackClient.markChannel(channel.type, channel.id, latestRead)
             latestRead = ""
         }
-    }
-
-    function handleReload() {
-        console.log("Handling reloading")
-        inputEnabled = false
-        loadStarted()
-        loadMessages()
     }
 
     function loadMessages() {
