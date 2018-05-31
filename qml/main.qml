@@ -63,7 +63,6 @@ ApplicationWindow {
             channelListPermanent.sourceComponent = channelsListComponent
             console.log("loading page. adding channel component:", SlackClient.lastChannel)
             pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
-            //pageStack.push(loadingPage)
         }
         onTestLoginFail: {
             pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))

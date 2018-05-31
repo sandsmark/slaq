@@ -49,6 +49,7 @@ SlackClient::SlackClient(QObject *parent) :
         if (ti->teamId() == _lastTeam) {
             m_currentTeamInfo = ti;
             m_lastAccessToken = ti->teamToken();
+            qDebug() << "last token" << m_lastAccessToken;
             break;
         }
     }
@@ -59,7 +60,7 @@ SlackClient::SlackClient(QObject *parent) :
 
 SlackClient::~SlackClient()
 {
-    if (m_currentTeamInfo) {
+    if (m_currentTeamInfo != nullptr) {
         QSettings settings;
         settings.setValue(QStringLiteral("LastTeam"), m_currentTeamInfo->teamId());
     }

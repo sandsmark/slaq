@@ -26,17 +26,17 @@ QList<TeamInfo *> SlackConfig::teams()
 {
     QList<TeamInfo *> list;
     int size = m_settings.beginReadArray(QStringLiteral("teams"));
-     for (int i = 0; i < size; ++i) {
-         m_settings.setArrayIndex(i);
-         TeamInfo * teaminfo = new TeamInfo;
-         teaminfo->m_id = m_settings.value(QStringLiteral("id")).toString();
-         teaminfo->m_name = m_settings.value(QStringLiteral("name")).toString();
-         teaminfo->m_icons = m_settings.value(QStringLiteral("icons")).toStringList();
-         teaminfo->m_token = m_settings.value(QStringLiteral("token")).toString();
-         teaminfo->m_channel = m_settings.value(QStringLiteral("lastChannel")).toString();
-         list.append(teaminfo);
-     }
-     m_settings.endArray();
+    for (int i = 0; i < size; ++i) {
+        m_settings.setArrayIndex(i);
+        TeamInfo * teaminfo = new TeamInfo;
+        teaminfo->m_id = m_settings.value(QStringLiteral("id")).toString();
+        teaminfo->m_name = m_settings.value(QStringLiteral("name")).toString();
+        teaminfo->m_icons = m_settings.value(QStringLiteral("icons")).toStringList();
+        teaminfo->m_token = m_settings.value(QStringLiteral("token")).toString();
+        teaminfo->m_channel = m_settings.value(QStringLiteral("lastChannel")).toString();
+        list.append(teaminfo);
+    }
+    m_settings.endArray();
     return list;
 }
 

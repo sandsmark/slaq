@@ -136,19 +136,18 @@ Popup {
 
                 ComboBox {
                     id: setsBox
-                    property int setIndex: 0
+                    property int setIndex: -1
                     model: ImagesCache.getEmojiImagesSetsNames();
                     Component.onCompleted: {
                         setIndex = find(settings.emojisSet, Qt.MatchFixedString)
-                        console.log("emoji set index found", setIndex, settings.emojisSet)
-                        if (setIndex !== -1)
+                        if (setIndex !== -1) {
                             currentIndex = setIndex
+                        }
                     }
                     Layout.fillWidth: true
-                    onCurrentIndexChanged: {
-                        if (currentIndex !== -1) {
-                            console.log("emoji set index", currentIndex, displayText)
-                            ImagesCache.setEmojiImagesSet(textAt(currentIndex))
+                    onActivated: {
+                        if (index !== -1) {
+                            ImagesCache.setEmojiImagesSet(textAt(index))
                         }
                     }
                 }

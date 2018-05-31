@@ -43,12 +43,6 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
     setEmojiImagesSet(imagesSet);
     qDebug() << "readed emojis set index" << m_currentImagesSetIndex;
 
-    QThread *thread = QThread::create([&]{
-        parseSlackJson();
-        checkImagesPresence();
-        qDebug() << "database loaded";
-    });
-    thread->start();
     connect(this, &ImagesCache::requestImageViaHttp, this, &ImagesCache::onImageRequestedViaHttp,
             Qt::QueuedConnection);
 }
@@ -210,9 +204,12 @@ void ImagesCache::setEmojiImagesSet(const QString& setName)
         m_currentImagesSetIndex = 0;
     }
     QSettings settings;
-    settings.setValue("emojisSet", m_imagesSetsNames.at(m_currentImagesSetIndex));
+    settings.setValue(QStringLiteral("emojisSet"), m_imagesSetsNames.at(m_currentImagesSetIndex));
     //check asyncronously
     QThread *thread = QThread::create([&]{
+        if (m_emojiList.isEmpty()) {
+            parseSlackJson();
+        }
         checkImagesPresence();
         m_requestsListMutex.lock();
         for(QNetworkReply* reply: m_activeRequests) {
