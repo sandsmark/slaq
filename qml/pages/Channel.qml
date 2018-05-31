@@ -132,25 +132,15 @@ Page {
         }
     }
 
-    Component.onCompleted: {
-        console.log("before get channel", page.channelId, SlackClient.getChannel(page.channelId).name)
-        page.channel = SlackClient.getChannel(page.channelId)
-        input.forceActiveFocus()
-
-        if (!initialized) {
-            initialized = true
-            listView.loadMessages()
-        }
-    }
-
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
             console.log("channel active", page.title)
             SlackClient.setActiveWindow(page.channelId)
+            page.channel = SlackClient.getChannel(page.channelId)
+            input.forceActiveFocus()
 
             if (!initialized) {
                 initialized = true
-                console.log("channel loading messages", page.title)
                 listView.loadMessages()
             }
         } else {

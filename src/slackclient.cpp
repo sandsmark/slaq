@@ -49,7 +49,6 @@ SlackClient::SlackClient(QObject *parent) :
         if (ti->teamId() == _lastTeam) {
             m_currentTeamInfo = ti;
             m_lastAccessToken = ti->teamToken();
-            qDebug() << "last token" << m_lastAccessToken;
             break;
         }
     }
@@ -551,7 +550,7 @@ void SlackClient::handleStartReply()
         if (data.isEmpty()) {
             emit initFail(tr("No data received from server"));
         } else {
-            qDebug() << data;
+            qDebug() << "data error" << data;
             emit initFail(tr("Wat"));
         }
         return;
@@ -916,7 +915,7 @@ void SlackClient::handleTeamInfoReply()
     if (isError(data)) {
         qDebug() << "Team info failed";
     }
-    qDebug() << "teaminfo:" << data;
+    //qDebug() << "teaminfo:" << data;
     QJsonObject teamObj = data.value(QStringLiteral("team")).toObject();
 
     QString _id = teamObj.value(QStringLiteral("id")).toString();
@@ -1261,7 +1260,7 @@ QVariantList SlackClient::getImages(const QJsonObject& message)
             fileData.insert(QStringLiteral("thumbUrl"), file.value("thumb_" + thumbItem).toVariant());
 
             images.append(fileData);
-            qDebug() << fileData;
+            //qDebug() << fileData;
         }
     }
 

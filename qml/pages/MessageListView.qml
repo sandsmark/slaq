@@ -52,14 +52,14 @@ ListView {
 
     onAppActiveChanged: {
         if (appActive && atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(messageListModel.count - 1).time
+            latestRead = messageListModel.get(0).time
             readTimer.restart()
         }
     }
 
     onMovementEnded: {
         if (atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(messageListModel.count - 1).time
+            latestRead = messageListModel.get(0).time
             readTimer.restart()
         }
     }
