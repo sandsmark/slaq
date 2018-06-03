@@ -53,7 +53,8 @@ HEADERS += \
     src/imagescache.h \
     src/slackclientthreadspawner.h \
     src/emojiinfo.h \
-    src/teaminfo.h
+    src/teaminfo.h \
+    src/debugblock.h
 
 DISTFILES += \
     qml/dialogs/ImagePicker.qml \

@@ -20,6 +20,7 @@
 #include "teaminfo.h"
 #include "QQmlObjectListModel.h"
 #include "storage.h"
+#include "debugblock.h"
 
 class SlackClient : public QObject
 {
