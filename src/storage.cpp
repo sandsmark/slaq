@@ -153,13 +153,15 @@ UsersModel *NetworksModel::usersModel(const QString &id)
 
 User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
 {
+    qDebug().noquote() << QJsonDocument(data).toJson();
+
     m_userId = data.value(QStringLiteral("id")).toString();
     if (m_userId.isEmpty()) {
         qWarning() << "No user id";
         return;
     }
 
-    m_fullName = data.value(QStringLiteral("name")).toString();
+    m_fullName = data.value(QStringLiteral("real_name")).toString();
     if (m_fullName.isEmpty()) {
         qWarning() << "No full name set";
     }
