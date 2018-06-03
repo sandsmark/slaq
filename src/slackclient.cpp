@@ -181,6 +181,9 @@ void SlackClient::handleStreamMessage(const QJsonObject& message)
         parseUser(message.value(QStringLiteral("user")).toObject());
     } else if (type == QStringLiteral("member_joined_channel")) {
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
+    } else {
+        qDebug() << "Unhandled message";
+        qDebug().noquote() << QJsonDocument(message).toJson();
     }
 }
 
@@ -440,6 +443,7 @@ QNetworkReply *SlackClient::executeGet(const QString& method, const QMap<QString
     QUrl url(QStringLiteral("https://slack.com/api/") + method);
     url.setQuery(query);
     QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
 
     qDebug() << "GET" << url.toString();
     return networkAccessManager->get(request);
@@ -463,6 +467,7 @@ QNetworkReply *SlackClient::executePost(const QString& method, const QMap<QStrin
 
     QUrl url(QStringLiteral("https://slack.com/api/") + method);
     QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
 
@@ -633,11 +638,10 @@ void SlackClient::handleStartReply()
 //    qDebug() << data.keys();
 //    qDebug().noquote() << QJsonDocument(data).toJson();
 
-    parseUsers(data);
+//    parseUsers(data);
     parseBots(data);
-    parseChannels(data);
-    parseGroups(data);
-    parseChats(data);
+//    parseChannels(data);
+//    parseGroups(data);
 
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
@@ -866,17 +870,17 @@ QString SlackClient::lastChannel()
     return _lastChannel;
 }
 
-QString SlackClient::historyMethod(const QString& type)
+QString SlackClient::historyMethod(const ChatsModel::ChatType type)
 {
     DEBUG_BLOCK
 
-    if (type == QStringLiteral("channel")) {
+    if (type == ChatsModel::Channel) {
         return QStringLiteral("channels.history");
-    } else if (type == QStringLiteral("group")) {
+    } else if (type == ChatsModel::Group) {
         return QStringLiteral("groups.history");
     } else if (type == QStringLiteral("mpim")) {
         return QStringLiteral("mpim.history");
-    } else if (type == QStringLiteral("im")) {
+    } else if (type == ChatsModel::Conversation) {
         return QStringLiteral("im.history");
     } else {
         return QStringLiteral("");
@@ -1055,9 +1059,14 @@ void SlackClient::handleTeamInfoReply()
     emit teamInfoChanged(m_teamInfo.teamId());
 }
 
-void SlackClient::loadMessages(const QString& type, const QString& channelId)
+void SlackClient::loadMessages(const ChatsModel::ChatType type, const QString& channelId)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
+    qDebug() << "Loading message" << type << channelId;
+    if (channelId.isEmpty()) {
+        qWarning() << "Empty channel id";
+        return;
+    }
 
     if (m_storage.channelMessagesExist(channelId)) {
         QVariantList messages = m_storage.channelMessages(channelId);
@@ -1081,8 +1090,6 @@ void SlackClient::handleLoadMessagesReply()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     QJsonObject data = getResult(reply);
-    qDebug() << "load messages reply";
-//    qDebug().noquote() << QJsonDocument(data).toJson();
     reply->deleteLater();
 
     if (isError(data)) {
@@ -1091,7 +1098,6 @@ void SlackClient::handleLoadMessagesReply()
     }
 
     QJsonArray messageList = data.value(QStringLiteral("messages")).toArray();
-    QVariantList messages;
 
     QString channelId = reply->property("channelId").toString();
     ChatsModel *chatModel = m_networksModel->chatsModel(m_networkId);

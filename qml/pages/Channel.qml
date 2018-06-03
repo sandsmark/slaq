@@ -1,6 +1,7 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import com.iskrembilen 1.0
 
 import ".."
 
@@ -10,8 +11,9 @@ Page {
     property string channelId
     property variant channel
     property bool initialized: false
+    property int channelType
 
-    title: channel !== undefined ? channel.name : ""
+    title: channel !== undefined ? channel.Name : ""
 
     header: Rectangle {
         height: Theme.headerSize
@@ -37,6 +39,7 @@ Page {
         id: listView
         channel: page.channel
         onChannelChanged: console.log("channel changed", listView.channel)
+        channelType: page.channelType
 
         anchors {
             top: parent.top; bottom: input.top; left: parent.left; right: parent.right
@@ -99,9 +102,9 @@ Page {
         width: parent.width
 
         visible: listView.inputEnabled
-        placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
+        placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.Name) : ""
         onSendMessage: {
-            SlackClient.postMessage(teamRoot.teamId, channel.id, content)
+            SlackClient.postMessage(teamRoot.teamId, channel.Id, content)
         }
 
         nickPopupVisible: nickPopup.visible

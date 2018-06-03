@@ -9,6 +9,7 @@ ListView {
 
     property alias atBottom: listView.atYEnd
     property variant channel
+    property int channelType
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
@@ -60,8 +61,9 @@ ListView {
     }
 
     onMovementEnded: {
-        if (atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(0).Yime
+        if (atBottom && model.rowCount()) {
+            latestRead = model.data(model.index(model.rowCount() - 1, 0)).Time
+//            latestRead = messageListModel.get(messageListModel.count - 1).time
             readTimer.restart()
         }
     }
@@ -80,13 +82,17 @@ ListView {
 
     function markLatest() {
         if (latestRead != "") {
-            SlackClient.markChannel(teamRoot.teamId, channel.type, channel.id, latestRead)
+            SlackClient.markChannel(teamRoot.teamId, channel.Type, channel.Id, latestRead)
             latestRead = ""
         }
     }
 
     function loadMessages() {
-        console.log("loading messages", teamRoot.teamId)
+        console.log(Object.keys(channel))
+        console.log(channel.Name)
+        console.log(channelType)
+        console.log(channel.Id)
+        console.log("loading messages")
         SlackClient.loadMessages(teamRoot.teamId, channel.type, channel.id)
     }
 

@@ -39,7 +39,7 @@ ItemDelegate {
                 id: avatarImage
                 height: Theme.avatarSize
                 width: height
-                source: SlackClient.avatarUrl(teamid, User.Id)
+                source: model.User.avatarUrl
             }
 
             Column {
@@ -100,7 +100,7 @@ ItemDelegate {
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.RichText
                     visible: text.length > 0
-                    text: Text
+                    text: model.Text
                     renderType: Text.QtRendering
                     selectByKeyboard: true
                     selectByMouse: true

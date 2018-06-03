@@ -105,7 +105,7 @@ public slots:
     void startClient();
     void testLogin();
     void searchMessages(const QString& searchString);
-    void loadMessages(const QString& type, const QString& channelId);
+    void loadMessages(const ChatsModel::ChatType type, const QString& channelId);
     void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QString &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
@@ -197,7 +197,7 @@ private:
 
     QVariantMap user(const QJsonObject &data);
 
-    QString historyMethod(const QString& type);
+    QString historyMethod(const ChatsModel::ChatType type);
     QString markMethod(const QString& type);
 
     QPointer<QNetworkAccessManager> networkAccessManager;

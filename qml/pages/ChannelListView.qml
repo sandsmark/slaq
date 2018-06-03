@@ -68,10 +68,16 @@ ListView {
 
             SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
 
-            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id})
+//            var channel = List
+//            console.log(Object.keys(channel))
+//            console.log(channel.Name)
+//            console.log(channel.Type)
+//            console.log(channel.Id)
+
+            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id, "title": model.Name, "channelType": model.Type})
         }
 
-        property bool hasActions: model.Type === ChatsModel.Channel || model.type === ChatsModel.Conversation
+        property bool hasActions: model.Type === ChatsModel.Channel || model.Type === ChatsModel.Conversation
         onPressAndHold: if (hasActions) { actionsMenu.popup() }
 
         MouseArea {
@@ -92,7 +98,7 @@ ListView {
                             break
 
                         case "group":
-                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name})
+                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name })
                             dialog.accepted.connect(function() {
                                 SlackClient.leaveGroup(teamRoot.teamId, model.Id)
                             })

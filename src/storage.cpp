@@ -327,6 +327,7 @@ void MessageListModel::addMessage(const Message &message)
 
 void MessageListModel::addMessages(const QJsonArray &messages)
 {
+    qDebug() << "Adding" << messages.count() << "messages";
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count());
 
     for (const QJsonValue &messageData : messages) {

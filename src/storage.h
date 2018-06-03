@@ -199,6 +199,7 @@ public:
         Channel,
         Group,
         Conversation,
+        MultiUserConversation
     };
     Q_ENUM(ChatType)
 
