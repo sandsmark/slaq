@@ -2,11 +2,17 @@
 
 #include <QDebug>
 #include <QJsonObject>
+#include <QQmlEngine>
 
 void Storage::saveUser(const QVariantMap& user)
 {
     userMap.insert(user.value("id").toString(), user);
     userList = userMap.values();
+}
+
+Storage::Storage()
+{
+    m_networksModel = new NetworksModel(this);
 }
 
 QVariantMap Storage::user(const QVariant& id)
@@ -64,6 +70,61 @@ void Storage::clearChannelMessages()
 void Storage::clearChannels()
 {
     channelMap.clear();
+}
+
+NetworksModel::NetworksModel(QObject *parent) : QAbstractListModel(parent)
+{
+
+}
+
+QVariant NetworksModel::data(const QModelIndex &index, int role) const
+{
+    const int row = index.row();
+    if (row >= m_networks.count() || row < 0) {
+        qWarning() << "invalid row" << row;
+        return QVariant();
+    }
+    const Network &network = m_networks[row];
+    switch (role) {
+    case Id:
+        return network.id;
+    case Name:
+        return network.name;
+    case Chats:
+        return QVariant::fromValue(network.chats);
+    case Users:
+        return QVariant::fromValue(network.users);
+    default:
+        qWarning() << "Invalid role" << role;
+        return QVariant();
+    }
+}
+
+QHash<int, QByteArray> NetworksModel::roleNames() const
+{
+    QHash<int, QByteArray> names;
+    names[Id] = "Id";
+    names[Name] = "Name";
+    names[Chats] = "Chats";
+    names[Users] = "Users";
+    return names;
+
+}
+
+void NetworksModel::addNetwork(const QJsonObject &networkData)
+{
+    Network network;
+
+    network.users = new UsersModel(this);
+    network.users->addUsers(networkData.value(QStringLiteral("users")).toArray());
+
+    network.chats = new ChatsModel(this);
+    network.chats->addChats(networkData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);
+    network.chats->addChats(networkData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
+    network.chats->addChats(networkData.value(QStringLiteral("chats")).toArray(), ChatsModel::Conversation);
+
+
+    m_networks.append(std::move(network));
 }
 
 User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
@@ -246,6 +307,11 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     return names;
 }
 
+ChatsModel::ChatsModel(QObject *parent) : QAbstractListModel(parent)
+{
+
+}
+
 QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
@@ -299,6 +365,23 @@ void ChatsModel::addChat(const Chat &chat)
     endInsertRows();
 }
 
+void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
+{
+    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count());
+    for (const QJsonValue &value : chats) {
+        QJsonObject chatData = value.toObject();
+
+        m_chats.append(Chat(chatData, type));
+    }
+
+    endInsertRows();
+}
+
+UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
+{
+
+}
+
 QVariant UsersModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
@@ -343,15 +426,13 @@ void UsersModel::addUsers(const QJsonArray &usersData)
     endInsertRows();
 }
 
-ChatsModel::Chat::Chat(const QJsonObject &data)
+ChatsModel::Chat::Chat(const QJsonObject &data, const ChatType type_)
 {
     id = data.value(QStringLiteral("id")).toString();
-//    type = QVariant(QStringLiteral("channel"));
-//    category = QVariant(QStringLiteral("channel"));
+    type = type_;
     name = data.value(QStringLiteral("name")).toString();
     presence = QStringLiteral("none");
     isOpen = data.value(QStringLiteral("is_member")).toBool();
     lastReadId = data.value(QStringLiteral("last_read")).toString();
     unreadCount = data.value(QStringLiteral("unread_count_display")).toInt();
-//    members = channel.value(QStringLiteral("members")).toVariant();
 }

@@ -16,10 +16,10 @@ class User : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString m_userId MEMBER m_userId CONSTANT)
-    Q_PROPERTY(QString m_username MEMBER m_username CONSTANT)
-    Q_PROPERTY(QString m_fullName MEMBER m_fullName CONSTANT)
-    Q_PROPERTY(QUrl m_avatarUrl MEMBER m_avatarUrl CONSTANT)
+    Q_PROPERTY(QString userId MEMBER m_userId CONSTANT)
+    Q_PROPERTY(QString username MEMBER m_username CONSTANT)
+    Q_PROPERTY(QString fullName MEMBER m_fullName CONSTANT)
+    Q_PROPERTY(QUrl avatarUrl MEMBER m_avatarUrl CONSTANT)
     Q_PROPERTY(bool isBot MEMBER m_isBot CONSTANT)
     Q_PROPERTY(Presence presence READ presence NOTIFY presenceChanged)
 
@@ -129,8 +129,6 @@ public:
         UnreadCount,
         MembersModel,
         MessagesModel,
-
-        WorkspaceFieldsCount
     };
 
     enum ChatType {
@@ -142,8 +140,7 @@ public:
 
     struct Chat
     {
-
-        Chat(const QJsonObject &data);
+        Chat(const QJsonObject &data, const ChatType type);
 
         QString id;
         QString presence;
@@ -163,15 +160,51 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void addChat(const Chat &chat);
+    void addChats(const QJsonArray &chats, const ChatType type);
 
 private:
     QList<Chat> m_chats;
 };
 
-
-class Storage
+class NetworksModel : public QAbstractListModel
 {
+    Q_OBJECT
+
 public:
+    NetworksModel(QObject *parent);
+
+    enum NetworkFields {
+        Id,
+        Name,
+        Chats,
+        Users
+    };
+
+    struct Network {
+        QString id;
+        QString name;
+        ChatsModel *chats;
+        UsersModel *users;
+    };
+
+    int rowCount(const QModelIndex &/*parent*/) const override { return m_networks.count(); }
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    void addNetwork(const QJsonObject &networkData);
+
+private:
+    QList<Network> m_networks;
+};
+
+
+class Storage : public QObject
+{
+    Q_OBJECT
+
+public:
+    Storage();
+
     QVariantMap user(const QVariant& id);
     const QVariantList &users();
     void saveUser(const QVariantMap& user);
@@ -196,7 +229,7 @@ private:
     QVariantMap channelMap;
     QVariantMap channelMessageMap;
     QVariantList userList;
-    QHash<QString, User> m_users;
+    NetworksModel *m_networksModel;
 };
 
 #endif // STORAGE_H
