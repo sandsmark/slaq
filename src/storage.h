@@ -72,13 +72,13 @@ public:
 
     UsersModel(QObject *parent);
 
-    int rowCount(const QModelIndex &/*parent*/) const override { return m_users.count(); }
+    int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_users.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
     void addUser(User *user);
     void addUsers(const QJsonArray &usersData);
-    User *user(const QString &id);
+    QPointer<User> user(const QString &id);
     Q_INVOKABLE int fooCount() { return m_users.count(); }
 
 private:
@@ -230,7 +230,7 @@ public:
 
     bool hasChannel(const QString &id);
 
-    MessageListModel *messages(const QString &id);
+    Q_INVOKABLE MessageListModel *messages(const QString &id);
     UsersModel *members(const QString &id);
 
 private:

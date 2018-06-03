@@ -153,7 +153,7 @@ UsersModel *NetworksModel::usersModel(const QString &id)
 
 User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
 {
-    qDebug().noquote() << QJsonDocument(data).toJson();
+//    qDebug().noquote() << QJsonDocument(data).toJson();
 
     m_userId = data.value(QStringLiteral("id")).toString();
     if (m_userId.isEmpty()) {
@@ -428,8 +428,13 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
     QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
 
+
     if (type == Conversation) {
         chat.user = m_networkUsers->user(data["user"].toString());
+    } else {
+        for (const QJsonValue &userId : data["members"].toArray()) {
+            chat.membersModel->addUser(m_networkUsers->user(userId.toString()));
+        }
     }
 
     m_chatIds.append(chat.id);
@@ -522,9 +527,9 @@ void UsersModel::addUsers(const QJsonArray &usersData)
     endInsertRows();
 }
 
-User *UsersModel::user(const QString &id)
+QPointer<User> UsersModel::user(const QString &id)
 {
-    return m_users[id];
+    return m_users.value(id);
 }
 
 ChatsModel::Chat::Chat(const QJsonObject &data, const ChatType type_)

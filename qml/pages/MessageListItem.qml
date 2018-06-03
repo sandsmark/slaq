@@ -39,7 +39,7 @@ ItemDelegate {
                 id: avatarImage
                 height: Theme.avatarSize
                 width: height
-                source: SlackClient.avatarUrl(teamid, user.id)
+                source: SlackClient.avatarUrl(teamid, User.Id)
             }
 
             Column {
@@ -54,13 +54,13 @@ ItemDelegate {
 
                     Label {
                         id: nickLabel
-                        text: user.name
+                        text: User.fullName
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
 
                     Label {
-                        text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
+                        text: new Date(parseInt(Time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"
@@ -100,7 +100,7 @@ ItemDelegate {
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.RichText
                     visible: text.length > 0
-                    text: content
+                    text: Text
                     renderType: Text.QtRendering
                     selectByKeyboard: true
                     selectByMouse: true
@@ -125,7 +125,7 @@ ItemDelegate {
 
                     Repeater {
                         id: reactionsRepeater
-                        model: reactions
+                        model: Reactions
 
                         Button {
                             //TODO: check for Theme
@@ -207,7 +207,7 @@ ItemDelegate {
 
         Repeater {
             id: imageRepeater
-            model: images
+            model: Attachments
 
             Item {
                 property bool expanded: false
@@ -269,7 +269,7 @@ ItemDelegate {
 
         Repeater {
             id: attachmentRepeater
-            model: attachments
+            model: Attachments
 
             Attachment {
                 width: column.width

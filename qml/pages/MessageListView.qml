@@ -1,5 +1,6 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
+import com.iskrembilen 1.0
 import ".."
 import "../Message.js" as Message
 
@@ -34,9 +35,10 @@ ListView {
     }
 
     //TODO: move messages model to C++
-    model: ListModel {
-        id: messageListModel
-    }
+//    model: ListModel {
+//        id: messageListModel
+//    }
+    model: SlackClient.currentChatsModel.messages(channelId)
 
     delegate: MessageListItem {}
 
@@ -59,21 +61,21 @@ ListView {
 
     onMovementEnded: {
         if (atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(0).time
+            latestRead = messageListModel.get(0).Yime
             readTimer.restart()
         }
     }
 
     Component.onCompleted: {
-        SlackClient.onLoadMessagesSuccess.connect(handleLoadSuccess)
-        SlackClient.onMessageReceived.connect(handleMessageReceived)
-        SlackClient.onMessageUpdated.connect(handleMessageUpdated)
+//        SlackClient.onLoadMessagesSuccess.connect(handleLoadSuccess)
+//        SlackClient.onMessageReceived.connect(handleMessageReceived)
+//        SlackClient.onMessageUpdated.connect(handleMessageUpdated)
     }
 
     Component.onDestruction: {
-        SlackClient.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
-        SlackClient.onMessageReceived.disconnect(handleMessageReceived)
-        SlackClient.onMessageUpdated.disconnect(handleMessageUpdated)
+//        SlackClient.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
+//        SlackClient.onMessageReceived.disconnect(handleMessageReceived)
+//        SlackClient.onMessageUpdated.disconnect(handleMessageUpdated)
     }
 
     function markLatest() {
@@ -88,73 +90,73 @@ ListView {
         SlackClient.loadMessages(teamRoot.teamId, channel.type, channel.id)
     }
 
-    function handleLoadSuccess(teamId, channelId, messages) {
-        console.log("loading success", channelId, channel.id)
-        if (teamId === teamRoot.teamId && channelId === channel.id) {
-            messages.sort(Message.compareByTime)
-            messageListModel.clear()
-            messages.forEach(function(message) {
-                message.day = Message.getDisplayDate(message)
-                messageListModel.insert(0, message)
-            })
-            inputEnabled = true
-            loadCompleted()
+//    function handleLoadSuccess(teamId, channelId, messages) {
+//        console.log("loading success", channelId, channel.id)
+//        if (teamId === teamRoot.teamId && channelId === channel.id) {
+//            messages.sort(Message.compareByTime)
+//            messageListModel.clear()
+//            messages.forEach(function(message) {
+//                message.day = Message.getDisplayDate(message)
+//                messageListModel.insert(0, message)
+//            })
+//            inputEnabled = true
+//            loadCompleted()
 
-            if (messageListModel.count) {
-                latestRead = messageListModel.get(0).time
-                readTimer.restart()
-            }
-        }
-    }
+//            if (messageListModel.count) {
+//                latestRead = messageListModel.get(0).time
+//                readTimer.restart()
+//            }
+//        }
+//    }
 
-    function handleMessageUpdated(teamId, message) {
-        if (teamId === teamRoot.teamId && message.channel === channel.id) {
-            for (var msgi = 0; msgi < messageListModel.count; msgi++) {
-                var msg = messageListModel.get(msgi);
-                if (msg.time === message.ts) {
-                    var updated = false;
-                    var reactions = msg.reactions;
-                    var reaction = { "emoji": message.emoji, "reactionscount": 1,
-                        "name": message.reaction, "users": message.user }
-                    for (var rctni = 0; rctni < reactions.count; rctni++) {
-                        var rcn = reactions.get(rctni);
-                        if (rcn.name === message.reaction) {
-                            if (message.type === "reaction_removed") {
-                                reaction.reactionscount = rcn.reactionscount - 1
-                            } else {
-                                reaction.reactionscount = rcn.reactionscount + 1
-                            }
-                            if (reaction.reactionscount <= 0) {
-                                reactions.remove(rctni, 1);
-                            } else {
-                                reactions.set(rctni, reaction);
-                            }
-                            updated = true;
-                            break;
-                        }
-                    }
-                    if (updated === false) {
-                        reactions.append(reaction)
-                    }
-                    messageListModel.set(msgi, {"reactions": reactions});
-                    break;
-                }
-            }
-        }
-    }
+//    function handleMessageUpdated(teamId, message) {
+//        if (teamId === teamRoot.teamId && message.channel === channel.id) {
+//            for (var msgi = 0; msgi < messageListModel.count; msgi++) {
+//                var msg = messageListModel.get(msgi);
+//                if (msg.time === message.ts) {
+//                    var updated = false;
+//                    var reactions = msg.reactions;
+//                    var reaction = { "emoji": message.emoji, "reactionscount": 1,
+//                        "name": message.reaction, "users": message.user }
+//                    for (var rctni = 0; rctni < reactions.count; rctni++) {
+//                        var rcn = reactions.get(rctni);
+//                        if (rcn.name === message.reaction) {
+//                            if (message.type === "reaction_removed") {
+//                                reaction.reactionscount = rcn.reactionscount - 1
+//                            } else {
+//                                reaction.reactionscount = rcn.reactionscount + 1
+//                            }
+//                            if (reaction.reactionscount <= 0) {
+//                                reactions.remove(rctni, 1);
+//                            } else {
+//                                reactions.set(rctni, reaction);
+//                            }
+//                            updated = true;
+//                            break;
+//                        }
+//                    }
+//                    if (updated === false) {
+//                        reactions.append(reaction)
+//                    }
+//                    messageListModel.set(msgi, {"reactions": reactions});
+//                    break;
+//                }
+//            }
+//        }
+//    }
 
-    function handleMessageReceived(teamId, message) {
-        if (teamId === teamRoot.teamId && message.type === "message" && message.channel === channel.id) {
-            var isAtBottom = atBottom
-            message.day = Message.getDisplayDate(message)
-            messageListModel.insert(0, message)
+//    function handleMessageReceived(teamId, message) {
+//        if (teamId === teamRoot.teamId && message.type === "message" && message.channel === channel.id) {
+//            var isAtBottom = atBottom
+//            message.day = Message.getDisplayDate(message)
+//            messageListModel.insert(0, message)
 
-            if (isAtBottom) {
-                if (appActive) {
-                    latestRead = message.time
-                    readTimer.restart()
-                }
-            }
-        }
-    }
+//            if (isAtBottom) {
+//                if (appActive) {
+//                    latestRead = message.time
+//                    readTimer.restart()
+//                }
+//            }
+//        }
+//    }
 }
