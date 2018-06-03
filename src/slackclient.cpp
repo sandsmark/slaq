@@ -212,6 +212,7 @@ void SlackClient::parseChannelJoin(const QJsonObject& message)
 
     QVariantMap data = parseChannel(message.value(QStringLiteral("channel")).toObject());
     m_storage.saveChannel(data);
+    currentChatsModel()->addChat(message.value(QStringLiteral("channel")).toObject(), ChatsModel::Channel);
     emit channelJoined(m_teamInfo.teamId(), data);
 }
 

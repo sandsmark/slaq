@@ -125,10 +125,10 @@ QString NetworksModel::addNetwork(const QJsonObject &networkData)
     network.users = new UsersModel(this);
     network.users->addUsers(networkData.value(QStringLiteral("users")).toArray());
 
-    network.chats = new ChatsModel(this);
+    network.chats = new ChatsModel(this, network.users);
     network.chats->addChats(networkData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);
     network.chats->addChats(networkData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
-    network.chats->addChats(networkData.value(QStringLiteral("chats")).toArray(), ChatsModel::Conversation);
+    network.chats->addChats(networkData.value(QStringLiteral("ims")).toArray(), ChatsModel::Conversation);
 
     qDebug() << "Chats count" << network.chats->rowCount();
 
@@ -359,7 +359,8 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     return names;
 }
 
-ChatsModel::ChatsModel(QObject *parent) : QAbstractListModel(parent)
+ChatsModel::ChatsModel(QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
+    m_networkUsers(networkUsers)
 {
 
 }
@@ -386,9 +387,11 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case UnreadCount:
         return chat.unreadCount;
     case MembersModel:
-        return QVariant::fromValue(chat.membersModel);
+        return QVariant::fromValue(chat.membersModel.data());
     case MessagesModel:
-        return QVariant::fromValue(chat.messagesModel);
+        return QVariant::fromValue(chat.messagesModel.data());
+    case UserObject:
+        return QVariant::fromValue(chat.user.data());
     default:
         qWarning() << "Invalid role" << role;
         return QVariant();
@@ -406,34 +409,39 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
     names[UnreadCount] = "UnreadCount";
     names[MembersModel] = "MembersModel";
     names[MessagesModel] = "MessagesModel";
+    names[UserObject] = "UserObject";
     return names;
 
 }
 
-void ChatsModel::addChat(const Chat &chat)
+void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
 {
-    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + 1);
+//    qDebug() << type;
+//    qDebug().noquote() << QJsonDocument(data).toJson();
+
+    Chat chat(data, type);
+
+    chat.membersModel = new UsersModel(this);
+    chat.messagesModel = new MessageListModel(this, chat.membersModel);
+    QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
+    QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
+
+    if (type == Conversation) {
+        chat.user = m_networkUsers->user(data["user"].toString());
+    }
+
     m_chatIds.append(chat.id);
+
     m_chats.insert(chat.id, chat);
-    endInsertRows();
 }
 
 void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
 {
+    qDebug() << type << chats.count();
+
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count());
     for (const QJsonValue &value : chats) {
-        QJsonObject chatData = value.toObject();
-
-        Chat chat(chatData, type);
-        chat.membersModel = new UsersModel(this);
-        chat.messagesModel = new MessageListModel(this, chat.membersModel);
-
-        QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
-        QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
-
-        m_chatIds.append(chat.id);
-        qDebug() << "Adding chat" << chat.name;
-        m_chats.insert(chat.id, chat);
+        addChat(value.toObject(), type);
     }
 
     endInsertRows();

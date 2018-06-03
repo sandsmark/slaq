@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
+    qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
 

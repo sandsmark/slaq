@@ -32,7 +32,7 @@ ListView {
 
     delegate: ItemDelegate {
         id: delegate
-        text: model.Name
+        text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText: palette.text
         highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.Id
 

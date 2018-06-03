@@ -79,6 +79,7 @@ public:
     void addUser(User *user);
     void addUsers(const QJsonArray &usersData);
     User *user(const QString &id);
+    Q_INVOKABLE int fooCount() { return m_users.count(); }
 
 private:
     QMap<QString, QPointer<User>> m_users;
@@ -191,6 +192,7 @@ public:
         UnreadCount,
         MembersModel,
         MessagesModel,
+        UserObject
     };
 
     enum ChatType {
@@ -214,15 +216,16 @@ public:
         int unreadCount = 0;
         QPointer<UsersModel> membersModel;
         QPointer<MessageListModel> messagesModel;
+        QPointer<User> user;
     };
 
-    ChatsModel(QObject *parent);
+    ChatsModel(QObject *parent, UsersModel *networkUsers);
 
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_chats.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void addChat(const Chat &chat);
+    void addChat(const QJsonObject &data, const ChatsModel::ChatType type);
     void addChats(const QJsonArray &chats, const ChatType type);
 
     bool hasChannel(const QString &id);
@@ -233,6 +236,7 @@ public:
 private:
     QMap<QString, Chat> m_chats;
     QStringList m_chatIds;
+    UsersModel *m_networkUsers;
 };
 
 class NetworksModel : public QAbstractListModel
