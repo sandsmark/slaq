@@ -90,6 +90,9 @@ ApplicationWindow {
             RowLayout {
                 Layout.fillWidth: true
                 TabBar {
+                    id: tabBar
+                    Layout.fillWidth: true
+                    currentIndex: teamsSwipe.currentIndex
                     Repeater {
                         model: teamsModel
                         TabButton {
@@ -97,11 +100,11 @@ ApplicationWindow {
                             ToolTip.text: name
                             icon.source: "image://emoji/icon/" + icons[icons.length - 2]
                             icon.color: "transparent"
-                            onClicked: {
-                                if (model.teamId !== SlackClient.lastTeam) {
-                                    SlackClient.connectToTeam(model.teamId)
-                                }
-                            }
+//                            onClicked: {
+//                                if (model.teamId !== SlackClient.lastTeam) {
+//                                    SlackClient.connectToTeam(model.teamId)
+//                                }
+//                            }
                         }
                     }
                 }
@@ -156,10 +159,11 @@ ApplicationWindow {
     SwipeView {
         id: teamsSwipe
         anchors.fill: parent
+        currentIndex: tabBar.currentIndex
         Repeater {
             model: teamsModel
             Loader {
-                active: SwipeView.isCurrentItem
+                active: true
                     //SwipeView.isCurrentItem || SwipeView.isNextItem || SwipeView.isPreviousItem
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)

@@ -26,11 +26,13 @@ Page {
     Connections {
         target: SlackClient
         onInitSuccess: {
-            channelListPermanent.sourceComponent = channelsListComponent
-            var _lastChannel = SlackClient.lastChannel(teamRoot.teamId);
-            console.log("loading page. adding channel component:", _lastChannel)
-            pageStack.replace(channelComponent, {"channelId" : _lastChannel,
-                              "channel" : SlackClient.getChannel(teamRoot.teamId, _lastChannel) })
+            if (teamRoot.teamId == teamId) {
+                channelListPermanent.sourceComponent = channelsListComponent
+                var _lastChannel = SlackClient.lastChannel(teamRoot.teamId);
+                console.log("loading page. adding channel component:", _lastChannel, teamRoot.teamId)
+                pageStack.replace(channelComponent, {"channelId" : _lastChannel,
+                                      "channel" : SlackClient.getChannel(teamRoot.teamId, _lastChannel) })
+            }
         }
         onTestLoginFail: {
             //TODO: inform main to open login dialog
