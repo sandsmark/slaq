@@ -149,7 +149,7 @@ public:
         bool isOpen = false;
         QString lastReadId;
         int unreadCount = 0;
-        QHash<QString, QPointer<User>> membersModel;
+        UsersModel *membersModel;
         MessageListModel *messagesModel;
     };
 
@@ -181,10 +181,16 @@ public:
     };
 
     struct Network {
+        Network() = default;
+        Network(const QJsonObject &data);
+
         QString id;
         QString name;
+        QUrl icon;
         ChatsModel *chats;
         UsersModel *users;
+
+        bool isValid();
     };
 
     int rowCount(const QModelIndex &/*parent*/) const override { return m_networks.count(); }
@@ -194,7 +200,8 @@ public:
     void addNetwork(const QJsonObject &networkData);
 
 private:
-    QList<Network> m_networks;
+    QStringList m_networkIds;
+    QMap<QString, Network> m_networks;
 };
 
 
@@ -229,7 +236,6 @@ private:
     QVariantMap channelMap;
     QVariantMap channelMessageMap;
     QVariantList userList;
-    NetworksModel *m_networksModel;
 };
 
 #endif // STORAGE_H

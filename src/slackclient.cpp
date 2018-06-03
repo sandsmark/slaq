@@ -17,7 +17,8 @@
 SlackClient::SlackClient(const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
     m_clientId(QString::fromLatin1(QByteArray::fromBase64("MTE5MDczMjc1MDUuMjUyMzc1NTU3MTU1"))),
-    m_clientId2(QString::fromLatin1(QByteArray::fromBase64("MGJlNDA0M2Q2OGIxYjM0MzE4ODk5ZDEwYTNiYmM3ZTY=")))
+    m_clientId2(QString::fromLatin1(QByteArray::fromBase64("MGJlNDA0M2Q2OGIxYjM0MzE4ODk5ZDEwYTNiYmM3ZTY="))),
+    m_networksModel(new NetworksModel(this))
 {
     m_teamInfo.setTeamId(teamId);
     config = SlackConfig::instance();
@@ -27,6 +28,7 @@ SlackClient::SlackClient(const QString &teamId, const QString &accessToken, QObj
     }
     setState(ClientStates::DISCONNECTED);
     qDebug() << "client ctor finished" << m_teamInfo.teamToken() << m_teamInfo.teamId() << m_teamInfo.name();
+    QQmlEngine::setObjectOwnership(m_networksModel, QQmlEngine::CppOwnership);
 }
 
 SlackClient::~SlackClient() {}
@@ -477,6 +479,7 @@ void SlackClient::handleTestLoginReply()
         emit testLoginFail(m_teamInfo.teamId());
         return;
     }
+    qDebug().noquote() << QJsonDocument(data).toJson();
 
     QString teamId = data.value(QStringLiteral("team_id")).toString();
     QString userId = data.value(QStringLiteral("user_id")).toString();
@@ -561,6 +564,11 @@ void SlackClient::handleStartReply()
         }
         return;
     }
+
+    qDebug() << "start reply";
+    m_networksModel->addNetwork(data);
+//    qDebug() << data.keys();
+//    qDebug().noquote() << QJsonDocument(data).toJson();
 
     parseUsers(data);
     parseBots(data);

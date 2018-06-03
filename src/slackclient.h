@@ -204,6 +204,7 @@ private:
     MessageFormatter m_formatter;
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
+    NetworksModel *m_networksModel;
 };
 
 QML_DECLARE_TYPE(SlackClient)

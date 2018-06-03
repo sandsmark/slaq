@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QJsonObject>
+#include <QJsonDocument>
 #include <QQmlEngine>
 
 void Storage::saveUser(const QVariantMap& user)
@@ -12,7 +13,6 @@ void Storage::saveUser(const QVariantMap& user)
 
 Storage::Storage()
 {
-    m_networksModel = new NetworksModel(this);
 }
 
 QVariantMap Storage::user(const QVariant& id)
@@ -84,7 +84,7 @@ QVariant NetworksModel::data(const QModelIndex &index, int role) const
         qWarning() << "invalid row" << row;
         return QVariant();
     }
-    const Network &network = m_networks[row];
+    const Network &network = m_networks[m_networkIds[row]];
     switch (role) {
     case Id:
         return network.id;
@@ -113,7 +113,11 @@ QHash<int, QByteArray> NetworksModel::roleNames() const
 
 void NetworksModel::addNetwork(const QJsonObject &networkData)
 {
-    Network network;
+    Network network(networkData["team"].toObject());
+    if (!network.isValid()) {
+        qWarning() << "Invalid network";
+        qDebug() << QJsonDocument(networkData).toJson();
+    }
 
     network.users = new UsersModel(this);
     network.users->addUsers(networkData.value(QStringLiteral("users")).toArray());
@@ -123,8 +127,11 @@ void NetworksModel::addNetwork(const QJsonObject &networkData)
     network.chats->addChats(networkData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
     network.chats->addChats(networkData.value(QStringLiteral("chats")).toArray(), ChatsModel::Conversation);
 
+    QQmlEngine::setObjectOwnership(network.users, QQmlEngine::CppOwnership);
+    QQmlEngine::setObjectOwnership(network.chats, QQmlEngine::CppOwnership);
 
-    m_networks.append(std::move(network));
+    m_networkIds.append(network.id);
+    m_networks.insert(network.id, network);
 }
 
 User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
@@ -372,6 +379,11 @@ void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
         QJsonObject chatData = value.toObject();
 
         m_chats.append(Chat(chatData, type));
+
+        m_chats.last().membersModel = new UsersModel(this);
+        QQmlEngine::setObjectOwnership(m_chats.last().membersModel, QQmlEngine::CppOwnership);
+        m_chats.last().messagesModel = new MessageListModel(this);
+        QQmlEngine::setObjectOwnership(m_chats.last().messagesModel, QQmlEngine::CppOwnership);
     }
 
     endInsertRows();
@@ -435,4 +447,23 @@ ChatsModel::Chat::Chat(const QJsonObject &data, const ChatType type_)
     isOpen = data.value(QStringLiteral("is_member")).toBool();
     lastReadId = data.value(QStringLiteral("last_read")).toString();
     unreadCount = data.value(QStringLiteral("unread_count_display")).toInt();
+}
+
+NetworksModel::Network::Network(const QJsonObject &data)
+{
+    id = data["id"].toString();
+    name = data["name"].toString();
+
+    QString iconString = data["icon"].toObject()["image_230"].toString();
+    icon = QUrl(iconString);
+    if (!icon.isValid()) {
+        qWarning() << "Invalid icon" << iconString;
+    }
+
+    qDebug() << id << icon << name;
+}
+
+bool NetworksModel::Network::isValid()
+{
+    return !id.isEmpty() && !icon.isEmpty();
 }
