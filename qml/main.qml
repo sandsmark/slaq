@@ -5,13 +5,9 @@ import QtQuick.Window 2.3
 
 import Qt.labs.settings 1.0
 
-import "ChannelList.js" as ChannelList
-import "Channel.js" as Channel
 import "."
-
 import "pages"
 import "dialogs"
-import "cover"
 
 ApplicationWindow {
     id: window
@@ -19,7 +15,7 @@ ApplicationWindow {
     width: 800
     height: 600
 
-    property alias pageStack: pageStack
+    property alias teamsSwipe: teamsSwipe
     property alias emojiSelector: emojiSelector
     property alias settings: settings
 
@@ -34,38 +30,24 @@ ApplicationWindow {
         id: settingsDialog
     }
 
+    LoginDialog {
+        id: loginDialog
+    }
+
+    AboutDialog {
+        id: aboutDialog
+    }
+
     color: palette.window
 
     EmojiSelector  {
         id: emojiSelector
     }
 
-    Component {
-        id: channelComponent
-        Channel {}
-    }
-
-    Component {
-        id: channelsListComponent
-        ChannelList {}
-    }
-
     Connections {
         target: SlackClient
         onThreadStarted: {
             console.log("qml: thread started")
-            //pageStack.push(loadingPage)
-            if (!SlackConfig.hasUserInfo()) {
-                SlackClient.testLogin()
-            }
-        }
-        onInitSuccess: {
-            channelListPermanent.sourceComponent = channelsListComponent
-            console.log("loading page. adding channel component:", SlackClient.lastChannel)
-            pageStack.replace(channelComponent, {"channelId" : SlackClient.lastChannel })
-        }
-        onTestLoginFail: {
-            pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))
         }
     }
 
@@ -86,10 +68,12 @@ ApplicationWindow {
             }
 
             ToolButton {
-                text: pageStack.depth > 1 ? "‹" : "›"
+                text: teamsSwipe.currentItem !== null ?
+                          teamsSwipe.currentItem.item.pageStack.depth > 1 ?
+                              "‹" : "›" : ""
                 onClicked: {
-                    if (pageStack.depth > 1) {
-                        pageStack.pop()
+                    if (teamsSwipe.currentItem.item.pageStack.depth > 1) {
+                        teamsSwipe.currentItem.item.pageStack.pop()
                         return;
                     }
 
@@ -98,23 +82,26 @@ ApplicationWindow {
                     }
                 }
 
-                visible: SlackClient.isDevice || pageStack.depth > 1
+                visible: SlackClient.isDevice || teamsSwipe.currentItem !== null ?
+                             teamsSwipe.currentItem.item.pageStack.depth > 1 : false
                 enabled: visible
             }
+
             RowLayout {
                 Layout.fillWidth: true
-                Repeater {
-                    model: teamsModel
-                    ToolButton {
-                        hoverEnabled: true
-                        ToolTip.text: name
-                        icon.source: "image://emoji/icon/" + icons[icons.length - 2]
-                        icon.color: "transparent"
-                        onClicked: {
-                            pageStack.clear()
-                            channelListPermanent.sourceComponent = undefined
-                            pageStack.push(loadingPage)
-                            SlackClient.connectToTeam(teamId)
+                TabBar {
+                    Repeater {
+                        model: teamsModel
+                        TabButton {
+                            hoverEnabled: true
+                            ToolTip.text: name
+                            icon.source: "image://emoji/icon/" + icons[icons.length - 2]
+                            icon.color: "transparent"
+                            onClicked: {
+                                if (model.teamId !== SlackClient.lastTeam) {
+                                    SlackClient.connectToTeam(model.teamId)
+                                }
+                            }
                         }
                     }
                 }
@@ -123,10 +110,7 @@ ApplicationWindow {
                     text: "➕"
                     font.family: "Twitter Color Emoji"
                     onClicked: {
-                        pageStack.clear()
-                        channelListPermanent.sourceComponent = undefined
-                        SlackClient.connectToTeam("")
-                        pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))
+                        loginDialog.open()
                     }
                 }
             }
@@ -143,19 +127,19 @@ ApplicationWindow {
                     MenuItem {
                         text: qsTr("About")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("pages/About.qml"))
+                            aboutDialog.open()
                         }
                     }
                     MenuItem {
                         text: qsTr("Open chat")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
+                            teamsSwipe.currentItem.pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
                         }
                     }
                     MenuItem {
                         text: qsTr("Join channel")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
+                            teamsSwipe.currentItem.pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
                         }
                     }
                     MenuItem {
@@ -169,33 +153,26 @@ ApplicationWindow {
         }
     }
 
+    SwipeView {
+        id: teamsSwipe
+        anchors.fill: parent
+        Repeater {
+            model: teamsModel
+            Loader {
+                active: SwipeView.isCurrentItem
+                    //SwipeView.isCurrentItem || SwipeView.isNextItem || SwipeView.isPreviousItem
+                sourceComponent: Team {
+                    slackClient: SlackClient.slackClient(model.teamId)
+                    teamId: model.teamId
+                    Component.onCompleted: console.log("created: " + index + " teamid: " + model.teamId + " name " + name)
+                    Component.onDestruction: console.log("destroyed:", index)
+                }
+                onLoaded: {
+                    SlackClient.lastTeam = item.teamId
+                }
+            }
+        }
+    }
+
     ConnectionPanel { id: connectionPanel; }
-
-    Component {
-        id: loadingPage
-        LoadingPage {}
-    }
-
-    StackView {
-        id: pageStack
-        anchors {
-            top: parent.top
-            left: channelListPermanent.active ? channelListPermanent.right : parent.left
-            right: parent.right
-            bottom: parent.bottom
-        }
-
-        transform: Translate {
-            x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
-        }
-    }
-
-    Loader {
-        id: channelListPermanent
-        width: active ? Math.min(parent.width * 0.33, 200) : 0
-        height: window.height
-        opacity: active ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 500 } }
-
-    }
 }

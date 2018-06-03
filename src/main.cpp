@@ -24,13 +24,13 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-    app.setOrganizationName("Martin Sandsmark");
-    app.setApplicationName("Slaq");
+    app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
+    app.setApplicationName(QStringLiteral("Slaq"));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QNetworkProxyFactory::setUseSystemConfiguration(true);
-    QQuickStyle::setStyle("Material");
-    int emojiFontId = QFontDatabase::addApplicationFont(":/fonts/TwitterColorEmoji.ttf");
+    QQuickStyle::setStyle(QStringLiteral("Material"));
+    int emojiFontId = QFontDatabase::addApplicationFont(QStringLiteral(":/fonts/TwitterColorEmoji.ttf"));
     qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     QQmlApplicationEngine engine;
@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
-    qmlRegisterUncreatableType<QQmlGadgetListModelBase> ("SlaqQmlModels", 1, 0, "QQmlGadgetListModelBase",  "!!!");
+    qmlRegisterUncreatableType<QQmlGadgetListModelBase> ("SlaqQmlModels", 1, 0, "QQmlGadgetListModelBase",
+                                                         QStringLiteral("!!!"));
 
     SlackConfig::clearWebViewCache();
     //instantiate ImageCache
@@ -62,10 +63,10 @@ int main(int argc, char *argv[])
     //    connection.registerService("slaq");
     //    connection.registerObject("/", listener);
 
-    engine.rootContext()->setContextProperty("fileModel", new FileModel());
-    engine.addImageProvider("emoji", new EmojiProvider);
+    engine.rootContext()->setContextProperty(QStringLiteral("fileModel"), new FileModel());
+    engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
-    engine.load(QUrl("qrc:/qml/main.qml"));
+    engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";
         //        return 1;

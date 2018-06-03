@@ -32,17 +32,17 @@ ListView {
         id: delegate
         text: model.name
         property color textColor: delegate.highlighted ? palette.highlightedText: palette.text
-        highlighted: SlackClient.lastChannel === model.id
+        highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.id
 
         icon.name: Channel.getIcon(model)
         width: listView.width
 
         onClicked: {
-            if (model.id === SlackClient.lastChannel) {
+            if (model.id === SlackClient.lastChannel(teamRoot.teamId)) {
                 return
             }
 
-            SlackClient.setActiveWindow(model.id)
+            SlackClient.setActiveWindow(teamRoot.teamId, model.id)
 
             pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
         }
@@ -64,18 +64,18 @@ ListView {
                 onClicked: {
                     switch (model.type) {
                         case "channel":
-                            SlackClient.leaveChannel(model.id)
+                            SlackClient.leaveChannel(teamRoot.teamId, model.id)
                             break
 
                         case "group":
                             var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
                             dialog.accepted.connect(function() {
-                                SlackClient.leaveGroup(model.id)
+                                SlackClient.leaveGroup(teamRoot.teamId, model.id)
                             })
                             break
 
                         case "im":
-                            SlackClient.closeChat(model.id)
+                            SlackClient.closeChat(teamRoot.teamId,  model.id)
                     }
                 }
             }
@@ -83,7 +83,7 @@ ListView {
     }
 
     Component.onCompleted: {
-        console.log("channel list view component completed",SlackClient.getChannels().length)
+        console.log("channel list view component completed",SlackClient.getChannels(teamRoot.teamId).length, teamRoot.teamId)
         ChannelList.init()
     }
 

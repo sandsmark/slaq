@@ -36,6 +36,7 @@ Page {
     MessageListView {
         id: listView
         channel: page.channel
+        onChannelChanged: console.log("channel changed", listView.channel)
 
         anchors {
             top: parent.top; bottom: input.top; left: parent.left; right: parent.right
@@ -100,7 +101,7 @@ Page {
         visible: listView.inputEnabled
         placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
         onSendMessage: {
-            SlackClient.postMessage(channel.id, content)
+            SlackClient.postMessage(teamRoot.teamId, channel.id, content)
         }
 
         nickPopupVisible: nickPopup.visible
@@ -135,8 +136,8 @@ Page {
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
             console.log("channel active", page.title)
-            SlackClient.setActiveWindow(page.channelId)
-            page.channel = SlackClient.getChannel(page.channelId)
+            SlackClient.setActiveWindow(teamRoot.teamId, page.channelId)
+            page.channel = SlackClient.getChannel(teamRoot.teamId, page.channelId)
             input.forceActiveFocus()
 
             if (!initialized) {
@@ -144,7 +145,7 @@ Page {
                 listView.loadMessages()
             }
         } else {
-            SlackClient.setActiveWindow("")
+            SlackClient.setActiveWindow(teamRoot.teamId, "")
             listView.markLatest()
         }
     }

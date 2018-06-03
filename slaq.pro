@@ -56,8 +56,11 @@ HEADERS += \
     src/teaminfo.h
 
 DISTFILES += \
+    qml/dialogs/ImagePicker.qml \
+    qml/dialogs/LoginDialog.qml \
+    qml/dialogs/SettingsDialog.qml \
+    qml/dialogs/AboutDialog.qml \
     qml/pages/Settings.js \
-    qml/pages/LoginPage.qml \
     qml/pages/ChannelList.qml \
     qml/pages/ChannelList.js \
     qml/pages/Channel.qml \
@@ -66,7 +69,6 @@ DISTFILES += \
     qml/pages/ConnectionPanel.qml \
     qml/pages/ChannelListView.qml \
     qml/pages/MessageListView.qml \
-    qml/pages/About.qml \
     qml/pages/RichTextLabel.qml \
     qml/pages/AttachmentFieldGrid.qml \
     qml/pages/Attachment.qml \
@@ -76,13 +78,12 @@ DISTFILES += \
     qml/pages/Message.js \
     qml/pages/GroupLeaveDialog.qml \
     qml/pages/ChatSelect.qml \
-    qml/dialogs/ImagePicker.qml \
     qml/pages/FileSend.qml \
     qml/pages/SlackImage.qml \
     qml/pages/LoadingPage.qml \
-    qml/pages/SettingsDialog.qml \
     qml/EmojiButton.qml \
-    qml/EmojiToolButton.qml
+    qml/EmojiToolButton.qml \
+    qml/pages/Team.qml
 
 target.path = /usr/bin/
 

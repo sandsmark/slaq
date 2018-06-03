@@ -9,7 +9,7 @@ Page {
 
     title: SlackConfig.teamName()
     onAppActiveChanged: {
-        SlackClient.setAppActive(appActive)
+        SlackClient.setAppActive(teamRoot.teamId, appActive)
     }
 
     header: Rectangle {

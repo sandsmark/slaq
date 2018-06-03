@@ -13,8 +13,8 @@ public:
 
     QString userId();
     void setUserInfo(const QString &userId, const QString &teamId, const QString &teamName);
-    QList<TeamInfo*> teams();
-    void setTeams(const QList<TeamInfo*>& list);
+    void loadTeamInfo(TeamInfo& teamInfo);
+    void saveTeamInfo(const TeamInfo& teamInfo);
 
     static void clearWebViewCache();
     static SlackConfig *instance();
@@ -26,6 +26,9 @@ public:
                                  && !m_currentTeamId.isEmpty()
                                  && !m_currentTeamName.isEmpty());
     }
+
+    QStringList teams();
+    void setTeams(const QStringList& teams);
 
 signals:
 

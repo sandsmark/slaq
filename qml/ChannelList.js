@@ -16,31 +16,39 @@ function disconnect() {
     SlackClient.onChannelLeft.disconnect(handleChannelLeft)
 }
 
-function reloadChannels() {
-    var channels = SlackClient.getChannels().filter(Channel.isOpen)
-    channels.sort(compareByCategory)
+function reloadChannels(teamId) {
+    if (teamRoot.teamId === teamId) {
+        var channels = SlackClient.getChannels(teamRoot.teamId).filter(Channel.isOpen)
+        channels.sort(compareByCategory)
 
-    channelListModel.clear()
-    channels.forEach(function(c) {
-        c.section = getChannelSection(c)
-        channelListModel.append(c)
-    })
+        channelListModel.clear()
+        channels.forEach(function(c) {
+            c.section = getChannelSection(c)
+            channelListModel.append(c)
+        })
+    }
 }
 
-function handleChannelUpdate(channel) {
-    reloadChannels()
+function handleChannelUpdate(teamId, channel) {
+    if (teamRoot.teamId === teamId) {
+        reloadChannels(teamRoot.teamId)
+    }
 }
 
-function handleChannelJoined(channel) {
-    reloadChannels()
+function handleChannelJoined(teamId, channel) {
+    if (teamRoot.teamId === teamId) {
+        reloadChannels()
+    }
 }
 
-function handleChannelLeft(channel) {
-    for (var i = 0; i < channelListModel.count; i++) {
-        var current = channelListModel.get(i)
+function handleChannelLeft(teamId, channel) {
+    if (teamRoot.teamId === teamId) {
+        for (var i = 0; i < channelListModel.count; i++) {
+            var current = channelListModel.get(i)
 
-        if (channel.id === current.id) {
-            channelListModel.remove(i)
+            if (channel.id === current.id) {
+                channelListModel.remove(i)
+            }
         }
     }
 }

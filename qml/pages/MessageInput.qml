@@ -36,7 +36,7 @@ Column {
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]
-                nickSuggestions = SlackClient.getNickSuggestions(text, cursorPosition)
+                nickSuggestions = SlackClient.getNickSuggestions(teamRoot.teamId, xt, cursorPosition)
                 var nickPosition = nickSuggestions.indexOf(selectedNick)
                 if (nickPosition > 0) {
                     currentNickSuggestionIndex = nickPosition
