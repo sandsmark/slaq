@@ -218,7 +218,7 @@ public:
 
     ChatsModel(QObject *parent);
 
-    int rowCount(const QModelIndex &/*parent*/) const override { return m_chats.count(); }
+    int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_chats.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 

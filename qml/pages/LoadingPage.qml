@@ -87,10 +87,12 @@ Page {
     }
 
     StackView.onActivating: {
+        console.log("activating")
         initLoading()
     }
 
     function initLoading() {
+        console.log("init loading")
         loading = true
 
         if (SlackConfig.hasUserInfo()) {
@@ -106,20 +108,22 @@ Page {
     }
 
     function handleLoginTestFail() {
+        console.log("login test fail")
         pageStack.push(Qt.resolvedUrl("LoginPage.qml"))
     }
 
     function handleInitSuccess() {
-
     }
 
     function handleInitFail(why) {
+        console.log("init fail")
         loading = false
         errorMessage = qsTr("Error connecting: ") + why
         initButton.visible = true
     }
 
     function handleConnectionFail() {
+        console.log("connect fail")
         loading = false
         errorMessage = qsTr("No network connection")
         initButton.visible = true

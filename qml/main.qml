@@ -48,12 +48,12 @@ ApplicationWindow {
         id: searchResultsList
     }
 
-    Connections {
-        target: SlackClient
-        onThreadStarted: {
-            console.log("qml: thread started")
-        }
-    }
+//    Connections {
+//        target: SlackClient
+//        onThreadStarted: {
+//            console.log("qml: thread started")
+//        }
+//    }
 
     header: ToolBar {
         id: toolbar

@@ -1,6 +1,7 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
 import ".."
+import com.iskrembilen 1.0
 
 import "../ChannelList.js" as ChannelList
 import "../Channel.js" as Channel
@@ -14,8 +15,9 @@ ListView {
         currentIndex = ind
     }
     interactive: true
+    model: SlackClient.currentChatsModel
 
-    model: ListModel {
+    ListModel {
         id: channelListModel
     }
 
@@ -30,24 +32,46 @@ ListView {
 
     delegate: ItemDelegate {
         id: delegate
-        text: model.name
+        text: model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText: palette.text
-        highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.id
+        highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.Id
 
-        icon.name: Channel.getIcon(model)
+//        icon.name: Channel.getIcon(model)
+        icon.name: {
+            switch (model.Type) {
+            case ChatsModel.Channel:
+                if (model.presence === "active") {
+                    return "irc-channel-active"
+                } else {
+                    return "irc-channel-inactive"
+                }
+            case ChatsModel.Group:
+                return "icon-s-secure"
+            case ChatsModel.Conversation:
+                if (model.IsOpen === "active") {
+                    return "im-user"
+                } else {
+                    return "im-user-inactive"
+                }
+            default:
+                console.log("unhandled type: " + model.Type)
+                return ""
+            }
+        }
+
         width: listView.width
 
         onClicked: {
-            if (model.id === SlackClient.lastChannel(teamRoot.teamId)) {
+            if (model.Id === SlackClient.lastChannel(teamRoot.teamId)) {
                 return
             }
 
-            SlackClient.setActiveWindow(teamRoot.teamId, model.id)
+            SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
 
-            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
+            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id})
         }
 
-        property bool hasActions: model.category === "channel" || model.type === "im"
+        property bool hasActions: model.Type === ChatsModel.Channel || model.type === ChatsModel.Conversation
         onPressAndHold: if (hasActions) { actionsMenu.popup() }
 
         MouseArea {
@@ -60,22 +84,22 @@ ListView {
              id: actionsMenu
 
             MenuItem {
-                text: model.category === "channel" ? qsTr("Leave") : qsTr("Close")
+                text: model.Type === ChatsModel.Channel ? qsTr("Leave") : qsTr("Close")
                 onClicked: {
-                    switch (model.type) {
-                        case "channel":
-                            SlackClient.leaveChannel(teamRoot.teamId, model.id)
+                    switch (model.Type) {
+                        case ChatsModel.Channel:
+                            SlackClient.leaveChannel(teamRoot.teamId, model.Id)
                             break
 
                         case "group":
-                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
+                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name})
                             dialog.accepted.connect(function() {
-                                SlackClient.leaveGroup(teamRoot.teamId, model.id)
+                                SlackClient.leaveGroup(teamRoot.teamId, model.Id)
                             })
                             break
 
                         case "im":
-                            SlackClient.closeChat(teamRoot.teamId,  model.id)
+                            SlackClient.closeChat(teamRoot.teamId,  model.Id)
                     }
                 }
             }

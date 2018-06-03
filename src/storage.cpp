@@ -130,6 +130,8 @@ QString NetworksModel::addNetwork(const QJsonObject &networkData)
     network.chats->addChats(networkData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
     network.chats->addChats(networkData.value(QStringLiteral("chats")).toArray(), ChatsModel::Conversation);
 
+    qDebug() << "Chats count" << network.chats->rowCount();
+
     QQmlEngine::setObjectOwnership(network.users, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(network.chats, QQmlEngine::CppOwnership);
 
@@ -333,6 +335,8 @@ void MessageListModel::addMessages(const QJsonArray &messages)
         for (const QJsonValue &reactionValue : messageObject["reactions"].toArray()) {
             const QJsonObject reactionObject = reactionValue.toObject();
             Reaction *reaction = new Reaction(reactionObject, this);
+            QQmlEngine::setObjectOwnership(reaction, QQmlEngine::CppOwnership);
+
             m_reactions.insert(reactionObject["name"].toString(), reaction);
             message.reactions.append(reaction);
         }
@@ -428,6 +432,7 @@ void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
         QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
 
         m_chatIds.append(chat.id);
+        qDebug() << "Adding chat" << chat.name;
         m_chats.insert(chat.id, chat);
     }
 
@@ -493,6 +498,7 @@ void UsersModel::addUsers(const QJsonArray &usersData)
     for (const QJsonValue &value : usersData) {
         QJsonObject userData = value.toObject();
         User *user = new User(userData, this);
+        QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
 
         if (m_users[user->userId()]) {
             m_users[user->userId()]->deleteLater();

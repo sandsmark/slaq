@@ -26,6 +26,11 @@ class SlackClient : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(bool isOnline READ isOnline NOTIFY isOnlineChanged)
+    Q_PROPERTY(bool isDevice READ isDevice CONSTANT)
+    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setActiveWindow NOTIFY lastChannelChanged)
+    Q_PROPERTY(ChatsModel *currentChatsModel READ currentChatsModel NOTIFY currentChatsModelChanged)
+
 public:
     explicit SlackClient(const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
     virtual ~SlackClient();
@@ -48,6 +53,8 @@ public:
 
     ClientStates getState() const;
     void setState(ClientStates state);
+
+    ChatsModel *currentChatsModel();
 
 signals:
     void testConnectionFail(const QString& teamId);
@@ -90,6 +97,8 @@ signals:
     void stateChanged(const QString& teamId);
     void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
+    void currentChatsModelChanged();
+
 public slots:
 
     void startConnections();
@@ -112,6 +121,7 @@ public slots:
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
     QString lastChannel();
     bool isOnline() const;
+    bool isDevice() const;
 
 private slots:
     void handleStartReply();

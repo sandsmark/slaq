@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
+    qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
 
@@ -54,9 +55,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("SlackConfig"), SlackConfig::instance());
     _slackThread->start();
 
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
-        _slackThread->quit();
-    });
+//    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
+//        _slackThread->quit();
+//    });
     //    NotificationListener* listener = new NotificationListener(&engine);
     //    new DBusAdaptor(listener);
     //    QDBusConnection connection = QDBusConnection::sessionBus();

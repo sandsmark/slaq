@@ -626,6 +626,8 @@ void SlackClient::handleStartReply()
     }
 
     m_networkId = m_networksModel->addNetwork(data);
+//    qDebug() << "chats count" << m_networksModel->rowCount();
+    emit currentChatsModelChanged();
     qDebug() << "start reply, added network" << m_networkId;
 //    qDebug() << data.keys();
 //    qDebug().noquote() << QJsonDocument(data).toJson();
@@ -825,11 +827,25 @@ QStringList SlackClient::getNickSuggestions(const QString &currentText, const in
     return nicks;
 }
 
+ChatsModel *SlackClient::currentChatsModel()
+{
+    return m_networksModel->chatsModel(m_networkId);
+}
+
 bool SlackClient::isOnline() const
 {
     DEBUG_BLOCK
 
-    return stream && stream->isConnected();
+            return stream && stream->isConnected();
+}
+
+bool SlackClient::isDevice() const
+{
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    return true;
+#else
+    return false;
+#endif
 }
 
 QString SlackClient::lastChannel()
@@ -1065,7 +1081,7 @@ void SlackClient::handleLoadMessagesReply()
 
     QJsonObject data = getResult(reply);
     qDebug() << "load messages reply";
-    qDebug().noquote() << QJsonDocument(data).toJson();
+//    qDebug().noquote() << QJsonDocument(data).toJson();
     reply->deleteLater();
 
     if (isError(data)) {
