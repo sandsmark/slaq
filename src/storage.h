@@ -9,7 +9,9 @@
 #include <QVariantMap>
 #include <QPointer>
 #include <QAbstractListModel>
+#include <QSize>
 #include <QJsonArray>
+#include <QDateTime>
 
 
 class User : public QObject
@@ -76,18 +78,74 @@ public:
 
     void addUser(User *user);
     void addUsers(const QJsonArray &usersData);
+    User *user(const QString &id);
 
 private:
-    QList<QPointer<User>> m_users;
+    QMap<QString, QPointer<User>> m_users;
+    QStringList m_userIds;
+};
+
+class Reaction : public QObject
+{
+    Q_OBJECT
+
+    Q_PROPERTY(QStringList userIds MEMBER userIds NOTIFY usersChanged)
+    Q_PROPERTY(QString emoji MEMBER emoji CONSTANT)
+    Q_PROPERTY(QString name MEMBER name CONSTANT)
+    Q_PROPERTY(int usersCount READ usersCount NOTIFY usersChanged)
+
+public:
+    Reaction(const QJsonObject &data, QObject *parent);
+    int usersCount() { return userIds.count(); }
+
+signals:
+    void usersChanged();
+
+public:
+    QStringList userIds;
+    QString name;
+    QString emoji;
+};
+
+class Attachment {
+    Q_GADGET
+    Q_PROPERTY(QString titleLink MEMBER titleLink CONSTANT)
+    Q_PROPERTY(QString title MEMBER title CONSTANT)
+    Q_PROPERTY(QString pretext MEMBER pretext CONSTANT)
+    Q_PROPERTY(QString text MEMBER text CONSTANT)
+    Q_PROPERTY(QString fallback MEMBER fallback CONSTANT)
+    Q_PROPERTY(QString color MEMBER color CONSTANT)
+
+public:
+    Attachment(const QJsonObject &data);
+
+    QString titleLink;
+    QString title;
+    QString pretext;
+    QString text;
+    QString fallback;
+    QString color;
+
+    QUrl imageUrl;
+    QSize imageSize;
 };
 
 struct Message {
+    Message(const QJsonObject &data);
+    ~Message();
+
     QString text;
-    QPointer<User> user;
-    QString time;
-    QStringList attachments;
+    QDateTime time;
     QString type;
+
+    QPointer<User> user;
+    QList<Reaction*> reactions;
+
+
+    QList<Attachment*> attachments;
 };
+
+class ChatsModel;
 
 class MessageListModel : public QAbstractListModel
 {
@@ -99,20 +157,24 @@ public:
         User,
         Time,
         Attachments,
+        Reactions,
 
         MessageFieldCount
     };
 
-    MessageListModel(QObject *parent);
+    MessageListModel(QObject *parent, UsersModel *usersModel);
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
     void addMessage(const Message &message);
+    void addMessages(const QJsonArray &messages);
 
 private:
     QList<Message> m_messages;
+    QMap<QString, Reaction*> m_reactions;
+    UsersModel *m_usersModel;
 };
 
 class ChatsModel : public QAbstractListModel
@@ -141,6 +203,7 @@ public:
     struct Chat
     {
         Chat(const QJsonObject &data, const ChatType type);
+        Chat() = default;
 
         QString id;
         QString presence;
@@ -149,8 +212,8 @@ public:
         bool isOpen = false;
         QString lastReadId;
         int unreadCount = 0;
-        UsersModel *membersModel;
-        MessageListModel *messagesModel;
+        QPointer<UsersModel> membersModel;
+        QPointer<MessageListModel> messagesModel;
     };
 
     ChatsModel(QObject *parent);
@@ -162,8 +225,14 @@ public:
     void addChat(const Chat &chat);
     void addChats(const QJsonArray &chats, const ChatType type);
 
+    bool hasChannel(const QString &id);
+
+    MessageListModel *messages(const QString &id);
+    UsersModel *members(const QString &id);
+
 private:
-    QList<Chat> m_chats;
+    QMap<QString, Chat> m_chats;
+    QStringList m_chatIds;
 };
 
 class NetworksModel : public QAbstractListModel
@@ -197,7 +266,9 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void addNetwork(const QJsonObject &networkData);
+    QString addNetwork(const QJsonObject &networkData);
+    ChatsModel *chatsModel(const QString &id);
+    UsersModel *usersModel(const QString &id);
 
 private:
     QStringList m_networkIds;

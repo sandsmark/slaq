@@ -4,6 +4,8 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QQmlEngine>
+#include <QDateTime>
+#include <QJsonArray>
 
 void Storage::saveUser(const QVariantMap& user)
 {
@@ -111,12 +113,13 @@ QHash<int, QByteArray> NetworksModel::roleNames() const
 
 }
 
-void NetworksModel::addNetwork(const QJsonObject &networkData)
+QString NetworksModel::addNetwork(const QJsonObject &networkData)
 {
     Network network(networkData["team"].toObject());
     if (!network.isValid()) {
         qWarning() << "Invalid network";
         qDebug() << QJsonDocument(networkData).toJson();
+        return QString();
     }
 
     network.users = new UsersModel(this);
@@ -132,6 +135,18 @@ void NetworksModel::addNetwork(const QJsonObject &networkData)
 
     m_networkIds.append(network.id);
     m_networks.insert(network.id, network);
+
+    return network.id;
+}
+
+ChatsModel *NetworksModel::chatsModel(const QString &id)
+{
+    return m_networks[id].chats;
+}
+
+UsersModel *NetworksModel::usersModel(const QString &id)
+{
+    return m_networks[id].users;
 }
 
 User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
@@ -263,7 +278,8 @@ User::Presence User::presence()
 //    return ret;
 //}
 
-MessageListModel::MessageListModel(QObject *parent) : QAbstractListModel(parent)
+MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel) : QAbstractListModel(parent),
+    m_usersModel(usersModel)
 {
 }
 
@@ -289,7 +305,9 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     case Time:
         return m_messages[row].time;
     case Attachments:
-        return m_messages[row].attachments;
+        return QVariant::fromValue(m_messages[row].attachments);
+    case Reactions:
+        return QVariant::fromValue(m_messages[row].reactions);
     default:
         qWarning() << "Unhandled role" << role;
         return QVariant();
@@ -303,6 +321,28 @@ void MessageListModel::addMessage(const Message &message)
     endInsertRows();
 }
 
+void MessageListModel::addMessages(const QJsonArray &messages)
+{
+    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count());
+
+    for (const QJsonValue &messageData : messages) {
+        const QJsonObject messageObject = messageData.toObject();
+        Message message(messageObject);
+        message.user = m_usersModel->user(messageObject["user"].toString());
+
+        for (const QJsonValue &reactionValue : messageObject["reactions"].toArray()) {
+            const QJsonObject reactionObject = reactionValue.toObject();
+            Reaction *reaction = new Reaction(reactionObject, this);
+            m_reactions.insert(reactionObject["name"].toString(), reaction);
+            message.reactions.append(reaction);
+        }
+
+        m_messages.append(std::move(message));
+    }
+
+    endInsertRows();
+}
+
 
 QHash<int, QByteArray> MessageListModel::roleNames() const
 {
@@ -311,6 +351,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[User] = "User";
     names[Time] = "Time";
     names[Attachments] = "Attachments";
+    names[Reactions] = "Reactions";
     return names;
 }
 
@@ -322,11 +363,11 @@ ChatsModel::ChatsModel(QObject *parent) : QAbstractListModel(parent)
 QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
-    if (row >= m_chats.count() || row < 0) {
+    if (row >= m_chatIds.count() || row < 0) {
         qWarning() << "invalid row" << row;
         return QVariant();
     }
-    const Chat &chat = m_chats[row];
+    const Chat &chat = m_chats[m_chatIds[row]];
     switch (role) {
     case Id:
         return chat.id;
@@ -368,7 +409,8 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
 void ChatsModel::addChat(const Chat &chat)
 {
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + 1);
-    m_chats.append(chat);
+    m_chatIds.append(chat.id);
+    m_chats.insert(chat.id, chat);
     endInsertRows();
 }
 
@@ -378,15 +420,33 @@ void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
     for (const QJsonValue &value : chats) {
         QJsonObject chatData = value.toObject();
 
-        m_chats.append(Chat(chatData, type));
+        Chat chat(chatData, type);
+        chat.membersModel = new UsersModel(this);
+        chat.messagesModel = new MessageListModel(this, chat.membersModel);
 
-        m_chats.last().membersModel = new UsersModel(this);
-        QQmlEngine::setObjectOwnership(m_chats.last().membersModel, QQmlEngine::CppOwnership);
-        m_chats.last().messagesModel = new MessageListModel(this);
-        QQmlEngine::setObjectOwnership(m_chats.last().messagesModel, QQmlEngine::CppOwnership);
+        QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
+        QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
+
+        m_chatIds.append(chat.id);
+        m_chats.insert(chat.id, chat);
     }
 
     endInsertRows();
+}
+
+bool ChatsModel::hasChannel(const QString &id)
+{
+    return m_chatIds.contains(id);
+}
+
+MessageListModel *ChatsModel::messages(const QString &id)
+{
+    return m_chats[id].messagesModel;
+}
+
+UsersModel *ChatsModel::members(const QString &id)
+{
+    return m_chats[id].membersModel;
 }
 
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
@@ -404,7 +464,7 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 
     switch (role) {
     case UserObject:
-        return QVariant::fromValue(m_users[row]);
+        return QVariant::fromValue(m_users[m_userIds[row]]);
     default:
         qWarning() << "Invalid role" << role;
         return QVariant();
@@ -422,7 +482,8 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 void UsersModel::addUser(User *user)
 {
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + 1);
-    m_users.append(user);
+    m_userIds.append(user->userId());
+    m_users.insert(user->userId(), user);
     endInsertRows();
 }
 
@@ -431,11 +492,23 @@ void UsersModel::addUsers(const QJsonArray &usersData)
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + usersData.count());
     for (const QJsonValue &value : usersData) {
         QJsonObject userData = value.toObject();
+        User *user = new User(userData, this);
 
-        m_users.append(new User(userData, this));
+        if (m_users[user->userId()]) {
+            m_users[user->userId()]->deleteLater();
+            m_userIds.removeAll(user->userId());
+        }
+
+        m_userIds.append(user->userId());
+        m_users[user->userId()] = user;
     }
 
     endInsertRows();
+}
+
+User *UsersModel::user(const QString &id)
+{
+    return m_users[id];
 }
 
 ChatsModel::Chat::Chat(const QJsonObject &data, const ChatType type_)
@@ -459,11 +532,58 @@ NetworksModel::Network::Network(const QJsonObject &data)
     if (!icon.isValid()) {
         qWarning() << "Invalid icon" << iconString;
     }
-
-    qDebug() << id << icon << name;
 }
 
 bool NetworksModel::Network::isValid()
 {
     return !id.isEmpty() && !icon.isEmpty();
+}
+
+Message::Message(const QJsonObject &data)
+{
+    type = data.value(QStringLiteral("type")).toString();
+    time = QDateTime::fromSecsSinceEpoch(data.value(QStringLiteral("ts")).toDouble());
+    text = data.value(QStringLiteral("text")).toString();
+}
+
+Message::~Message()
+{
+    qDeleteAll(attachments);
+    attachments.clear();
+}
+
+Attachment::Attachment(const QJsonObject &data)
+{
+    titleLink = data.value(QStringLiteral("title_link")).toString();
+    title = data.value(QStringLiteral("title")).toString();
+    pretext = data.value(QStringLiteral("pretext")).toString();
+    text = data.value(QStringLiteral("text")).toString();
+    fallback = data.value(QStringLiteral("fallback")).toString();
+
+    imageSize = QSize(data["image_width"].toInt(), data["image_height"].toInt());
+    imageUrl = QUrl(data["image_url"].toString());
+
+    color = data.value(QStringLiteral("color")).toString();
+    if (color.isEmpty()) {
+        color = QStringLiteral("theme");
+    } else if (color == QStringLiteral("good")) {
+        color = QStringLiteral("#6CC644");
+    } else if (color == QStringLiteral("warning")) {
+        color = QStringLiteral("#E67E22");
+    } else if (color == QStringLiteral("danger")) {
+        color = QStringLiteral("#D00000");
+    } else if (!color.startsWith("#")) {
+        color = "#" + color;
+    }
+}
+
+Reaction::Reaction(const QJsonObject &data, QObject *parent) : QObject(parent)
+{
+    name = data[QStringLiteral("name")].toString();
+    emoji = data[QStringLiteral("emoji")].toString();
+
+    const QJsonArray usersList = data[QStringLiteral("users")].toArray();
+    for (const QJsonValue &usersValue : usersList) {
+        userIds.append(usersValue.toObject()["name"].toString());
+    }
 }

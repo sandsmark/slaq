@@ -206,6 +206,7 @@ private:
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
     NetworksModel *m_networksModel;
+    QString m_networkId;
 };
 
 QML_DECLARE_TYPE(SlackClient)
