@@ -179,7 +179,9 @@ bool SlackClientThreadSpawner::handleAccessTokenReply(const QJsonObject &bootDat
 
     qDebug() << "Access token success" << _accessToken << _userId << _teamId << _teamName;
 
-    connectToTeam(_teamId, _accessToken);
+    QMetaObject::invokeMethod(this, "connectToTeam", Qt::QueuedConnection,
+                              Q_ARG(QString, _teamId),
+                              Q_ARG(QString, _accessToken));
     return true;
 }
 

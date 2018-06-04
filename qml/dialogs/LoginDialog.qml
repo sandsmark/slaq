@@ -41,7 +41,6 @@ Dialog {
 
             onLoadingChanged: {
                 runJavaScript("JSON.stringify(boot_data)", function(result){
-                    //console.log("boot data", result)
                     if (result !== undefined) {
                         if (SlackClient.handleAccessTokenReply(JSON.parse(result))) {
                             webView.visible = false

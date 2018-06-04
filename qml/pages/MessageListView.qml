@@ -144,7 +144,6 @@ ListView {
     }
 
     function handleMessageReceived(teamId, message) {
-        console.log("message received")
         if (teamId === teamRoot.teamId && message.type === "message" && message.channel === channel.id) {
             var isAtBottom = atBottom
             message.day = Message.getDisplayDate(message)
