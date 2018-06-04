@@ -13,8 +13,7 @@ Page {
     property var slackClient: null
     property alias pageStack: pageStack
     property string teamId
-
-    //title: slackClient
+    property string teamName
 
     onSlackClientChanged: {
         if (slackClient !== null) {
@@ -27,7 +26,6 @@ Page {
         target: SlackClient
         onInitSuccess: {
             if (teamRoot.teamId == teamId) {
-                channelListPermanent.sourceComponent = channelsListComponent
                 var _lastChannel = SlackClient.lastChannel(teamRoot.teamId);
                 console.log("loading page. adding channel component:", _lastChannel, teamRoot.teamId)
                 pageStack.replace(channelComponent, {"channelId" : _lastChannel,
@@ -44,34 +42,23 @@ Page {
         Channel {}
     }
 
-    Component {
-        id: channelsListComponent
-        ChannelList {}
-    }
-    Component {
-        id: loadingPage
-        LoadingPage {}
-    }
-
-    StackView {
-        id: pageStack
-        anchors {
-            top: parent.top
-            left: channelListPermanent.active ? channelListPermanent.right : parent.left
-            right: parent.right
-            bottom: parent.bottom
+    Row {
+        anchors.fill: parent
+        spacing: 0
+        ChannelList {
+            id: channelsList
+            height: parent.height
+            width: 200
         }
 
-        transform: Translate {
-            x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
+        StackView {
+            id: pageStack
+            height: parent.height
+            width: parent.width - channelsList.width
+            transform: Translate {
+                x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
+            }
         }
     }
 
-    Loader {
-        id: channelListPermanent
-        width: active ? Math.min(parent.width * 0.33, 200) : 0
-        height: window.height
-        opacity: active ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 500 } }
-    }
 }

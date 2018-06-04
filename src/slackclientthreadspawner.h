@@ -19,7 +19,7 @@ public:
     virtual ~SlackClientThreadSpawner();
     Q_INVOKABLE SlackClient *slackClient(const QString& teamId);
 
-    Q_INVOKABLE QQmlGadgetListModel<TeamInfo>* teamsModel();
+    Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
 
     QString lastTeam() const;
 
@@ -61,11 +61,8 @@ signals:
     void reconnecting(const QString& teamId);
     void disconnected(const QString& teamId);
     void connected(const QString& teamId);
-
     void lastChannelChanged(const QString& teamId);
-
     void lastTeamChanged(QString lastTeam);
-
     void onlineChanged(bool isOnline);
 
 public slots:
@@ -105,6 +102,7 @@ public slots:
     //teams
     void onTeamInfoChanged(const QString& teamId);
     void connectToTeam(const QString& teamId, const QString &accessToken = QString(""));
+    void leaveTeam(const QString& teamId);
 
     void setLastTeam(const QString& lastTeam);
     void onOnlineChanged(const QString& teamId);
@@ -116,7 +114,7 @@ private:
     SlackClient *createNewClientInstance(const QString &teamId, const QString &accessToken = QString(""));
 
 private:
-    QQmlGadgetListModel<TeamInfo> m_teamsModel;
+    QQmlObjectListModel<TeamInfo> m_teamsModel;
     QHash<QString, SlackClient*> m_knownTeams;
     QString m_lastTeam;
     bool m_isOnline;

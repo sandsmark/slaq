@@ -19,7 +19,7 @@
 #include "slackclientthreadspawner.h"
 #include "emojiinfo.h"
 #include "teaminfo.h"
-#include "QQmlGadgetListModel.h"
+#include "QQmlObjectListModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
-    qmlRegisterUncreatableType<QQmlGadgetListModelBase> ("SlaqQmlModels", 1, 0, "QQmlGadgetListModelBase",
+    qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
 
     SlackConfig::clearWebViewCache();

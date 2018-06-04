@@ -55,18 +55,69 @@ ApplicationWindow {
         id: toolbar
         RowLayout {
             anchors.fill: parent
-            Rectangle {
-                color: SlackClient.isOnline ? "green" : "red"
-                Layout.leftMargin: Theme.paddingMedium
-                height: parent.height/3
-                width: height
-                radius: width/2
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: connectionPanel.open()
+            spacing: 0
+            ToolButton {
+                Layout.leftMargin: Theme.headerSize/3
+                background: Rectangle {
+                    anchors.centerIn: parent
+                    color: SlackClient.isOnline ? "green" : "red"
+                    implicitHeight: Theme.headerSize/3
+                    implicitWidth: Theme.headerSize/3
+                    radius: implicitWidth/2
                 }
+
+                onClicked: connectionPanel.open()
             }
 
+            ToolSeparator {}
+
+            RowLayout {
+                TabBar {
+                    id: tabBar
+                    spacing: 2
+                    currentIndex: teamsSwipe.currentIndex
+                    Repeater {
+                        model: teamsModel
+                        TabButton {
+                            hoverEnabled: true
+                            ToolTip.delay: 200
+                            ToolTip.text: model.name
+                            ToolTip.visible: hovered
+                            background: Item {
+                                implicitHeight: Theme.headerSize
+                                implicitWidth: Theme.headerSize
+                            }
+                            contentItem: Image {
+                                anchors.centerIn: parent
+                                sourceSize { width: Theme.headerSize - 2; height: Theme.headerSize - 2 } // ### TODO: resize the image
+                                source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[model.icons.length - 2] : ""
+                                smooth: true
+                            }
+                            onPressAndHold: teamMenu.open();
+                            Menu {
+                                id: teamMenu
+                                MenuItem {
+                                    text: qsTr("Leave")
+                                    onClicked: {
+                                        SlackClient.leaveTeam(model.teamId)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ToolButton {
+                    text: "➕"
+                    font.family: "Twitter Color Emoji"
+                    onClicked: {
+                        loginDialog.open()
+                    }
+                }
+            }
+            ToolSeparator {}
+
+            Item { Layout.fillWidth: true }
             ToolButton {
                 text: teamsSwipe.currentItem !== null ?
                           teamsSwipe.currentItem.item.pageStack.depth > 1 ?
@@ -86,38 +137,6 @@ ApplicationWindow {
                              teamsSwipe.currentItem.item.pageStack.depth > 1 : false
                 enabled: visible
             }
-
-            RowLayout {
-                Layout.fillWidth: true
-                TabBar {
-                    id: tabBar
-                    Layout.fillWidth: true
-                    currentIndex: teamsSwipe.currentIndex
-                    Repeater {
-                        model: teamsModel
-                        TabButton {
-                            hoverEnabled: true
-                            ToolTip.text: name
-                            icon.source: "image://emoji/icon/" + icons[icons.length - 2]
-                            icon.color: "transparent"
-//                            onClicked: {
-//                                if (model.teamId !== SlackClient.lastTeam) {
-//                                    SlackClient.connectToTeam(model.teamId)
-//                                }
-//                            }
-                        }
-                    }
-                }
-
-                ToolButton {
-                    text: "➕"
-                    font.family: "Twitter Color Emoji"
-                    onClicked: {
-                        loginDialog.open()
-                    }
-                }
-            }
-
             ToolButton {
                 text: qsTr("⋮")
                 onClicked: menu.open()
@@ -136,13 +155,13 @@ ApplicationWindow {
                     MenuItem {
                         text: qsTr("Open chat")
                         onClicked: {
-                            teamsSwipe.currentItem.pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
+                            teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
                         }
                     }
                     MenuItem {
                         text: qsTr("Join channel")
                         onClicked: {
-                            teamsSwipe.currentItem.pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
+                            teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
                         }
                     }
                     MenuItem {
@@ -164,12 +183,10 @@ ApplicationWindow {
             model: teamsModel
             Loader {
                 active: true
-                    //SwipeView.isCurrentItem || SwipeView.isNextItem || SwipeView.isPreviousItem
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId
-                    Component.onCompleted: console.log("created: " + index + " teamid: " + model.teamId + " name " + name)
-                    Component.onDestruction: console.log("destroyed:", index)
+                    teamName: name
                 }
                 onLoaded: {
                     SlackClient.lastTeam = item.teamId

@@ -7,7 +7,7 @@ Page {
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
 
-    title: SlackConfig.teamName()
+    title: teamRoot.teamName
     onAppActiveChanged: {
         SlackClient.setAppActive(teamRoot.teamId, appActive)
     }

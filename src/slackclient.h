@@ -17,7 +17,7 @@
 #include "slackstream.h"
 #include "messageformatter.h"
 #include "teaminfo.h"
-#include "QQmlGadgetListModel.h"
+#include "QQmlObjectListModel.h"
 #include "storage.h"
 
 class SlackClient : public QObject
@@ -91,8 +91,6 @@ public slots:
 
     void startConnections();
     void startClient();
-    bool handleAccessTokenReply(const QJsonObject &bootData);
-
     void testLogin();
     void loadMessages(const QString& type, const QString& channelId);
     void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
