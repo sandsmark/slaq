@@ -115,7 +115,7 @@ private:
 
 private:
     QQmlObjectListModel<TeamInfo> m_teamsModel;
-    QHash<QString, SlackClient*> m_knownTeams;
+    QMap<QString, SlackClient*> m_knownTeams;
     QString m_lastTeam;
     bool m_isOnline;
 };
