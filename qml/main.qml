@@ -93,6 +93,11 @@ ApplicationWindow {
                                 source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[model.icons.length - 2] : ""
                                 smooth: true
                             }
+                            onClicked: {
+                                SlackClient.lastTeam = model.teamId
+                                teamsSwipe.currentIndex = index
+                            }
+
                             onPressAndHold: teamMenu.open();
                             Menu {
                                 id: teamMenu
@@ -186,10 +191,12 @@ ApplicationWindow {
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId
-                    teamName: name
-                }
-                onLoaded: {
-                    SlackClient.lastTeam = item.teamId
+                    teamName: model.name
+                    Component.onCompleted: {
+                        if (model.teamId ===  SlackClient.lastTeam) {
+                            teamsSwipe.currentIndex = index
+                        }
+                    }
                 }
             }
         }
