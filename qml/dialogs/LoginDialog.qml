@@ -5,7 +5,7 @@ import QtQuick.Controls 2.3
 Dialog {
     id: loginDialog
     width: window.width
-    height: window.height
+    height: window.height - window.header.height
     modal: true
     focus: true
 
@@ -27,10 +27,18 @@ Dialog {
     Rectangle {
         anchors {
             fill: parent
-            margins: 5
+            margins: loginDialog.footer.height
         }
         color: "transparent"
         border.color: "black"
+        Loader {
+            id: webViewLoader
+            anchors {
+                fill: parent
+                margins: 5
+            }
+            active: false
+        }
     }
 
     Component {
@@ -53,11 +61,6 @@ Dialog {
         }
     }
 
-    Loader {
-        id: webViewLoader
-        active: false
-        anchors.fill: parent
-    }
 
     Component.onCompleted: {
         SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
