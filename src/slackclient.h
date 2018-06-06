@@ -169,6 +169,7 @@ private:
     QVariantMap parseGroup(const QJsonObject& group);
 
     void parseUsers(const QJsonObject& data);
+    void parseUser(const QJsonObject &user);
     void parseBots(const QJsonObject& data);
     void parseChannels(const QJsonObject& data);
     void parseGroups(const QJsonObject& data);
