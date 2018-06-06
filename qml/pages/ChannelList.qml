@@ -1,16 +1,15 @@
 import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 import ".."
-import "../Settings.js" as Settings
 
 Page {
     id: page
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
 
-    title: Settings.getUserInfo().teamName
+    title: teamRoot.teamName
     onAppActiveChanged: {
-        SlackClient.setAppActive(appActive)
+        SlackClient.setAppActive(teamRoot.teamId, appActive)
     }
 
     header: Rectangle {

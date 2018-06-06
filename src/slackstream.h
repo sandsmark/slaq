@@ -35,6 +35,8 @@ public slots:
     void handleFrame(const QString& message);
     void handleBinaryFrame(const QByteArray& message);
 
+    void stopStream();
+
 private:
     QPointer<QWebSocket> webSocket;
     QPointer<QTimer> checkTimer;

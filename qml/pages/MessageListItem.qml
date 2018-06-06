@@ -12,16 +12,13 @@ ItemDelegate {
     highlighted: hovered
     property bool emojiSelectorCalled: false
 
-    property color infoColor: palette.text
-    property color textColor: palette.text
-
     Connections {
         target: emojiSelector
         enabled: item.emojiSelectorCalled
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(channel.id, time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamRoot.teamId, channel.id, time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -41,7 +38,7 @@ ItemDelegate {
                 id: avatarImage
                 height: Theme.avatarSize
                 width: height
-                source: SlackClient.avatarUrl(user.id)
+                source: SlackClient.avatarUrl(teamRoot.teamId, user.id)
             }
 
             Column {
@@ -59,31 +56,22 @@ ItemDelegate {
                         text: user.name
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
-                        color: textColor
                     }
 
                     Label {
                         text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
                         font.pointSize: Theme.fontSizeTiny
-                        color: infoColor
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"
                     }
-                    Button {
+                    EmojiButton {
                         id: emojiButton
                         visible: item.hovered
-                        height: 22
+                        height: Theme.headerSize
                         width: height
                         text: "😎"
-                        contentItem: Text {
-                            text: emojiButton.text
-                            font.family: "Twitter Color Emoji"
-                            font.bold: true
-                            font.pixelSize: parent.height/2
-                            renderType: Text.QtRendering
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
-                        }
+                        font.bold: true
+                        font.pixelSize: parent.height/2
                         onClicked: {
                             emojiSelector.x = emojiButton.x
                             emojiSelector.y = emojiButton.y
@@ -99,7 +87,6 @@ ItemDelegate {
                     width: parent.width - avatarImage.width - parent.spacing
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.StyledText
-                    color: textColor
                     visible: text.length > 0
                     text: content
                     onLinkActivated: handleLink(link)
@@ -122,15 +109,14 @@ ItemDelegate {
                             ToolTip.delay: 500
                             ToolTip.timeout: 5000
                             ToolTip.visible: hovered
-                            height: Theme.headerSize
                             text: emoji
-
+                            height: Theme.headerSize
                             width: (ImagesCache.isUnicode ? contentItem.contentWidth : Theme.headerSize - 4)
                                    + Theme.paddingMedium*2
                                    + countLabel.contentWidth
 
                             onClicked: {
-                                SlackClient.deleteReaction(channel.id, time, name)
+                                SlackClient.deleteReaction(teamRoot.teamId, channel.id, time, name)
                             }
 
                             contentItem: Item {

@@ -69,7 +69,9 @@ void SlackStream::handleListerEnd()
 
 void SlackStream::handleMessage(const QString& message)
 {
-    qDebug() << "Got text message" << message;
+    if (!message.contains("pong")) {
+        qDebug() << "Got text message" << message;
+    }
 
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(message.toUtf8(), &error);
@@ -94,4 +96,9 @@ void SlackStream::handleFrame(const QString& message)
 void SlackStream::handleBinaryFrame(const QByteArray &message)
 {
     Q_UNUSED(message)
+}
+
+void SlackStream::stopStream()
+{
+    webSocket->abort();
 }

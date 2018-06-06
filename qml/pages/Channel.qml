@@ -11,7 +11,7 @@ Page {
     property variant channel
     property bool initialized: false
 
-    title: channel.name
+    title: channel !== undefined ? channel.name : ""
 
     header: Rectangle {
         height: Theme.headerSize
@@ -36,6 +36,7 @@ Page {
     MessageListView {
         id: listView
         channel: page.channel
+        onChannelChanged: console.log("channel changed", listView.channel)
 
         anchors {
             top: parent.top; bottom: input.top; left: parent.left; right: parent.right
@@ -100,7 +101,7 @@ Page {
         visible: listView.inputEnabled
         placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
         onSendMessage: {
-            SlackClient.postMessage(channel.id, content)
+            SlackClient.postMessage(teamRoot.teamId, channel.id, content)
         }
 
         nickPopupVisible: nickPopup.visible
@@ -132,28 +133,24 @@ Page {
         }
     }
 
-    Component.onCompleted: {
-        console.log("fetching")
-        page.channel = SlackClient.getChannel(page.channelId)
-        input.forceActiveFocus()
-
-        if (!initialized) {
-            initialized = true
-            listView.loadMessages()
-        }
-    }
-
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
-            SlackClient.setActiveWindow(page.channelId)
+            console.log("channel active", page.title)
+            SlackClient.setActiveWindow(teamRoot.teamId, page.channelId)
+            page.channel = SlackClient.getChannel(teamRoot.teamId, page.channelId)
+            input.forceActiveFocus()
 
             if (!initialized) {
                 initialized = true
                 listView.loadMessages()
             }
         } else {
-            SlackClient.setActiveWindow("")
+            SlackClient.setActiveWindow(teamRoot.teamId, "")
             listView.markLatest()
         }
+    }
+    StackView.onRemoved: {
+        console.log("channels destroying")
+        initialized = false
     }
 }

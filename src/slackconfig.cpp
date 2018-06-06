@@ -3,30 +3,65 @@
 #include <QStandardPaths>
 
 #include "slackconfig.h"
+#include "teaminfo.h"
 
 SlackConfig::SlackConfig(QObject *parent) :
-    QObject(parent), settings(this), currentUserId()
+    QObject(parent), m_settings(this), m_currentUserId()
 {
-}
-
-QString SlackConfig::accessToken()
-{
-    return settings.value("user/accessToken").toString();
-}
-
-void SlackConfig::setAccessToken(QString accessToken)
-{
-    settings.setValue("user/accessToken", QVariant(accessToken));
 }
 
 QString SlackConfig::userId()
 {
-    return currentUserId;
+    return m_currentUserId;
 }
 
-void SlackConfig::setUserId(QString userId)
+void SlackConfig::setUserInfo(const QString &userId, const QString &teamId, const QString &teamName)
 {
-    currentUserId = userId;
+    m_currentUserId = userId;
+    m_currentTeamId = teamId;
+    m_currentTeamName = teamName;
+}
+
+void SlackConfig::loadTeamInfo(TeamInfo &teamInfo)
+{
+    m_settings.beginGroup(teamInfo.teamId());
+    if (teamInfo.teamId().isEmpty()) {
+        teamInfo.setTeamId(m_settings.value(QStringLiteral("id")).toString());
+    }
+    if (teamInfo.name().isEmpty()) {
+        teamInfo.setName(m_settings.value(QStringLiteral("name")).toString());
+    }
+    if (teamInfo.icons().isEmpty()) {
+        teamInfo.setIcons(m_settings.value(QStringLiteral("icons")).toStringList());
+    }
+    if (teamInfo.teamToken().isEmpty()) {
+        teamInfo.setTeamToken(m_settings.value(QStringLiteral("token")).toString());
+    }
+    if (teamInfo.lastChannel().isEmpty()) {
+        teamInfo.setLastChannel(m_settings.value(QStringLiteral("lastChannel")).toString());
+    }
+    m_settings.endGroup();
+}
+
+void SlackConfig::saveTeamInfo(const TeamInfo &teamInfo)
+{
+    m_settings.beginGroup(teamInfo.teamId());
+    m_settings.setValue(QStringLiteral("id"), teamInfo.teamId());
+    m_settings.setValue(QStringLiteral("name"), teamInfo.name());
+    m_settings.setValue(QStringLiteral("icons"), teamInfo.icons());
+    m_settings.setValue(QStringLiteral("token"), teamInfo.teamToken());
+    m_settings.setValue(QStringLiteral("lastChannel"), teamInfo.lastChannel());
+    m_settings.endGroup();
+}
+
+QStringList SlackConfig::teams()
+{
+    return m_settings.value(QStringLiteral("teamsList")).toStringList();
+}
+
+void SlackConfig::setTeams(const QStringList &teams)
+{
+    m_settings.setValue(QStringLiteral("teamsList"), teams);
 }
 
 void SlackConfig::clearWebViewCache()
@@ -34,9 +69,15 @@ void SlackConfig::clearWebViewCache()
     QStringList dataPaths = QStandardPaths::standardLocations(QStandardPaths::DataLocation);
 
     if (dataPaths.size()) {
-        QDir webData(QDir(dataPaths.at(0)).filePath(".QtWebKit"));
+        QDir webData(QDir(dataPaths.at(0)).filePath(QStringLiteral(".QtWebKit")));
         if (webData.exists()) {
             webData.removeRecursively();
         }
     }
+}
+
+SlackConfig *SlackConfig::instance()
+{
+    static SlackConfig slackConfig;
+    return &slackConfig;
 }

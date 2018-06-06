@@ -43,7 +43,7 @@ Page {
             model: ListModel {
                 id: channelListModel
 
-                property var available: SlackClient.getChannels().filter(Channel.isJoinableChannel)
+                property var available: SlackClient.getChannels(teamRoot.teamId).filter(Channel.isJoinableChannel)
 
                 Component.onCompleted: update()
 
@@ -68,7 +68,7 @@ Page {
                 icon.name: Channel.getIcon(model)
                 text: model.name
                 onClicked: {
-                    SlackClient.joinChannel(model.id)
+                    SlackClient.joinChannel(teamRoot.teamId, model.id)
                     pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
                 }
             }

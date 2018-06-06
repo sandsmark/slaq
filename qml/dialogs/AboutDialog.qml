@@ -1,10 +1,19 @@
 import QtQuick 2.8
 import QtQuick.Window 2.3
 import QtQuick.Controls 2.3
+import "../pages"
 import ".."
 
-Page {
-    id: page
+Dialog {
+    id: aboutDialog
+    x: Math.round((window.width - width) / 2)
+    y: Math.round(window.height / 6)
+    width: Math.round(Math.min(window.width, window.height) / 3 * 2)
+    height: Math.round(Math.min(window.width, window.height) / 3 * 2)
+    modal: true
+    focus: true
+
+    standardButtons: Dialog.Ok
 
     title: qsTr("About")
 
@@ -17,17 +26,17 @@ Page {
         Column {
             id: column
 
-            width: page.width
+            width: aboutDialog.width
             spacing: Theme.paddingLarge
 
             Label {
-                x: page.padding
+                x: aboutDialog.padding
                 text: "Slaq 1.3"
                 font.pointSize: Theme.fontSizeHuge
             }
 
             Label {
-                x: page.padding
+                x: aboutDialog.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
                 text: qsTr("Unoffical Slack client which doesn't eat all your RAM")
@@ -35,7 +44,7 @@ Page {
             }
 
             Label {
-                x: page.padding
+                x: aboutDialog.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 wrapMode: Text.Wrap
                 font.pointSize: Theme.fontSizeSmall
@@ -43,7 +52,7 @@ Page {
             }
 
             RichTextLabel {
-                x: page.padding
+                x: aboutDialog.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 font.pointSize: Theme.fontSizeSmall
                 value: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/sandsmark/slaq")

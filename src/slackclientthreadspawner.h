@@ -9,96 +9,115 @@ class SlackClientThreadSpawner : public QThread
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool isOnline READ isOnline NOTIFY isOnlineChanged)
     Q_PROPERTY(bool isDevice READ isDevice CONSTANT)
-    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setActiveWindow NOTIFY lastChannelChanged)
+    Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
+    Q_PROPERTY(QString lastTeam READ lastTeam WRITE setLastTeam NOTIFY lastTeamChanged)
 
 public:
     explicit SlackClientThreadSpawner(QObject *parent = nullptr);
 
-    virtual ~SlackClientThreadSpawner() {}
-    SlackClient *slackClient();
+    virtual ~SlackClientThreadSpawner();
+    Q_INVOKABLE SlackClient *slackClient(const QString& teamId);
+
+    Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
+
+    QString lastTeam() const;
+
+    bool isOnline();
 
 signals:
     void threadStarted();
 
     //signals from thread
-    void testConnectionFail();
-    void testLoginSuccess(QString userId, QString teamId, QString team);
-    void testLoginFail();
+    void testConnectionFail(const QString& teamId);
+    void testLoginSuccess(QString userId, const QString& teamId, QString team);
+    void testLoginFail(const QString& teamId);
 
-    void accessTokenSuccess(QString userId, QString teamId, QString team);
-    void accessTokenFail();
+    void accessTokenSuccess(QString userId, const QString& teamId, QString team);
+    void accessTokenFail(const QString& teamId);
 
-    void loadMessagesSuccess(QString channelId, QVariantList messages);
-    void loadMessagesFail();
+    void loadMessagesSuccess(const QString& teamId, QString channelId, QVariantList messages);
+    void loadMessagesFail(const QString& teamId);
 
-    void initFail(const QString &why);
-    void initSuccess();
+    void initFail(const QString& teamId, const QString &why);
+    void initSuccess(const QString& teamId);
 
-    void reconnectFail();
-    void reconnectAccessTokenFail();
+    void reconnectFail(const QString& teamId);
+    void reconnectAccessTokenFail(const QString& teamId);
 
-    void messageReceived(QVariantMap message);
-    void messageUpdated(QVariantMap message);
-    void channelUpdated(QVariantMap channel);
-    void channelJoined(QVariantMap channel);
-    void channelLeft(QVariantMap channel);
-    void userUpdated(QVariantMap user);
+    void messageReceived(const QString& teamId, QVariantMap message);
+    void messageUpdated(const QString& teamId, QVariantMap message);
+    void channelUpdated(const QString& teamId, QVariantMap channel);
+    void channelJoined(const QString& teamId, QVariantMap channel);
+    void channelLeft(const QString& teamId, QVariantMap channel);
+    void userUpdated(const QString& teamId, QVariantMap user);
 
-    void postImageSuccess();
-    void postImageFail();
+    void postImageSuccess(const QString& teamId);
+    void postImageFail(const QString& teamId);
 
-    void networkOff();
-    void networkOn();
+    void networkOff(const QString& teamId);
+    void networkOn(const QString& teamId);
 
-    void reconnecting();
-    void disconnected();
-    void connected();
-
-    void isOnlineChanged();
-    void lastChannelChanged();
+    void reconnecting(const QString& teamId);
+    void disconnected(const QString& teamId);
+    void connected(const QString& teamId);
+    void lastChannelChanged(const QString& teamId);
+    void lastTeamChanged(QString lastTeam);
+    void onlineChanged(bool isOnline);
 
 public slots:
-    void startClient();
-    void testLogin();
+    void startClient(const QString& teamId);
+    void testLogin(const QString& teamId);
 
-    void setAppActive(bool active);
-    void setActiveWindow(const QString &windowId);
+    void setAppActive(const QString& teamId, bool active);
+    void setActiveWindow(const QString& teamId, const QString &windowId);
 
-    QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
+    QStringList getNickSuggestions(const QString& teamId, const QString &currentText, const int cursorPosition);
 
-    bool isOnline() const;
     bool isDevice() const;
-    QString lastChannel();
+    QString lastChannel(const QString& teamId);
 
-    QUrl avatarUrl(const QString &userId);
+    QUrl avatarUrl(const QString& teamId, const QString &userId);
     bool handleAccessTokenReply(const QJsonObject &bootData);
 
     //channels
-    void markChannel(const QString& type, const QString& channelId, const QString& time);
-    void joinChannel(const QString& channelId);
-    void leaveChannel(const QString& channelId);
-    void leaveGroup(const QString& groupId);
-    QVariantList getChannels();
-    QVariant getChannel(const QString& channelId);
+    void markChannel(const QString& teamId, const QString& type, const QString& channelId, const QString& time);
+    void joinChannel(const QString& teamId, const QString& channelId);
+    void leaveChannel(const QString& teamId, const QString& channelId);
+    void leaveGroup(const QString& teamId, const QString& groupId);
+    QVariantList getChannels(const QString& teamId);
+    QVariant getChannel(const QString& teamId, const QString& channelId);
 
     //messages
-    void loadMessages(const QString& type, const QString& channelId);
-    void postMessage(const QString& channelId, const QString& content);
-    void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
-    void deleteReaction(const QString& channelId, const QString& ts, const QString& reaction);
-    void addReaction(const QString& channelId, const QString& ts, const QString& reaction);
+    void loadMessages(const QString& teamId, const QString& type, const QString& channelId);
+    void postMessage(const QString& teamId, const QString& channelId, const QString& content);
+    void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
+    void deleteReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
+    void addReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
 
     //chats
-    void openChat(const QString& chatId);
-    void closeChat(const QString& chatId);
+    void openChat(const QString& teamId, const QString& chatId);
+    void closeChat(const QString& teamId, const QString& chatId);
+
+    //teams
+    void onTeamInfoChanged(const QString& teamId);
+    void connectToTeam(const QString& teamId, const QString &accessToken = QString(""));
+    void leaveTeam(const QString& teamId);
+
+    void setLastTeam(const QString& lastTeam);
+    void onOnlineChanged(const QString& teamId);
 
 protected:
     void run();
 
 private:
-    SlackClient *m_slackClient;
+    SlackClient *createNewClientInstance(const QString &teamId, const QString &accessToken = QString(""));
+
+private:
+    QQmlObjectListModel<TeamInfo> m_teamsModel;
+    QMap<QString, SlackClient*> m_knownTeams;
+    QString m_lastTeam;
+    bool m_isOnline;
 };
 
 #endif

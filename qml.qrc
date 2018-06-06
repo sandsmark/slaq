@@ -3,7 +3,6 @@
         <file>qml/main.qml</file>
         <file>qml/cover/CoverPage.qml</file>
         <file>qml/dialogs/ImagePicker.qml</file>
-        <file>qml/pages/About.qml</file>
         <file>qml/pages/Attachment.qml</file>
         <file>qml/pages/AttachmentFieldGrid.qml</file>
         <file>qml/pages/Channel.qml</file>
@@ -14,7 +13,6 @@
         <file>qml/pages/ConnectionPanel.qml</file>
         <file>qml/pages/FileSend.qml</file>
         <file>qml/pages/GroupLeaveDialog.qml</file>
-        <file>qml/pages/LoginPage.qml</file>
         <file>qml/pages/MessageInput.qml</file>
         <file>qml/pages/MessageListItem.qml</file>
         <file>qml/pages/MessageListView.qml</file>
@@ -26,13 +24,17 @@
         <file>qml/Channel.js</file>
         <file>qml/ChannelList.js</file>
         <file>qml/Message.js</file>
-        <file alias="qml/Settings.js">qml/Settings.js</file>
         <file>qml/pages/SlackImage.qml</file>
         <file>qml/pages/LoadingPage.qml</file>
         <file>icons/smile.gif</file>
         <file>fonts/TwitterColorEmoji.ttf</file>
         <file>qml/pages/EmojiSelector.qml</file>
         <file>data/emojis-slack.json</file>
-        <file>qml/pages/SettingsDialog.qml</file>
+        <file>qml/EmojiButton.qml</file>
+        <file>qml/EmojiToolButton.qml</file>
+        <file>qml/pages/Team.qml</file>
+        <file>qml/dialogs/LoginDialog.qml</file>
+        <file>qml/dialogs/SettingsDialog.qml</file>
+        <file>qml/dialogs/AboutDialog.qml</file>
     </qresource>
 </RCC>

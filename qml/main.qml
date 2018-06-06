@@ -1,18 +1,13 @@
 import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
+import QtQuick.Window 2.3
 
 import Qt.labs.settings 1.0
 
-import "Settings.js" as Settings
-import "ChannelList.js" as ChannelList
-import "Channel.js" as Channel
 import "."
-
-//import QtQuick.Window 2.3
 import "pages"
 import "dialogs"
-import "cover"
 
 ApplicationWindow {
     id: window
@@ -20,7 +15,7 @@ ApplicationWindow {
     width: 800
     height: 600
 
-    property alias pageStack: pageStack
+    property alias teamsSwipe: teamsSwipe
     property alias emojiSelector: emojiSelector
     property alias settings: settings
 
@@ -35,45 +30,106 @@ ApplicationWindow {
         id: settingsDialog
     }
 
+    LoginDialog {
+        id: loginDialog
+    }
+
+    AboutDialog {
+        id: aboutDialog
+    }
+
     color: palette.window
 
     EmojiSelector  {
         id: emojiSelector
     }
 
-    Component {
-        id: channelComponent
-        Channel {}
-    }
-
     Connections {
         target: SlackClient
         onThreadStarted: {
             console.log("qml: thread started")
-            pageStack.push(loadingPage)
         }
     }
+
     header: ToolBar {
+        id: toolbar
         RowLayout {
             anchors.fill: parent
-            Rectangle {
-                color: SlackClient.isOnline ? "green" : "red"
-                Layout.leftMargin: Theme.paddingMedium
-                height: parent.height/3
-                width: height
-                radius: width/2
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: connectionPanel.open()
+            spacing: 0
+            ToolButton {
+                Layout.leftMargin: Theme.headerSize/3
+                background: Rectangle {
+                    anchors.centerIn: parent
+                    color: SlackClient.isOnline ? "green" : "red"
+                    implicitHeight: Theme.headerSize/3
+                    implicitWidth: Theme.headerSize/3
+                    radius: implicitWidth/2
                 }
+
+                onClicked: connectionPanel.open()
             }
 
+            ToolSeparator {}
+
+            RowLayout {
+                TabBar {
+                    id: tabBar
+                    spacing: 2
+                    currentIndex: teamsSwipe.currentIndex
+                    Repeater {
+                        model: teamsModel
+                        TabButton {
+                            hoverEnabled: true
+                            ToolTip.delay: 200
+                            ToolTip.text: model.name
+                            ToolTip.visible: hovered
+                            background: Item {
+                                implicitHeight: Theme.headerSize
+                                implicitWidth: Theme.headerSize
+                            }
+                            contentItem: Image {
+                                anchors.centerIn: parent
+                                sourceSize { width: Theme.headerSize - 2; height: Theme.headerSize - 2 } // ### TODO: resize the image
+                                source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[model.icons.length - 2] : ""
+                                smooth: true
+                            }
+                            onClicked: {
+                                SlackClient.lastTeam = model.teamId
+                                teamsSwipe.currentIndex = index
+                            }
+
+                            onPressAndHold: teamMenu.open();
+                            Menu {
+                                id: teamMenu
+                                MenuItem {
+                                    text: qsTr("Leave")
+                                    onClicked: {
+                                        SlackClient.leaveTeam(model.teamId)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ToolButton {
+                    text: "➕"
+                    font.family: "Twitter Color Emoji"
+                    onClicked: {
+                        loginDialog.open()
+                    }
+                }
+            }
+            ToolSeparator {}
+
+            Item { Layout.fillWidth: true }
             ToolButton {
-                text: pageStack.depth > 1 ? "‹" : "›"
-                font.pixelSize: parent.height/2
+                text: teamsSwipe.currentItem !== null ?
+                          teamsSwipe.currentItem.item.pageStack.depth > 1 ?
+                              "‹" : "›" : ""
                 onClicked: {
-                    if (pageStack.depth > 1) {
-                        pageStack.pop()
+                    if (teamsSwipe.currentItem.item.pageStack.depth > 1) {
+                        teamsSwipe.currentItem.item.pageStack.pop()
                         return;
                     }
 
@@ -82,10 +138,10 @@ ApplicationWindow {
                     }
                 }
 
-                visible: SlackClient.isDevice || pageStack.depth > 1
+                visible: SlackClient.isDevice || teamsSwipe.currentItem !== null ?
+                             teamsSwipe.currentItem.item.pageStack.depth > 1 : false
                 enabled: visible
             }
-
             ToolButton {
                 text: qsTr("⋮")
                 onClicked: menu.open()
@@ -98,19 +154,19 @@ ApplicationWindow {
                     MenuItem {
                         text: qsTr("About")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("pages/About.qml"))
+                            aboutDialog.open()
                         }
                     }
                     MenuItem {
                         text: qsTr("Open chat")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
+                            teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
                         }
                     }
                     MenuItem {
                         text: qsTr("Join channel")
                         onClicked: {
-                            pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
+                            teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
                         }
                     }
                     MenuItem {
@@ -124,52 +180,27 @@ ApplicationWindow {
         }
     }
 
+    SwipeView {
+        id: teamsSwipe
+        anchors.fill: parent
+        currentIndex: tabBar.currentIndex
+        Repeater {
+            model: teamsModel
+            Loader {
+                active: true
+                sourceComponent: Team {
+                    slackClient: SlackClient.slackClient(model.teamId)
+                    teamId: model.teamId
+                    teamName: model.name
+                    Component.onCompleted: {
+                        if (model.teamId ===  SlackClient.lastTeam) {
+                            teamsSwipe.currentIndex = index
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     ConnectionPanel { id: connectionPanel; }
-
-    Component {
-        id: loadingPage
-        LoadingPage {}
-    }
-
-    StackView {
-        id: pageStack
-        anchors {
-            top: parent.top
-            left: channelListPermanent.active ? channelListPermanent.right : parent.left
-            right: parent.right
-            bottom: parent.bottom
-        }
-
-        transform: Translate {
-            x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
-        }
-    }
-
-//    Loader {
-//        id: channelList
-//        active: SlackClient.isDevice
-
-//        sourceComponent:  Drawer {
-//            width: parent.width * 0.66
-//            height: window.height
-
-//            ChannelList {
-//                anchors.fill: parent
-//            }
-//        }
-//    }
-
-    Loader {
-        id: channelListPermanent
-
-        width: active ? Math.min(parent.width * 0.33, 200) : 0
-        height: window.height
-
-        active: false
-        onWidthChanged: console.log(width)
-        opacity: active ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 500 } }
-
-        sourceComponent: ChannelList { }
-    }
 }

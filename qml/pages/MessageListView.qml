@@ -52,27 +52,25 @@ ListView {
 
     onAppActiveChanged: {
         if (appActive && atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(messageListModel.count - 1).time
+            latestRead = messageListModel.get(0).time
             readTimer.restart()
         }
     }
 
     onMovementEnded: {
         if (atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(messageListModel.count - 1).time
+            latestRead = messageListModel.get(0).time
             readTimer.restart()
         }
     }
 
     Component.onCompleted: {
-        SlackClient.onInitSuccess.connect(handleReload)
         SlackClient.onLoadMessagesSuccess.connect(handleLoadSuccess)
         SlackClient.onMessageReceived.connect(handleMessageReceived)
         SlackClient.onMessageUpdated.connect(handleMessageUpdated)
     }
 
     Component.onDestruction: {
-        SlackClient.onInitSuccess.disconnect(handleReload)
         SlackClient.onLoadMessagesSuccess.disconnect(handleLoadSuccess)
         SlackClient.onMessageReceived.disconnect(handleMessageReceived)
         SlackClient.onMessageUpdated.disconnect(handleMessageUpdated)
@@ -80,26 +78,19 @@ ListView {
 
     function markLatest() {
         if (latestRead != "") {
-            SlackClient.markChannel(channel.type, channel.id, latestRead)
+            SlackClient.markChannel(teamRoot.teamId, channel.type, channel.id, latestRead)
             latestRead = ""
         }
     }
 
-    function handleReload() {
-        console.log("Handling reloading")
-        inputEnabled = false
-        loadStarted()
-        loadMessages()
-    }
-
     function loadMessages() {
-        console.log("loading messages")
-        SlackClient.loadMessages(channel.type, channel.id)
+        console.log("loading messages", teamRoot.teamId)
+        SlackClient.loadMessages(teamRoot.teamId, channel.type, channel.id)
     }
 
-    function handleLoadSuccess(channelId, messages) {
-        console.log("loading success")
-        if (channelId === channel.id) {
+    function handleLoadSuccess(teamId, channelId, messages) {
+        console.log("loading success", channelId, channel.id)
+        if (teamId === teamRoot.teamId && channelId === channel.id) {
             messages.sort(Message.compareByTime)
             messageListModel.clear()
             messages.forEach(function(message) {
@@ -116,8 +107,8 @@ ListView {
         }
     }
 
-    function handleMessageUpdated(message) {
-        if (message.channel === channel.id) {
+    function handleMessageUpdated(teamId, message) {
+        if (teamId === teamRoot.teamId && message.channel === channel.id) {
             for (var msgi = 0; msgi < messageListModel.count; msgi++) {
                 var msg = messageListModel.get(msgi);
                 if (msg.time === message.ts) {
@@ -152,9 +143,8 @@ ListView {
         }
     }
 
-    function handleMessageReceived(message) {
-        console.log("message received")
-        if (message.type === "message" && message.channel === channel.id) {
+    function handleMessageReceived(teamId, message) {
+        if (teamId === teamRoot.teamId && message.type === "message" && message.channel === channel.id) {
             var isAtBottom = atBottom
             message.day = Message.getDisplayDate(message)
             messageListModel.insert(0, message)

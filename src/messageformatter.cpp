@@ -39,9 +39,9 @@ MessageFormatter::MessageFormatter() :
 
 #include <QDebug>
 
-void MessageFormatter::replaceUserInfo(QString &message)
+void MessageFormatter::replaceUserInfo(const QVariantList& users, QString &message)
 {
-    foreach (const QVariant &value, Storage::users()) {
+    foreach (const QVariant &value, users) {
         QVariantMap user = value.toMap();
         QString id = user.value(QStringLiteral("id")).toString();
         QString name = user.value(QStringLiteral("name")).toString();
@@ -53,9 +53,9 @@ void MessageFormatter::replaceUserInfo(QString &message)
     }
 }
 
-void MessageFormatter::replaceChannelInfo(QString &message)
+void MessageFormatter::replaceChannelInfo(const QVariantList& channels, QString &message)
 {
-    foreach (const QVariant &value, Storage::channels()) {
+    foreach (const QVariant &value, channels) {
         QVariantMap channel = value.toMap();
         QString id = channel.value(QStringLiteral("id")).toString();
         QString name = channel.value(QStringLiteral("name")).toString();
