@@ -93,15 +93,31 @@ ItemDelegate {
                     }
                 }
 
-                Label {
+                TextEdit {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
+                    readOnly: true
                     font.pointSize: Theme.fontSizeSmall
-                    textFormat: Text.StyledText
+                    textFormat: Text.RichText
                     visible: text.length > 0
                     text: content
+                    renderType: Text.QtRendering
+                    selectByKeyboard: true
+                    selectByMouse: true
                     onLinkActivated: handleLink(link)
+                    onLinkHovered:  {
+                        if (link !== "") {
+                            mouseArea.cursorShape = Qt.PointingHandCursor
+                        } else {
+                            mouseArea.cursorShape = Qt.ArrowCursor
+                        }
+                    }
                     wrapMode: Text.Wrap
+                    MouseArea {
+                        id: mouseArea
+                        anchors.fill: parent
+                        propagateComposedEvents: true
+                    }
                 }
 
                 Row {
