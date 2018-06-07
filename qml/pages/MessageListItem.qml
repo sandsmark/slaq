@@ -6,11 +6,11 @@ import ".."
 
 ItemDelegate {
     id: item
-    height: column.height + Theme.paddingSmall
+    height: column.height
     width: listView.width
     hoverEnabled: true
     highlighted: hovered
-    property bool emojiSelectorVisible: true
+    property bool isSearchResult: false
     property bool emojiSelectorCalled: false
 
     Connections {
@@ -65,9 +65,19 @@ ItemDelegate {
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"
                     }
+
+                    Label {
+                        id: channelLabel
+                        enabled: isSearchResult
+                        visible: isSearchResult
+                        text: model.channel !== undefined ? "#" + model.channel.name : ""
+                        font.pointSize: Theme.fontSizeSmall
+                        font.bold: true
+                    }
+
                     EmojiButton {
                         id: emojiButton
-                        visible: item.hovered && emojiSelectorVisible
+                        visible: item.hovered && !isSearchResult
                         height: Theme.headerSize
                         width: height
                         text: "😎"
@@ -250,6 +260,12 @@ ItemDelegate {
                 attachment: model
                 onLinkClicked: handleLink(link)
             }
+        }
+    }
+
+    onClicked: {
+        if (permalink !== undefined) {
+            Qt.openUrlExternally(permalink)
         }
     }
 

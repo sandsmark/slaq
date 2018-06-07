@@ -517,20 +517,14 @@ void SlackClient::handleSearchMessagesReply()
     QJsonArray matches = messages.value(QStringLiteral("matches")).toArray();
     for (const QJsonValue& match : matches) {
         const QJsonObject& matchObj = match.toObject();
-        QVariantMap searchResult;
-        searchResult[QStringLiteral("teamid")] = matchObj.value(QStringLiteral("team"));
-        searchResult.insert(QStringLiteral("type"), matchObj.value(QStringLiteral("type")).toVariant());
-        searchResult.insert(QStringLiteral("time"), matchObj.value(QStringLiteral("ts")).toVariant());
-        searchResult.insert(QStringLiteral("channel"), matchObj.value(QStringLiteral("channel")).toVariant());
-        searchResult.insert(QStringLiteral("user"), user(matchObj));
-        searchResult.insert(QStringLiteral("attachments"), getAttachments(matchObj));
-        searchResult.insert(QStringLiteral("images"), getImages(matchObj));
-        searchResult.insert(QStringLiteral("content"), QVariant(getContent(matchObj)));
-        searchResult.insert(QStringLiteral("reactions"), getReactions(matchObj));
+        QVariantMap searchResult = getMessageData(matchObj, matchObj.value(QStringLiteral("team")).toString());
+        searchResult.insert(QStringLiteral("permalink"), matchObj.value(QStringLiteral("permalink")).toVariant());
 
         const QJsonObject& channelObj = matchObj.value(QStringLiteral("channel")).toObject();
-        searchResult[QStringLiteral("channelid")] = channelObj.value(QStringLiteral("id"));
-        searchResult[QStringLiteral("channelname")] = channelObj.value(QStringLiteral("name"));
+        QVariantMap channel;
+        channel[QStringLiteral("id")] = channelObj.value(QStringLiteral("id"));
+        channel[QStringLiteral("name")] = channelObj.value(QStringLiteral("name"));
+        searchResult.insert(QStringLiteral("channel"), channel);
         searchResults.append(searchResult);
     }
     qDebug() << "search result. found entries" << _total;

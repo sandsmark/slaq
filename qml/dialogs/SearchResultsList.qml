@@ -39,12 +39,12 @@ Drawer {
     ListView {
         id: listView
         anchors.fill: parent
-        spacing: 5
         model: searchResultsModel
         ScrollIndicator.vertical: ScrollIndicator { }
         clip: true
+        spacing: Theme.paddingMedium
         delegate: MessageListItem {
-            emojiSelectorVisible: false
+            isSearchResult: true
         }
     }
 }

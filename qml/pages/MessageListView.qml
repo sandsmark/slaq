@@ -17,7 +17,7 @@ ListView {
     signal loadStarted()
     clip: true
 
-    spacing: Theme.paddingLarge
+    spacing: Theme.paddingMedium
     verticalLayoutDirection: ListView.BottomToTop
 
     ScrollBar.vertical: ScrollBar { }
