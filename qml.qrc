@@ -36,5 +36,6 @@
         <file>qml/dialogs/LoginDialog.qml</file>
         <file>qml/dialogs/SettingsDialog.qml</file>
         <file>qml/dialogs/AboutDialog.qml</file>
+        <file>qml/dialogs/SearchResultsList.qml</file>
     </qresource>
 </RCC>

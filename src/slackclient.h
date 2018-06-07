@@ -86,12 +86,14 @@ signals:
 
     void teamInfoChanged(const QString& teamId);
     void stateChanged(const QString& teamId);
+    void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
 public slots:
 
     void startConnections();
     void startClient();
     void testLogin();
+    void searchMessages(const QString& searchString);
     void loadMessages(const QString& type, const QString& channelId);
     void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QString &ts, const QString &reaction);
@@ -129,6 +131,7 @@ private slots:
     void handleStreamMessage(const QJsonObject& message);
     void reconnectClient();
     void handleTeamInfoReply();
+    void handleSearchMessagesReply();
 
 private:
     bool appActive;
@@ -154,7 +157,7 @@ private:
     void parsePresenceChange(const QJsonObject& message);
     void parseNotification(const QJsonObject& message);
 
-    QVariantMap getMessageData(const QJsonObject& message);
+    QVariantMap getMessageData(const QJsonObject& message, const QString& teamId);
 
     QString getContent(const QJsonObject& message);
     QVariantList getAttachments(const QJsonObject& message);

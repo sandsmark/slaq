@@ -93,6 +93,16 @@ QVariant SlackClientThreadSpawner::getChannel(const QString& teamId, const QStri
     return retVal;
 }
 
+void SlackClientThreadSpawner::searchMessages(const QString &teamId, const QString &searchString)
+{
+    SlackClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "searchMessages", Qt::QueuedConnection,
+                              Q_ARG(QString, searchString));
+}
+
 QStringList SlackClientThreadSpawner::getNickSuggestions(const QString& teamId, const QString &currentText, const int cursorPosition)
 {
     QStringList retVal;
@@ -341,6 +351,8 @@ SlackClient* SlackClientThreadSpawner::createNewClientInstance(const QString &te
     connect(_slackClient, &SlackClient::teamInfoChanged, this, &SlackClientThreadSpawner::onTeamInfoChanged, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackClient::isOnlineChanged, this, &SlackClientThreadSpawner::onOnlineChanged, Qt::QueuedConnection);
+
+    connect(_slackClient, &SlackClient::searchResultsReady, this, &SlackClientThreadSpawner::searchResultsReady, Qt::QueuedConnection);
 
     return _slackClient;
 }

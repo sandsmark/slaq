@@ -64,6 +64,7 @@ signals:
     void lastChannelChanged(const QString& teamId);
     void lastTeamChanged(QString lastTeam);
     void onlineChanged(bool isOnline);
+    void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
 public slots:
     void startClient(const QString& teamId);
@@ -89,6 +90,7 @@ public slots:
     QVariant getChannel(const QString& teamId, const QString& channelId);
 
     //messages
+    void searchMessages(const QString& teamId, const QString& searchString);
     void loadMessages(const QString& teamId, const QString& type, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);

@@ -44,6 +44,10 @@ ApplicationWindow {
         id: emojiSelector
     }
 
+    SearchResultsList {
+        id: searchResultsList
+    }
+
     Connections {
         target: SlackClient
         onThreadStarted: {
@@ -120,6 +124,26 @@ ApplicationWindow {
                     }
                 }
             }
+            ToolSeparator {}
+            RowLayout {
+                spacing: 2
+                EmojiToolButton {
+                    text: "🔍"
+                    onClicked: {
+                        SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
+                    }
+                }
+
+                TextField {
+                    id: searchInput
+                    placeholderText: qsTr("Search...")
+                    width: 400
+                    onAccepted: {
+                        SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
+                    }
+                }
+            }
+
             ToolSeparator {}
 
             Item { Layout.fillWidth: true }

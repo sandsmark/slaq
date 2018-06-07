@@ -6,10 +6,11 @@ import ".."
 
 ItemDelegate {
     id: item
-    height: column.height + Theme.paddingMedium
+    height: column.height + Theme.paddingSmall
     width: listView.width
     hoverEnabled: true
     highlighted: hovered
+    property bool emojiSelectorVisible: true
     property bool emojiSelectorCalled: false
 
     Connections {
@@ -18,7 +19,7 @@ ItemDelegate {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamRoot.teamId, channel.id, time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamid, channel.id, time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -38,7 +39,7 @@ ItemDelegate {
                 id: avatarImage
                 height: Theme.avatarSize
                 width: height
-                source: SlackClient.avatarUrl(teamRoot.teamId, user.id)
+                source: SlackClient.avatarUrl(teamid, user.id)
             }
 
             Column {
@@ -66,7 +67,7 @@ ItemDelegate {
                     }
                     EmojiButton {
                         id: emojiButton
-                        visible: item.hovered
+                        visible: item.hovered && emojiSelectorVisible
                         height: Theme.headerSize
                         width: height
                         text: "😎"
@@ -116,7 +117,7 @@ ItemDelegate {
                                    + countLabel.contentWidth
 
                             onClicked: {
-                                SlackClient.deleteReaction(teamRoot.teamId, channel.id, time, name)
+                                SlackClient.deleteReaction(teamid, channel.id, time, name)
                             }
 
                             contentItem: Item {
