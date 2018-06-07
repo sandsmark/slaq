@@ -217,11 +217,12 @@ void SlackClient::parseChannelUpdate(const QJsonObject& message)
 void SlackClient::parseMessageUpdate(const QJsonObject& message)
 {
     QVariantMap data;
+    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
     if (message.value(QStringLiteral("subtype")).isUndefined()) {
-        data = getMessageData(message);
+        data = getMessageData(message, teamId);
     } else {
         //TODO(unknown): handle messages threads
-        data = getMessageData(message.value(QStringLiteral("message")).toObject());
+        data = getMessageData(message.value(QStringLiteral("message")).toObject(), teamId);
     }
 
     QString channelId = message.value(QStringLiteral("channel")).toString();
@@ -487,6 +488,53 @@ void SlackClient::handleTestLoginReply()
     requestTeamInfo();
     emit testLoginSuccess(userId, teamId, teamName);
     //startClient();
+}
+
+void SlackClient::searchMessages(const QString &searchString)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("query"), searchString);
+    params.insert(QStringLiteral("highlight"), QStringLiteral("false"));
+    params.insert(QStringLiteral("sort"), QStringLiteral("timestamp"));
+
+    QNetworkReply *reply = executeGet(QStringLiteral("search.messages"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleSearchMessagesReply);
+}
+
+void SlackClient::handleSearchMessagesReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    QJsonObject data = getResult(reply);
+    reply->deleteLater();
+
+    if (isError(data)) {
+        emit testLoginFail(m_teamInfo.teamId());
+        return;
+    }
+    QVariantList searchResults;
+    QJsonObject messages = data.value(QStringLiteral("messages")).toObject();
+    int _total = messages.value(QStringLiteral("total")).toInt();
+    QJsonArray matches = messages.value(QStringLiteral("matches")).toArray();
+    for (const QJsonValue& match : matches) {
+        const QJsonObject& matchObj = match.toObject();
+        QVariantMap searchResult;
+        searchResult[QStringLiteral("teamid")] = matchObj.value(QStringLiteral("team"));
+        searchResult.insert(QStringLiteral("type"), matchObj.value(QStringLiteral("type")).toVariant());
+        searchResult.insert(QStringLiteral("time"), matchObj.value(QStringLiteral("ts")).toVariant());
+        searchResult.insert(QStringLiteral("channel"), matchObj.value(QStringLiteral("channel")).toVariant());
+        searchResult.insert(QStringLiteral("user"), user(matchObj));
+        searchResult.insert(QStringLiteral("attachments"), getAttachments(matchObj));
+        searchResult.insert(QStringLiteral("images"), getImages(matchObj));
+        searchResult.insert(QStringLiteral("content"), QVariant(getContent(matchObj)));
+        searchResult.insert(QStringLiteral("reactions"), getReactions(matchObj));
+
+        const QJsonObject& channelObj = matchObj.value(QStringLiteral("channel")).toObject();
+        searchResult[QStringLiteral("channelid")] = channelObj.value(QStringLiteral("id"));
+        searchResult[QStringLiteral("channelname")] = channelObj.value(QStringLiteral("name"));
+        searchResults.append(searchResult);
+    }
+    qDebug() << "search result. found entries" << _total;
+    emit searchResultsReady(m_teamInfo.teamId(), searchResults);
 }
 
 void SlackClient::startClient()
@@ -922,7 +970,7 @@ void SlackClient::handleLoadMessagesReply()
 
     foreach (const QJsonValue &value, messageList) {
         QJsonObject message = value.toObject();
-        messages << getMessageData(message);
+        messages << getMessageData(message, m_teamInfo.teamId());
     }
 
     QString channelId = reply->property("channelId").toString();
@@ -1095,7 +1143,7 @@ void SlackClient::handlePostImage()
     reply->deleteLater();
 }
 
-QVariantMap SlackClient::getMessageData(const QJsonObject& message)
+QVariantMap SlackClient::getMessageData(const QJsonObject& message, const QString& teamId)
 {
     QVariantMap data;
     data.insert(QStringLiteral("type"), message.value(QStringLiteral("type")).toVariant());
@@ -1106,6 +1154,7 @@ QVariantMap SlackClient::getMessageData(const QJsonObject& message)
     data.insert(QStringLiteral("images"), getImages(message));
     data.insert(QStringLiteral("content"), QVariant(getContent(message)));
     data.insert(QStringLiteral("reactions"), getReactions(message));
+    data.insert(QStringLiteral("teamid"), teamId);
 
     return data;
 }
