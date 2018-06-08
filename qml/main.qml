@@ -126,6 +126,7 @@ ApplicationWindow {
             }
             ToolSeparator {}
             RowLayout {
+
                 spacing: 2
                 EmojiToolButton {
                     text: "🔍"
@@ -137,20 +138,37 @@ ApplicationWindow {
                 TextField {
                     id: searchInput
                     placeholderText: qsTr("Search...")
-                    width: 400
+                    padding: 0
+                    Layout.fillWidth: true
+                    rightPadding: closeButton.width + Theme.paddingSmall
                     onAccepted: {
                         SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
+                    }
+
+                    EmojiToolButton {
+                        id: closeButton
+                        padding: 0
+                        anchors.right: parent.right
+                        anchors.rightMargin: -Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: -2
+                        width: searchInput.contentHeight
+                        height: searchInput.contentHeight
+                        text: "✖️"
+                        visible: searchInput.text !== ""
+                        onClicked: {
+                            searchInput.text = ""
+                        }
                     }
                 }
             }
 
             ToolSeparator {}
 
-            Item { Layout.fillWidth: true }
-            ToolButton {
+            EmojiToolButton {
                 text: teamsSwipe.currentItem !== null ?
                           teamsSwipe.currentItem.item.pageStack.depth > 1 ?
-                              "‹" : "›" : ""
+                              "🡸" : "🡺" : ""
                 onClicked: {
                     if (teamsSwipe.currentItem.item.pageStack.depth > 1) {
                         teamsSwipe.currentItem.item.pageStack.pop()
