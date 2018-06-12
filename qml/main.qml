@@ -91,11 +91,13 @@ ApplicationWindow {
                                 implicitHeight: Theme.headerSize
                                 implicitWidth: Theme.headerSize
                             }
-                            contentItem: Image {
-                                anchors.centerIn: parent
-                                sourceSize { width: Theme.headerSize - 2; height: Theme.headerSize - 2 } // ### TODO: resize the image
-                                source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[model.icons.length - 2] : ""
-                                smooth: true
+                            contentItem: Item {Image {
+                                    anchors.centerIn: parent
+                                    width: Theme.headerSize - 2
+                                    height: Theme.headerSize - 2
+                                    source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[1] : ""
+                                    smooth: true
+                                }
                             }
                             onClicked: {
                                 SlackClient.lastTeam = model.teamId
