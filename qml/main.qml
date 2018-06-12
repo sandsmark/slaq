@@ -222,12 +222,19 @@ ApplicationWindow {
         }
     }
 
+
     SwipeView {
         id: teamsSwipe
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
         Repeater {
             model: teamsModel
+            onCountChanged: {
+                if (count === 0 && SlackClient.lastTeam === "") {
+                    loginDialog.open()
+                }
+            }
+
             Loader {
                 active: true
                 sourceComponent: Team {
@@ -235,6 +242,11 @@ ApplicationWindow {
                     teamId: model.teamId
                     teamName: model.name
                     Component.onCompleted: {
+                        if (SlackClient.lastTeam === "") {
+                            SlackClient.lastTeam = model.teamId
+                            return
+                        }
+
                         if (model.teamId ===  SlackClient.lastTeam) {
                             teamsSwipe.currentIndex = index
                         }
