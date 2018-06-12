@@ -58,6 +58,8 @@ Page {
             transform: Translate {
                 x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
             }
+
+            initialItem: Item { BusyIndicator { anchors.centerIn: parent } }
         }
     }
 
