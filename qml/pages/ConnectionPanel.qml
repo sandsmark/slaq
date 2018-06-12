@@ -23,7 +23,7 @@ Drawer {
         }
 
         BusyIndicator {
-            running: connectionPanel.opened && !SlackClient.isOnline
+            running: !SlackClient.isOnline
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -31,6 +31,8 @@ Drawer {
             id: reconnectButton
             text: qsTr("Reconnect")
             anchors.verticalCenter: parent.verticalCenter
+            enabled: !SlackClient.isOnline
+            visible: enabled
             onClicked: {
                 SlackClient.reconnect()
             }
