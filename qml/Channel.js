@@ -26,19 +26,17 @@ function getIcon(model) {
             } else {
                 return "irc-channel-inactive"
             }
-            break;
-//            return "icon-s-group-chat"
         case "group":
-            return "icon-s-secure"
+            return "group"
         case "im":
             if (model.presence === "active") {
                 return "im-user"
             } else {
                 return "im-user-inactive"
             }
-
-//            ret = "im-user"
-//            return "icon-s-chat"
+        default:
+            console.warn("Unhandled model type: " + model.type)
+            return "irc-channel-active"
     }
 }
 
