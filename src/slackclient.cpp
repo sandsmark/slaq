@@ -155,6 +155,9 @@ void SlackClient::handleStreamMessage(const QJsonObject& message)
         parseReactionUpdate(message);
     } else if (type == QStringLiteral("user_typing")) {
         qDebug() << "user typing" << message;
+        emit userTyping(m_teamInfo.teamId(),
+                        message.value(QStringLiteral("channel")).toString(),
+                        message.value(QStringLiteral("user")).toString());
     } else if (type == QStringLiteral("team_join") || type == QStringLiteral("user_change")) {
         qDebug() << "user joined" << message;
         parseUser(message.value(QStringLiteral("user")).toObject());
@@ -405,7 +408,8 @@ QNetworkReply *SlackClient::executePost(const QString& method, const QMap<QStrin
 
     QUrl params;
     params.setQuery(query);
-    QByteArray body = params.toEncoded(QUrl::EncodeUnicode | QUrl::EncodeReserved);
+    // replace '+' manually, since QUrl does not replacing it
+    QByteArray body = params.toEncoded().replace('+', "%2B");
     body.remove(0, 1);
 
     QUrl url(QStringLiteral("https://slack.com/api/") + method);
@@ -413,7 +417,7 @@ QNetworkReply *SlackClient::executePost(const QString& method, const QMap<QStrin
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
 
-    qDebug() << "POST" << url.toString() << body;
+    qDebug() << "POST" << url.toString() << body << query.toString();
     return networkAccessManager->post(request, body);
 }
 
@@ -1050,10 +1054,6 @@ void SlackClient::addReaction(const QString &channelId, const QString &ts, const
 
 void SlackClient::postMessage(const QString& channelId, QString content)
 {
-    content.replace(QLatin1Char('&'), QStringLiteral("&amp;"));
-    content.replace(QLatin1Char('>'), QStringLiteral("&gt;"));
-    content.replace(QLatin1Char('<'), QStringLiteral("&lt;"));
-
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("text"), content);
@@ -1262,6 +1262,11 @@ QVariantList SlackClient::getAttachments(const QJsonObject& message)
         m_formatter.replaceLinks(text);
         m_formatter.replaceLinks(fallback);
         m_formatter.replaceEmoji(text);
+        m_formatter.replaceEmoji(pretext);
+        m_formatter.replaceEmoji(fallback);
+        m_formatter.replaceSpecialCharacters(text);
+        m_formatter.replaceSpecialCharacters(pretext);
+        m_formatter.replaceSpecialCharacters(fallback);
 
         int index = text.indexOf(' ', 250);
         if (index > 0) {
@@ -1320,6 +1325,7 @@ QVariantList SlackClient::getAttachmentFields(const QJsonObject& attachment)
             if (!title.isEmpty()) {
                 m_formatter.replaceLinks(title);
                 m_formatter.replaceMarkdown(title);
+                m_formatter.replaceSpecialCharacters(title);
 
                 QVariantMap titleData;
                 titleData.insert(QStringLiteral("isTitle"), QVariant(true));
@@ -1331,6 +1337,7 @@ QVariantList SlackClient::getAttachmentFields(const QJsonObject& attachment)
             if (!value.isEmpty()) {
                 m_formatter.replaceLinks(value);
                 m_formatter.replaceMarkdown(value);
+                m_formatter.replaceSpecialCharacters(title);
 
                 QVariantMap valueData;
                 valueData.insert(QStringLiteral("isTitle"), QVariant(false));

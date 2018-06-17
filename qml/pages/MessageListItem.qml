@@ -38,8 +38,12 @@ ItemDelegate {
             Image {
                 id: avatarImage
                 height: Theme.avatarSize
+                cache: true
+                asynchronous: true
                 width: height
                 source: SlackClient.avatarUrl(teamid, user.id)
+                onSourceChanged: console.log("avatar url", source)
+                onStatusChanged: console.log("avatar status", status)
             }
 
             Column {
