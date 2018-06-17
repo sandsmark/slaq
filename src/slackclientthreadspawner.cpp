@@ -161,6 +161,19 @@ QUrl SlackClientThreadSpawner::avatarUrl(const QString& teamId, const QString &u
     return retVal;
 }
 
+QString SlackClientThreadSpawner::userName(const QString& teamId, const QString &userId)
+{
+    QString retVal;
+    SlackClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return retVal;
+    }
+    QMetaObject::invokeMethod(_slackClient, "userName", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QString, retVal),
+                              Q_ARG(QString, userId));
+    return retVal;
+}
+
 bool SlackClientThreadSpawner::handleAccessTokenReply(const QJsonObject &bootData)
 {
     QString _accessToken = bootData[QStringLiteral("api_token")].toString();
@@ -353,6 +366,7 @@ SlackClient* SlackClientThreadSpawner::createNewClientInstance(const QString &te
     connect(_slackClient, &SlackClient::isOnlineChanged, this, &SlackClientThreadSpawner::onOnlineChanged, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackClient::searchResultsReady, this, &SlackClientThreadSpawner::searchResultsReady, Qt::QueuedConnection);
+    connect(_slackClient, &SlackClient::userTyping, this, &SlackClientThreadSpawner::userTyping, Qt::QueuedConnection);
 
     return _slackClient;
 }
