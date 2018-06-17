@@ -65,6 +65,7 @@ signals:
     void lastTeamChanged(QString lastTeam);
     void onlineChanged(bool isOnline);
     void searchResultsReady(const QString& teamId, const QVariantList& messages);
+    void userTyping(const QString& teamId, const QString& channelId, const QString& userId);
 
 public slots:
     void startClient(const QString& teamId);
@@ -79,6 +80,7 @@ public slots:
     QString lastChannel(const QString& teamId);
 
     QUrl avatarUrl(const QString& teamId, const QString &userId);
+    QString userName(const QString& teamId, const QString &userId);
     bool handleAccessTokenReply(const QJsonObject &bootData);
 
     //channels
