@@ -1,5 +1,7 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.3
+import QtQuick.Controls.Material 2.4
+
 import ".."
 
 import "../ChannelList.js" as ChannelList
@@ -24,6 +26,14 @@ ListView {
         criteria: ViewSection.FullString
         delegate: Label {
             text: getSectionName(section)
+            padding: Theme.paddingMedium
+
+            background: Rectangle {
+                width: listView.width
+                color: Material.primary
+            }
+
+            color: Material.background
         }
     }
 
@@ -31,7 +41,7 @@ ListView {
     delegate: ItemDelegate {
         id: delegate
         text: model.name
-        property color textColor: delegate.highlighted ? palette.highlightedText: palette.text
+        property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
         highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.id
 
         icon.name: Channel.getIcon(model)

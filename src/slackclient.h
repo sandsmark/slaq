@@ -88,6 +88,8 @@ signals:
     void stateChanged(const QString& teamId);
     void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
+    void userTyping(const QString& teamId, const QString& channelId, const QString& userId);
+
 public slots:
 
     void startConnections();
@@ -109,6 +111,7 @@ public slots:
     void requestTeamEmojis();
 
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
+    QString userName(const QString &userId) { return m_storage.user(userId).value(QStringLiteral("name")).toString(); }
     QString lastChannel();
     bool isOnline() const;
 

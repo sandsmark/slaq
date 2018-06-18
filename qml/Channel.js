@@ -19,6 +19,7 @@ function isJoinableChat(channel) {
 function getIcon(model) {
     var ret = ""
     switch (model.type) {
+        case "group":
         case "mpim":
         case "channel":
             if (model.presence === "active") {
@@ -26,19 +27,15 @@ function getIcon(model) {
             } else {
                 return "irc-channel-inactive"
             }
-            break;
-//            return "icon-s-group-chat"
-        case "group":
-            return "icon-s-secure"
         case "im":
             if (model.presence === "active") {
                 return "im-user"
             } else {
                 return "im-user-inactive"
             }
-
-//            ret = "im-user"
-//            return "icon-s-chat"
+        default:
+            console.warn("Unhandled model type: " + model.type)
+            return "irc-channel-active"
     }
 }
 

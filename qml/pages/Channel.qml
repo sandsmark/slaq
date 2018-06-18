@@ -12,6 +12,7 @@ Page {
     property bool initialized: false
 
     title: channel !== undefined ? channel.name : ""
+    property var usersTyping: []
 
     header: Rectangle {
         height: Theme.headerSize
@@ -111,6 +112,39 @@ Page {
 
         onHideNickPopup: {
             nickPopup.visible = false
+        }
+    }
+
+    Connections {
+        target: SlackClient
+        onUserTyping: {
+            if (teamRoot.teamId === teamId && channelId === channel.id) {
+                var userName = SlackClient.userName(teamRoot.teamId, userId)
+
+                if (usersTyping.indexOf(userName) === -1) {
+                    usersTyping.push(userName)
+                }
+                if (usersTyping.length > 0) {
+                    userTypingLabel.text = "User(s) " + usersTyping.join(", ") + " typing..."
+                    removeDelayTimer.restart()
+                }
+            }
+        }
+    }
+
+    Label {
+        id: userTypingLabel
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.paddingSmall
+        font.pixelSize: Theme.fontSizeMedium
+
+        Timer {
+            id: removeDelayTimer
+            interval: 2000
+            onTriggered: {
+                userTypingLabel.text = ""
+                usersTyping = []
+            }
         }
     }
 

@@ -29,7 +29,6 @@ Page {
         id: listView
         anchors {
             fill: parent
-            margins: Theme.paddingMedium
         }
     }
 }
