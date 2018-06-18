@@ -37,7 +37,7 @@ ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
                       << "Messenger 128px" << "Messenger 64px"
                       << "Twitter 64px" << "Twitter 72px";
     //need for quick access
-    m_categoriesSymbols << "🏈" << "🐶"<< "🏴" << "🥂" << "🔦" << "🏿" << "🙂" << "©️" <<"✈️";
+    m_categoriesSymbols << "🏈" << "🐶"<< "🏴" << "🥂" << "🔦" << "🏿" << "🙂" << "©️" << "✈️";
     QSettings settings;
     const QString imagesSet = settings.value("emojisSet", "Unicode").toString();
     setEmojiImagesSet(imagesSet);
@@ -69,7 +69,6 @@ bool ImagesCache::isCached(const QString& id) {
 QImage ImagesCache::image(const QString &id)
 {
     QImage image_;
-    //qDebug() << "request for image" << id << m_emojiList.contains(id) << m_emojiList.value(id)->cached();
     if (id.startsWith(QStringLiteral("icon/"))) {
         //icons ids started with icon/following by url:
         // icon/https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-10-19/259793453543_4b3c2e1f2d0926ea6415_original.png
@@ -84,10 +83,20 @@ QImage ImagesCache::image(const QString &id)
             emit requestImageViaHttp(id);
         }
     } else if (m_emojiList.contains(id)) {
+        //qDebug() << "request for image" << id << m_emojiList.contains(id) << m_emojiList.value(id)->cached();
         if (m_emojiList.value(id)->cached()) {
-            image_.load(m_cache + QDir::separator() +
+            EmojiInfo* einfo = m_emojiList.value(id);
+            QString _path;
+            if (einfo->imagesExist() & EmojiInfo::ImageSlackTeam) {
+                _path = m_cache + QDir::separator() + "teams_emojis" +
+                        QDir::separator() + QUrl(einfo->image()).fileName();
+
+            } else {
+                _path = m_cache + QDir::separator() +
                         m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
-                        m_emojiList.value(id)->image());
+                        m_emojiList.value(id)->image();
+            }
+            image_.load(_path);
         } else {
             emit requestImageViaHttp(id);
         }
@@ -99,20 +108,26 @@ QImage ImagesCache::image(const QString &id)
 
 void ImagesCache::onImageRequestedViaHttp(const QString &id)
 {
-    // doesnt makes sense for unicode
-
     QUrl url;
     if (id.startsWith(QStringLiteral("icon/"))) {
         QString iconPath = id;
         iconPath.remove(0, 5);
         url.setUrl(iconPath);
     } else {
-        if (isUnicode()) {
+        EmojiInfo* einfo = m_emojiList.value(id);
+        if (einfo == nullptr) {
             return;
         }
-        url.setUrl("https://github.com/iamcal/emoji-data/raw/master/"
-                   + m_imagesSetsFolders.at(m_currentImagesSetIndex)
-                   + "/" + m_emojiList.value(id)->image());
+        if (isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
+            return;
+        }
+        if (einfo->imagesExist() & EmojiInfo::ImageSlackTeam) {
+            url.setUrl(einfo->image());
+        } else {
+            url.setUrl("https://github.com/iamcal/emoji-data/raw/master/"
+                       + m_imagesSetsFolders.at(m_currentImagesSetIndex)
+                       + "/" + einfo->image());
+        }
     }
     QNetworkRequest req_ = QNetworkRequest(url);
 
@@ -189,8 +204,7 @@ void ImagesCache::parseSlackJson()
                 einfo->m_imagesExist |= EmojiInfo::ImageMessenger;
             }
 
-            m_emojiCategories.insert(einfo->m_category, einfo);
-            m_emojiList[einfo->m_shortNames.at(0)] = einfo;
+            addEmoji(einfo);
         }
     }
     qDebug() << "readed" << m_emojiList.count() << "emoji icons";
@@ -268,10 +282,24 @@ void ImagesCache::onImageRequestFinished()
                 }
 
             } else {
-                f.setFileName(m_cache + QDir::separator() +
-                              m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
-                              m_emojiList.value(id)->image());
-                m_emojiList.value(id)->setCached(true);
+                EmojiInfo* einfo = m_emojiList.value(id);
+                if (einfo == nullptr) {
+                    qWarning() << "id is not found" << id;
+                    return;
+                }
+
+                if (einfo->imagesExist() & EmojiInfo::ImageSlackTeam) {
+                    QUrl url(einfo->image());
+                    const QString& filename = url.fileName();
+                    f.setFileName(m_cache + QDir::separator() +
+                                  "teams_emojis" + QDir::separator() +
+                                  filename);
+                } else {
+                    f.setFileName(m_cache + QDir::separator() +
+                                  m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
+                                  einfo->image());
+                }
+                einfo->setCached(true);
             }
             f.open(QIODevice::WriteOnly);
             f.write(arr);
@@ -293,6 +321,10 @@ void ImagesCache::checkImagesPresence()
     if (!iconsCacheDir.exists()) {
         iconsCacheDir.mkpath(iconsCacheDir.path());
     }
+    QDir teamsEmojisCacheDir(m_cache + QDir::separator() + "teams_emojis");
+    if (!teamsEmojisCacheDir.exists()) {
+        teamsEmojisCacheDir.mkpath(teamsEmojisCacheDir.path());
+    }
     //readout icons
     for (const QFileInfo& fi: iconsCacheDir.entryInfoList()) {
         if (fi.isFile() && fi.size() > 0) {
@@ -300,9 +332,7 @@ void ImagesCache::checkImagesPresence()
         }
     }
     // doesnt makes sense for unicode
-    if (isUnicode()) {
-        return;
-    }
+
     const QList<EmojiInfo *> vals = m_emojiList.values();
     for (EmojiInfo *ei: vals) {
         ei->setCached(false);
@@ -326,6 +356,21 @@ void ImagesCache::checkImagesPresence()
 QStringList ImagesCache::getCategoriesSymbols() const
 {
     return m_categoriesSymbols;
+}
+
+void ImagesCache::addEmoji(EmojiInfo *einfo, bool visibleCategory)
+{
+    if (visibleCategory) {
+        m_emojiCategories.insert(einfo->m_category, einfo);
+    }
+    for (const QString& key : einfo->m_shortNames) {
+        m_emojiList[key] = einfo;
+    }
+}
+
+void ImagesCache::sendEmojisUpdated()
+{
+    QMetaObject::invokeMethod(this, "emojisUpdated", Qt::QueuedConnection);
 }
 
 //QML model data

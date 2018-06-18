@@ -40,10 +40,14 @@ public:
     Q_INVOKABLE QString getNameByEmoji(const QString& emoji) const;
     Q_INVOKABLE QStringList getCategoriesSymbols() const;
 
+    void addEmoji(EmojiInfo *einfo, bool visibleCategory = true);
+    void sendEmojisUpdated();
+
 signals:
     void imageLoaded(const QString &id);
     void requestImageViaHttp(const QString &id);
     void emojiReaded();
+    void emojisUpdated();
     void emojisSetsIndexChanged(int emojisIndex);
     void isUnicodeChanged(bool isUnicode);
 

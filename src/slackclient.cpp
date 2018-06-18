@@ -14,6 +14,8 @@
 
 #include "slackclient.h"
 
+#include "imagescache.h"
+
 SlackClient::SlackClient(const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
     m_clientId(QString::fromLatin1(QByteArray::fromBase64("MTE5MDczMjc1MDUuMjUyMzc1NTU3MTU1"))),
@@ -555,6 +557,7 @@ void SlackClient::handleTestLoginReply()
 
     config->setUserInfo(userId, teamId, teamName);
     requestTeamInfo();
+    requestTeamEmojis();
     emit testLoginSuccess(userId, teamId, teamName);
     //startClient();
 }
@@ -1029,6 +1032,12 @@ void SlackClient::requestTeamInfo()
     connect(reply, &QNetworkReply::finished, this, &SlackClient::handleTeamInfoReply);
 }
 
+void SlackClient::requestTeamEmojis()
+{
+    QNetworkReply *reply = executeGet(QStringLiteral("emoji.list"));
+    connect(reply, &QNetworkReply::finished, this, &SlackClient::handleTeamEmojisReply);
+}
+
 void SlackClient::handleTeamInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -1061,6 +1070,37 @@ void SlackClient::handleTeamInfoReply()
 
     config->saveTeamInfo(m_teamInfo);
     emit teamInfoChanged(m_teamInfo.teamId());
+}
+
+void SlackClient::handleTeamEmojisReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    QJsonObject data = getResult(reply);
+    reply->deleteLater();
+
+    if (isError(data)) {
+        qDebug() << "Team info failed";
+    }
+
+    ImagesCache* imagesCache = ImagesCache::instance();
+    QJsonObject teamEmojisArr = data.value(QStringLiteral("emoji")).toObject();
+    //qDebug() << "team emojis:" << data << teamEmojisArr.count();
+    for (const QString &name : teamEmojisArr.keys()) {
+        const QString& emoji_url = teamEmojisArr.value(name).toString();
+        if (emoji_url.startsWith("alias:")) {
+
+        } else {
+            EmojiInfo *einfo = new EmojiInfo;
+            einfo->m_name = name;
+            einfo->m_shortNames << name;
+            einfo->m_image = emoji_url;
+            einfo->m_imagesExist |= EmojiInfo::ImageSlackTeam;
+            einfo->m_category = "SlackTeam";
+            //qDebug() << "edding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
+            imagesCache->addEmoji(einfo, false);
+        }
+    }
+    imagesCache->sendEmojisUpdated();
 }
 
 void SlackClient::loadMessages(const ChatsModel::ChatType type, const QString& channelId)

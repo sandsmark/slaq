@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
-
+    qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", "!!!");
     SlackConfig::clearWebViewCache();
     //instantiate ImageCache
     engine.rootContext()->setContextProperty(QStringLiteral("ImagesCache"), ImagesCache::instance());

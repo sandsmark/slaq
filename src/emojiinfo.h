@@ -33,6 +33,7 @@ public:
         ImageEmojione =     (1<<3),
         ImageFacebook =     (1<<4),
         ImageMessenger =    (1<<5),
+        ImageSlackTeam =    (1<<6),
     };
     Q_DECLARE_FLAGS(ImagesExist, ImageExist)
 
