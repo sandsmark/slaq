@@ -1,6 +1,7 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
+import SlaqQmlModels 1.0
 import ".."
 
 Popup {
@@ -20,6 +21,13 @@ Popup {
         target: ImagesCache
         onEmojiReaded: {
             ldr.active = true
+        }
+
+        onEmojisUpdated: {
+            console.log("emojis updated")
+            ldr.reloading = true
+            categoriesTabRepeater.model = undefined
+            ldr.sourceComponent = undefined
         }
 
         onEmojisSetsIndexChanged: {
@@ -72,14 +80,14 @@ Popup {
                             Image {
                                 anchors.fill: parent
                                 anchors.margins: 2
-                                visible: !ImagesCache.isUnicode
+                                visible: !ImagesCache.isUnicode || (model.modelData.imagesExist & EmojiInfo.ImageSlackTeam)
                                 smooth: true
                                 cache: false
                                 source: "image://emoji/" + model.modelData.shortNames[0]
                             }
 
                             Text {
-                                visible: ImagesCache.isUnicode
+                                visible: ImagesCache.isUnicode && !(model.modelData.imagesExist & EmojiInfo.ImageSlackTeam)
                                 anchors.fill: parent
                                 text: model.modelData.unified
                                 font.family: "Twitter Color Emoji"
@@ -112,6 +120,7 @@ Popup {
             RowLayout {
                 anchors.fill: parent
                 Repeater {
+                    id: categoriesTabRepeater
                     model: ImagesCache.getCategoriesSymbols()
                     EmojiToolButton {
                         text: modelData
@@ -165,6 +174,7 @@ Popup {
                     if (reloading && status === Loader.Null) {
                         console.log("unloaded. loading back")
                         ldr.sourceComponent = lvComponent
+                        categoriesTabRepeater.model = ImagesCache.getCategoriesSymbols()
                         reloading = false
                     }
                 }

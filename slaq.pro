@@ -33,9 +33,7 @@ SOURCES += src/main.cpp \
     src/imagescache.cpp \
     src/slackclientthreadspawner.cpp
 
-OTHER_FILES += qml/main.qml \
-    qml/cover/CoverPage.qml \
-    translations/*.ts \
+OTHER_FILES += translations/*.ts \
     slaq.desktop \
     slaq.png
 
@@ -56,34 +54,10 @@ HEADERS += \
     src/teaminfo.h
 
 DISTFILES += \
-    qml/dialogs/ImagePicker.qml \
-    qml/dialogs/LoginDialog.qml \
-    qml/dialogs/SettingsDialog.qml \
-    qml/dialogs/AboutDialog.qml \
-    qml/pages/Settings.js \
-    qml/pages/ChannelList.qml \
-    qml/pages/ChannelList.js \
-    qml/pages/Channel.qml \
-    qml/pages/MessageListItem.qml \
-    qml/pages/MessageInput.qml \
-    qml/pages/ConnectionPanel.qml \
-    qml/pages/ChannelListView.qml \
-    qml/pages/MessageListView.qml \
-    qml/pages/RichTextLabel.qml \
-    qml/pages/AttachmentFieldGrid.qml \
-    qml/pages/Attachment.qml \
-    qml/pages/Spacer.qml \
-    qml/pages/ChannelSelect.qml \
-    qml/pages/Channel.js \
-    qml/pages/Message.js \
-    qml/pages/GroupLeaveDialog.qml \
-    qml/pages/ChatSelect.qml \
-    qml/pages/FileSend.qml \
-    qml/pages/SlackImage.qml \
-    qml/pages/LoadingPage.qml \
-    qml/EmojiButton.qml \
-    qml/EmojiToolButton.qml \
-    qml/pages/Team.qml
+    qml/dialogs/*.qml \
+    qml/pages/*.js \
+    qml/pages/*.qml \
+    qml/*.qml
 
 target.path = /usr/bin/
 

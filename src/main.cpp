@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
-
+    qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", "!!!");
     SlackConfig::clearWebViewCache();
     //instantiate ImageCache
     engine.rootContext()->setContextProperty(QStringLiteral("ImagesCache"), ImagesCache::instance());

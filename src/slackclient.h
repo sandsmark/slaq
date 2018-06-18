@@ -106,6 +106,7 @@ public slots:
     void openChat(const QString& chatId);
     void closeChat(const QString& chatId);
     void requestTeamInfo();
+    void requestTeamEmojis();
 
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
     QString lastChannel();
@@ -131,6 +132,7 @@ private slots:
     void handleStreamMessage(const QJsonObject& message);
     void reconnectClient();
     void handleTeamInfoReply();
+    void handleTeamEmojisReply();
     void handleSearchMessagesReply();
 
 private:
