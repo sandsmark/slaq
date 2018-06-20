@@ -103,10 +103,8 @@ ItemDelegate {
                     readOnly: true
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.RichText
-                    //visible: text.length > 0
                     text: content
-                    //text: "<img src=\"image://emoji/bowtie\" alt=\"\\1\" align=\"middle\" width=\"24\" height=\"24\" /> test"
-                    renderType: Text.NativeRendering
+                    renderType: Text.QtRendering
                     selectByKeyboard: true
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
@@ -118,12 +116,19 @@ ItemDelegate {
                         }
                     }
                     wrapMode: Text.Wrap
+                    //Due to bug in images not rendered until app resize
+                    //trigger redraw changing width
                     onTextChanged: {
-                        window.width--
-                        window.width++
+                        Qt.callLater(function() {
+                            var tmp = width
+                            width = 0
+                            width = tmp
+                        })
                     }
+
                     MouseArea {
                         id: mouseArea
+                        enabled: false //we need this just for changing cursor shape
                         anchors.fill: parent
                         propagateComposedEvents: true
                     }
@@ -289,7 +294,7 @@ ItemDelegate {
     }
 
     onClicked: {
-        if (permalink !== undefined) {
+        if (permalink !== "") {
             Qt.openUrlExternally(permalink)
         }
     }
