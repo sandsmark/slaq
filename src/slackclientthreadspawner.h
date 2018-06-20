@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QMutex>
 #include "slackclient.h"
+#include "QQmlObjectListModel.h"
 
 class SlackClientThreadSpawner : public QThread
 {

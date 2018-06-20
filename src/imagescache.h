@@ -10,6 +10,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QMutexLocker>
 
+#include "QQmlObjectListModel.h"
 #include "emojiinfo.h"
 
 class ImagesCache : public QObject
@@ -33,20 +34,22 @@ public:
     Q_INVOKABLE QString getEmojiImagesSet();
     Q_INVOKABLE int getEmojiImagesSetIndex();
     Q_INVOKABLE QStringList getEmojiImagesSetsNames();
-    Q_INVOKABLE QStringList getEmojiCategories();
-    Q_INVOKABLE QVariant getEmojisByCategory(const QString &category);
+    Q_INVOKABLE QVariant getEmojisByCategory(int category, const QString &teamId);
     bool isUnicode() const;
     Q_INVOKABLE QString getEmojiByName(const QString& name) const;
     Q_INVOKABLE QString getNameByEmoji(const QString& emoji) const;
-    Q_INVOKABLE QStringList getCategoriesSymbols() const;
 
     void addEmoji(EmojiInfo *einfo, bool visibleCategory = true);
     void sendEmojisUpdated();
+    void addEmojiAlias(const QString &emojiName, const QString &emojiAlias);
+    EmojiInfo* getEmojiInfo(const QString& name);
+
+    QQmlObjectListModel<EmojiCategoryHolder>* emojiCategoriesModel();
 
 signals:
     void imageLoaded(const QString &id);
     void requestImageViaHttp(const QString &id);
-    void emojiReaded();
+    void emojisDatabaseReaded();
     void emojisUpdated();
     void emojisSetsIndexChanged(int emojisIndex);
     void isUnicodeChanged(bool isUnicode);
@@ -54,10 +57,11 @@ signals:
 private slots:
     void onImageRequestedViaHttp(const QString &id);
     void onImageRequestFinished();
+    void checkImagesPresence();
 
 private:
     explicit ImagesCache(QObject *parent = nullptr);
-    void checkImagesPresence();
+
 
 private:
     QDateTime m_lastUpdate;
@@ -65,15 +69,16 @@ private:
 
     QStringList m_imagesSetsFolders;
     QStringList m_imagesSetsNames;
-    QStringList m_categoriesSymbols;
-    int m_currentImagesSetIndex; //represents current images set. Might be several in images cache folder
+    int m_currentImagesSetIndex {-1}; //represents current images set. Might be several in images cache folder
     QString m_cache;
     QHash<QString, EmojiInfo *> m_emojiList;
-    QMultiMap<QString, EmojiInfo *> m_emojiCategories;
+    QMultiMap<EmojiInfo::EmojiCategories, EmojiInfo *> m_emojiCategories;
     QSet<QString> m_iconsCached;
 
     QList<QNetworkReply*> m_activeRequests;
     QMutex m_requestsListMutex;
+
+    QQmlObjectListModel<EmojiCategoryHolder> m_EmojiCategoriesModel;
 };
 
 #endif // IMAGESCACHE_H

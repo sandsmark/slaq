@@ -958,18 +958,19 @@ void SlackClient::handleTeamEmojisReply()
     QJsonObject teamEmojisArr = data.value(QStringLiteral("emoji")).toObject();
     //qDebug() << "team emojis:" << data << teamEmojisArr.count();
     for (const QString &name : teamEmojisArr.keys()) {
-        const QString& emoji_url = teamEmojisArr.value(name).toString();
+        QString emoji_url = teamEmojisArr.value(name).toString();
         if (emoji_url.startsWith("alias:")) {
-
+            imagesCache->addEmojiAlias(name, emoji_url.remove(0, 6));
         } else {
             EmojiInfo *einfo = new EmojiInfo;
             einfo->m_name = name;
             einfo->m_shortNames << name;
             einfo->m_image = emoji_url;
             einfo->m_imagesExist |= EmojiInfo::ImageSlackTeam;
-            einfo->m_category = "SlackTeam";
+            einfo->m_category = EmojiInfo::EmojiCategoryCustom;
+            einfo->m_teamId = m_teamInfo.teamId();
             //qDebug() << "edding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
-            imagesCache->addEmoji(einfo, false);
+            imagesCache->addEmoji(einfo);
         }
     }
     imagesCache->sendEmojisUpdated();

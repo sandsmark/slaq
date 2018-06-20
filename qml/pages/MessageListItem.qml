@@ -1,4 +1,4 @@
-import QtQuick 2.8
+import QtQuick 2.11
 import QtQuick.Controls 2.3
 import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
@@ -42,8 +42,8 @@ ItemDelegate {
                 asynchronous: true
                 width: height
                 source: SlackClient.avatarUrl(teamid, user.id)
-                onSourceChanged: console.log("avatar url", source)
-                onStatusChanged: console.log("avatar status", status)
+//                onSourceChanged: console.log("avatar url", source)
+//                onStatusChanged: console.log("avatar status", status)
             }
 
             Column {
@@ -103,9 +103,10 @@ ItemDelegate {
                     readOnly: true
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.RichText
-                    visible: text.length > 0
+                    //visible: text.length > 0
                     text: content
-                    renderType: Text.QtRendering
+                    //text: "<img src=\"image://emoji/bowtie\" alt=\"\\1\" align=\"middle\" width=\"24\" height=\"24\" /> test"
+                    renderType: Text.NativeRendering
                     selectByKeyboard: true
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
@@ -117,6 +118,10 @@ ItemDelegate {
                         }
                     }
                     wrapMode: Text.Wrap
+                    onTextChanged: {
+                        window.width--
+                        window.width++
+                    }
                     MouseArea {
                         id: mouseArea
                         anchors.fill: parent
