@@ -110,7 +110,7 @@ void MessageFormatter::replaceEmoji(QString &message)
                         .arg(24);
 
                 message.replace(match.captured(), replacement);
-                qDebug() << "emoji image" << captured << message;
+                //qDebug() << "emoji image" << captured << message;
             }
         }
     }
