@@ -1367,6 +1367,7 @@ QVariantMap SlackClient::getMessageData(const QJsonObject& message, const QStrin
     data.insert(QStringLiteral("content"), QVariant(getContent(message)));
     data.insert(QStringLiteral("reactions"), getReactions(message));
     data.insert(QStringLiteral("teamid"), teamId);
+    data.insert(QStringLiteral("permalink"), "");
 
     return data;
 }
