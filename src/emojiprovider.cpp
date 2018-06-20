@@ -26,16 +26,16 @@ QQuickTextureFactory *AsyncImageResponse::textureFactory() const
 
 void AsyncImageResponse::run()
 {
-    //preload database from cache
-
     m_image = m_imageCache->image(m_id);
 
     if (!m_image.isNull()) {
 
-        if (m_requestedSize.isValid())
+        if (m_requestedSize.isValid()) {
             m_image = m_image.scaled(m_requestedSize);
+        }
 
         emit finished();
+        this->deleteLater();
     }
 }
 
@@ -47,5 +47,6 @@ void AsyncImageResponse::onImageLoaded(const QString &id)
             m_image = m_image.scaled(m_requestedSize);
         //qDebug() << "loaded image" << id;
         emit finished();
+        this->deleteLater();
     }
 }
