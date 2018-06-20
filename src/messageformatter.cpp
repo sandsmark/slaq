@@ -98,16 +98,20 @@ void MessageFormatter::replaceEmoji(QString &message)
         QString captured = match.captured();
         captured.replace(QStringLiteral(":"), QStringLiteral(""));
         //qDebug() << "captured" << captured;
-        if (imageCache->isUnicode() && imageCache->isExist(captured)) {
-            message.replace(":" + captured + ":", imageCache->getEmojiByName(captured));
-        } else if (imageCache->isExist(captured)) {
-            QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
-                    .arg(captured)
-                    .arg(QStringLiteral("middle"))
-                    .arg(24)
-                    .arg(24);
+        EmojiInfo* einfo = imageCache->getEmojiInfo(captured);
+        if (einfo != nullptr) {
+            if (imageCache->isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
+                message.replace(":" + captured + ":", imageCache->getEmojiByName(captured));
+            } else {
+                QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
+                        .arg(captured)
+                        .arg(QStringLiteral("middle"))
+                        .arg(24)
+                        .arg(24);
 
-            message.replace(match.captured(), replacement);
+                message.replace(match.captured(), replacement);
+                qDebug() << "emoji image" << captured << message;
+            }
         }
     }
 }

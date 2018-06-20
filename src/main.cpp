@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<SlackClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
+    qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
@@ -51,10 +52,13 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
-    qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", "!!!");
+    qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));
     SlackConfig::clearWebViewCache();
     //instantiate ImageCache
     engine.rootContext()->setContextProperty(QStringLiteral("ImagesCache"), ImagesCache::instance());
+    engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
+    engine.rootContext()->setContextProperty(QStringLiteral("emojiCategoriesModel"),
+                                             ImagesCache::instance()->emojiCategoriesModel());
     SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
     engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), _slackThread);
     engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), _slackThread->teamsModel());
@@ -71,8 +75,6 @@ int main(int argc, char *argv[])
     //    connection.registerObject("/", listener);
 
     engine.rootContext()->setContextProperty(QStringLiteral("fileModel"), new FileModel());
-    engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
-    engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";

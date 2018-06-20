@@ -18,7 +18,6 @@
 #include "slackstream.h"
 #include "messageformatter.h"
 #include "teaminfo.h"
-#include "QQmlObjectListModel.h"
 #include "storage.h"
 #include "debugblock.h"
 

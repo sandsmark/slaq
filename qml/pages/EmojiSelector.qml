@@ -19,7 +19,7 @@ Popup {
 
     Connections {
         target: ImagesCache
-        onEmojiReaded: {
+        onEmojisDatabaseReaded: {
             ldr.active = true
         }
 
@@ -44,7 +44,7 @@ Popup {
             ScrollBar.vertical: ScrollBar { }
 
             Component.onCompleted: {
-                listView.model = ImagesCache.getEmojiCategories();
+                listView.model = emojiCategoriesModel
             }
 
             interactive: true
@@ -54,12 +54,14 @@ Popup {
             delegate: Column {
                 id: col
                 spacing: 5
-                height: title.implicitHeight + grid.implicitHeight + spacing
+                visible: isVisible
+                enabled: visible
+                height: visible ? title.implicitHeight + grid.implicitHeight + spacing : 0
 
                 Text {
                     id: title
                     font.capitalization: Font.Capitalize
-                    text: modelData
+                    text: visibleName
                     font.pixelSize: 24
                     font.bold: true
                 }
@@ -71,7 +73,7 @@ Popup {
                     spacing: 0
                     Repeater {
                         id: rep
-                        model: ImagesCache.getEmojisByCategory(modelData)
+                        model: ImagesCache.getEmojisByCategory(category, SlackClient.lastTeam)
                         delegate: Rectangle {
                             width: Theme.headerSize
                             height: Theme.headerSize
@@ -96,15 +98,22 @@ Popup {
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignHCenter
                             }
+                            ToolTip {
+                                delay: 300
+                                text: model.modelData.shortNames[0]
+                                timeout: 2000
+                                visible: mouseArea.containsMouse
+                            }
+
                             MouseArea {
                                 id: mouseArea
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 onClicked: {
-                                    emojiSelected(model.modelData.unified)
+                                    emojiSelected(model.modelData.unified !== "" ?
+                                                      model.modelData.unified : ":" + model.modelData.shortNames[0] + ":")
                                     popup.close()
                                 }
-
                             }
                         }
                     }
@@ -121,14 +130,20 @@ Popup {
                 anchors.fill: parent
                 Repeater {
                     id: categoriesTabRepeater
-                    model: ImagesCache.getCategoriesSymbols()
+                    model: emojiCategoriesModel
                     EmojiToolButton {
-                        text: modelData
+                        text: unicode
+                        visible: isVisible
                         font.bold: true
                         Layout.fillWidth: true
                         onClicked: {
                             ldr.item.positionViewAtIndex(index, ListView.Beginning)
                         }
+                        hoverEnabled: true
+                        ToolTip.delay: 300
+                        ToolTip.text: visibleName
+                        ToolTip.timeout: 2000
+                        ToolTip.visible: hovered
                     }
                 }
             }
@@ -172,9 +187,8 @@ Popup {
                 sourceComponent: lvComponent
                 onStatusChanged: {
                     if (reloading && status === Loader.Null) {
-                        console.log("unloaded. loading back")
                         ldr.sourceComponent = lvComponent
-                        categoriesTabRepeater.model = ImagesCache.getCategoriesSymbols()
+                        categoriesTabRepeater.model = emojiCategoriesModel
                         reloading = false
                     }
                 }
