@@ -8,13 +8,18 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent) :
 
 QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
-    if (request.url().host() == "files.slack.com") {
-        QNetworkRequest copy(request);
+    const QUrl& url = request.url();
+    if (url.scheme() == "team") {
 
-//        QString token = config->accessToken();
-//        if (!token.isEmpty()) {
-//            copy.setRawHeader(QString("Authorization").toUtf8(), QString("Bearer " + token).toUtf8());
-//        }
+        QNetworkRequest copy(request);
+        copy.setUrl(QUrl(url.path().remove(0, 1)));
+
+        QString token = config->accessToken(url.host().toUpper());
+        if (!token.isEmpty()) {
+            copy.setRawHeader(QString("Authorization").toUtf8(), QString("Bearer " + token).toUtf8());
+        } else {
+            qWarning() << "token for team" << url.host() << "not found";
+        }
 
         return QNetworkAccessManager::createRequest(op, copy, outgoingData);
     } else {

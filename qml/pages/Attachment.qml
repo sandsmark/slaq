@@ -66,7 +66,7 @@ Column {
 
                 Image {
                     fillMode: Image.PreserveAspectFit
-                    source: model.url
+                    source: "team://" + teamId + "/" + model.url
                     sourceSize: Qt.size(model.size.width, model.size.height)
                 }
             }

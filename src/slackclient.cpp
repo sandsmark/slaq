@@ -1457,7 +1457,7 @@ QVariantList SlackClient::getImages(const QJsonObject& message)
             fileData.insert(QStringLiteral("thumbUrl"), file.value("thumb_" + thumbItem).toVariant());
 
             images.append(fileData);
-            //qDebug() << fileData;
+            //qDebug() << "images" << fileData;
         }
     }
 
@@ -1512,6 +1512,7 @@ QVariantList SlackClient::getAttachments(const QJsonObject& message)
         data.insert(QStringLiteral("images"), QVariant(images));
 
         attachments.append(data);
+        qDebug() << "attachment" << data;
     }
 
     return attachments;
