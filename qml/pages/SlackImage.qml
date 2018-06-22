@@ -5,6 +5,7 @@ Page {
     id: page
 
     property variant model
+    property string teamId
 
     ProgressBar {
         opacity: parent.progress < 1
@@ -27,7 +28,7 @@ Page {
 
             Image {
                 id: image
-                source: model.url
+                source: "team://" + teamId + "/" + model.url
                 width: parent.width
                 fillMode: Image.PreserveAspectFit
                 sourceSize.width: model.size.width

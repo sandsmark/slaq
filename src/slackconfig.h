@@ -29,6 +29,7 @@ public:
 
     QStringList teams();
     void setTeams(const QStringList& teams);
+    QString accessToken(const QString& teamId);
 
 signals:
 
@@ -41,6 +42,7 @@ private:
     QString m_currentUserId;
     QString m_currentTeamId;
     QString m_currentTeamName;
+    QHash<QString, QString> m_teamsTokens;
 };
 
 #endif // SLACKCONFIG_H

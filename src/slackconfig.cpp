@@ -41,6 +41,7 @@ void SlackConfig::loadTeamInfo(TeamInfo &teamInfo)
         teamInfo.setLastChannel(m_settings.value(QStringLiteral("lastChannel")).toString());
     }
     m_settings.endGroup();
+    m_teamsTokens[teamInfo.teamId()] = teamInfo.teamToken();
 }
 
 void SlackConfig::saveTeamInfo(const TeamInfo &teamInfo)
@@ -52,6 +53,7 @@ void SlackConfig::saveTeamInfo(const TeamInfo &teamInfo)
     m_settings.setValue(QStringLiteral("token"), teamInfo.teamToken());
     m_settings.setValue(QStringLiteral("lastChannel"), teamInfo.lastChannel());
     m_settings.endGroup();
+    m_teamsTokens[teamInfo.teamId()] = teamInfo.teamToken();
 }
 
 QStringList SlackConfig::teams()
@@ -62,6 +64,11 @@ QStringList SlackConfig::teams()
 void SlackConfig::setTeams(const QStringList &teams)
 {
     m_settings.setValue(QStringLiteral("teamsList"), teams);
+}
+
+QString SlackConfig::accessToken(const QString &teamId)
+{
+    return m_teamsTokens.value(teamId);
 }
 
 void SlackConfig::clearWebViewCache()
