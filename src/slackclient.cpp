@@ -720,8 +720,8 @@ void SlackClient::parseUser(const QJsonObject& user)
     data.insert(QStringLiteral("name"), user.value(QStringLiteral("name")).toVariant());
     data.insert(QStringLiteral("presence"), user.value(QStringLiteral("presence")).toVariant());
 
-    QJsonObject profile = user.value(QStringLiteral("profile")).toObject();
-    m_userAvatars[userId] = QUrl(profile.value(QStringLiteral("image_192")).toString());
+    const QJsonObject& profile = user.value(QStringLiteral("profile")).toObject();
+    m_userAvatars[userId] = QUrl(profile.value(QStringLiteral("image_72")).toString());
 
     m_storage.saveUser(data);
 }
