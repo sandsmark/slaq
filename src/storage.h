@@ -11,6 +11,7 @@ public:
     QVariantMap user(const QVariant& id);
     const QVariantList &users();
     void saveUser(const QVariantMap& user);
+    void updateUsersList();
 
     QVariantMap channel(const QVariant& id);
     QVariantList channels();
