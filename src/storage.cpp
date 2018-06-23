@@ -9,7 +9,11 @@
 
 void Storage::saveUser(const QVariantMap& user)
 {
-    userMap.insert(user.value("id").toString(), user);
+    userMap.insert(user.value(QStringLiteral("id")).toString(), user);
+}
+
+void Storage::updateUsersList()
+{
     userList = userMap.values();
 }
 

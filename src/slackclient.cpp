@@ -184,6 +184,7 @@ void SlackClient::handleStreamMessage(const QJsonObject& message)
     } else if (type == QStringLiteral("team_join") || type == QStringLiteral("user_change")) {
         qDebug() << "user joined" << message;
         parseUser(message.value(QStringLiteral("user")).toObject());
+        m_storage.updateUsersList();
     } else if (type == QStringLiteral("member_joined_channel")) {
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
     } else {
@@ -619,7 +620,6 @@ void SlackClient::startClient()
 void SlackClient::handleStartReply()
 {
     DEBUG_BLOCK
-
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     QJsonObject data = getResult(reply);
@@ -721,16 +721,18 @@ void SlackClient::parseUser(const QJsonObject& user)
     data.insert(QStringLiteral("presence"), user.value(QStringLiteral("presence")).toVariant());
 
     QJsonObject profile = user.value(QStringLiteral("profile")).toObject();
-    m_userAvatars[userId] = QUrl(profile[QStringLiteral("image_192")].toString());
+    m_userAvatars[userId] = QUrl(profile.value(QStringLiteral("image_192")).toString());
 
     m_storage.saveUser(data);
 }
 
 void SlackClient::parseUsers(const QJsonObject& data)
 {
+    qDebug() << "parse users";
     foreach (const QJsonValue &value, data.value(QStringLiteral("users")).toArray()) {
         parseUser(value.toObject());
     }
+    m_storage.updateUsersList();
 }
 
 void SlackClient::parseBots(const QJsonObject& data)
@@ -1512,7 +1514,6 @@ QVariantList SlackClient::getAttachments(const QJsonObject& message)
         data.insert(QStringLiteral("images"), QVariant(images));
 
         attachments.append(data);
-        qDebug() << "attachment" << data;
     }
 
     return attachments;
