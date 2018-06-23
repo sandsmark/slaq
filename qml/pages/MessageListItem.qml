@@ -19,7 +19,7 @@ ItemDelegate {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamid, channel.id, time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamId, channel.id, time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -41,9 +41,7 @@ ItemDelegate {
                 cache: true
                 asynchronous: true
                 width: height
-                source: SlackClient.avatarUrl(teamid, user.id)
-//                onSourceChanged: console.log("avatar url", source)
-//                onStatusChanged: console.log("avatar status", status)
+                source: SlackClient.avatarUrl(teamId, user.id)
             }
 
             Column {
@@ -157,7 +155,7 @@ ItemDelegate {
                                    + countLabel.contentWidth
 
                             onClicked: {
-                                SlackClient.deleteReaction(teamid, channel.id, time, name)
+                                SlackClient.deleteReaction(teamId, channel.id, time, name)
                             }
 
                             contentItem: Item {
