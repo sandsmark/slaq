@@ -22,6 +22,10 @@ Page {
         }
     }
 
+    function setCurrentTeam() {
+        pageStack.currentItem.setChannelActive()
+    }
+
     Connections {
         target: SlackClient
         onInitSuccess: {
@@ -32,6 +36,7 @@ Page {
                                       "channel" : SlackClient.getChannel(teamRoot.teamId, _lastChannel) })
             }
         }
+
         onTestLoginFail: {
             //TODO: inform main to open login dialog
             //pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))

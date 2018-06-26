@@ -16,6 +16,14 @@ Page {
     title: channel !== undefined ? channel.Name : ""
     property var usersTyping: []
 
+    function setChannelActive() {
+        console.log("channel active", page.title)
+        SlackClient.setActiveWindow(teamRoot.teamId, page.channelId)
+        page.channel = SlackClient.getChannel(teamRoot.teamId, page.channelId)
+        input.forceActiveFocus()
+        listView.markLatest()
+    }
+
     header: Rectangle {
         height: Theme.headerSize
         border.color: "#00050505"
@@ -172,18 +180,14 @@ Page {
 
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
-            console.log("channel active", page.title)
-            SlackClient.setActiveWindow(teamRoot.teamId, page.channelId)
-            page.channel = SlackClient.getChannel(teamRoot.teamId, page.channelId)
-            input.forceActiveFocus()
-
+            setChannelActive()
             if (!initialized) {
                 initialized = true
                 listView.loadMessages()
             }
+
         } else {
             SlackClient.setActiveWindow(teamRoot.teamId, "")
-            listView.markLatest()
         }
     }
     StackView.onRemoved: {
