@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import QtQuick.Window 2.3
 
 import Qt.labs.settings 1.0
+import Qt.labs.platform 1.0 as Platform
 
 import "."
 import "pages"
@@ -18,6 +19,39 @@ ApplicationWindow {
     property alias teamsSwipe: teamsSwipe
     property alias emojiSelector: emojiSelector
     property alias settings: settings
+
+    property int totalUnreadChannelMessages: 0
+    property int totalUnreadIMMessages: 0
+
+    function recalcUnread() {
+        var total = 0
+        var totalIm = 0
+        for (var i = 0; i < tabBar.contentChildren.length; i++) {
+            var tabItem = tabBar.contentChildren[i]
+            total += tabItem.unreadChannelMessages
+            totalIm += tabItem.unreadIMMessages
+        }
+        window.totalUnreadChannelMessages = total
+        window.totalUnreadIMMessages = totalIm
+    }
+
+    Platform.SystemTrayIcon {
+        id: trayIcon
+        visible: available
+        iconSource: window.totalUnreadChannelMessages > 0 && window.totalUnreadIMMessages > 0 ?
+                        "qrc:/icons/128x128/harbour-slackfish_channel_im.png" :
+                        (window.totalUnreadChannelMessages > 0 ?
+                             "qrc:/icons/128x128/harbour-slackfish_channel.png" :
+                             (window.totalUnreadIMMessages > 0 ?
+                                  "qrc:/icons/128x128/harbour-slackfish_channel_im.png" :
+                                  "qrc:/icons/128x128/harbour-slackfish.png"))
+
+        onActivated: {
+            window.showNormal()
+            window.raise()
+            window.requestActivate()
+        }
+    }
 
     Settings {
         id: settings
@@ -83,25 +117,82 @@ ApplicationWindow {
                     Repeater {
                         model: teamsModel
                         TabButton {
+                            id: tabButton
                             hoverEnabled: true
                             ToolTip.delay: 200
                             ToolTip.text: model.name
                             ToolTip.visible: hovered
+                            padding: 1
+                            property int unreadChannelMessages: 0
+                            property int unreadIMMessages: 0
                             background: Item {
                                 implicitHeight: Theme.headerSize
                                 implicitWidth: Theme.headerSize
                             }
-                            contentItem: Item {Image {
+                            contentItem: Item {
+                                implicitHeight: Theme.headerSize
+                                implicitWidth: Theme.headerSize
+                                Image {
                                     anchors.centerIn: parent
                                     width: Theme.headerSize - 2
                                     height: Theme.headerSize - 2
                                     source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[1] : ""
                                     smooth: true
                                 }
+                                Rectangle {
+                                    color: "green"
+                                    visible: unreadChannelMessages > 0
+                                    width: Theme.headerSize / 2
+                                    height: Theme.headerSize / 2
+                                    radius: width/2
+                                    anchors.top: parent.top
+                                    anchors.right: parent.right
+                                    Text {
+                                        color: "white"
+                                        anchors.centerIn: parent
+                                        text: unreadChannelMessages
+                                    }
+                                }
+                                Rectangle {
+                                    color: "red"
+                                    visible: unreadIMMessages > 0
+                                    width: Theme.headerSize / 2
+                                    height: Theme.headerSize / 2
+                                    radius: width/2
+                                    anchors.bottom: parent.bottom
+                                    anchors.right: parent.right
+                                    Text {
+                                        color: "white"
+                                        anchors.centerIn: parent
+                                        text: unreadIMMessages
+                                    }
+                                }
                             }
                             onClicked: {
                                 SlackClient.lastTeam = model.teamId
                                 teamsSwipe.currentIndex = index
+                            }
+                            Connections {
+                                target: SlackClient
+                                onChannelUpdated: {
+                                    if (model.teamId === teamId) {
+                                        var total = 0
+                                        var totalIm = 0
+                                        SlackClient.getChannels(model.teamId).forEach(function(channel) {
+                                            if (channel.isOpen && channel.unreadCount > 0) {
+                                                if (channel.type === "im") {
+                                                    totalIm += channel.unreadCount
+                                                } else {
+                                                    total += channel.unreadCount
+                                                }
+                                            }
+                                        })
+                                        console.log("channel updated", channel.unreadCount, total)
+                                        tabButton.unreadChannelMessages = total
+                                        tabButton.unreadIMMessages = totalIm
+                                        window.recalcUnread()
+                                    }
+                                }
                             }
 
                             onPressAndHold: teamMenu.open();
@@ -109,7 +200,7 @@ ApplicationWindow {
                                 id: teamMenu
                                 MenuItem {
                                     text: qsTr("Leave")
-                                    onClicked: {
+                                    onTriggered: {
                                         SlackClient.leaveTeam(model.teamId)
                                     }
                                 }
@@ -252,6 +343,11 @@ ApplicationWindow {
                         if (model.teamId ===  SlackClient.lastTeam) {
                             teamsSwipe.currentIndex = index
                         }
+                    }
+                }
+                SwipeView.onIsCurrentItemChanged: {
+                    if (SwipeView.isCurrentItem  && item !== null) {
+                        item.setCurrentTeam()
                     }
                 }
             }
