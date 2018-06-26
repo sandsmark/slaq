@@ -24,7 +24,7 @@ ListView {
 
     Timer {
         id: readTimer
-        interval: 5000
+        interval: 2000
         triggeredOnStart: false
         running: false
         repeat: false
@@ -51,10 +51,8 @@ ListView {
     }
 
     onAppActiveChanged: {
-        if (appActive && atBottom && messageListModel.count) {
-            latestRead = messageListModel.get(0).time
-            readTimer.restart()
-        }
+        latestRead = messageListModel.get(0).time
+        readTimer.restart()
     }
 
     onMovementEnded: {
@@ -77,14 +75,17 @@ ListView {
     }
 
     function markLatest() {
-        if (latestRead != "") {
+        if (appActive && atBottom && messageListModel.count
+                && teamId === SlackClient.lastTeam
+                && SlackClient.lastChannel(teamRoot.teamId) === channel.id) {
+            latestRead = messageListModel.get(0).time
             SlackClient.markChannel(teamRoot.teamId, channel.type, channel.id, latestRead)
             latestRead = ""
         }
     }
 
     function loadMessages() {
-        console.log("loading messages", teamRoot.teamId)
+        console.log("loading messages", teamRoot.teamId, channel.name)
         SlackClient.loadMessages(teamRoot.teamId, channel.type, channel.id)
     }
 

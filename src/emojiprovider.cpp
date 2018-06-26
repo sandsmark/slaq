@@ -35,7 +35,6 @@ void AsyncImageResponse::run()
         }
 
         emit finished();
-        this->deleteLater();
     }
 }
 
@@ -47,6 +46,5 @@ void AsyncImageResponse::onImageLoaded(const QString &id)
             m_image = m_image.scaled(m_requestedSize);
         //qDebug() << "loaded image" << id;
         emit finished();
-        this->deleteLater();
     }
 }

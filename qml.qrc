@@ -37,5 +37,9 @@
         <file>qml/dialogs/SettingsDialog.qml</file>
         <file>qml/dialogs/AboutDialog.qml</file>
         <file>qml/dialogs/SearchResultsList.qml</file>
+        <file>icons/128x128/harbour-slackfish.png</file>
+        <file>icons/128x128/harbour-slackfish_channel_im.png</file>
+        <file>icons/128x128/harbour-slackfish_channel.png</file>
+        <file>icons/128x128/harbour-slackfish_im.png</file>
     </qresource>
 </RCC>
