@@ -71,6 +71,7 @@ signals:
 public slots:
     void startClient(const QString& teamId);
     void testLogin(const QString& teamId);
+    void reconnectClient();
 
     void setAppActive(const QString& teamId, bool active);
     void setActiveWindow(const QString& teamId, const QString &windowId);
