@@ -154,6 +154,15 @@ ListView {
 
 //    function handleMessageReceived(teamId, message) {
 //        if (teamId === teamRoot.teamId && message.type === "message" && message.channel === channel.id) {
+//            if (message.edited !== "") {
+//                for (var msgi = 0; msgi < messageListModel.count; msgi++) {
+//                    var msg = messageListModel.get(msgi);
+//                    if (msg.time === message.time) {
+//                        messageListModel.set(msgi, {"content": message.content});
+//                        return;
+//                    }
+//                }
+//            } else {
 //            var isAtBottom = atBottom
 //            message.day = Message.getDisplayDate(message)
 //            messageListModel.insert(0, message)
@@ -165,5 +174,6 @@ ListView {
 //                }
 //            }
 //        }
+//    }
 //    }
 }
