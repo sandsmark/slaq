@@ -263,11 +263,15 @@ void SlackClient::parseMessageUpdate(const QJsonObject& message)
 
     QVariantMap data;
     const QString& teamId = message.value(QStringLiteral("team_id")).toString();
-    if (message.value(QStringLiteral("subtype")).isUndefined()) {
+    const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
+    if (subtype.isUndefined()) {
         data = getMessageData(message, teamId);
     } else {
         //TODO(unknown): handle messages threads
         data = getMessageData(message.value(QStringLiteral("message")).toObject(), teamId);
+        if (subtype.toString() == "message_changed") {
+            data[QStringLiteral("edited")] = true;
+        }
     }
 
     QString channelId = message.value(QStringLiteral("channel")).toString();
@@ -1374,12 +1378,12 @@ QVariantMap SlackClient::getMessageData(const QJsonObject& message, const QStrin
     data.insert(QStringLiteral("reactions"), getReactions(message));
     data.insert(QStringLiteral("teamid"), teamId);
     data.insert(QStringLiteral("permalink"), "");
-    QJsonValue _edited = message.value(QStringLiteral("edited"));
-    QVariant _editedTs = QVariant("");
-    if (!_edited.isUndefined()) {
-        _editedTs = _edited.toObject().value("ts").toVariant();
+
+    bool _edited = false;
+    if (!message.value(QStringLiteral("edited")).isUndefined()) {
+        _edited = true;
     }
-    data.insert(QStringLiteral("edited"), _editedTs);
+    data.insert(QStringLiteral("edited"), _edited);
 
     return data;
 }
