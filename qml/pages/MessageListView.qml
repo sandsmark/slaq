@@ -146,7 +146,7 @@ ListView {
 
     function handleMessageReceived(teamId, message) {
         if (teamId === teamRoot.teamId && message.type === "message" && message.channel === channel.id) {
-            if (message.edited !== "") {
+            if (message.edited === true) {
                 for (var msgi = 0; msgi < messageListModel.count; msgi++) {
                     var msg = messageListModel.get(msgi);
                     if (msg.time === message.time) {
