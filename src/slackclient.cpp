@@ -232,6 +232,11 @@ void SlackClient::parseMessageUpdate(const QJsonObject& message)
     }
 
     QString channelId = message.value(QStringLiteral("channel")).toString();
+
+    if (!data.value("channel").isValid()) {
+        data["channel"] = QVariant(channelId);
+    }
+
     if (m_storage.channelMessagesExist(channelId)) {
         m_storage.appendChannelMessage(channelId, data);
     }
@@ -1195,6 +1200,12 @@ QVariantMap SlackClient::getMessageData(const QJsonObject& message, const QStrin
     data.insert(QStringLiteral("reactions"), getReactions(message));
     data.insert(QStringLiteral("teamid"), teamId);
     data.insert(QStringLiteral("permalink"), "");
+    QJsonValue _edited = message.value(QStringLiteral("edited"));
+    QVariant _editedTs = QVariant("");
+    if (!_edited.isUndefined()) {
+        _editedTs = _edited.toObject().value("ts").toVariant();
+    }
+    data.insert(QStringLiteral("edited"), _editedTs);
 
     return data;
 }
