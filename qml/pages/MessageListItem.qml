@@ -4,12 +4,11 @@ import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 import ".."
 
-ItemDelegate {
+MouseArea {
     id: item
     height: column.height
     width: listView.width
     hoverEnabled: true
-    highlighted: hovered
     property bool isSearchResult: false
     property bool emojiSelectorCalled: false
 
@@ -79,7 +78,7 @@ ItemDelegate {
 
                     EmojiButton {
                         id: emojiButton
-                        visible: item.hovered && !isSearchResult
+                        visible: item.containsMouse && !isSearchResult
                         height: Theme.headerSize
                         width: height
                         text: "😎"

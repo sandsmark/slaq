@@ -1061,6 +1061,7 @@ void SlackClient::setState(ClientStates state)
     if (state != m_state) {
         m_state = state;
         emit stateChanged(m_teamInfo.teamId());
+        qDebug() << "Setting state" << state;
     }
 }
 
