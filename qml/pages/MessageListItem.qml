@@ -64,7 +64,7 @@ MouseArea {
                         text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
-                        verticalAlignment: "AlignBottom"
+                        verticalAlignment: "AlignVCenter"
                     }
 
                     Label {
@@ -94,16 +94,13 @@ MouseArea {
                     }
                 }
 
-                TextEdit {
+                Label {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
-                    readOnly: true
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.RichText
                     text: content
                     renderType: Text.QtRendering
-                    selectByKeyboard: true
-                    selectByMouse: true
                     onLinkActivated: handleLink(link)
                     onLinkHovered:  {
                         if (link !== "") {
