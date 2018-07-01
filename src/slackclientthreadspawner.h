@@ -112,6 +112,9 @@ public slots:
     void setLastTeam(const QString& lastTeam);
     void onOnlineChanged(const QString& teamId);
 
+    void setMediaSource(QObject *mediaPlayer, const QString& teamId, const QString& url);
+    QString teamToken(const QString& teamId);
+
 protected:
     void run();
 

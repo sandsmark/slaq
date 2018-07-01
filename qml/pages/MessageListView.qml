@@ -51,8 +51,10 @@ ListView {
     }
 
     onAppActiveChanged: {
-        latestRead = messageListModel.get(0).time
-        readTimer.restart()
+        if (messageListModel.get(0)) {
+            latestRead = messageListModel.get(0).time
+            readTimer.restart()
+        }
     }
 
     onMovementEnded: {

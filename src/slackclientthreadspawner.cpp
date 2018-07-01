@@ -1,4 +1,6 @@
 #include "slackclientthreadspawner.h"
+#include <QtMultimedia/QMediaPlayer>
+#include <QtMultimedia/QMediaContent>
 
 SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
     QThread(parent)
@@ -424,6 +426,43 @@ void SlackClientThreadSpawner::onOnlineChanged(const QString &teamId)
     if (teamId == m_lastTeam && slackClient(teamId) != nullptr) {
         emit onlineChanged(slackClient(teamId)->isOnline());
     }
+}
+
+void SlackClientThreadSpawner::setMediaSource(QObject *mediaPlayer, const QString &teamId,
+                                              const QString &url)
+{
+    SlackClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+
+    QMediaPlayer *mPlayer = qvariant_cast<QMediaPlayer *>(mediaPlayer->property("mediaObject"));
+    if (mPlayer == nullptr) {
+        qWarning() << "no media player found";
+        return;
+    }
+    QNetworkRequest request;
+    request.setUrl(url);
+
+    QString token = _slackClient->teamInfo()->teamToken();
+    if (!token.isEmpty()) {
+        request.setRawHeader(QString("Authorization").toUtf8(), QString("Bearer " + token).toUtf8());
+    } else {
+        qWarning() << "token for team" << _slackClient->teamInfo()->name() << "not found";
+        return;
+    }
+
+    qDebug() << "set media content" << request.url();
+    mPlayer->setMedia(QMediaContent(request));
+}
+
+QString SlackClientThreadSpawner::teamToken(const QString &teamId)
+{
+    SlackClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return QStringLiteral("");
+    }
+    return _slackClient->teamInfo()->teamToken();
 }
 
 void SlackClientThreadSpawner::run()
