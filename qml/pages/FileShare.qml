@@ -15,7 +15,14 @@ Item {
         folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation)
         fileMode: Platform.FileDialog.SaveFile
         onAccepted: {
+            progressBar.value = 0
             downloadManager.append(model.url_download, file, SlackClient.teamToken(teamId))
+        }
+    }
+    Connections {
+        target: downloadManager
+        onDownloaded: {
+            progressBar.value = progress
         }
     }
 
@@ -41,18 +48,25 @@ Item {
         }
     }
 
-    Loader {
-        id: loader
+    Column {
         anchors.centerIn: parent
         anchors.margins: Theme.paddingMedium/2
-        sourceComponent: {
-            if (model.mimetype.indexOf("video") !== -1) {
-                return videoSharedFileComponent
-            } else if (model.mimetype.indexOf("image") !== -1) {
-                return imageSharedFileComponent
-            } else if (model.mimetype.indexOf("text") !== -1) {
-                return textSharedFileComponent
+        Loader {
+            id: loader
+            sourceComponent: {
+                if (model.mimetype.indexOf("video") !== -1) {
+                    return videoSharedFileComponent
+                } else if (model.mimetype.indexOf("image") !== -1) {
+                    return imageSharedFileComponent
+                } else if (model.mimetype.indexOf("text") !== -1) {
+                    return textSharedFileComponent
+                }
             }
+        }
+        ProgressBar {
+            id: progressBar
+            value: 0
+            width: loader.item.width
         }
     }
 

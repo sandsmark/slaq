@@ -21,6 +21,7 @@ public:
 
 signals:
     void finished();
+    void downloaded(qreal progress);
 
 private slots:
     void startNextDownload();
