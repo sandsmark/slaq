@@ -27,9 +27,7 @@
         <file>qml/pages/SlackImage.qml</file>
         <file>qml/pages/LoadingPage.qml</file>
         <file>icons/smile.gif</file>
-        <file>fonts/TwitterColorEmoji.ttf</file>
         <file>qml/pages/EmojiSelector.qml</file>
-        <file>data/emojis-slack.json</file>
         <file>qml/EmojiButton.qml</file>
         <file>qml/EmojiToolButton.qml</file>
         <file>qml/pages/Team.qml</file>
@@ -41,5 +39,6 @@
         <file>icons/128x128/harbour-slackfish_channel_im.png</file>
         <file>icons/128x128/harbour-slackfish_channel.png</file>
         <file>icons/128x128/harbour-slackfish_im.png</file>
+        <file>qml/pages/FileShare.qml</file>
     </qresource>
 </RCC>

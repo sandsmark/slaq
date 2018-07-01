@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>fonts/TwitterColorEmoji.ttf</file>
+    </qresource>
+</RCC>

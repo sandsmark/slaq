@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>data/emojis-slack.json</file>
+    </qresource>
+</RCC>

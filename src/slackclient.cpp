@@ -1199,7 +1199,7 @@ QVariantMap SlackClient::getMessageData(const QJsonObject& message, const QStrin
     data.insert(QStringLiteral("channel"), message.value(QStringLiteral("channel")).toVariant());
     data.insert(QStringLiteral("user"), user(message));
     data.insert(QStringLiteral("attachments"), getAttachments(message));
-    data.insert(QStringLiteral("images"), getImages(message));
+    data.insert(QStringLiteral("fileShares"), getFileShares(message));
     data.insert(QStringLiteral("content"), QVariant(getContent(message)));
     data.insert(QStringLiteral("reactions"), getReactions(message));
     data.insert(QStringLiteral("teamid"), teamId);
@@ -1260,42 +1260,45 @@ QString SlackClient::getContent(const QJsonObject& message)
     return content;
 }
 
-QVariantList SlackClient::getImages(const QJsonObject& message)
+QVariantList SlackClient::getFileShares(const QJsonObject& message)
 {
     QVariantList images;
 
     if (message.value(QStringLiteral("subtype")).toString() == QStringLiteral("file_share")) {
-        QStringList imageTypes;
-        imageTypes << QStringLiteral("jpg");
-        imageTypes << QStringLiteral("png");
-        imageTypes << QStringLiteral("gif");
+        qDebug() << "file share json:" << message;
 
         QJsonObject file = message.value(QStringLiteral("file")).toObject();
         QString fileType = file.value(QStringLiteral("filetype")).toString();
 
-        if (imageTypes.contains(fileType)) {
-            QString thumbItem = file.contains(QStringLiteral("thumb_480")) ?
-                        QStringLiteral("480") :
-                        QStringLiteral("360");
+        QString thumbItem = file.contains(QStringLiteral("thumb_480")) ?
+                    QStringLiteral("480") :
+                    QStringLiteral("360");
 
-            QVariantMap thumbSize;
-            thumbSize.insert(QStringLiteral("width"), file.value("thumb_" + thumbItem + "_w").toVariant());
-            thumbSize.insert(QStringLiteral("height"), file.value("thumb_" + thumbItem + "_h").toVariant());
+        QVariantMap thumbSize;
+        thumbSize.insert(QStringLiteral("width"), file.value("thumb_" + thumbItem + "_w").toVariant());
+        thumbSize.insert(QStringLiteral("height"), file.value("thumb_" + thumbItem + "_h").toVariant());
 
-            QVariantMap imageSize;
-            imageSize.insert(QStringLiteral("width"), file.value("original_w").toVariant());
-            imageSize.insert(QStringLiteral("height"), file.value("original_h").toVariant());
+        QVariantMap imageSize;
+        imageSize.insert(QStringLiteral("width"), file.value("original_w").toVariant());
+        imageSize.insert(QStringLiteral("height"), file.value("original_h").toVariant());
 
-            QVariantMap fileData;
-            fileData.insert(QStringLiteral("name"), file.value(QStringLiteral("name")).toVariant());
-            fileData.insert(QStringLiteral("url"), file.value(QStringLiteral("url_private")).toVariant());
-            fileData.insert(QStringLiteral("size"), imageSize);
-            fileData.insert(QStringLiteral("thumbSize"), thumbSize);
+        QVariantMap fileData;
+        fileData.insert(QStringLiteral("filetype"), fileType);
+        fileData.insert(QStringLiteral("name"), file.value(QStringLiteral("name")).toVariant());
+        fileData.insert(QStringLiteral("url"), file.value(QStringLiteral("url_private")).toVariant());
+        fileData.insert(QStringLiteral("url_download"), file.value(QStringLiteral("url_private_download")).toVariant());
+        fileData.insert(QStringLiteral("size"), imageSize);
+        fileData.insert(QStringLiteral("thumbSize"), thumbSize);
+        fileData.insert(QStringLiteral("preview_highlight"), file.value(QStringLiteral("preview_highlight")).toVariant());
+        if (!file.value(QStringLiteral("thumb_video")).isUndefined()) {
+            fileData.insert(QStringLiteral("thumbUrl"), file.value("thumb_video").toVariant());
+        } else {
             fileData.insert(QStringLiteral("thumbUrl"), file.value("thumb_" + thumbItem).toVariant());
-
-            images.append(fileData);
-            //qDebug() << "images" << fileData;
         }
+        fileData.insert(QStringLiteral("mimetype"), file.value("mimetype").toVariant());
+
+        images.append(fileData);
+        //qDebug() << "images" << fileData;
     }
 
     return images;
