@@ -15,7 +15,7 @@ TARGET = slaq
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
-QT += quick webview xml quickcontrols2
+QT += quick webview xml quickcontrols2 multimedia widgets
 CONFIG += c++1x
 QT += websockets
 
@@ -31,7 +31,8 @@ SOURCES += src/main.cpp \
     src/filemodel.cpp \
     src/emojiprovider.cpp \
     src/imagescache.cpp \
-    src/slackclientthreadspawner.cpp
+    src/slackclientthreadspawner.cpp \
+    src/downloadmanager.cpp
 
 OTHER_FILES += translations/*.ts \
     slaq.desktop \
@@ -52,17 +53,21 @@ HEADERS += \
     src/slackclientthreadspawner.h \
     src/emojiinfo.h \
     src/teaminfo.h \
+    src/downloadmanager.h \
     src/debugblock.h
 
 DISTFILES += \
     qml/dialogs/*.qml \
     qml/pages/*.js \
     qml/pages/*.qml \
-    qml/*.qml
+    qml/*.qml \
+    qml/pages/FileShare.qml
 
 target.path = /usr/bin/
 
 RESOURCES += \
-    qml.qrc
+    qml.qrc \
+    data.qrc \
+    fonts.qrc
 
 include (src/modelshelper/QtQmlModels.pri)

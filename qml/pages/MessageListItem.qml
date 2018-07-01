@@ -1,7 +1,9 @@
 import QtQuick 2.11
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
+import QtMultimedia 5.9
+
 import ".."
 
 ItemDelegate {
@@ -214,69 +216,15 @@ ItemDelegate {
         Item {
             height: Theme.paddingMedium
             width: height
-            visible: contentLabel.visible && (imageRepeater.count > 0 || attachmentRepeater.count > 0)
+            visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }
 
         Repeater {
-            id: imageRepeater
+            id: fileSharesRepeater
             model: Attachments
 
-            Item {
-                property bool expanded: false
-                width: expanded ? listView.width - Theme.paddingLarge * 4 : model.thumbSize.width
-                height: expanded ? width / (model.size.width / model.size.height) : model.thumbSize.height
+            delegate: FileShare {
 
-                Image {
-                    id: thumbImage
-                    anchors.fill: parent
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectFit
-                    source: "team://" + teamId + "/" + model.thumbUrl
-                    sourceSize: Qt.size(model.thumbSize.width, model.thumbSize.height)
-                    visible: !expanded
-                }
-
-                AnimatedImage {
-                    id: fullImage
-                    anchors.fill: parent
-                    //to preserve memory, cache is turned off, so to see animation again need to re-expand image
-                    //TODO: create settings to change the behavior
-                    source: expanded ? "team://" + teamId + "/" + model.url : ""
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectFit
-                    visible: expanded
-                    playing: expanded
-                    cache: false
-                    smooth: true
-                }
-
-                ProgressBar {
-                    anchors.centerIn: parent
-                    opacity: value < 1
-                    value: expanded ? fullImage.progress : thumbImage.progress
-                    Behavior on opacity { NumberAnimation { duration: 250 } }
-                }
-
-                Rectangle {
-                    anchors.fill: imageMouseArea
-                    color: Qt.rgba(1, 1, 1, 0.1)
-                    visible: imageMouseArea.containsMouse
-                }
-
-                MouseArea {
-                    id: imageMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: parent.expanded ? Qt.ArrowCursor : Qt.WhatsThisCursor
-
-                    onClicked: {
-                        if (SlackClient.isDevice) {
-                            pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model, "teamId": teamId})
-                        } else {
-                            parent.expanded = !parent.expanded
-                        }
-                    }
-                }
             }
         }
 

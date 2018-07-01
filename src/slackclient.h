@@ -177,7 +177,7 @@ private:
 
     QString getContent(const QJsonObject& message);
     QVariantList getAttachments(const QJsonObject& message);
-    QVariantList getImages(const QJsonObject& message);
+    QVariantList getFileShares(const QJsonObject& message);
     QString getAttachmentColor(const QJsonObject& attachment);
     QVariantList getAttachmentFields(const QJsonObject& attachment);
     QVariantList getAttachmentImages(const QJsonObject& attachment);

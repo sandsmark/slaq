@@ -1,5 +1,5 @@
 #include <QQuickView>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
 #include <QtWebView>
@@ -20,10 +20,11 @@
 #include "emojiinfo.h"
 #include "teaminfo.h"
 #include "QQmlObjectListModel.h"
+#include "downloadmanager.h"
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
 
@@ -74,7 +75,10 @@ int main(int argc, char *argv[])
     //    connection.registerService("slaq");
     //    connection.registerObject("/", listener);
 
-    engine.rootContext()->setContextProperty(QStringLiteral("fileModel"), new FileModel());
+    DownloadManager downloadManager;
+    FileModel fileModel;
+    engine.rootContext()->setContextProperty(QStringLiteral("fileModel"), &fileModel);
+    engine.rootContext()->setContextProperty(QStringLiteral("downloadManager"), &downloadManager);
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";
