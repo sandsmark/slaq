@@ -60,7 +60,7 @@ DISTFILES += \
     qml/pages/*.js \
     qml/pages/*.qml \
     qml/*.qml \
-    qml/pages/FileShare.qml
+    qml/components/*.qml
 
 target.path = /usr/bin/
 

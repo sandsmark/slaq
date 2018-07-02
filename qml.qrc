@@ -40,5 +40,8 @@
         <file>icons/128x128/harbour-slackfish_channel.png</file>
         <file>icons/128x128/harbour-slackfish_im.png</file>
         <file>qml/pages/FileShare.qml</file>
+        <file>qml/components/ImageFileShare.qml</file>
+        <file>qml/components/TextFileShare.qml</file>
+        <file>qml/components/VideoFileShare.qml</file>
     </qresource>
 </RCC>

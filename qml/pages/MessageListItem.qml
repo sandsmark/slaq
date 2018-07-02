@@ -203,7 +203,6 @@ ItemDelegate {
                         }
                     }
                 }
-
             }
         }
 
@@ -223,9 +222,7 @@ ItemDelegate {
             id: fileSharesRepeater
             model: fileShares
 
-            delegate: FileShare {
-
-            }
+            delegate: FileShare {}
         }
 
         Repeater {

@@ -1079,7 +1079,7 @@ void SlackClient::handleMarkChannelReply()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     QJsonObject data = getResult(reply);
-    qDebug() << "Mark message result" << data;
+    //qDebug() << "Mark message result" << data;
 
     reply->deleteLater();
 }
@@ -1265,7 +1265,7 @@ QVariantList SlackClient::getFileShares(const QJsonObject& message)
     QVariantList images;
 
     if (message.value(QStringLiteral("subtype")).toString() == QStringLiteral("file_share")) {
-        qDebug() << "file share json:" << message;
+        //qDebug() << "file share json:" << message;
 
         QJsonObject file = message.value(QStringLiteral("file")).toObject();
         QString fileType = file.value(QStringLiteral("filetype")).toString();
