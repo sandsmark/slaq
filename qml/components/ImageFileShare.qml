@@ -42,7 +42,7 @@ Item {
 
     Rectangle {
         id: fader
-        anchors.fill: imageMouseArea
+        anchors.fill: thumbImage
         color: Qt.rgba(1, 1, 1, 0.1)
         visible: false
     }
