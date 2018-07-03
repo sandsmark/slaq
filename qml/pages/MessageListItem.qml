@@ -94,13 +94,15 @@ MouseArea {
                     }
                 }
 
-                Label {
+                TextArea {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
+                    readOnly: true
                     font.pointSize: Theme.fontSizeSmall
                     textFormat: Text.RichText
                     text: content
                     renderType: Text.QtRendering
+                    selectByMouse: true
                     onLinkActivated: handleLink(link)
                     onLinkHovered:  {
                         if (link !== "") {
@@ -109,7 +111,17 @@ MouseArea {
                             mouseArea.cursorShape = Qt.ArrowCursor
                         }
                     }
+                    onSelectedTextChanged: {
+                        if (selectedText !== "") {
+                            focus = true
+                        }
+                    }
+
                     wrapMode: Text.Wrap
+
+                    // To avoid the border on some styles, we only want a textarea to be able to select things
+                    background: Item {}
+
                     //Due to bug in images not rendered until app resize
                     //trigger redraw changing width
                     onTextChanged: {
