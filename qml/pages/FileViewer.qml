@@ -34,11 +34,11 @@ Item {
             id: loader
             Component.onCompleted: {
                 if (model.mimetype.indexOf("video") !== -1) {
-                    setSource("qrc:/qml/components/VideoFileShare.qml")
+                    setSource("qrc:/qml/components/VideoFileViewer.qml")
                 } else if (model.mimetype.indexOf("image") !== -1) {
-                    setSource("qrc:/qml/components/ImageFileShare.qml")
+                    setSource("qrc:/qml/components/ImageFileViewer.qml")
                 } else if (model.mimetype.indexOf("text") !== -1) {
-                    setSource("qrc:/qml/components/TextFileShare.qml")
+                    setSource("qrc:/qml/components/TextFileViewer.qml")
                 }
             }
 

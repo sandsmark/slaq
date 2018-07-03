@@ -221,7 +221,7 @@ ItemDelegate {
             id: fileSharesRepeater
             model: Attachments
 
-            delegate: FileShare {}
+            delegate: FileViewer {}
         }
 
         Repeater {
