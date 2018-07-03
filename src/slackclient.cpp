@@ -225,11 +225,12 @@ void SlackClient::parseMessageUpdate(const QJsonObject& message)
     QVariantMap data;
     const QString& teamId = message.value(QStringLiteral("team_id")).toString();
     const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
-    if (subtype.isUndefined()) {
+    const QJsonValue& innerMessage = message.value(QStringLiteral("message"));
+    if (innerMessage.isUndefined()) {
         data = getMessageData(message, teamId);
     } else {
         //TODO(unknown): handle messages threads
-        data = getMessageData(message.value(QStringLiteral("message")).toObject(), teamId);
+        data = getMessageData(innerMessage.toObject(), teamId);
         if (subtype.toString() == "message_changed") {
             data[QStringLiteral("edited")] = true;
         }
