@@ -104,6 +104,7 @@ MouseArea {
                     renderType: Text.QtRendering
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
+                    activeFocusOnPress: false
                     onLinkHovered:  {
                         if (link !== "") {
                             mouseArea.cursorShape = Qt.PointingHandCursor
@@ -113,7 +114,9 @@ MouseArea {
                     }
                     onSelectedTextChanged: {
                         if (selectedText !== "") {
-                            focus = true
+                            forceActiveFocus()
+                        } else {
+                            input.forceActiveFocus()
                         }
                     }
 
