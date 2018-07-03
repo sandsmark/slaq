@@ -38,7 +38,7 @@ Item {
                 } else if (model.mimetype.indexOf("image") !== -1) {
                     setSource("qrc:/qml/components/ImageFileShare.qml")
                 } else if (model.mimetype.indexOf("text") !== -1) {
-                    setSource("qrc:/qml/components/textFileShare.qml")
+                    setSource("qrc:/qml/components/TextFileShare.qml")
                 }
             }
 
@@ -46,6 +46,7 @@ Item {
                 id: mouArea
                 anchors.fill: parent
                 hoverEnabled: true
+                z: loader.item.z + 100 //workaround since for Text item
                 onContainsMouseChanged: {
                     if (loader.item) {
                         loader.item.hovered(mouArea)
@@ -58,6 +59,7 @@ Item {
                 }
             }
         }
+
         ProgressBar {
             id: progressBar
             value: 0
