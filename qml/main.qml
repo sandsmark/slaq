@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.3
+import QtQuick.Controls.Material 2.3
 
 import Qt.labs.settings 1.0
 import Qt.labs.platform 1.0 as Platform
@@ -35,6 +36,8 @@ ApplicationWindow {
         window.totalUnreadIMMessages = totalIm
     }
 
+    Material.theme: settings.theme
+
     Platform.SystemTrayIcon {
         id: trayIcon
         visible: available
@@ -58,6 +61,7 @@ ApplicationWindow {
         property string emojisSet
         property alias width: window.width
         property alias height: window.height
+        property int theme: Material.System
     }
 
     SettingsDialog {

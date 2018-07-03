@@ -32,8 +32,6 @@ ListView {
                 width: listView.width
                 color: Material.primary
             }
-
-            color: Material.background
         }
     }
 

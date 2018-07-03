@@ -47,6 +47,13 @@ void SlackClientThreadSpawner::testLogin(const QString& teamId)
     QMetaObject::invokeMethod(_slackClient, "testLogin", Qt::QueuedConnection);
 }
 
+void SlackClientThreadSpawner::reconnectClient()
+{
+    for (SlackClient *client : m_knownTeams.values()) {
+        QMetaObject::invokeMethod(client, "reconnectClient", Qt::QueuedConnection);
+    }
+}
+
 void SlackClientThreadSpawner::setAppActive(const QString& teamId, bool active)
 {
     SlackClient* _slackClient = slackClient(teamId);

@@ -22,17 +22,12 @@ Page {
         listView.markLatest()
     }
 
-    header: Rectangle {
+    header: Label {
+        text: "#" + page.title
+        horizontalAlignment: "AlignHCenter"
+        verticalAlignment: "AlignVCenter"
         height: Theme.headerSize
-        border.color: "#00050505"
-        border.width: 1
-        radius: 5
-        Label {
-            text: "#" + page.title
-            anchors.centerIn: parent
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-        }
+        font.bold: true
     }
 
     BusyIndicator {

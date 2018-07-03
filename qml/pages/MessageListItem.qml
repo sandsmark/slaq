@@ -4,12 +4,11 @@ import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 import ".."
 
-ItemDelegate {
+MouseArea {
     id: item
     height: column.height
     width: listView.width
     hoverEnabled: true
-    highlighted: hovered
     property bool isSearchResult: false
     property bool emojiSelectorCalled: false
 
@@ -65,7 +64,7 @@ ItemDelegate {
                         text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
-                        verticalAlignment: "AlignBottom"
+                        verticalAlignment: "AlignVCenter"
                     }
 
                     Label {
@@ -79,7 +78,7 @@ ItemDelegate {
 
                     EmojiButton {
                         id: emojiButton
-                        visible: item.hovered && !isSearchResult
+                        visible: item.containsMouse && !isSearchResult
                         height: Theme.headerSize
                         width: height
                         text: "😎"
@@ -95,7 +94,7 @@ ItemDelegate {
                     }
                 }
 
-                TextEdit {
+                TextArea {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
@@ -103,9 +102,9 @@ ItemDelegate {
                     textFormat: Text.RichText
                     text: content
                     renderType: Text.QtRendering
-                    selectByKeyboard: true
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
+                    activeFocusOnPress: false
                     onLinkHovered:  {
                         if (link !== "") {
                             mouseArea.cursorShape = Qt.PointingHandCursor
@@ -113,7 +112,19 @@ ItemDelegate {
                             mouseArea.cursorShape = Qt.ArrowCursor
                         }
                     }
+                    onSelectedTextChanged: {
+                        if (selectedText !== "") {
+                            forceActiveFocus()
+                        } else {
+                            input.forceActiveFocus()
+                        }
+                    }
+
                     wrapMode: Text.Wrap
+
+                    // To avoid the border on some styles, we only want a textarea to be able to select things
+                    background: Item {}
+
                     //Due to bug in images not rendered until app resize
                     //trigger redraw changing width
                     onTextChanged: {
