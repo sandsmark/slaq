@@ -19,7 +19,7 @@ function disconnect() {
 function reloadChannels(teamId) {
     if (teamRoot.teamId === teamId) {
         var channels = SlackClient.getChannels(teamRoot.teamId).filter(Channel.isOpen)
-        channels.sort(compareByCategory)
+        channels.sort(compareChannels)
 
         channelListModel.clear()
         channels.forEach(function(c) {
@@ -55,7 +55,7 @@ function handleChannelLeft(teamId, channel) {
 
 function getChannelSection(channel) {
     if (channel.unreadCount > 0) {
-        return "unread"
+        return "unread" + channel.category
     } else {
         return channel.category
     }
@@ -66,13 +66,13 @@ function compareChannels(a, b) {
         return compareByCategory(a, b)
     } else {
         if (a.unreadCount > 0 && b.unreadCount > 0) {
-            return Channel.compareByName(a, b)
+            return compareByCategory(a, b)
         } else if (a.unreadCount > 0) {
             return -1
         } else if (b.unreadCount > 0) {
             return 1
         } else {
-            return Channel.compareByName(a, b)
+            return compareByCategory(a, b)
         }
     }
 }
@@ -81,10 +81,7 @@ function compareByCategory(a, b) {
     if (a.category === b.category) {
         return Channel.compareByName(a, b);
     }
-    if (a.category === "chat" && b.category === "channel") {
-        return 1;
-    }
-    return -1;
+    return a.category.localeCompare(b.category)
 }
 
 
