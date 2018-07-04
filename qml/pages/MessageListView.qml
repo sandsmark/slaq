@@ -46,6 +46,7 @@ ListView {
     section {
         property: "day"
         criteria: ViewSection.FullString
+        labelPositioning: ViewSection.CurrentLabelAtStart
         delegate: Label {
             text: section
             width: listView.width
