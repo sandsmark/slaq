@@ -5,7 +5,9 @@ Item {
     height: textEdit.height
 
     function hovered(mouseArea) {}
-    function clicked() {}
+    function clicked() {
+        channelRoot.showText(model.url_download, model.name, user.name)
+    }
 
     Text {
         id: textEdit

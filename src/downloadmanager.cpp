@@ -21,6 +21,16 @@ void DownloadManager::append(const QUrl &url, const QString &where, const QStrin
     ++totalCount;
 }
 
+void DownloadManager::clearBuffer(const QUrl &url)
+{
+    m_downloadedBuffers[url].clear();
+}
+
+QByteArray DownloadManager::buffer(const QUrl &url)
+{
+    return m_downloadedBuffers.value(url);
+}
+
 QString DownloadManager::saveFileName(const QUrl &url)
 {
     QString path = url.path();
@@ -50,25 +60,29 @@ void DownloadManager::startNextDownload()
 {
     if (downloadQueue.isEmpty()) {
         qDebug("%d/%d files downloaded successfully", downloadedCount, totalCount);
-        emit finished();
+        emit allFinished();
         return;
     }
 
-    DownloadRequest dreq = downloadQueue.dequeue();
+    currentRequest = downloadQueue.dequeue();
 
-    QString filename = saveFileName(dreq.where);
-    output.setFileName(filename);
-    if (!output.open(QIODevice::WriteOnly)) {
-        qWarning("Problem opening save file '%s' for download '%s': %s",
-                qPrintable(filename), dreq.what.toEncoded().constData(),
-                qPrintable(output.errorString()));
+    if (currentRequest.where == "buffer") {
+        m_downloadedBuffers[currentRequest.what] = QByteArray();
+    } else {
+        QString filename = saveFileName(currentRequest.where);
+        output.setFileName(filename);
+        if (!output.open(QIODevice::WriteOnly)) {
+            qWarning("Problem opening save file '%s' for download '%s': %s",
+                     qPrintable(filename), currentRequest.what.toEncoded().constData(),
+                     qPrintable(output.errorString()));
 
-        startNextDownload();
-        return;                 // skip this download
+            startNextDownload();
+            return;                 // skip this download
+        }
     }
 
-    QNetworkRequest request(dreq.what);
-    request.setRawHeader(QString("Authorization").toUtf8(), QString("Bearer " + dreq.token).toUtf8());
+    QNetworkRequest request(currentRequest.what);
+    request.setRawHeader(QString("Authorization").toUtf8(), QString("Bearer " + currentRequest.token).toUtf8());
     currentDownload = manager.get(request);
     connect(currentDownload, SIGNAL(downloadProgress(qint64,qint64)),
             SLOT(downloadProgress(qint64,qint64)));
@@ -78,29 +92,41 @@ void DownloadManager::startNextDownload()
             SLOT(downloadReadyRead()));
 
     // prepare the output
-    qDebug("Downloading %s...", dreq.what.toEncoded().constData());
+    qDebug("Downloading %s...", currentRequest.what.toEncoded().constData());
     downloadTime.start();
 }
 
 void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    emit downloaded(1.0 / ((double)bytesTotal/(double)bytesReceived));
+    emit downloaded(currentRequest.what, 1.0 / ((double)bytesTotal/(double)bytesReceived));
 }
 
 void DownloadManager::downloadFinished()
 {
-    emit downloaded(1.0);
-    output.close();
+    emit downloaded(currentRequest.what, 1.0);
+    if (currentRequest.where != QLatin1String("buffer")) {
+        output.close();
+    }
 
+    emit finished(currentRequest.what, currentDownload->error());
     if (currentDownload->error()) {
         // download failed
         qWarning("Failed: %s\n", qPrintable(currentDownload->errorString()));
-        output.remove();
+        if (currentRequest.where != QLatin1String("buffer")) {
+            output.remove();
+        } else {
+            m_downloadedBuffers[currentRequest.what].clear();
+        }
+
     } else {
         // let's check if it was actually a redirect
         if (isHttpRedirect()) {
             reportRedirect();
-            output.remove();
+            if (currentRequest.where != QLatin1String("buffer")) {
+                output.remove();
+            } else {
+                m_downloadedBuffers[currentRequest.what].clear();
+            }
         } else {
             qDebug() << "Succeeded.";
             ++downloadedCount;
@@ -113,7 +139,11 @@ void DownloadManager::downloadFinished()
 
 void DownloadManager::downloadReadyRead()
 {
-    output.write(currentDownload->readAll());
+    if (currentRequest.where == QLatin1String("buffer")) {
+        m_downloadedBuffers[currentRequest.what].append(currentDownload->readAll());
+    } else {
+        output.write(currentDownload->readAll());
+    }
 }
 
 bool DownloadManager::isHttpRedirect() const

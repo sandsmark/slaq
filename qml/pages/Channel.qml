@@ -1,26 +1,47 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 
 import ".."
 
 Page {
-    id: page
+    id: channelRoot
 
     property string channelId
     property variant channel
     property bool initialized: false
+    property url textToShowUrl
+    property string textToShowName
+    property string textToShowUserName
 
     title: channel !== undefined ? channel.name : ""
     property var usersTyping: []
 
     function setChannelActive() {
-        console.log("channel active", page.title)
-        SlackClient.setActiveWindow(teamRoot.teamId, page.channelId)
-        page.channel = SlackClient.getChannel(teamRoot.teamId, page.channelId)
+        console.log("channel active", channelRoot.title)
+        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId)
+        channelRoot.channel = SlackClient.getChannel(teamRoot.teamId, channelRoot.channelId)
         input.forceActiveFocus()
         listView.markLatest()
     }
+
+    function showText(url, name, userName) {
+        textToShowUrl = url
+        textToShowName = name
+        textToShowUserName = userName
+        downloadManager.append(url, "buffer", SlackClient.teamToken(teamId))
+    }
+
+    Connections {
+         target: downloadManager
+         onFinished: {
+             if (url === textToShowUrl) {
+                 drawerTextArea.text = downloadManager.buffer(url)
+                 downloadManager.clearBuffer(url)
+                 channelTextView.open()
+             }
+         }
+     }
 
     header: Rectangle {
         height: Theme.headerSize
@@ -28,7 +49,7 @@ Page {
         border.width: 1
         radius: 5
         Label {
-            text: "#" + page.title
+            text: "#" + channelRoot.title
             anchors.centerIn: parent
             font.bold: true
             horizontalAlignment: Text.AlignHCenter
@@ -42,9 +63,38 @@ Page {
         anchors.centerIn: parent
     }
 
+    Drawer {
+        id: channelTextView
+        width: drawerTextArea.paintedWidth > 0.66 * channelRoot.availableWidth ?
+                   0.66 * channelRoot.availableWidth : drawerTextArea.paintedWidth + Theme.paddingMedium
+        height: channelRoot.availableHeight
+        edge: Qt.RightEdge
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 10
+            Label {
+                text: "User: " + textToShowUserName + " name: " + textToShowName
+            }
+
+            ScrollView {
+                id: view
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.margins: Theme.paddingMedium/2
+                TextArea {
+                    id: drawerTextArea
+                    readOnly: true
+                    selectByKeyboard: true
+                    selectByMouse: true
+                }
+            }
+        }
+    }
+
     MessageListView {
         id: listView
-        channel: page.channel
+        channel: channelRoot.channel
         onChannelChanged: console.log("channel changed", listView.channel)
 
         anchors {
