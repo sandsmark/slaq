@@ -23,7 +23,9 @@ Item {
     Connections {
         target: downloadManager
         onDownloaded: {
-            progressBar.value = progress
+            if (url === model.url_download) {
+                progressBar.value = progress
+            }
         }
     }
 
