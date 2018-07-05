@@ -111,7 +111,7 @@ Popup {
                                 hoverEnabled: true
                                 onClicked: {
                                     emojiSelected(model.modelData.unified !== "" ?
-                                                      model.modelData.unified : ":" + model.modelData.shortNames[0] + ":")
+                                                      model.modelData.unified : model.modelData.shortNames[0])
                                     popup.close()
                                 }
                             }

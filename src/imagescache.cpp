@@ -493,9 +493,14 @@ QString ImagesCache::getEmojiByName(const QString &name) const
 QString ImagesCache::getNameByEmoji(const QString &emoji) const
 {
     const QList<EmojiInfo*>& eiList = m_emojiList.values();
+
     for (EmojiInfo* ei : eiList) {
-        if (ei->unified() == emoji) {
-            return ei->shortNames().at(0);
+        const QStringList& _shortnames = ei->shortNames();
+        if (_shortnames.isEmpty()) {
+            continue;
+        }
+        if (ei->unified() == emoji || _shortnames.contains(emoji)) {
+            return _shortnames.at(0);
         }
     }
     return QStringLiteral("");
