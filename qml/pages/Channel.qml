@@ -71,18 +71,34 @@ Page {
         height: channelRoot.availableHeight
         edge: Qt.RightEdge
 
-        ColumnLayout {
+        Page {
             anchors.fill: parent
-            spacing: 10
-            Label {
-                text: "User: " + textToShowUserName + " name: " + textToShowName
+            padding: Theme.paddingMedium/2
+            header: Rectangle {
+                height: Theme.headerSize
+                border.color: "#00050505"
+                border.width: 1
+                radius: 5
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 10
+                    Label {
+                        text: "@" + textToShowUserName
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        color: palette.link
+                    }
+                    Label {
+                        text: textToShowName
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
             }
 
-            ScrollView {
+            contentItem: ScrollView {
                 id: view
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                Layout.margins: Theme.paddingMedium/2
+
                 TextArea {
                     id: drawerTextArea
                     readOnly: true
