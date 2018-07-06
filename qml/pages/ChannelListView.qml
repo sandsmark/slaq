@@ -1,12 +1,9 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Controls.Material 2.4
 
 import ".."
 import com.iskrembilen 1.0
-
-import "../ChannelList.js" as ChannelList
-import "../Channel.js" as Channel
 
 ListView {
     id: listView
@@ -17,11 +14,17 @@ ListView {
         currentIndex = ind
     }
     interactive: true
-    model: SlackClient.currentChatsModel
 
-    ListModel {
-        id: channelListModel
+    Connections {
+        target: SlackClient
+        onChatsModelChanged: {
+            if (teamId === teamRoot.teamId) {
+                listView.model = teamRoot.slackClient.currentChatsModel()
+            }
+        }
     }
+
+    onModelChanged: console.log("channels list model", model)
 
     section {
         property: "section"
@@ -45,7 +48,9 @@ ListView {
         text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
         highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.Id
-
+        visible: model.IsOpen
+        enabled: visible
+        height: model.IsOpen ? delegate.implicitHeight : 0
 //        icon.name: Channel.getIcon(model)
         icon.name: {
             switch (model.Type) {
@@ -84,7 +89,7 @@ ListView {
 //            console.log(channel.Type)
 //            console.log(channel.Id)
 
-            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id, "title": model.Name, "channelType": model.Type})
+            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id, "channelName": model.Name, "channelType": model.Type})
         }
 
         property bool hasActions: model.Type === ChatsModel.Channel || model.Type === ChatsModel.Conversation
@@ -124,11 +129,11 @@ ListView {
 
     Component.onCompleted: {
         console.log("channel list view component completed",SlackClient.getChannels(teamRoot.teamId).length, teamRoot.teamId)
-        ChannelList.init()
+        //ChannelList.init()
     }
 
     Component.onDestruction: {
-        ChannelList.disconnect()
+        //ChannelList.disconnect()
     }
 
     function getSectionName(section) {

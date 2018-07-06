@@ -32,7 +32,8 @@ SOURCES += src/main.cpp \
     src/emojiprovider.cpp \
     src/imagescache.cpp \
     src/slackclientthreadspawner.cpp \
-    src/downloadmanager.cpp
+    src/downloadmanager.cpp \
+    src/teaminfo.cpp
 
 OTHER_FILES += translations/*.ts \
     slaq.desktop \

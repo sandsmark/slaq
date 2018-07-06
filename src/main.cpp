@@ -22,6 +22,8 @@
 #include "QQmlObjectListModel.h"
 #include "downloadmanager.h"
 
+SlackClientThreadSpawner* g_slackThread = nullptr;
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -39,7 +41,7 @@ int main(int argc, char *argv[])
 
     QtWebView::initialize();
     qDebug() << "GUI thread" << QThread::currentThreadId();
-    qRegisterMetaType<SlackClient*>("SlackClient*");
+    qRegisterMetaType<SlackTeamClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
@@ -60,11 +62,11 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
     engine.rootContext()->setContextProperty(QStringLiteral("emojiCategoriesModel"),
                                              ImagesCache::instance()->emojiCategoriesModel());
-    SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
-    engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), _slackThread);
-    engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), _slackThread->teamsModel());
+    g_slackThread = new SlackClientThreadSpawner;
+    engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), g_slackThread);
+    engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), g_slackThread->teamsModel());
     engine.rootContext()->setContextProperty(QStringLiteral("SlackConfig"), SlackConfig::instance());
-    _slackThread->start();
+    g_slackThread->start();
 
 //    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
 //        _slackThread->quit();

@@ -9,19 +9,19 @@ Page {
     id: channelRoot
 
     property string channelId
-    property variant channel
-    property bool initialized: false
-    property url textToShowUrl
-    property string textToShowUserName
+    property string channelName
     property int channelType
+    property bool initialized: false
+    property url textToShowUrl: ""
+    property string textToShowUserName: ""
+    property string textToShowName: ""
 
-    title: channel !== undefined ? channel.Name : ""
+    title: channelName
     property var usersTyping: []
 
     function setChannelActive() {
         console.log("channel active", channelRoot.title)
         SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId)
-        channelRoot.channel = SlackClient.getChannel(teamRoot.teamId, channelRoot.channelId)
         input.forceActiveFocus()
         listView.markLatest()
     }
@@ -111,9 +111,6 @@ Page {
 
     MessageListView {
         id: listView
-        channel: channelRoot.channel
-        onChannelChanged: console.log("channel changed", listView.channel)
-        channelType: channelRoot.channelType
 
         anchors {
             top: parent.top; bottom: input.top; left: parent.left; right: parent.right
@@ -176,7 +173,7 @@ Page {
         width: parent.width
 
         visible: listView.inputEnabled
-        placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.Name) : ""
+        placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
         onSendMessage: {
             SlackClient.postMessage(teamRoot.teamId, channel.Id, content)
         }
@@ -194,9 +191,7 @@ Page {
     Connections {
         target: SlackClient
         onUserTyping: {
-            if (teamRoot.teamId === teamId && channelId === channel.id) {
-                var userName = SlackClient.userName(teamRoot.teamId, userId)
-
+            if (teamRoot.teamId === teamId && channelId === channelRoot.channelId) {
                 if (usersTyping.indexOf(userName) === -1) {
                     usersTyping.push(userName)
                 }

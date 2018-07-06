@@ -39,6 +39,10 @@ public:
     Presence presence();
 
     const QString &userId() { return m_userId; }
+    QString username() const;
+    QString fullName() const;
+    QUrl avatarUrl() const;
+    bool isBot() const;
 
 signals:
     void presenceChanged();
@@ -70,7 +74,7 @@ public:
     };
     Q_ENUM(Presence)
 
-    UsersModel(QObject *parent);
+    UsersModel(QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_users.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
@@ -96,7 +100,7 @@ class Reaction : public QObject
     Q_PROPERTY(int usersCount READ usersCount NOTIFY usersChanged)
 
 public:
-    Reaction(const QJsonObject &data, QObject *parent);
+    Reaction(const QJsonObject &data, QObject *parent = nullptr);
     int usersCount() { return userIds.count(); }
 
 signals:
@@ -192,7 +196,8 @@ public:
         UnreadCount,
         MembersModel,
         MessagesModel,
-        UserObject
+        UserObject,
+        Presence
     };
 
     enum ChatType {
@@ -220,7 +225,7 @@ public:
         QPointer<User> user;
     };
 
-    ChatsModel(QObject *parent, UsersModel *networkUsers);
+    ChatsModel(QObject *parent = nullptr, UsersModel *networkUsers = nullptr);
 
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_chats.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
@@ -240,79 +245,79 @@ private:
     UsersModel *m_networkUsers;
 };
 
-class NetworksModel : public QAbstractListModel
-{
-    Q_OBJECT
+//class TeamsModel : public QAbstractListModel
+//{
+//    Q_OBJECT
 
-public:
-    NetworksModel(QObject *parent);
+//public:
+//    TeamsModel(QObject *parent);
 
-    enum NetworkFields {
-        Id,
-        Name,
-        Chats,
-        Users
-    };
+//    enum TeamsModelFields {
+//        Id,
+//        Name,
+//        Chats,
+//        Users
+//    };
 
-    struct Network {
-        Network() = default;
-        Network(const QJsonObject &data);
+//    struct Network {
+//        Network() = default;
+//        explicit Network(const QJsonObject &data);
 
-        QString id;
-        QString name;
-        QUrl icon;
-        ChatsModel *chats;
-        UsersModel *users;
+//        QString id;
+//        QString name;
+//        QUrl icon;
+//        ChatsModel *chats{nullptr};
+//        UsersModel *users{nullptr};
 
-        bool isValid();
-    };
+//        bool isValid();
+//    };
 
-    int rowCount(const QModelIndex &/*parent*/) const override { return m_networks.count(); }
-    QVariant data(const QModelIndex &index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
+//    int rowCount(const QModelIndex &/*parent*/) const override { return m_networks.count(); }
+//    QVariant data(const QModelIndex &index, int role) const override;
+//    QHash<int, QByteArray> roleNames() const override;
 
-    QString addNetwork(const QJsonObject &networkData);
-    ChatsModel *chatsModel(const QString &id);
-    UsersModel *usersModel(const QString &id);
+//    QString addNetwork(const QJsonObject &networkData);
+//    ChatsModel *chatsModel(const QString &id);
+//    UsersModel *usersModel(const QString &id);
 
-private:
-    QStringList m_networkIds;
-    QMap<QString, Network> m_networks;
-};
+//private:
+//    QStringList m_networkIds;
+//    QMap<QString, Network> m_networks;
+//};
 
 
-class Storage : public QObject
-{
-    Q_OBJECT
+//class Storage : public QObject
+//{
+//    Q_OBJECT
 
-public:
-    Storage();
+//public:
+//    Storage();
 
-    QVariantMap user(const QVariant& id);
-    const QVariantList &users();
-    void saveUser(const QVariantMap& user);
-    void updateUsersList();
+//    QVariantMap user(const QVariant& id);
+//    const QVariantList &users();
+//    void saveUser(const QVariantMap& user);
+//    void updateUsersList();
 
-    QVariantMap channel(const QVariant& id);
-    QVariantList channels();
-    void saveChannel(const QVariantMap& channel);
+//    QVariantMap channel(const QVariant& id);
+//    QVariantList channels();
+//    void saveChannel(const QVariantMap& channel);
 
-    QVariantList channelMessages(const QVariant& channelId);
-    bool channelMessagesExist(const QVariant& channelId);
-    void setChannelMessages(const QVariant& channelId, const QVariantList& messages);
-    void appendChannelMessage(const QVariant& channelId, const QVariantMap& message);
-    void clearChannelMessages();
-    void clearChannels();
+//    QVariantList channelMessages(const QVariant& channelId);
+//    bool channelMessagesExist(const QVariant& channelId);
+//    void setChannelMessages(const QVariant& channelId, const QVariantList& messages);
+//    void appendChannelMessage(const QVariant& channelId, const QVariantMap& message);
+//    void clearChannelMessages();
+//    void clearChannels();
 
-signals:
+//signals:
 
-public slots:
+//public slots:
 
-private:
-    QVariantMap userMap;
-    QVariantMap channelMap;
-    QVariantMap channelMessageMap;
-    QVariantList userList;
-};
+//private:
+//    QVariantMap userMap;
+//    QVariantMap channelMap;
+//    QVariantMap channelMessageMap;
+//    QVariantList userList;
+//};
 
 #endif // STORAGE_H

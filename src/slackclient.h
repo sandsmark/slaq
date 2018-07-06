@@ -21,18 +21,14 @@
 #include "storage.h"
 #include "debugblock.h"
 
-class SlackClient : public QObject
+class SlackTeamClient : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool isOnline READ isOnline NOTIFY isOnlineChanged)
-    Q_PROPERTY(bool isDevice READ isDevice CONSTANT)
-    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setActiveWindow NOTIFY lastChannelChanged)
-    Q_PROPERTY(ChatsModel *currentChatsModel READ currentChatsModel NOTIFY currentChatsModelChanged)
 
 public:
-    explicit SlackClient(const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
-    virtual ~SlackClient();
+    explicit SlackTeamClient(const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
+    virtual ~SlackTeamClient();
 
     Q_INVOKABLE void setAppActive(bool active);
     Q_INVOKABLE void setActiveWindow(const QString &windowId);
@@ -53,7 +49,7 @@ public:
     ClientStates getState() const;
     void setState(ClientStates state);
 
-    ChatsModel *currentChatsModel();
+    Q_INVOKABLE ChatsModel *currentChatsModel();
 
 signals:
     void testConnectionFail(const QString& teamId);
@@ -63,7 +59,7 @@ signals:
     void accessTokenSuccess(QString userId, QString teamId, QString team);
     void accessTokenFail(const QString& teamId);
 
-    void loadMessagesSuccess(const QString& teamId, QString channelId, QVariantList messages);
+    void loadMessagesSuccess(const QString& teamId, QString channelId);
     void loadMessagesFail(const QString& teamId);
 
     void initFail(const QString& teamId, const QString &why);
@@ -96,8 +92,8 @@ signals:
     void stateChanged(const QString& teamId);
     void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
-	void currentChatsModelChanged();
-	void userTyping(const QString& teamId, const QString& channelId, const QString& userId);
+    void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
+    void teamDataChanged(const QJsonObject &teamData);
 	
 
 public slots:
@@ -121,7 +117,7 @@ public slots:
     void requestTeamEmojis();
 
     QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
-    QString userName(const QString &userId) { return m_storage.user(userId).value(QStringLiteral("name")).toString(); }
+    QString userName(const QString &userId);
     QString lastChannel();
     bool isOnline() const;
     bool isDevice() const;
@@ -208,7 +204,7 @@ private:
     QPointer<SlackConfig> config;
     QPointer<SlackStream> stream;
     QPointer<QTimer> reconnectTimer;
-    Storage m_storage;
+    //Storage m_storage;
 
     QNetworkAccessManager::NetworkAccessibility networkAccessible;
     QHash<QString, QUrl> m_userAvatars;
@@ -219,10 +215,8 @@ private:
     MessageFormatter m_formatter;
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
-    NetworksModel *m_networksModel;
-    QString m_networkId;
 };
 
-QML_DECLARE_TYPE(SlackClient)
+QML_DECLARE_TYPE(SlackTeamClient)
 
 #endif // SLACKCLIENT_H

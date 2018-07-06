@@ -63,7 +63,7 @@ ItemDelegate {
                     }
 
                     Label {
-                        text: new Date(parseInt(Time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
+                        text: Qt.formatTime(model.Time, "H:mm")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"

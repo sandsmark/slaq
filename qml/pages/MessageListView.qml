@@ -8,8 +8,7 @@ ListView {
     id: listView
 
     property alias atBottom: listView.atYEnd
-    property variant channel
-    property int channelType
+    //property variant channel
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
@@ -35,11 +34,18 @@ ListView {
         }
     }
 
-    //TODO: move messages model to C++
-//    model: ListModel {
-//        id: messageListModel
-//    }
-    model: SlackClient.currentChatsModel.messages(channelId)
+    Connections {
+        target: SlackClient
+        onLoadMessagesSuccess: {
+            if (teamId === teamRoot.teamId) {
+                listView.model = teamRoot.slackClient.currentChatsModel().messages(channelId)
+                loadCompleted()
+            }
+        }
+    }
+
+
+    //model: teamRoot.slackClient.currentChatsModel.messages(channelId)
 
     delegate: MessageListItem {}
 
@@ -55,10 +61,10 @@ ListView {
     }
 
     onAppActiveChanged: {
-        if (messageListModel.get(0)) {
-            latestRead = messageListModel.get(0).time
-            readTimer.restart()
-        }
+//        if (messageListModel.get(0)) {
+//            latestRead = messageListModel.get(0).time
+//            readTimer.restart()
+//        }
     }
 
     onMovementEnded: {
@@ -82,22 +88,17 @@ ListView {
     }
 
     function markLatest() {
-        if (appActive && atBottom && messageListModel.count
+        if (appActive && atBottom /*&& model.count*/
                 && teamId === SlackClient.lastTeam
-                && SlackClient.lastChannel(teamRoot.teamId) === channel.id) {
-            latestRead = messageListModel.get(0).time
-            SlackClient.markChannel(teamRoot.teamId, channel.Type, channel.Id, latestRead)
-            latestRead = ""
+                && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channelId) {
+            //latestRead = model.get(0).time
+            //SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId, latestRead)
+            //latestRead = ""
         }
     }
 
     function loadMessages() {
-        console.log(Object.keys(channel))
-        console.log(channel.Name)
-        console.log(channelType)
-        console.log(channel.Id)
-        console.log("loading messages", teamRoot.teamId)
-        SlackClient.loadMessages(teamRoot.teamId, channel.type, channel.id)
+        SlackClient.loadMessages(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
     }
 
 //    function handleLoadSuccess(teamId, channelId, messages) {

@@ -18,7 +18,7 @@ public:
     explicit SlackClientThreadSpawner(QObject *parent = nullptr);
 
     virtual ~SlackClientThreadSpawner();
-    Q_INVOKABLE SlackClient *slackClient(const QString& teamId);
+    Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
 
     Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
 
@@ -37,7 +37,7 @@ signals:
     void accessTokenSuccess(QString userId, const QString& teamId, QString team);
     void accessTokenFail(const QString& teamId);
 
-    void loadMessagesSuccess(const QString& teamId, QString channelId, QVariantList messages);
+    void loadMessagesSuccess(const QString& teamId, QString channelId);
     void loadMessagesFail(const QString& teamId);
 
     void initFail(const QString& teamId, const QString &why);
@@ -66,7 +66,10 @@ signals:
     void lastTeamChanged(QString lastTeam);
     void onlineChanged(bool isOnline);
     void searchResultsReady(const QString& teamId, const QVariantList& messages);
-    void userTyping(const QString& teamId, const QString& channelId, const QString& userId);
+    void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
+
+    void chatsModelChanged(const QString& teamId);
+
 
 public slots:
     void startClient(const QString& teamId);
@@ -94,7 +97,7 @@ public slots:
 
     //messages
     void searchMessages(const QString& teamId, const QString& searchString);
-    void loadMessages(const QString& teamId, const QString& type, const QString& channelId);
+    void loadMessages(const QString& teamId, ChatsModel::ChatType type, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
@@ -115,15 +118,17 @@ public slots:
     void setMediaSource(QObject *mediaPlayer, const QString& teamId, const QString& url);
     QString teamToken(const QString& teamId);
 
+    void onTeamDataChanged(const QJsonObject &teamData);
+
 protected:
     void run();
 
 private:
-    SlackClient *createNewClientInstance(const QString &teamId, const QString &accessToken = QString(""));
+    SlackTeamClient *createNewClientInstance(const QString &teamId, const QString &accessToken = QString(""));
 
 private:
     QQmlObjectListModel<TeamInfo> m_teamsModel;
-    QMap<QString, SlackClient*> m_knownTeams;
+    QMap<QString, SlackTeamClient*> m_knownTeams;
     QString m_lastTeam;
     bool m_isOnline;
 };
