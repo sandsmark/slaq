@@ -13,13 +13,17 @@ GridLayout {
     Repeater {
         id: repeater
 
+//        onModelChanged: {
+//            console.log("attachment fields", model)
+//        }
+
         Label {
             Layout.columnSpan: model.isShort ? 1 : 2
             Layout.preferredWidth: model.isShort ? grid.width / 2 : grid.width
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             font.pointSize: Theme.fontSizeTiny
-            font.weight: model.isTitle ? Font.Bold : Font.Normal
-            text: model.content
+            font.weight: model.isShort ? Font.Bold : Font.Normal
+            text: model.title != undefined ? model.title : model.value != undefined ? model.value : ""
         }
     }
 }

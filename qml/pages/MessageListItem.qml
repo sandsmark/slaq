@@ -6,7 +6,7 @@ import QtQuick.Layouts 1.3
 import ".."
 
 ItemDelegate {
-    id: item
+    id: itemDelegate
     height: column.height
     width: listView.width
     hoverEnabled: true
@@ -16,7 +16,7 @@ ItemDelegate {
 
     Connections {
         target: emojiSelector
-        enabled: item.emojiSelectorCalled
+        enabled: itemDelegate.emojiSelectorCalled
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
@@ -63,7 +63,7 @@ ItemDelegate {
                     }
 
                     Label {
-                        text: Qt.formatTime(model.Time, "H:mm")
+                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss.zzz")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"
@@ -80,7 +80,7 @@ ItemDelegate {
 
                     EmojiButton {
                         id: emojiButton
-                        visible: item.hovered && !isSearchResult
+                        visible: itemDelegate.hovered && !isSearchResult
                         height: Theme.headerSize
                         width: height
                         text: "😎"
@@ -90,7 +90,7 @@ ItemDelegate {
                             emojiSelector.x = emojiButton.x
                             emojiSelector.y = emojiButton.y
                             emojiSelector.state = "reaction"
-                            item.emojiSelectorCalled = true
+                            itemDelegate.emojiSelectorCalled = true
                             emojiSelector.open()
                         }
                     }
@@ -219,7 +219,7 @@ ItemDelegate {
 
         Repeater {
             id: fileSharesRepeater
-            model: Attachments
+            model: FileShares
 
             delegate: FileViewer {}
         }
@@ -230,7 +230,7 @@ ItemDelegate {
 
             Attachment {
                 width: column.width
-                attachment: model
+                attachment: Attachments[index]
                 onLinkClicked: handleLink(link)
             }
         }

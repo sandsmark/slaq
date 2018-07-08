@@ -44,10 +44,13 @@ int main(int argc, char *argv[])
     qRegisterMetaType<SlackTeamClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
+    qRegisterMetaType<Attachment*>("Attachment*");
+    qRegisterMetaType<Message*>("Message*");
     qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
+    qmlRegisterUncreatableType<Attachment>("com.iskrembilen", 1, 0, "Attachment", "Only instantiated by c++");
 
     qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
 

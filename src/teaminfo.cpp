@@ -29,9 +29,11 @@ void TeamInfo::parseTeamInfoData(const QJsonObject &teamObj) {
 
 void TeamInfo::addTeamData(const QJsonObject &teamData)
 {
+    qDebug() << "start" << __FUNCTION__;
     parseTeamInfoData(teamData["team"].toObject());
     m_users = new UsersModel;
     m_users->addUsers(teamData.value(QStringLiteral("users")).toArray());
+    m_users->addUsers(teamData.value(QStringLiteral("bots")).toArray());
 
     m_chats = new ChatsModel(nullptr, m_users);
     m_chats->addChats(teamData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);

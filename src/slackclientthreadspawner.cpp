@@ -300,6 +300,11 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
                               Q_ARG(QString, reaction));
 }
 
+void SlackClientThreadSpawner::onMessageReceived(Message *message)
+{
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+}
+
 void SlackClientThreadSpawner::openChat(const QString& teamId, const QString &chatId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
@@ -345,7 +350,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::reconnectFail, this, &SlackClientThreadSpawner::reconnectFail, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::reconnectAccessTokenFail, this, &SlackClientThreadSpawner::reconnectAccessTokenFail, Qt::QueuedConnection);
 
-    connect(_slackClient, &SlackTeamClient::messageReceived, this, &SlackClientThreadSpawner::messageReceived, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::messageReceived, this, &SlackClientThreadSpawner::onMessageReceived, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::messageUpdated, this, &SlackClientThreadSpawner::messageUpdated, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelUpdated, this, &SlackClientThreadSpawner::channelUpdated, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelJoined, this, &SlackClientThreadSpawner::channelJoined, Qt::QueuedConnection);
@@ -470,6 +475,7 @@ QString SlackClientThreadSpawner::teamToken(const QString &teamId)
 // this method should be run on GUI thread since QML engine cant connect to models, created in thread, differs from QML Engine
 void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
 {
+    DEBUG_BLOCK
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addTeamData(teamData);
     emit chatsModelChanged(_slackClient->teamInfo()->teamId());

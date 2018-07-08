@@ -39,6 +39,7 @@ ListView {
         onLoadMessagesSuccess: {
             if (teamId === teamRoot.teamId) {
                 listView.model = teamRoot.slackClient.currentChatsModel().messages(channelId)
+                inputEnabled = true
                 loadCompleted()
             }
         }
@@ -69,7 +70,7 @@ ListView {
 
     onMovementEnded: {
         if (atBottom && model.rowCount()) {
-            latestRead = model.data(model.index(model.rowCount() - 1, 0)).Time
+            //latestRead = model.data(model.index(model.rowCount() - 1, 0)).Time
 //            latestRead = messageListModel.get(messageListModel.count - 1).time
             readTimer.restart()
         }

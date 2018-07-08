@@ -68,7 +68,7 @@ signals:
     void reconnectFail(const QString& teamId);
     void reconnectAccessTokenFail(const QString& teamId);
 
-    void messageReceived(const QString& teamId, QVariantMap message);
+    void messageReceived(Message* message);
     void messageUpdated(const QString& teamId, QVariantMap message);
     void channelUpdated(const QString& teamId, QVariantMap channel);
     void channelJoined(const QString& teamId, QVariantMap channel);

@@ -3,9 +3,11 @@
 
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QThread>
 
 struct DebugHelperClass {
     DebugHelperClass(QString funcInfo) : m_funcInfo(funcInfo) {
+        qDebug().noquote() << "start" << m_funcInfo << QThread::currentThreadId();
         m_timer.start();
     }
 

@@ -4,7 +4,8 @@
 #include <QString>
 #include <QObject>
 #include <QtQml>
-#include "storage.h"
+#include "UsersModel.h"
+#include "ChatsModel.h"
 
 class TeamInfo: public QObject {
     Q_OBJECT

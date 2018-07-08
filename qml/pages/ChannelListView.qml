@@ -128,7 +128,7 @@ ListView {
     }
 
     Component.onCompleted: {
-        console.log("channel list view component completed",SlackClient.getChannels(teamRoot.teamId).length, teamRoot.teamId)
+        console.log("channel list view component completed", teamRoot.teamId)
         //ChannelList.init()
     }
 

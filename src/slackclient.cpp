@@ -15,6 +15,8 @@
 #include "slackclient.h"
 #include "imagescache.h"
 
+#include "MessagesModel.h"
+
 SlackTeamClient::SlackTeamClient(const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible),
     m_clientId(QString::fromLatin1(QByteArray::fromBase64("MTE5MDczMjc1MDUuMjUyMzc1NTU3MTU1"))),
@@ -149,7 +151,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 
     const QString& type = message.value(QStringLiteral("type")).toString();
 
-//    qDebug() << "stream message";
+    qDebug() << "stream message" << type;
 //    qDebug().noquote() << QJsonDocument(message).toJson();
 
     if (type == QStringLiteral("message")) {
@@ -186,6 +188,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
     } else if (type == QStringLiteral("member_joined_channel")) {
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
     } else if (type == QStringLiteral("pong")) {
+    } else if (type == QStringLiteral("hello")) {
     } else {
         qDebug() << "Unhandled message";
         qDebug().noquote() << QJsonDocument(message).toJson();
@@ -260,7 +263,8 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
 //TODO: redesign
-//    QVariantMap data;
+    Message* message_ = new Message;
+    message_->setData(message);
 //    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
 //    const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
 //    const QJsonValue& innerMessage = message.value(QStringLiteral("message"));
@@ -302,7 +306,7 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 //        }
 //    }
 
-//    emit messageReceived(m_teamInfo.teamId(), data);
+    emit messageReceived(message_);
 }
 
 void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
@@ -558,7 +562,7 @@ void SlackTeamClient::handleTestLoginReply()
         emit testLoginFail(m_teamInfo.teamId());
         return;
     }
-    qDebug().noquote() << QJsonDocument(data).toJson();
+    //qDebug().noquote() << QJsonDocument(data).toJson();
 
     QString teamId = data.value(QStringLiteral("team_id")).toString();
     QString userId = data.value(QStringLiteral("user_id")).toString();
@@ -633,10 +637,7 @@ void SlackTeamClient::startClient()
 void SlackTeamClient::handleStartReply()
 {
     DEBUG_BLOCK;
-//    if (thread() != QThread::currentThread()) {
-//        QMetaObject::invokeMethod(this, "handleStartReply", Qt::QueuedConnection);
-//        return;
-//    }
+
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     QJsonObject data = getResult(reply);
@@ -655,15 +656,16 @@ void SlackTeamClient::handleStartReply()
         return;
     }
 
-    //QMetaObject::invokeMethod(&m_teamInfo, "addTeamData", Qt::QueuedConnection, Q_ARG(QJsonObject, data));
+    // now time to create models.
+    // Qt is strict that model, used by QMLEngine, should be created in same thread
+    // by deafault its GUI thread
+    // TODO: investigate move QML engine to separate thread or make parsing in non-GUI thread
+    // and then provide data to the models
     emit teamDataChanged(data);
-    //m_teamInfo.addTeamData(data);
-//    qDebug() << "chats count" << m_networksModel->rowCount();
-//    qDebug() << data.keys();
-//    qDebug().noquote() << QJsonDocument(data).toJson();
+
 
 //    parseUsers(data);
-    parseBots(data);
+//    parseBots(data);
 //    parseChannels(data);
 //    parseGroups(data);
 
@@ -872,9 +874,8 @@ ChatsModel *SlackTeamClient::currentChatsModel()
 
 bool SlackTeamClient::isOnline() const
 {
-    DEBUG_BLOCK
-
-            return stream && stream->isConnected();
+    DEBUG_BLOCK;
+    return stream && stream->isConnected();
 }
 
 bool SlackTeamClient::isDevice() const
@@ -912,7 +913,7 @@ QString SlackTeamClient::historyMethod(const ChatsModel::ChatType type)
         return QStringLiteral("channels.history");
     } else if (type == ChatsModel::Group) {
         return QStringLiteral("groups.history");
-    } else if (type == QStringLiteral("mpim")) {
+    } else if (type == ChatsModel::MultiUserConversation) {
         return QStringLiteral("mpim.history");
     } else if (type == ChatsModel::Conversation) {
         return QStringLiteral("im.history");

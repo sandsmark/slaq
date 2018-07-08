@@ -32,8 +32,7 @@ Page {
             if (teamRoot.teamId == teamId) {
                 var _lastChannel = SlackClient.lastChannel(teamRoot.teamId);
                 console.log("loading page. adding channel component:", _lastChannel, teamRoot.teamId)
-                pageStack.replace(channelComponent, {"channelId" : _lastChannel,
-                                      "channel" : SlackClient.getChannel(teamRoot.teamId, _lastChannel) })
+                pageStack.replace(channelComponent, {"channelId" : _lastChannel })
             }
         }
 
