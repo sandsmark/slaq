@@ -316,14 +316,15 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
 
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
 {
+    DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    UsersModel* users = _slackClient->teamInfo()->chats()->members(message->channel_id);
     MessageListModel *messages = _slackClient->teamInfo()->chats()->messages(message->channel_id);
-    if (messages == nullptr || users == nullptr) {
+    if (messages == nullptr) {
         qWarning() << "No messages in chat" << message->channel_id;
         delete message;
         return;
     }
+    messages->updateMessage(message);
 }
 
 void SlackClientThreadSpawner::openChat(const QString& teamId, const QString &chatId)

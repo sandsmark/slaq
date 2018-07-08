@@ -120,15 +120,9 @@ public:
 
 class Message: public QObject {
     Q_OBJECT
-
-    //Q_PROPERTY(QQmlListProperty<Attachment> attachments READ getAttachments NOTIFY attachmentsChanged)
-
 public:
     Message(QObject* parent = nullptr);
     ~Message();
-//    QQmlListProperty<Attachment> getAttachments();
-//    static int countAttachments(QQmlListProperty<Attachment> *property);
-//    static Attachment *atAttachments(QQmlListProperty<Attachment> *property, int index);
 
     void setData(const QJsonObject &data);
     QString text;
@@ -140,14 +134,12 @@ public:
     QString team_id;
     bool isStarred;
     QStringList pinnedTo;
+    bool isChanged { false };
 
     QPointer<User> user;
     QList<Reaction*> reactions;
     QList<QObject*> attachments;
     QList<FileShare*> filechares;
-
-signals:
-    void attachmentsChanged(QQmlListProperty<Attachment> attachments);
 };
 
 class MessageListModel : public QAbstractListModel
@@ -162,6 +154,8 @@ public:
         Attachments,
         Reactions,
         FileShares,
+        IsStarred,
+        IsChanged,
         MessageFieldCount
     };
 
@@ -172,6 +166,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void addMessage(Message *message);
+    void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages);
 
 private:
@@ -179,7 +174,4 @@ private:
     QMap<QString, Reaction*> m_reactions;
     UsersModel *m_usersModel;
 };
-
-//QML_DECLARE_TYPE(Attachment)
-//Q_DECLARE_METATYPE(Attachment)
 

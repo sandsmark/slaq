@@ -42,6 +42,10 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(m_messages[row]->reactions);
     case FileShares:
         return QVariant::fromValue(m_messages[row]->filechares);
+    case IsStarred:
+        return QVariant::fromValue(m_messages[row]->isStarred);
+    case IsChanged:
+        return QVariant::fromValue(m_messages[row]->isChanged);
     default:
         qWarning() << "Unhandled role" << role;
         return QVariant();
@@ -54,6 +58,22 @@ void MessageListModel::addMessage(Message* message)
     qDebug() << "adding message:" << message->text;
     m_messages.insert(0, message);
     endInsertRows();
+}
+
+void MessageListModel::updateMessage(Message *message)
+{
+    for (int i = 0; i < m_messages.count(); i++) {
+        Message* oldmessage = m_messages.at(i);
+        if (oldmessage->time == message->time) {
+            if (message->user.isNull()) {
+                message->user = oldmessage->user;
+            }
+            m_messages.replace(i, message);
+            QModelIndex index = QAbstractListModel::index (i, 0,  QModelIndex());
+            emit dataChanged(index, index);
+            break;
+        }
+    }
 }
 
 void MessageListModel::addMessages(const QJsonArray &messages)
@@ -92,6 +112,8 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[Attachments] = "Attachments";
     names[Reactions] = "Reactions";
     names[FileShares] = "FileShares";
+    names[IsStarred] = "IsStarred";
+    names[IsChanged] = "IsChanged";
     return names;
 }
 

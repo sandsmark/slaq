@@ -101,6 +101,7 @@ ItemDelegate {
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
                     font.pointSize: Theme.fontSizeSmall
+                    font.italic: model.IsChanged
                     textFormat: Text.RichText
                     text: model.Text
                     renderType: Text.QtRendering
