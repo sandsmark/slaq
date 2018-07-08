@@ -63,7 +63,7 @@ ItemDelegate {
                     }
 
                     Label {
-                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss.zzz")
+                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
                         verticalAlignment: "AlignBottom"

@@ -50,8 +50,9 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
 
 void MessageListModel::addMessage(Message* message)
 {
-    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + 1);
-    m_messages.append(message);
+    beginInsertRows(QModelIndex(),0, 1);
+    qDebug() << "adding message:" << message->text;
+    m_messages.insert(0, message);
     endInsertRows();
 }
 
@@ -94,6 +95,15 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     return names;
 }
 
+Message::Message(QObject *parent) : QObject(parent)
+{}
+
+Message::~Message()
+{
+    qDeleteAll(attachments);
+    attachments.clear();
+}
+
 //    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
 //    const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
 //    const QJsonValue& innerMessage = message.value(QStringLiteral("message"));
@@ -134,28 +144,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
 //            openChat(channelId);
 //        }
 //    }
-Message::Message(QObject *parent) : QObject(parent)
-{}
 
-Message::~Message()
-{
-    qDeleteAll(attachments);
-    attachments.clear();
-}
-
-//QQmlListProperty<Attachment> Message::getAttachments() {
-//    return QQmlListProperty<Attachment>(this, 0, &Message::countAttachments, &Message::atAttachments);
-//}
-
-//int Message::countAttachments(QQmlListProperty<Attachment> *property) {
-//    Message *m = qobject_cast<Message *>(property->object);
-//    return m->attachments.size();
-//}
-
-//Attachment *Message::atAttachments(QQmlListProperty<Attachment> *property, int index) {
-//    Message *m = qobject_cast<Message *>(property->object);
-//    return m->attachments[index];
-//}
 
 void Message::setData(const QJsonObject &data)
 {

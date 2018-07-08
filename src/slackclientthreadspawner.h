@@ -104,6 +104,7 @@ public slots:
     void addReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
 
     void onMessageReceived(Message* message);
+    void onMessageUpdated(Message* message);
 
     //chats
     void openChat(const QString& teamId, const QString& chatId);

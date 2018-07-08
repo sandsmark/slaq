@@ -263,8 +263,14 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
 //TODO: redesign
+    const QString& subtype = message.value(QStringLiteral("subtype")).toString();
     Message* message_ = new Message;
     message_->setData(message);
+    if (subtype == "message_changed") {
+        emit messageUpdated(message_);
+    } else {
+        emit messageReceived(message_);
+    }
 //    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
 //    const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
 //    const QJsonValue& innerMessage = message.value(QStringLiteral("message"));
@@ -306,7 +312,7 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 //        }
 //    }
 
-    emit messageReceived(message_);
+
 }
 
 void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)

@@ -51,6 +51,7 @@ public:
     bool isShort { false };
 };
 
+//TODO: implement actions
 class Attachment: public QObject {
 
     Q_OBJECT
