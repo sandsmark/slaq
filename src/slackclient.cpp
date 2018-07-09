@@ -183,10 +183,18 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         emit userTyping(m_teamInfo.teamId(),
                         message.value(QStringLiteral("channel")).toString(),
                         userName(message.value(QStringLiteral("user")).toString()));
-    } else if (type == QStringLiteral("team_join") || type == QStringLiteral("user_change")) {
+    } else if (type == QStringLiteral("user_change")) {
+        qDebug() << "user changed" << message;
+        QMetaObject::invokeMethod(teamInfo()->users(), "updateUser",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QJsonObject, message.value(QStringLiteral("user")).toObject()));
+    } else if (type == QStringLiteral("team_join")) {
         qDebug() << "user joined" << message;
-        parseUser(message.value(QStringLiteral("user")).toObject());
-        //m_storage.updateUsersList(); //TODO: redesign
+        //invoke add user for run in GUI thread
+        QMetaObject::invokeMethod(teamInfo()->users(), "addUser",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QJsonObject, message.value(QStringLiteral("user")).toObject()));
+        //parseUser(message.value(QStringLiteral("user")).toObject());
     } else if (type == QStringLiteral("member_joined_channel")) {
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
     } else if (type == QStringLiteral("pong")) {

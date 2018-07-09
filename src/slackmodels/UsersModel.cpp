@@ -50,7 +50,43 @@
 //    "tz_offset": 7200,
 //    "updated": 1504672036
 //}
-User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
+
+User::User(QObject *parent) : QObject(parent) {}
+
+User::User(const User &copy, QObject *parent) : QObject(parent) {
+    m_userId = copy.m_userId;
+    if (!copy.m_appId.isEmpty()) {
+        m_appId = copy.m_appId;
+    }
+    if (!copy.m_username.isEmpty()) {
+        m_username = copy.m_username;
+    }
+    if (!copy.m_fullName.isEmpty()) {
+        m_fullName = copy.m_fullName;
+    }
+    if (!copy.m_avatarUrl.isEmpty()) {
+        m_avatarUrl = copy.m_avatarUrl;
+    }
+    m_isBot = copy.m_isBot;
+    if (!copy.m_statusEmoji.isEmpty()) {
+        m_statusEmoji = copy.m_statusEmoji;
+    }
+    if (!copy.m_status.isEmpty()) {
+        m_status = copy.m_status;
+    }
+    if (!copy.m_email.isEmpty()) {
+        m_email = copy.m_email;
+    }
+    if (copy.m_color != m_color) {
+        m_color = copy.m_color;
+    }
+    if (copy.m_presence != m_presence) {
+        m_presence = copy.m_presence;
+    }
+}
+
+
+void User::setData(const QJsonObject &data)
 {
     //qDebug().noquote() << "user parse" << QJsonDocument(data).toJson();
 
@@ -97,6 +133,8 @@ User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
             //qWarning() << "No avatar URL";
         }
         m_statusEmoji = profile.value(QStringLiteral("status_emoji")).toString();
+        m_status = profile.value(QStringLiteral("status_text")).toString();
+        m_email = profile.value(QStringLiteral("email")).toString();
     }
 }
 
@@ -174,14 +212,42 @@ void UsersModel::addUser(User *user)
     endInsertRows();
 }
 
+void UsersModel::updateUser(const QJsonObject &userData)
+{
+    const QString& userId = userData.value(QStringLiteral("id")).toString();
+    User *olduser = m_users[userId];
+    if (olduser == nullptr) {
+        qWarning() << "no user found for" << userId;
+        return;
+    }
+    User *user = new User(olduser, this);
+    user->setData(userData);
+    QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+    if (m_users[user->userId()]) {
+        m_users[user->userId()]->deleteLater();
+    }
+    m_users[user->userId()] = user;
+    int row  = m_userIds.indexOf(user->userId());
+    QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
+    emit dataChanged(index, index);
+}
+
+void UsersModel::addUser(const QJsonObject &userData)
+{
+    User *user = new User(this);
+    user->setData(userData);
+    QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+    addUser(user);
+}
+
 void UsersModel::addUsers(const QJsonArray &usersData)
 {
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + usersData.count());
     for (const QJsonValue &value : usersData) {
         QJsonObject userData = value.toObject();
-        User *user = new User(userData, this);
+        User *user = new User(this);
+        user->setData(userData);
         QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
-
         if (m_users[user->userId()]) {
             m_users[user->userId()]->deleteLater();
             m_userIds.removeAll(user->userId());

@@ -19,6 +19,8 @@ class User : public QObject
     Q_PROPERTY(QString username MEMBER m_username CONSTANT)
     Q_PROPERTY(QString fullName MEMBER m_fullName CONSTANT)
     Q_PROPERTY(QString statusEmoji MEMBER m_statusEmoji CONSTANT)
+    Q_PROPERTY(QString status MEMBER m_status CONSTANT)
+    Q_PROPERTY(QString email MEMBER m_email CONSTANT)
     Q_PROPERTY(QColor color MEMBER m_color CONSTANT)
     Q_PROPERTY(QUrl avatarUrl MEMBER m_avatarUrl CONSTANT)
     Q_PROPERTY(bool isBot MEMBER m_isBot CONSTANT)
@@ -33,7 +35,10 @@ public:
     };
     Q_ENUM(Presence)
 
-    User(const QJsonObject &data, QObject *parent);
+    User(QObject *parent);
+    User(const User& copy, QObject *parent);
+
+    void setData(const QJsonObject &data);
 
     void setPresence(const Presence presence);
     Presence presence();
@@ -55,6 +60,8 @@ private:
     QUrl m_avatarUrl;
     bool m_isBot = false;
     QString m_statusEmoji;
+    QString m_status;
+    QString m_email;
     QColor m_color;
     Presence m_presence = Unknown;
 };
@@ -83,10 +90,14 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+
+public slots:
     void addUser(User *user);
+    void updateUser(const QJsonObject &userData);
+    void addUser(const QJsonObject &userData);
     void addUsers(const QJsonArray &usersData);
     QPointer<User> user(const QString &id);
-    Q_INVOKABLE int fooCount() { return m_users.count(); }
+    int fooCount() { return m_users.count(); }
 
 private:
     QMap<QString, QPointer<User>> m_users;
