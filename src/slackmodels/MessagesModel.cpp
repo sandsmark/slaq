@@ -8,10 +8,8 @@
 #include "MessagesModel.h"
 #include "messageformatter.h"
 
-MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel) : QAbstractListModel(parent),
-    m_usersModel(usersModel)
-{
-}
+MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId) : QAbstractListModel(parent),
+    m_usersModel(usersModel), m_channelId(channelId) {}
 
 int MessageListModel::rowCount(const QModelIndex &parent) const
 {
@@ -35,13 +33,16 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(m_messages[row]->user.data());
     case Time:
         return m_messages[row]->time;
+    case SlackTimestamp:
+        return m_messages[row]->ts;
     case Attachments:
         //qDebug() << "Attachment for row" << row << m_messages[row]->attachments.count();
         return QVariant::fromValue(m_messages[row]->attachments);
     case Reactions:
+        //qDebug() << "Reactions for row" << row << m_messages[row]->reactions.count();
         return QVariant::fromValue(m_messages[row]->reactions);
     case FileShares:
-        return QVariant::fromValue(m_messages[row]->filechares);
+        return QVariant::fromValue(m_messages[row]->fileshares);
     case IsStarred:
         return QVariant::fromValue(m_messages[row]->isStarred);
     case IsChanged:
@@ -52,9 +53,38 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     }
 }
 
+void MessageListModel::updateReactionUsers(Message* message) {
+    foreach(QObject* r, message->reactions) {
+        Reaction* reaction = static_cast<Reaction*>(r);
+        if (!reaction->users.isEmpty()) {
+            reaction->users.clear();
+        }
+        foreach (const QString& userId, reaction->userIds) {
+            reaction->users.append(m_usersModel->user(userId)->username());
+        }
+        //qDebug() << "reaction users" << reaction->users << "for" << reaction->userIds;
+    }
+}
+
+Message *MessageListModel::message(const QDateTime &ts)
+{
+    for (int i = 0; i < m_messages.count(); i++) {
+        Message* message = m_messages.at(i);
+        if (message->time == ts) {
+            return message;
+        }
+    }
+    return nullptr;
+}
+
 void MessageListModel::addMessage(Message* message)
 {
-    beginInsertRows(QModelIndex(),0, 1);
+    updateReactionUsers(message);
+    if (message->user.isNull()) {
+        qWarning() << "user is null for " << message->user_id;
+    }
+
+    beginInsertRows(QModelIndex(), 0, 0);
     qDebug() << "adding message:" << message->text;
     m_messages.insert(0, message);
     endInsertRows();
@@ -62,11 +92,15 @@ void MessageListModel::addMessage(Message* message)
 
 void MessageListModel::updateMessage(Message *message)
 {
+    updateReactionUsers(message);
     for (int i = 0; i < m_messages.count(); i++) {
         Message* oldmessage = m_messages.at(i);
         if (oldmessage->time == message->time) {
             if (message->user.isNull()) {
                 message->user = oldmessage->user;
+                if (message->user.isNull()) {
+                    qWarning() << "user is null for " << message->user_id;
+                }
             }
             m_messages.replace(i, message);
             QModelIndex index = QAbstractListModel::index (i, 0,  QModelIndex());
@@ -84,7 +118,10 @@ void MessageListModel::addMessages(const QJsonArray &messages)
     for (const QJsonValue &messageData : messages) {
         const QJsonObject messageObject = messageData.toObject();
         Message* message = new Message;
+        //qDebug() << "message obj" << messageObject;
         message->setData(messageObject);
+        message->channel_id = m_channelId;
+        updateReactionUsers(message);
         if (message->user_id.isEmpty()) {
             qWarning() << "user id is empty" << messageObject;
         }
@@ -109,6 +146,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[Text] = "Text";
     names[User] = "User";
     names[Time] = "Time";
+    names[SlackTimestamp] = "SlackTimestamp";
     names[Attachments] = "Attachments";
     names[Reactions] = "Reactions";
     names[FileShares] = "FileShares";
@@ -172,10 +210,13 @@ void Message::setData(const QJsonObject &data)
 {
     //qDebug() << "message" << data;
     type = data.value(QStringLiteral("type")).toString();
-    time = QDateTime::fromSecsSinceEpoch(data.value(QStringLiteral("ts")).toString().toDouble());
+    ts = data.value(QStringLiteral("ts")).toString();
+    time = slackToDateTime(ts);
+    //qDebug() << ts << time;
     text = data.value(QStringLiteral("text")).toString();
     channel_id = data.value(QStringLiteral("channel")).toString();
     user_id = data.value(QStringLiteral("user")).toString();
+    subtype = data.value(QStringLiteral("subtype")).toString();
     if (user_id.isEmpty()) {
         const QString& subtype = data.value(QStringLiteral("subtype")).toString(QStringLiteral("default"));
         if (subtype == QStringLiteral("bot_message")) {
@@ -183,9 +224,9 @@ void Message::setData(const QJsonObject &data)
         }
     }
 
-    subtype = data.value(QStringLiteral("subtype")).toString();
     for (const QJsonValue &reactionValue : data.value("reactions").toArray()) {
-        Reaction *reaction = new Reaction(reactionValue.toObject());
+        Reaction *reaction = new Reaction;
+        reaction->setData(reactionValue.toObject());
         QQmlEngine::setObjectOwnership(reaction, QQmlEngine::CppOwnership);
         reactions.append(reaction);
     }
@@ -234,9 +275,7 @@ void Message::setData(const QJsonObject &data)
 //data.insert(QStringLiteral("fields"), QVariant(fields));
 //data.insert(QStringLiteral("images"), QVariant(images));
 
-Attachment::Attachment(QObject *parent): QObject(parent)
-{
-}
+Attachment::Attachment(QObject *parent): QObject(parent) {}
 
 void Attachment::setData(const QJsonObject &data)
 {
@@ -301,20 +340,21 @@ void Attachment::setData(const QJsonObject &data)
     }
 }
 
-Reaction::Reaction(const QJsonObject &data, QObject *parent) : QObject(parent)
+Reaction::Reaction(QObject *parent) : QObject(parent) {}
+
+void Reaction::setData(const QJsonObject &data)
 {
+    //qDebug().noquote() << "reaction" << QJsonDocument(data).toJson();
     name = data[QStringLiteral("name")].toString();
     emoji = data[QStringLiteral("emoji")].toString();
 
     const QJsonArray usersList = data[QStringLiteral("users")].toArray();
     for (const QJsonValue &usersValue : usersList) {
-        userIds.append(usersValue.toObject()["name"].toString());
+        userIds.append(usersValue.toString());
     }
 }
 
-AttachmentField::AttachmentField(QObject *parent): QObject(parent)
-{
-}
+AttachmentField::AttachmentField(QObject *parent): QObject(parent) {}
 
 void AttachmentField::setData(const QJsonObject &data)
 {
@@ -322,3 +362,5 @@ void AttachmentField::setData(const QJsonObject &data)
     value = data.value(QStringLiteral("value")).toString();
     isShort = data.value(QStringLiteral("short")).toBool();
 }
+
+

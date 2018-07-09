@@ -7,7 +7,7 @@
 
 struct DebugHelperClass {
     DebugHelperClass(QString funcInfo) : m_funcInfo(funcInfo) {
-        qDebug().noquote() << "start" << m_funcInfo << QThread::currentThreadId();
+        //qDebug().noquote() << "start" << m_funcInfo << QThread::currentThreadId();
         m_timer.start();
     }
 

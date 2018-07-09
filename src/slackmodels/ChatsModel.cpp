@@ -156,7 +156,7 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
     Chat chat(data, type);
 
     chat.membersModel = new UsersModel(this);
-    chat.messagesModel = new MessageListModel(this, /*chat.membersModel*/m_networkUsers);
+    chat.messagesModel = new MessageListModel(this, /*chat.membersModel*/m_networkUsers, chat.id);
     QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
 

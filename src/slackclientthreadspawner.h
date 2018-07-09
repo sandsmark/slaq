@@ -100,8 +100,8 @@ public slots:
     void loadMessages(const QString& teamId, ChatsModel::ChatType type, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
-    void deleteReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
-    void addReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
+    void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
+    void addReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
 
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message);

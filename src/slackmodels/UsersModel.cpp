@@ -6,10 +6,53 @@
 #include <QQmlEngine>
 #include <QDateTime>
 #include <QJsonArray>
-
+//user parse {
+//    "color": "3c8c69",
+//    "deleted": false,
+//    "id": "U3SFDNEHY",
+//    "is_admin": false,
+//    "is_app_user": false,
+//    "is_bot": false,
+//    "is_owner": false,
+//    "is_primary_owner": false,
+//    "is_restricted": false,
+//    "is_ultra_restricted": false,
+//    "name": "tafuri",
+//    "presence": "away",
+//    "profile": {
+//        "avatar_hash": "g225e85e1f2c",
+//        "display_name": "tafuri",
+//        "display_name_normalized": "tafuri",
+//        "fields": null,
+//        "first_name": "Sebastian",
+//        "image_192": "https://secure.gravatar.com/avatar/225e85e1f2c0112175e4db9d1d2f6623.jpg?s=192&d=https%3A%2F%2Fcfr.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0022-192.png",
+//        "image_24": "https://secure.gravatar.com/avatar/225e85e1f2c0112175e4db9d1d2f6623.jpg?s=24&d=https%3A%2F%2Fcfr.slack-edge.com%2F66f9%2Fimg%2Favatars%2Fava_0022-24.png",
+//        "image_32": "https://secure.gravatar.com/avatar/225e85e1f2c0112175e4db9d1d2f6623.jpg?s=32&d=https%3A%2F%2Fcfr.slack-edge.com%2F66f9%2Fimg%2Favatars%2Fava_0022-32.png",
+//        "image_48": "https://secure.gravatar.com/avatar/225e85e1f2c0112175e4db9d1d2f6623.jpg?s=48&d=https%3A%2F%2Fcfr.slack-edge.com%2F66f9%2Fimg%2Favatars%2Fava_0022-48.png",
+//        "image_512": "https://secure.gravatar.com/avatar/225e85e1f2c0112175e4db9d1d2f6623.jpg?s=512&d=https%3A%2F%2Fcfr.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0022-512.png",
+//        "image_72": "https://secure.gravatar.com/avatar/225e85e1f2c0112175e4db9d1d2f6623.jpg?s=72&d=https%3A%2F%2Fcfr.slack-edge.com%2F66f9%2Fimg%2Favatars%2Fava_0022-72.png",
+//        "last_name": "Tafuri",
+//        "phone": "",
+//        "real_name": "Sebastian Tafuri",
+//        "real_name_normalized": "Sebastian Tafuri",
+//        "skype": "",
+//        "status_emoji": "",
+//        "status_expiration": 0,
+//        "status_text": "",
+//        "status_text_canonical": "",
+//        "team": "T21Q22G66",
+//        "title": ""
+//    },
+//    "real_name": "Sebastian Tafuri",
+//    "team_id": "T21Q22G66",
+//    "tz": "Europe/Amsterdam",
+//    "tz_label": "Central European Summer Time",
+//    "tz_offset": 7200,
+//    "updated": 1504672036
+//}
 User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
 {
-//    qDebug().noquote() << QJsonDocument(data).toJson();
+    //qDebug().noquote() << "user parse" << QJsonDocument(data).toJson();
 
     m_userId = data.value(QStringLiteral("id")).toString();
     if (m_userId.isEmpty()) {
@@ -32,10 +75,12 @@ User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
         m_appId = data.value(QStringLiteral("app_id")).toString();
     } else {
         m_fullName = data.value(QStringLiteral("real_name")).toString();
+        m_username = data.value(QStringLiteral("name")).toString();
         if (m_fullName.isEmpty()) {
             //qWarning() << "No full name set";
         }
 
+        m_color = QColor("#" + data.value(QStringLiteral("color")).toString());
         const QString presenceString = data.value(QStringLiteral("presence")).toString();
         if (presenceString == "active") {
             m_presence = Active;
@@ -47,10 +92,11 @@ User::User(const QJsonObject &data, QObject *parent) : QObject(parent)
         }
 
         QJsonObject profile = data.value(QStringLiteral("profile")).toObject();
-        m_avatarUrl = QUrl(profile[QStringLiteral("image_72")].toString());
+        m_avatarUrl = QUrl(profile.value(QStringLiteral("image_72")).toString());
         if (!m_avatarUrl.isValid()) {
             //qWarning() << "No avatar URL";
         }
+        m_statusEmoji = profile.value(QStringLiteral("status_emoji")).toString();
     }
 }
 

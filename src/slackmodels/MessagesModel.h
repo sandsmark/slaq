@@ -10,26 +10,45 @@
 #include <QAbstractListModel>
 #include <QSize>
 #include <QDateTime>
+#include <QStringList>
 
 #include "UsersModel.h"
 
+namespace {
+QDateTime slackToDateTime(const QString& slackts) {
+    QDateTime dt;
+    QStringList ts_ = slackts.split(".");
+    if (ts_.size() == 2) {
+        dt = QDateTime::fromSecsSinceEpoch(ts_.at(0).toLongLong());
+        int msecs = ts_.at(1).toInt();
+        dt = dt.addMSecs(msecs);
+    }
+    return dt;
+}
+
+QString dateTimeToSlack(const QDateTime& dt) {
+    return QString("%1.000").arg(dt.toSecsSinceEpoch()) + QString("%1").arg(dt.time().msec(), 3, 10, QChar('0'));
+}
+}
 class Reaction : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QStringList userIds MEMBER userIds NOTIFY usersChanged)
+    Q_PROPERTY(QStringList users MEMBER users CONSTANT/*NOTIFY usersChanged*/)
     Q_PROPERTY(QString emoji MEMBER emoji CONSTANT)
     Q_PROPERTY(QString name MEMBER name CONSTANT)
-    Q_PROPERTY(int usersCount READ usersCount NOTIFY usersChanged)
+    Q_PROPERTY(int usersCount READ usersCount CONSTANT/*NOTIFY usersChanged*/)
 
 public:
-    Reaction(const QJsonObject &data, QObject *parent = nullptr);
-    int usersCount() { return userIds.count(); }
+    Reaction(QObject *parent = nullptr);
+    void setData(const QJsonObject &data);
+    int usersCount() { return users.count(); }
 
 signals:
     void usersChanged();
 
 public:
+    QStringList users;
     QStringList userIds;
     QString name;
     QString emoji;
@@ -126,6 +145,7 @@ public:
 
     void setData(const QJsonObject &data);
     QString text;
+    QString ts;
     QDateTime time;
     QString type;
     QString subtype;
@@ -137,9 +157,9 @@ public:
     bool isChanged { false };
 
     QPointer<User> user;
-    QList<Reaction*> reactions;
+    QList<QObject*> reactions;
     QList<QObject*> attachments;
-    QList<FileShare*> filechares;
+    QList<QObject*> fileshares;
 };
 
 class MessageListModel : public QAbstractListModel
@@ -151,6 +171,7 @@ public:
         Text,
         User,
         Time,
+        SlackTimestamp,
         Attachments,
         Reactions,
         FileShares,
@@ -159,7 +180,7 @@ public:
         MessageFieldCount
     };
 
-    MessageListModel(QObject *parent, UsersModel *usersModel);
+    MessageListModel(QObject *parent, UsersModel *usersModel, const QString& channelId);
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -168,10 +189,13 @@ public:
     void addMessage(Message *message);
     void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages);
+    void updateReactionUsers(Message *message);
 
+    Message* message(const QDateTime& ts);
 private:
     QList<Message*> m_messages;
     QMap<QString, Reaction*> m_reactions;
     UsersModel *m_usersModel;
+    QString m_channelId;
 };
 

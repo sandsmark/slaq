@@ -151,7 +151,9 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 
     const QString& type = message.value(QStringLiteral("type")).toString();
 
-    qDebug() << "stream message" << type;
+    if (type != "pong") {
+        qDebug() << "stream message" << type;
+    }
 //    qDebug().noquote() << QJsonDocument(message).toJson();
 
     if (type == QStringLiteral("message")) {
@@ -264,20 +266,21 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
     DEBUG_BLOCK;
 //TODO: redesign
     const QString& subtype = message.value(QStringLiteral("subtype")).toString();
+    const QJsonValue& submessage = message.value(QStringLiteral("message"));
     Message* message_ = new Message;
+    if (submessage.isUndefined()) {
+        message_->setData(message);
+    } else {
+        message_->setData(submessage.toObject());
+        //channel id missed in sub messages
+        const QString& channel_id = message.value(QStringLiteral("channel")).toString();
+        message_->channel_id = channel_id;
+    }
     if (subtype == "message_changed") {
        //qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
-       const QJsonValue& submessage = message.value(QStringLiteral("message"));
-       if (submessage.isUndefined()) {
-           message_->setData(message);
-       } else {
-           message_->setData(submessage.toObject());
-           //channel id missed in sub messages
-           const QString& channel_id = message.value(QStringLiteral("channel")).toString();
-           message_->channel_id = channel_id;
-       }
        message_->isChanged = true;
        emit messageUpdated(message_);
+    } if (subtype == "message_deleted") {
     } else {
         message_->setData(message);
         emit messageReceived(message_);
@@ -328,28 +331,51 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 
 void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
-//TODO: redesign
     //"{\"type\":\"reaction_added\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C09PZTN5S\",\"ts\":\"1525437188.000435\"},\"reaction\":\"slightly_smiling_face\",\"item_user\":\"U3ZC1RYJG\",\"event_ts\":\"1525437431.000236\",\"ts\":\"1525437431.000236\"}"
     //"{\"type\":\"reaction_removed\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C0CK10FA9\",\"ts\":\"1526478339.000316\"},\"reaction\":\"+1\",\"item_user\":\"U1WTHK18E\",\"event_ts\":\"1526736040.000047\",\"ts\":\"1526736040.000047\"}"
-//    QVariantMap data;
-//    QJsonObject item = message.value(QStringLiteral("item")).toObject();
-//    const QString& reaction = message.value(QStringLiteral("reaction")).toString();
-
-//    QString emojiPrepare = QString(":%1:").arg(reaction);
-//    m_formatter.replaceEmoji(emojiPrepare);
-
-//    data.insert(QStringLiteral("type"), message.value(QStringLiteral("type")).toVariant());
-//    data.insert(QStringLiteral("reaction"), reaction);
-//    data.insert(QStringLiteral("emoji"), emojiPrepare);
-//    data.insert(QStringLiteral("user"),
-//                m_storage.user(message.value(QStringLiteral("user")).toString()).
-//                value(QStringLiteral("name")).toString());
-//    data.insert(QStringLiteral("channel"), item.value(QStringLiteral("channel")).toVariant());
-//    data.insert(QStringLiteral("ts"), item.value(QStringLiteral("ts")).toVariant());
-
-//    emit messageUpdated(m_teamInfo.teamId(), data);
+    const QJsonObject& item = message.value(QStringLiteral("item")).toObject();
+    const QDateTime& ts = slackToDateTime(item.value(QStringLiteral("ts")).toString());
+    const QString& channelid = item.value(QStringLiteral("channel")).toString();
+    MessageListModel* messages = m_teamInfo.chats()->messages(channelid);
+    Message* m = messages->message(ts);
+    if (m != nullptr) {
+        const QString& reaction = message.value(QStringLiteral("reaction")).toString();
+        const QString& type = message.value(QStringLiteral("type")).toString();
+        const QString& userid = message.value(QStringLiteral("user")).toString();
+        Reaction* r = nullptr;
+        //check if the reaction already there
+        foreach(QObject* reaObj, m->reactions) {
+            Reaction* rea = static_cast<Reaction*>(reaObj);
+            qDebug() << "search reaction" << rea->name << reaction;
+            if (rea->name == reaction) {
+                r = rea;
+                break;
+            }
+        }
+        if (type == "reaction_added") {
+            if (r == nullptr) {
+                r = new Reaction;
+                QString emojiPrepare = QString(":%1:").arg(reaction);
+                MessageFormatter _formatter;
+                _formatter.replaceEmoji(emojiPrepare);
+                r->emoji = emojiPrepare;
+                r->name = reaction;
+                m->reactions.append(r);
+            }
+            r->userIds << userid;
+        } else if (type == "reaction_removed") {
+            if (r == nullptr) {
+                qWarning() << "reaction" << reaction << "not found for message on channel" << channelid << "time" << ts;
+                return;
+            }
+            m->reactions.removeOne(r);
+        }
+        emit messageUpdated(m);
+    } else {
+        qWarning() << "message not found for ts" << ts;
+    }
 }
 
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
@@ -1263,27 +1289,27 @@ void SlackTeamClient::handleMarkChannelReply()
     reply->deleteLater();
 }
 
-void SlackTeamClient::deleteReaction(const QString& channelId, const QString& ts, const QString& reaction)
+void SlackTeamClient::deleteReaction(const QString& channelId, const QDateTime &ts, const QString& reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    data.insert(QStringLiteral("timestamp"), ts);
+    data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.remove"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleDeleteReactionReply);
 }
 
-void SlackTeamClient::addReaction(const QString &channelId, const QString &ts, const QString &reaction)
+void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    data.insert(QStringLiteral("timestamp"), ts);
+    data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleAddReactionReply);

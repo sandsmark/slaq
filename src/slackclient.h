@@ -103,8 +103,8 @@ public slots:
     void testLogin();
     void searchMessages(const QString& searchString);
     void loadMessages(const ChatsModel::ChatType type, const QString& channelId);
-    void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
-    void addReaction(const QString &channelId, const QString &ts, const QString &reaction);
+    void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
+    void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void markChannel(const QString& type, const QString& channelId, const QString& time);

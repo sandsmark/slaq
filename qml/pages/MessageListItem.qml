@@ -4,6 +4,7 @@ import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 
 import ".."
+import "../components"
 
 ItemDelegate {
     id: itemDelegate
@@ -20,7 +21,7 @@ ItemDelegate {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamId, channel.id, time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamId, channelId, model.Time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -141,65 +142,8 @@ ItemDelegate {
                         id: reactionsRepeater
                         model: Reactions
 
-                        Button {
-                            //TODO: check for Theme
-                            id: control
-
-                            hoverEnabled: true
-                            ToolTip.text: users
-                            ToolTip.delay: 500
-                            ToolTip.timeout: 5000
-                            ToolTip.visible: hovered
-                            text: emoji
-                            height: Theme.headerSize
-                            width: (ImagesCache.isUnicode ? contentItem.contentWidth : Theme.headerSize - 4)
-                                   + Theme.paddingMedium*2
-                                   + countLabel.contentWidth
-
-                            onClicked: {
-                                SlackClient.deleteReaction(teamId, channel.id, time, name)
-                            }
-
-                            contentItem: Item {
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: Theme.headerSize - 4
-                                    height: Theme.headerSize - 4
-                                    smooth: true
-                                    visible: !ImagesCache.isUnicode
-                                    source: "image://emoji/" + name
-                                }
-
-                                Text {
-                                    visible: ImagesCache.isUnicode
-                                    anchors.centerIn: parent
-                                    text: control.text
-                                    font.family: "Twitter Color Emoji"
-                                    font.pixelSize: Theme.headerSize - 6
-                                    renderType: Text.QtRendering
-                                    verticalAlignment: Text.AlignVCenter
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                            }
-
-                            background: Rectangle {
-                                color: "#eaf4f5"
-                                implicitWidth: 100
-                                implicitHeight: parent.height
-                                opacity: enabled ? 1 : 0.3
-                                border.color: "#bdbdbd"
-                                border.width: 1
-                                radius: 3
-                                Text {
-                                    id: countLabel
-                                    anchors.right: parent.right; anchors.rightMargin: Theme.paddingSmall
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    font.pointSize: Theme.fontSizeSmall
-                                    renderType: Text.QtRendering
-                                    color: "#0f0f0f"
-                                    text: reactionscount
-                                }
-                            }
+                        Reaction {
+                            reaction: Reactions[index]
                         }
                     }
                 }

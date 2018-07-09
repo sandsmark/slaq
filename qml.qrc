@@ -43,5 +43,6 @@
         <file>qml/components/ImageFileViewer.qml</file>
         <file>qml/components/TextFileViewer.qml</file>
         <file>qml/components/VideoFileViewer.qml</file>
+        <file>qml/components/Reaction.qml</file>
     </qresource>
 </RCC>
