@@ -219,6 +219,23 @@ Page {
         }
     }
 
+    Connections {
+        target: SlackClient
+        onUserTyping: {
+            if (teamRoot.teamId === teamId && channelId === channel.id) {
+                var userName = SlackClient.userName(teamRoot.teamId, userId)
+
+                if (usersTyping.indexOf(userName) === -1) {
+                    usersTyping.push(userName)
+                }
+                if (usersTyping.length > 0) {
+                    userTypingLabel.text = "User(s) " + usersTyping.join(", ") + " typing..."
+                    removeDelayTimer.restart()
+                }
+            }
+        }
+    }
+
     Column {
         id: nickPopup
         anchors {

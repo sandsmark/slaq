@@ -138,8 +138,11 @@ ListView {
 
     function getSectionName(section) {
         switch (section) {
-            case "unread":
-                return qsTr("Unreads")
+            case "unreadchannel":
+                return qsTr("Unread channels")
+
+            case "unreadchat":
+                return qsTr("Unread chats")
 
             case "channel":
                 return qsTr("Channels")
@@ -147,5 +150,7 @@ ListView {
             case "chat":
                 return qsTr("Direct messages")
         }
+
+        return qsTr("Other")
     }
 }

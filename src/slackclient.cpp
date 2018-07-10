@@ -1332,7 +1332,6 @@ void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
 void SlackTeamClient::postMessage(const QString& channelId, QString content)
 {
     DEBUG_BLOCK
-
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("text"), content);
