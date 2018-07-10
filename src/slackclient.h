@@ -169,16 +169,7 @@ private:
     void parsePresenceChange(const QJsonObject& message);
     void parseNotification(const QJsonObject& message);
 
-    QVariantMap getMessageData(const QJsonObject& message, const QString& teamId);
-
-    QString getContent(const QJsonObject& message);
-    QVariantList getAttachments(const QJsonObject& message);
     QVariantList getFileShares(const QJsonObject& message);
-    QString getAttachmentColor(const QJsonObject& attachment);
-    QVariantList getAttachmentFields(const QJsonObject& attachment);
-    QVariantList getAttachmentImages(const QJsonObject& attachment);
-
-    QVariantList getReactions(const QJsonObject& message);
 
     QVariantMap parseChannel(const QJsonObject& data);
     QVariantMap parseGroup(const QJsonObject& group);

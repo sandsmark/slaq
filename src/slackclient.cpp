@@ -660,15 +660,16 @@ void SlackTeamClient::handleSearchMessagesReply()
     QJsonArray matches = messages.value(QStringLiteral("matches")).toArray();
     for (const QJsonValue& match : matches) {
         const QJsonObject& matchObj = match.toObject();
-        QVariantMap searchResult = getMessageData(matchObj, matchObj.value(QStringLiteral("team")).toString());
-        searchResult.insert(QStringLiteral("permalink"), matchObj.value(QStringLiteral("permalink")).toVariant());
+        //TODO: redesign
+//        QVariantMap searchResult = getMessageData(matchObj, matchObj.value(QStringLiteral("team")).toString());
+//        searchResult.insert(QStringLiteral("permalink"), matchObj.value(QStringLiteral("permalink")).toVariant());
 
-        const QJsonObject& channelObj = matchObj.value(QStringLiteral("channel")).toObject();
-        QVariantMap channel;
-        channel[QStringLiteral("id")] = channelObj.value(QStringLiteral("id"));
-        channel[QStringLiteral("name")] = channelObj.value(QStringLiteral("name"));
-        searchResult.insert(QStringLiteral("channel"), channel);
-        searchResults.append(searchResult);
+//        const QJsonObject& channelObj = matchObj.value(QStringLiteral("channel")).toObject();
+//        QVariantMap channel;
+//        channel[QStringLiteral("id")] = channelObj.value(QStringLiteral("id"));
+//        channel[QStringLiteral("name")] = channelObj.value(QStringLiteral("name"));
+//        searchResult.insert(QStringLiteral("channel"), channel);
+//        searchResults.append(searchResult);
     }
     qDebug() << "search result. found entries" << _total;
     emit searchResultsReady(m_teamInfo.teamId(), searchResults);
@@ -1425,31 +1426,6 @@ void SlackTeamClient::handlePostImage()
     reply->deleteLater();
 }
 
-QVariantMap SlackTeamClient::getMessageData(const QJsonObject& message, const QString& teamId)
-{
-    DEBUG_BLOCK
-
-    QVariantMap data;
-    data.insert(QStringLiteral("type"), message.value(QStringLiteral("type")).toVariant());
-    data.insert(QStringLiteral("time"), message.value(QStringLiteral("ts")).toVariant());
-    data.insert(QStringLiteral("channel"), message.value(QStringLiteral("channel")).toVariant());
-    data.insert(QStringLiteral("user"), user(message));
-    data.insert(QStringLiteral("attachments"), getAttachments(message));
-    data.insert(QStringLiteral("fileShares"), getFileShares(message));
-    data.insert(QStringLiteral("content"), QVariant(getContent(message)));
-    data.insert(QStringLiteral("reactions"), getReactions(message));
-    data.insert(QStringLiteral("teamid"), teamId);
-    data.insert(QStringLiteral("permalink"), "");
-
-    bool _edited = false;
-    if (!message.value(QStringLiteral("edited")).isUndefined()) {
-        _edited = true;
-    }
-    data.insert(QStringLiteral("edited"), _edited);
-
-    return data;
-}
-
 QVariantMap SlackTeamClient::user(const QJsonObject &data)
 {
     DEBUG_BLOCK;
@@ -1480,24 +1456,6 @@ QVariantMap SlackTeamClient::user(const QJsonObject &data)
 
 //    return userData;
     return QVariantMap();
-}
-
-QString SlackTeamClient::getContent(const QJsonObject& message)
-{
-    DEBUG_BLOCK
-
-    QString content = message.value(QStringLiteral("text")).toString();
-//TODO: redesign
-//    findNewUsers(content);
-//    m_formatter.replaceUserInfo(m_storage.users(), content);
-//    m_formatter.replaceTargetInfo(content);
-//    m_formatter.replaceChannelInfo(m_storage.channels(), content);
-//    m_formatter.replaceLinks(content);
-//    m_formatter.replaceSpecialCharacters(content);
-//    m_formatter.replaceMarkdown(content);
-//    m_formatter.replaceEmoji(content);
-
-    return content;
 }
 
 QVariantList SlackTeamClient::getFileShares(const QJsonObject& message)
@@ -1544,203 +1502,6 @@ QVariantList SlackTeamClient::getFileShares(const QJsonObject& message)
     }
 
     return images;
-}
-
-QVariantList SlackTeamClient::getAttachments(const QJsonObject& message)
-{
-    DEBUG_BLOCK
-
-    QJsonArray attachementList = message.value(QStringLiteral("attachments")).toArray();
-    QVariantList attachments;
-
-    foreach (const QJsonValue &value, attachementList) {
-        QJsonObject attachment = value.toObject();
-        QVariantMap data;
-
-        QString titleLink = attachment.value(QStringLiteral("title_link")).toString();
-        QString title = attachment.value(QStringLiteral("title")).toString();
-        QString pretext = attachment.value(QStringLiteral("pretext")).toString();
-        QString text = attachment.value(QStringLiteral("text")).toString();
-        QString fallback = attachment.value(QStringLiteral("fallback")).toString();
-        QString color = getAttachmentColor(attachment);
-        QVariantList fields = getAttachmentFields(attachment);
-        QVariantList images = getAttachmentImages(attachment);
-
-        m_formatter.replaceLinks(pretext);
-        m_formatter.replaceLinks(text);
-        m_formatter.replaceLinks(fallback);
-        m_formatter.replaceEmoji(text);
-        m_formatter.replaceEmoji(pretext);
-        m_formatter.replaceEmoji(fallback);
-        m_formatter.replaceSpecialCharacters(text);
-        m_formatter.replaceSpecialCharacters(pretext);
-        m_formatter.replaceSpecialCharacters(fallback);
-
-        int index = text.indexOf(' ', 250);
-        if (index > 0) {
-            text = text.left(index) + "...";
-        }
-
-        if (!title.isEmpty() && !titleLink.isEmpty()) {
-            title = "<a href=\"" + titleLink + "\">" + title + "</a>";
-        }
-
-        data.insert(QStringLiteral("title"), QVariant(title));
-        data.insert(QStringLiteral("pretext"), QVariant(pretext));
-        data.insert(QStringLiteral("content"), QVariant(text));
-        data.insert(QStringLiteral("fallback"), QVariant(fallback));
-        data.insert(QStringLiteral("indicatorColor"), QVariant(color));
-        data.insert(QStringLiteral("fields"), QVariant(fields));
-        data.insert(QStringLiteral("images"), QVariant(images));
-
-        attachments.append(data);
-    }
-
-    return attachments;
-}
-
-QString SlackTeamClient::getAttachmentColor(const QJsonObject& attachment)
-{
-    DEBUG_BLOCK
-
-    QString color = attachment.value(QStringLiteral("color")).toString();
-
-    if (color.isEmpty()) {
-        color = QStringLiteral("theme");
-    } else if (color == QStringLiteral("good")) {
-        color = QStringLiteral("#6CC644");
-    } else if (color == QStringLiteral("warning")) {
-        color = QStringLiteral("#E67E22");
-    } else if (color == QStringLiteral("danger")) {
-        color = QStringLiteral("#D00000");
-    } else if (!color.startsWith("#")) {
-        color = "#" + color;
-    }
-
-    return color;
-}
-
-QVariantList SlackTeamClient::getAttachmentFields(const QJsonObject& attachment)
-{
-    DEBUG_BLOCK
-
-    QVariantList fields;
-    if (attachment.contains(QStringLiteral("fields"))) {
-        QJsonArray fieldList = attachment.value(QStringLiteral("fields")).toArray();
-
-        foreach (const QJsonValue &fieldValue, fieldList) {
-            QJsonObject field = fieldValue.toObject();
-            QString title = field.value(QStringLiteral("title")).toString();
-            QString value = field.value(QStringLiteral("value")).toString();
-            bool isShort = field.value(QStringLiteral("short")).toBool();
-
-            if (!title.isEmpty()) {
-                m_formatter.replaceLinks(title);
-                m_formatter.replaceMarkdown(title);
-                m_formatter.replaceSpecialCharacters(title);
-
-                QVariantMap titleData;
-                titleData.insert(QStringLiteral("isTitle"), QVariant(true));
-                titleData.insert(QStringLiteral("isShort"), QVariant(isShort));
-                titleData.insert(QStringLiteral("content"), QVariant(title));
-                fields.append(titleData);
-            }
-
-            if (!value.isEmpty()) {
-                m_formatter.replaceLinks(value);
-                m_formatter.replaceMarkdown(value);
-                m_formatter.replaceSpecialCharacters(title);
-
-                QVariantMap valueData;
-                valueData.insert(QStringLiteral("isTitle"), QVariant(false));
-                valueData.insert(QStringLiteral("isShort"), QVariant(isShort));
-                valueData.insert(QStringLiteral("content"), QVariant(value));
-                fields.append(valueData);
-            }
-        }
-    }
-
-    return fields;
-}
-
-QVariantList SlackTeamClient::getAttachmentImages(const QJsonObject& attachment)
-{
-    DEBUG_BLOCK
-
-    QVariantList images;
-
-    if (attachment.contains(QStringLiteral("image_url"))) {
-        QVariantMap size;
-        size.insert(QStringLiteral("width"), attachment.value(QStringLiteral("image_width")));
-        size.insert(QStringLiteral("height"), attachment.value(QStringLiteral("image_height")));
-
-        QVariantMap image;
-        image.insert(QStringLiteral("url"), attachment.value(QStringLiteral("image_url")));
-        image.insert(QStringLiteral("size"), size);
-
-        images.append(image);
-    }
-
-    return images;
-}
-
-QVariantList SlackTeamClient::getReactions(const QJsonObject &message)
-{
-    DEBUG_BLOCK
-
-    QJsonArray reactionsList = message.value(QStringLiteral("reactions")).toArray();
-    QVariantList reactions;
-//TODO: redesign
-//    foreach (const QJsonValue &value, reactionsList) {
-//        QJsonObject reaction = value.toObject();
-//        QVariantMap data;
-
-//        QString name = reaction.value(QStringLiteral("name")).toString();
-//        int count = reaction.value(QStringLiteral("count")).toInt();
-//        QJsonArray usersList = reaction.value(QStringLiteral("users")).toArray();
-//        QString users;
-//        for (int i = 0; i < usersList.count(); i++) {
-//            const QJsonValue &uservalue = usersList.at(i);
-//            users.append(m_storage.user(uservalue.toString()).value("name").toString());
-//            if (i < usersList.count() - 1) {
-//                users.append("\n");
-//            }
-//        }
-
-//        QString emojiPrepare = QString(":%1:").arg(name);
-//        m_formatter.replaceEmoji(emojiPrepare);
-
-//        data.insert(QStringLiteral("name"), QVariant(name));
-//        data.insert(QStringLiteral("emoji"), QVariant(emojiPrepare));
-//        data.insert(QStringLiteral("reactionscount"), QVariant(count));
-//        data.insert(QStringLiteral("users"), QVariant(users));
-
-//        reactions.append(data);
-//    }
-
-    return reactions;
-}
-
-void SlackTeamClient::findNewUsers(const QString &message)
-{
-    DEBUG_BLOCK
-//TODO: redesign
-//    QRegularExpression newUserPattern(QStringLiteral("<@([A-Z0-9]+)\\|([^>]+)>"));
-
-//    QRegularExpressionMatchIterator i = newUserPattern.globalMatch(message);
-//    while (i.hasNext()) {
-//        QRegularExpressionMatch match = i.next();
-//        QString id = match.captured(1);
-
-//        if (m_storage.user(id).isEmpty()) {
-//            QString name = match.captured(2);
-//            QVariantMap data;
-//            data.insert(QStringLiteral("id"), QVariant(id));
-//            data.insert(QStringLiteral("name"), QVariant(name));
-//            data.insert(QStringLiteral("presence"), QVariant(QStringLiteral("active")));
-//            m_storage.saveUser(data);
-//        }
-//    }
 }
 
 void SlackTeamClient::sendNotification(const QString& channelId, const QString& title, const QString& text)
