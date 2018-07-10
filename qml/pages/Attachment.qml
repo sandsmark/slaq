@@ -42,8 +42,9 @@ Column {
             Row {
                 id: authorRow
                 width: parent.width
-                height: 16
+                height: visible ? 16 : 0
                 visible: attachment.author_name !== ""
+                spacing: Theme.paddingMedium
                 Image {
                     width: 16
                     height: 16
@@ -53,6 +54,7 @@ Column {
                 Label {
                     width: parent.width
                     font.pointSize: Theme.fontSizeSmall
+                    verticalAlignment: Text.AlignVCenter
                     font.weight: Font.Bold
                     text: attachment.author_name
                     onLinkActivated: linkClicked(link)
@@ -105,6 +107,7 @@ Column {
     Row {
         id: footerRow
         anchors.left: parent.left
+        spacing: Theme.paddingMedium
         Image {
             fillMode: Image.PreserveAspectFit
             source: attachment.footer_icon
@@ -113,12 +116,14 @@ Column {
         Label {
             font.pointSize: Theme.fontSizeSmall
             text: attachment.footer
+            verticalAlignment: Text.AlignVCenter
             wrapMode: Text.Wrap
             visible: text.length > 0
         }
         Label {
             font.pointSize: Theme.fontSizeSmall
             text: Qt.formatDateTime(attachment.ts, "dd MMM yyyy hh:mm")
+            verticalAlignment: Text.AlignVCenter
             wrapMode: Text.Wrap
             visible: attachment.ts > 0
         }

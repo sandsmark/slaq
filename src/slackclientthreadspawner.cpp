@@ -303,7 +303,7 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
 void SlackClientThreadSpawner::onMessageReceived(Message *message)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    UsersModel* users = _slackClient->teamInfo()->chats()->members(message->channel_id);
+    UsersModel* users = _slackClient->teamInfo()->users();
     MessageListModel *messages = _slackClient->teamInfo()->chats()->messages(message->channel_id);
     if (messages == nullptr || users == nullptr) {
         qWarning() << "No messages in chat" << message->channel_id;

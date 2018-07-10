@@ -13,6 +13,9 @@
 #include <QStringList>
 
 #include "UsersModel.h"
+#include "messageformatter.h"
+
+class ChatsModel;
 
 namespace {
 QDateTime slackToDateTime(const QString& slackts) {
@@ -30,6 +33,7 @@ QString dateTimeToSlack(const QDateTime& dt) {
     return QString("%1.000").arg(dt.toSecsSinceEpoch()) + QString("%1").arg(dt.time().msec(), 3, 10, QChar('0'));
 }
 }
+
 class Reaction : public QObject
 {
     Q_OBJECT
@@ -189,13 +193,19 @@ public:
     void addMessage(Message *message);
     void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages);
+    Message* message(const QDateTime& ts);
+
+private:
+    void preprocessFormatting(::Chat* chat, Message *message);
+    void findNewUsers(const QString &message);
     void updateReactionUsers(Message *message);
 
-    Message* message(const QDateTime& ts);
 private:
     QList<Message*> m_messages;
     QMap<QString, Reaction*> m_reactions;
     UsersModel *m_usersModel;
     QString m_channelId;
+    MessageFormatter m_formatter;
+    QRegularExpression m_newUserPattern;
 };
 

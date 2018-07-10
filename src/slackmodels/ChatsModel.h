@@ -12,6 +12,9 @@
 #include "UsersModel.h"
 #include "MessagesModel.h"
 
+
+struct Chat;
+
 class ChatsModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -38,22 +41,6 @@ public:
     };
     Q_ENUM(ChatType)
 
-    struct Chat
-    {
-        Chat(const QJsonObject &data, const ChatType type);
-        Chat() = default;
-
-        QString id;
-        QString presence;
-        ChatType type;
-        QString name;
-        bool isOpen = false;
-        QString lastReadId;
-        int unreadCount = 0;
-        QPointer<UsersModel> membersModel;
-        QPointer<MessageListModel> messagesModel;
-        QPointer<User> user;
-    };
 
     ChatsModel(QObject *parent = nullptr, UsersModel *networkUsers = nullptr);
 
@@ -69,9 +56,27 @@ public:
     Q_INVOKABLE MessageListModel *messages(const QString &id);
     UsersModel *members(const QString &id);
 
+    Chat& chat(const QString &id);
+
 private:
     QMap<QString, Chat> m_chats;
     QStringList m_chatIds;
     UsersModel *m_networkUsers;
 };
 
+struct Chat
+{
+    Chat(const QJsonObject &data, const ChatsModel::ChatType type);
+    Chat() = default;
+
+    QString id;
+    QString presence;
+    ChatsModel::ChatType type;
+    QString name;
+    bool isOpen = false;
+    QString lastReadId;
+    int unreadCount = 0;
+    QPointer<UsersModel> membersModel;
+    QPointer<MessageListModel> messagesModel;
+    QPointer<User> user;
+};

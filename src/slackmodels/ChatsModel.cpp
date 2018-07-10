@@ -91,10 +91,7 @@
 //}
 
 ChatsModel::ChatsModel(QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
-    m_networkUsers(networkUsers)
-{
-
-}
+    m_networkUsers(networkUsers) {}
 
 QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
@@ -156,7 +153,7 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
     Chat chat(data, type);
 
     chat.membersModel = new UsersModel(this);
-    chat.messagesModel = new MessageListModel(this, /*chat.membersModel*/m_networkUsers, chat.id);
+    chat.messagesModel = new MessageListModel(this, m_networkUsers, chat.id);
     QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
 
@@ -201,7 +198,12 @@ UsersModel *ChatsModel::members(const QString &id)
     return m_chats[id].membersModel;
 }
 
-ChatsModel::Chat::Chat(const QJsonObject &data, const ChatType type_)
+Chat &ChatsModel::chat(const QString &id)
+{
+    return m_chats[id];
+}
+
+Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
     id = data.value(QStringLiteral("id")).toString();
     type = type_;

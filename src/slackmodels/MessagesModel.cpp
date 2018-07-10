@@ -5,11 +5,15 @@
 #include <QDateTime>
 #include <QJsonArray>
 
+#include "UsersModel.h"
+#include "ChatsModel.h"
 #include "MessagesModel.h"
 #include "messageformatter.h"
 
 MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId) : QAbstractListModel(parent),
-    m_usersModel(usersModel), m_channelId(channelId) {}
+    m_usersModel(usersModel), m_channelId(channelId) {
+    m_newUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)\\|([^>]+)>"));
+}
 
 int MessageListModel::rowCount(const QModelIndex &parent) const
 {
@@ -60,7 +64,10 @@ void MessageListModel::updateReactionUsers(Message* message) {
             reaction->users.clear();
         }
         foreach (const QString& userId, reaction->userIds) {
-            reaction->users.append(m_usersModel->user(userId)->username());
+            ::User* user_ = m_usersModel->user(userId);
+            if (user_ != nullptr) {
+                reaction->users.append(m_usersModel->user(userId)->username());
+            }
         }
         //qDebug() << "reaction users" << reaction->users << "for" << reaction->userIds;
     }
@@ -77,13 +84,32 @@ Message *MessageListModel::message(const QDateTime &ts)
     return nullptr;
 }
 
+void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
+{
+    findNewUsers(message->text);
+    updateReactionUsers(message);
+    if (!message->user.isNull()) {
+        m_formatter.replaceUserInfo(message->user, message->text);
+    }
+    m_formatter.replaceTargetInfo(message->text);
+    m_formatter.replaceChannelInfo(chat, message->text);
+    m_formatter.replaceLinks(message->text);
+    m_formatter.replaceSpecialCharacters(message->text);
+    m_formatter.replaceMarkdown(message->text);
+    m_formatter.replaceEmoji(message->text);
+}
+
 void MessageListModel::addMessage(Message* message)
 {
-    updateReactionUsers(message);
     if (message->user.isNull()) {
         qWarning() << "user is null for " << message->user_id;
     }
-
+    Q_ASSERT_X(!message->user.isNull(), "addMessage .user is null", "");
+    Chat chat;
+    if (parent() != nullptr) {
+        chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
+    }
+    preprocessFormatting(&chat, message);
     beginInsertRows(QModelIndex(), 0, 0);
     qDebug() << "adding message:" << message->text;
     m_messages.insert(0, message);
@@ -100,12 +126,35 @@ void MessageListModel::updateMessage(Message *message)
                 message->user = oldmessage->user;
                 if (message->user.isNull()) {
                     qWarning() << "user is null for " << message->user_id;
+                    Q_ASSERT_X(!message->user.isNull(), "user is null", "");
                 }
             }
+            Chat chat;
+            if (parent() != nullptr) {
+                chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
+            }
+            preprocessFormatting(&chat, message);
             m_messages.replace(i, message);
             QModelIndex index = QAbstractListModel::index (i, 0,  QModelIndex());
             emit dataChanged(index, index);
             break;
+        }
+    }
+}
+
+void MessageListModel::findNewUsers(const QString &message)
+{
+    //DEBUG_BLOCK
+
+    QRegularExpressionMatchIterator i = m_newUserPattern.globalMatch(message);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        QString id = match.captured(1);
+
+        if (m_usersModel->user(id).isNull()) {
+            QString name = match.captured(2);
+            QPointer<::User> user = new ::User(id, name, this);
+            m_usersModel->addUser(user);
         }
     }
 }
@@ -115,13 +164,18 @@ void MessageListModel::addMessages(const QJsonArray &messages)
     qDebug() << "Adding" << messages.count() << "messages";
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count());
 
+    //assum we have parent;
+    Chat chat;
+    if (parent() != nullptr) {
+        chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
+    }
     for (const QJsonValue &messageData : messages) {
         const QJsonObject messageObject = messageData.toObject();
         Message* message = new Message;
         //qDebug() << "message obj" << messageObject;
         message->setData(messageObject);
         message->channel_id = m_channelId;
-        updateReactionUsers(message);
+
         if (message->user_id.isEmpty()) {
             qWarning() << "user id is empty" << messageObject;
         }
@@ -131,7 +185,9 @@ void MessageListModel::addMessages(const QJsonArray &messages)
         if (message->user.isNull()) {
             qWarning() << "no user for" << message->user_id << m_usersModel;
         }
-        //Q_ASSERT(!message.user.isNull());
+        Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+
+        preprocessFormatting(&chat, message);
 
         m_messages.append(std::move(message));
     }
@@ -214,6 +270,7 @@ void Message::setData(const QJsonObject &data)
     time = slackToDateTime(ts);
     //qDebug() << ts << time;
     text = data.value(QStringLiteral("text")).toString();
+
     channel_id = data.value(QStringLiteral("channel")).toString();
     user_id = data.value(QStringLiteral("user")).toString();
     subtype = data.value(QStringLiteral("subtype")).toString();
@@ -309,15 +366,21 @@ void Attachment::setData(const QJsonObject &data)
         color = "#" + color;
     }
     MessageFormatter formatter;
-    formatter.replaceLinks(pretext);
     formatter.replaceLinks(text);
-    formatter.replaceLinks(fallback);
     formatter.replaceEmoji(text);
-    formatter.replaceEmoji(pretext);
-    formatter.replaceEmoji(fallback);
     formatter.replaceSpecialCharacters(text);
+    formatter.replaceLinks(pretext);
+    formatter.replaceEmoji(pretext);
     formatter.replaceSpecialCharacters(pretext);
+    formatter.replaceLinks(fallback);
+    formatter.replaceEmoji(fallback);
     formatter.replaceSpecialCharacters(fallback);
+    formatter.replaceLinks(title);
+    formatter.replaceEmoji(title);
+    formatter.replaceSpecialCharacters(title);
+    formatter.replaceLinks(footer);
+    formatter.replaceEmoji(footer);
+    formatter.replaceSpecialCharacters(footer);
 
     const QJsonArray& fieldList = data.value(QStringLiteral("fields")).toArray();
 

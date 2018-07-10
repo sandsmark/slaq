@@ -175,7 +175,7 @@ Page {
         visible: listView.inputEnabled
         placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
         onSendMessage: {
-            SlackClient.postMessage(teamRoot.teamId, channel.Id, content)
+            SlackClient.postMessage(teamRoot.teamId, channelId, content)
         }
 
         nickPopupVisible: nickPopup.visible

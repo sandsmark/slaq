@@ -37,6 +37,7 @@ public:
 
     User(QObject *parent);
     User(const User& copy, QObject *parent);
+    User(const QString& id, const QString& name, QObject *parent);
 
     void setData(const QJsonObject &data);
 

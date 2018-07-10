@@ -8,8 +8,8 @@
 #include <QJsonArray>
 #include "imagescache.h"
 
-#include "storage.h"
-
+#include "UsersModel.h"
+#include "ChatsModel.h"
 
 MessageFormatter::MessageFormatter() :
     m_labelPattern(QRegularExpression (QStringLiteral("<(http[^\\|>]+)\\|([^>]+)>"))),
@@ -37,34 +37,20 @@ MessageFormatter::MessageFormatter() :
     m_emojiPattern.optimize();
 }
 
-#include <QDebug>
-
-void MessageFormatter::replaceUserInfo(const QVariantList& users, QString &message)
+void MessageFormatter::replaceUserInfo(User* user, QString &message)
 {
-    foreach (const QVariant &value, users) {
-        QVariantMap user = value.toMap();
-        QString id = user.value(QStringLiteral("id")).toString();
-        QString name = user.value(QStringLiteral("name")).toString();
+    QRegularExpression userIdPattern("<@" + user->userId() + "(\\|[^>]+)?>");
+    QString displayName = "<a href=\"slaq://user/" + user->userId() + "\">@" + user->username() + "</a>";
 
-        QRegularExpression userIdPattern("<@" + id + "(\\|[^>]+)?>");
-        QString displayName = "<a href=\"slaq://user/" + id + "\">@" + name + "</a>";
-
-        message.replace(userIdPattern, displayName);
-    }
+    message.replace(userIdPattern, displayName);
 }
 
-void MessageFormatter::replaceChannelInfo(const QVariantList& channels, QString &message)
+void MessageFormatter::replaceChannelInfo(Chat *chat, QString &message)
 {
-    foreach (const QVariant &value, channels) {
-        QVariantMap channel = value.toMap();
-        QString id = channel.value(QStringLiteral("id")).toString();
-        QString name = channel.value(QStringLiteral("name")).toString();
+    QRegularExpression channelIdPattern("<#" + chat->id + "(\\|[^>]+)?>");
+    QString displayName = "<a href=\"slaq://channel/" + chat->id + "\">#" + chat->name + "</a>";
 
-        QRegularExpression channelIdPattern("<#" + id + "(\\|[^>]+)?>");
-        QString displayName = "<a href=\"slaq://channel/" + id + "\">#" + name + "</a>";
-
-        message.replace(channelIdPattern, displayName);
-    }
+    message.replace(channelIdPattern, displayName);
 }
 
 void MessageFormatter::replaceLinks(QString &message)

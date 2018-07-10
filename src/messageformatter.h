@@ -1,17 +1,19 @@
-#ifndef MESSAGEFORMATTER_H
-#define MESSAGEFORMATTER_H
+#pragma once
 
 #include <QString>
 #include <QRegularExpression>
+
+class User;
+struct Chat;
 
 class MessageFormatter
 {
 public:
     MessageFormatter();
 
-    void replaceUserInfo(const QVariantList &users, QString &message);
+    void replaceUserInfo(User *user, QString &message);
     void replaceTargetInfo(QString &message);
-    void replaceChannelInfo(const QVariantList &channels, QString &message);
+    void replaceChannelInfo(Chat* chat, QString &message);
     void replaceSpecialCharacters(QString &message);
     void replaceLinks(QString &message);
     void replaceMarkdown(QString &message);
@@ -38,4 +40,3 @@ private:
     QRegularExpression m_emojiPattern;
 };
 
-#endif // MESSAGEFORMATTER_H

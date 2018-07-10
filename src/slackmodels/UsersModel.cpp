@@ -85,6 +85,13 @@ User::User(const User &copy, QObject *parent) : QObject(parent) {
     }
 }
 
+User::User(const QString &id, const QString &name, QObject *parent)
+{
+    m_userId = id;
+    m_username = name;
+    m_presence = Active;
+}
+
 
 void User::setData(const QJsonObject &data)
 {

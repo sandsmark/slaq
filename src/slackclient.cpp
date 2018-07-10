@@ -269,6 +269,9 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
 //    emit channelUpdated(m_teamInfo.teamId(), channel);
 }
 
+//TODO: investigate comment type
+//user id is empty QJsonObject({"comment":{"comment":"Okay, now I'm interested here. Light can travel less than a meter in a single nanosecond. Is \"nanosecond latency\" meaning \"measured in nanoseconds\"?","created":1531158771,"id":"FcBLM50VKJ","is_intro":false,"timestamp":1531158771,"user":"U8JRJRKEF"},"file":{"channels":["C21PKDHSL"],"comments_count":2,"created":1531158641,"display_as_bot":false,"editable":false,"external_type":"","filetype":"png","groups":[],"id":"FBM54SBDJ","image_exif_rotation":1,"ims":[],"initial_comment":{"comment":"For example here's a point-to-point laser router with nanosecond latency","created":1531158641,"id":"FcBMBYPSSE","is_intro":true,"timestamp":1531158641,"user":"U4R43AVMM"},"is_external":false,"is_public":true,"mimetype":"image/png","mode":"hosted","name":"image.png","original_h":183,"original_w":276,"permalink":"https://cpplang.slack.com/files/U4R43AVMM/FBM54SBDJ/image.png","permalink_public":"https://slack-files.com/T21Q22G66-FBM54SBDJ-4703532276","pretty_type":"PNG","public_url_shared":false,"size":29293,"thumb_160":"https://files.slack.com/files-tmb/T21Q22G66-FBM54SBDJ-d21d39f46d/image_160.png","thumb_360":"https://files.slack.com/files-tmb/T21Q22G66-FBM54SBDJ-d21d39f46d/image_360.png","thumb_360_h":183,"thumb_360_w":276,"thumb_64":"https://files.slack.com/files-tmb/T21Q22G66-FBM54SBDJ-d21d39f46d/image_64.png","thumb_80":"https://files.slack.com/files-tmb/T21Q22G66-FBM54SBDJ-d21d39f46d/image_80.png","timestamp":1531158641,"title":"image.png","url_private":"https://files.slack.com/files-pri/T21Q22G66-FBM54SBDJ/image.png","url_private_download":"https://files.slack.com/files-pri/T21Q22G66-FBM54SBDJ/download/image.png","user":"U4R43AVMM","username":""},"is_intro":false,"subtype":"file_comment","text":"<@U8JRJRKEF> commented on <@U4R43AVMM>’s file <https://cpplang.slack.com/files/U4R43AVMM/FBM54SBDJ/image.png|image.png>: Okay, now I'm interested here. Light can travel less than a meter in a single nanosecond. Is \"nanosecond latency\" meaning \"measured in nanoseconds\"?","ts":"1531158771.000413","type":"message"})
+//no user for "" UsersModel(0x55555a081f80)
 void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
@@ -290,7 +293,6 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
        emit messageUpdated(message_);
     } if (subtype == "message_deleted") {
     } else {
-        message_->setData(message);
         emit messageReceived(message_);
     }
 //    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
@@ -1118,7 +1120,11 @@ void SlackTeamClient::requestTeamEmojis()
 }
 
 QString SlackTeamClient::userName(const QString &userId) {
-    return teamInfo()->users()->user(userId)->username();
+    User* user = teamInfo()->users()->user(userId);
+    if (user == nullptr) {
+        return "";
+    }
+    return user->username();
 }
 
 void SlackTeamClient::handleTeamInfoReply()
