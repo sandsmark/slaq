@@ -27,10 +27,10 @@ ListView {
     onModelChanged: console.log("channels list model", model)
 
     section {
-        property: "section"
+        property: "Section"
         criteria: ViewSection.FullString
         delegate: Label {
-            text: getSectionName(section)
+            text: section
             padding: Theme.paddingMedium
 
             background: Rectangle {
@@ -134,23 +134,5 @@ ListView {
 
     Component.onDestruction: {
         //ChannelList.disconnect()
-    }
-
-    function getSectionName(section) {
-        switch (section) {
-            case "unreadchannel":
-                return qsTr("Unread channels")
-
-            case "unreadchat":
-                return qsTr("Unread chats")
-
-            case "channel":
-                return qsTr("Channels")
-
-            case "chat":
-                return qsTr("Direct messages")
-        }
-
-        return qsTr("Other")
     }
 }

@@ -272,7 +272,7 @@ void Message::setData(const QJsonObject &data)
     }
 
     if (subtype == QStringLiteral("file_share")) {
-        //qDebug().noquote() << "file share json:" << QJsonDocument(data).toJson();;
+        //qDebug().noquote() << "file share json:" << QJsonDocument(data).toJson();
         const QJsonValue& filesArrayValue = data.value(QStringLiteral("files"));
         if (filesArrayValue.isUndefined()) {
             const QJsonValue& fileValue = data.value(QStringLiteral("file"));

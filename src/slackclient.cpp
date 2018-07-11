@@ -481,15 +481,7 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
     if (isOk(reply)) {
         QJsonParseError error;
         QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
-#if 0 //dump initial
-        {
-            QFile f("statup_dumps.json");
-            if (f.open(QIODevice::Append)) {
-                f.write(document.toJson(QJsonDocument::Indented));
-                f.close();
-            }
-        }
-#endif
+
         if (error.error == QJsonParseError::NoError) {
             return document.object();
         } else {
@@ -715,13 +707,16 @@ void SlackTeamClient::handleStartReply()
     // by deafault its GUI thread
     // TODO: investigate move QML engine to separate thread or make parsing in non-GUI thread
     // and then provide data to the models
+#if 0 //dump initial
+        {
+            QFile f("statup_dumps_latest_" + m_teamInfo.name() + ".json");
+            if (f.open(QIODevice::WriteOnly)) {
+                f.write(QJsonDocument(data).toJson());
+                f.close();
+            }
+        }
+#endif
     emit teamDataChanged(data);
-
-
-//    parseUsers(data);
-//    parseBots(data);
-//    parseChannels(data);
-//    parseGroups(data);
 
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
@@ -731,147 +726,6 @@ void SlackTeamClient::handleStartReply()
     }
     qDebug() << "init success";
     emit initSuccess(m_teamInfo.teamId());
-}
-
-QVariantMap SlackTeamClient::parseChannel(const QJsonObject& channel)
-{
-    DEBUG_BLOCK;
-
-    QVariantMap data;
-    data.insert(QStringLiteral("id"), channel.value(QStringLiteral("id")).toVariant());
-    data.insert(QStringLiteral("type"), QVariant(QStringLiteral("channel")));
-    data.insert(QStringLiteral("category"), QVariant(QStringLiteral("channel")));
-    data.insert(QStringLiteral("name"), channel.value(QStringLiteral("name")).toVariant());
-    data.insert(QStringLiteral("presence"), QVariant(QStringLiteral("none")));
-    data.insert(QStringLiteral("isOpen"), channel.value(QStringLiteral("is_member")).toVariant());
-    data.insert(QStringLiteral("lastRead"), channel.value(QStringLiteral("last_read")).toVariant());
-    data.insert(QStringLiteral("unreadCount"), channel.value(QStringLiteral("unread_count_display")).toVariant());
-    data.insert(QStringLiteral("members"), channel.value(QStringLiteral("members")).toVariant());
-    data.insert(QStringLiteral("userId"), QVariant());
-    return data;
-}
-
-QVariantMap SlackTeamClient::parseGroup(const QJsonObject& group)
-{
-    DEBUG_BLOCK
-
-    QVariantMap data;
-//TODO: redesign
-//    if (group.value(QStringLiteral("is_mpim")).toBool()) {
-//        data.insert(QStringLiteral("type"), QVariant(QStringLiteral("mpim")));
-//        data.insert(QStringLiteral("category"), QVariant(QStringLiteral("chat")));
-
-//        QStringList members;
-//        QJsonArray memberList = group.value(QStringLiteral("members")).toArray();
-//        foreach (const QJsonValue &member, memberList) {
-//            QVariant memberId = member.toVariant();
-
-//            if (memberId != config->userId()) {
-//                members << m_storage.user(memberId).value(QStringLiteral("name")).toString();
-//            }
-//        }
-//        data.insert(QStringLiteral("name"), QVariant(members.join(QStringLiteral(", "))));
-//    } else {
-//        data.insert(QStringLiteral("type"), QVariant(QStringLiteral("group")));
-//        data.insert(QStringLiteral("category"), QVariant(QStringLiteral("channel")));
-//        data.insert(QStringLiteral("name"), group.value(QStringLiteral("name")).toVariant());
-//    }
-
-//    data.insert(QStringLiteral("id"), group.value(QStringLiteral("id")).toVariant());
-//    data.insert(QStringLiteral("presence"), QVariant(QStringLiteral("none")));
-//    data.insert(QStringLiteral("isOpen"), group.value(QStringLiteral("is_open")).toVariant());
-//    data.insert(QStringLiteral("lastRead"), group.value(QStringLiteral("last_read")).toVariant());
-//    data.insert(QStringLiteral("unreadCount"), group.value(QStringLiteral("unread_count_display")).toVariant());
-//    data.insert(QStringLiteral("userId"), QVariant());
-    return data;
-}
-
-void SlackTeamClient::parseUser(const QJsonObject& user)
-{
-    //TODO: redesign
-//    QVariantMap data;
-//    const QString userId = user.value(QStringLiteral("id")).toString();
-//    data.insert(QStringLiteral("id"), userId);
-//    data.insert(QStringLiteral("name"), user.value(QStringLiteral("name")).toVariant());
-//    data.insert(QStringLiteral("presence"), user.value(QStringLiteral("presence")).toVariant());
-
-//    const QJsonObject& profile = user.value(QStringLiteral("profile")).toObject();
-//    m_userAvatars[userId] = QUrl(profile.value(QStringLiteral("image_72")).toString());
-
-//    m_storage.saveUser(data);
-}
-
-void SlackTeamClient::parseUsers(const QJsonObject& data)
-{
-    //TODO: redesign
-//    qDebug() << "parse users";
-//    foreach (const QJsonValue &value, data.value(QStringLiteral("users")).toArray()) {
-//        parseUser(value.toObject());
-//    }
-//    m_storage.updateUsersList();
-}
-
-void SlackTeamClient::parseBots(const QJsonObject& data)
-{
-    DEBUG_BLOCK
-
-//TODO: redesign
-//    foreach (const QJsonValue &value, data.value(QStringLiteral("bots")).toArray()) {
-//        QJsonObject bot = value.toObject();
-
-//        QVariantMap data;
-//        data.insert(QStringLiteral("id"), bot.value(QStringLiteral("id")));
-//        data.insert(QStringLiteral("name"), bot.value(QStringLiteral("name")));
-//        data.insert(QStringLiteral("presence"), QVariant(QStringLiteral("active")));
-//        m_storage.saveUser(data);
-//    }
-}
-
-void SlackTeamClient::parseChannels(const QJsonObject& data)
-{
-    DEBUG_BLOCK
-//TODO: redesign
-//    qDebug() << "parse channels";
-
-//    foreach (const QJsonValue &value, data.value(QStringLiteral("channels")).toArray()) {
-//        QVariantMap data = parseChannel(value.toObject());
-//        m_storage.saveChannel(data);
-//    }
-}
-
-void SlackTeamClient::parseGroups(const QJsonObject& data)
-{
-    DEBUG_BLOCK
-//TODO: redesign
-//    foreach (const QJsonValue &value, data.value(QStringLiteral("groups")).toArray()) {
-//        QVariantMap data = parseGroup(value.toObject());
-//        m_storage.saveChannel(data);
-//    }
-}
-
-void SlackTeamClient::parseChats(const QJsonObject& data)
-{
-    DEBUG_BLOCK
-//TODO: redesign
-//    qDebug() << "parse chats"; // << data;
-//    foreach (const QJsonValue &value, data.value(QStringLiteral("ims")).toArray()) {
-//        QJsonObject chat = value.toObject();
-//        QVariantMap data;
-
-//        QVariant userId = chat.value(QStringLiteral("user")).toVariant();
-//        QVariantMap user = m_storage.user(userId);
-
-//        data.insert(QStringLiteral("type"), QVariant(QStringLiteral("im")));
-//        data.insert(QStringLiteral("category"), QVariant(QStringLiteral("chat")));
-//        data.insert(QStringLiteral("id"), chat.value(QStringLiteral("id")).toVariant());
-//        data.insert(QStringLiteral("userId"), userId);
-//        data.insert(QStringLiteral("name"), user.value(QStringLiteral("name")));
-//        data.insert(QStringLiteral("presence"), user.value(QStringLiteral("presence")));
-//        data.insert(QStringLiteral("isOpen"), chat.value(QStringLiteral("is_open")).toVariant());
-//        data.insert(QStringLiteral("lastRead"), chat.value(QStringLiteral("last_read")).toVariant());
-//        data.insert(QStringLiteral("unreadCount"), chat.value(QStringLiteral("unread_count_display")).toVariant());
-//        m_storage.saveChannel(data);
-//    }
 }
 
 QVariantList SlackTeamClient::getChannels()

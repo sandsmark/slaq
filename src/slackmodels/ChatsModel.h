@@ -27,10 +27,12 @@ public:
         IsOpen,
         LastReadId,
         UnreadCount,
+        UnreadCountDisplay,
         MembersModel,
         MessagesModel,
         UserObject,
-        Presence
+        Presence,
+        Section
     };
 
     enum ChatType {
@@ -42,7 +44,7 @@ public:
     Q_ENUM(ChatType)
 
 
-    ChatsModel(QObject *parent = nullptr, UsersModel *networkUsers = nullptr);
+    ChatsModel(const QString& selfId, QObject *parent = nullptr, UsersModel *networkUsers = nullptr);
 
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_chats.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
@@ -55,13 +57,17 @@ public:
 
     Q_INVOKABLE MessageListModel *messages(const QString &id);
     UsersModel *members(const QString &id);
-
     Chat& chat(const QString &id);
+
+private:
+    QString getSectionName(const Chat& chat) const;
 
 private:
     QMap<QString, Chat> m_chats;
     QStringList m_chatIds;
     UsersModel *m_networkUsers;
+    QString m_selfId; // its you
+
 };
 
 struct Chat
@@ -73,10 +79,14 @@ struct Chat
     QString presence;
     ChatsModel::ChatType type;
     QString name;
+    QString readableName;
     bool isOpen = false;
     QString lastReadId;
     int unreadCount = 0;
+    int unreadCountDisplay = 0;
     QPointer<UsersModel> membersModel;
     QPointer<MessageListModel> messagesModel;
     QPointer<User> user;
+
+    void setReadableName(const QString &selfId);
 };

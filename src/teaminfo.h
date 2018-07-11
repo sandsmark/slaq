@@ -20,6 +20,7 @@ class TeamInfo: public QObject {
     Q_PROPERTY(QString enterpriseName READ enterpriseName WRITE setEnterpriseName NOTIFY enterpriseNameChanged)
     Q_PROPERTY(QString teamToken READ teamToken WRITE setTeamToken NOTIFY teamTokenChanged)
     Q_PROPERTY(QString lastChannel READ lastChannel WRITE setLastChannel NOTIFY lastChannelChanged)
+    Q_PROPERTY(QString selfId READ selfId CONSTANT)
     Q_PROPERTY(ChatsModel* chats READ chats NOTIFY chatsChanged)
     Q_PROPERTY(UsersModel* users READ users NOTIFY usersChanged)
 
@@ -47,7 +48,12 @@ public:
     QString lastChannel() const { return m_lastChannel; }
     ChatsModel *chats() const;
     UsersModel* users() const;
+
     void parseTeamInfoData(const QJsonObject &teamObj);
+    void parseSelfData(const QJsonObject &selfObj);
+
+    QString selfId() const;
+
 public slots:
     void setTeamId(const QString& teamId);
     void setName(const QString& name);
@@ -88,6 +94,7 @@ private:
     QString m_enterpriseName;
     QString m_teamToken;
     QString m_lastChannel;
+    QString m_selfId;
     ChatsModel* m_chats {nullptr};
     UsersModel* m_users {nullptr};
 };

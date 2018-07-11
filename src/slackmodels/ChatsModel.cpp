@@ -90,8 +90,23 @@
 //    return ret;
 //}
 
-ChatsModel::ChatsModel(QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
-    m_networkUsers(networkUsers) {}
+ChatsModel::ChatsModel(const QString &selfId, QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
+    m_selfId(selfId), m_networkUsers(networkUsers) {}
+
+QString ChatsModel::getSectionName(const Chat& chat) const {
+    switch (chat.type) {
+    case Channel:
+        return chat.unreadCountDisplay > 0 ? tr("Unread channels") : tr("Channels");
+
+    case Group:
+        return chat.unreadCountDisplay > 0 ? tr("Unread chats") : tr("Chats");
+
+    case Conversation:
+        return chat.unreadCountDisplay > 0 ? tr("Unread DM") : tr("Direct messages");
+
+    }
+    return tr("Other");
+}
 
 QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
@@ -107,11 +122,13 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case Type:
         return chat.type;
     case Name:
-        return chat.name;
+        return chat.readableName.isEmpty() ? chat.name : chat.readableName;
     case IsOpen:
         return chat.isOpen;
     case LastReadId:
         return chat.lastReadId;
+    case UnreadCountDisplay:
+        return chat.unreadCountDisplay;
     case UnreadCount:
         return chat.unreadCount;
     case Presence:
@@ -122,6 +139,8 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(chat.messagesModel.data());
     case UserObject:
         return QVariant::fromValue(chat.user.data());
+    case Section:
+        return getSectionName(chat);
     default:
         qWarning() << "Invalid role" << role;
         return QVariant();
@@ -137,10 +156,12 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
     names[IsOpen] = "IsOpen";
     names[LastReadId] = "LastReadId";
     names[UnreadCount] = "UnreadCount";
+    names[UnreadCountDisplay] = "UnreadCountDisplay";
     names[MembersModel] = "MembersModel";
     names[MessagesModel] = "MessagesModel";
     names[UserObject] = "UserObject";
     names[Presence] = "Presence";
+    names[Section] = "Section";
     return names;
 
 }
@@ -166,6 +187,9 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
         }
     }
 
+    if (type != Channel) {
+        chat.setReadableName(m_selfId);
+    }
     m_chatIds.append(chat.id);
 
     m_chats.insert(chat.id, chat);
@@ -209,7 +233,20 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
     type = type_;
     name = data.value(QStringLiteral("name")).toString();
     presence = QStringLiteral("none");
-    isOpen = data.value(QStringLiteral("is_member")).toBool();
+    isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
+                                             data.value(QStringLiteral("is_open")).toBool();
     lastReadId = data.value(QStringLiteral("last_read")).toString();
-    unreadCount = data.value(QStringLiteral("unread_count_display")).toInt();
+    unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
+    unreadCount = data.value(QStringLiteral("unread_count")).toInt();
 }
+
+void Chat::setReadableName(const QString& selfId) {
+    QStringList _users;
+    for (QPointer<User> user : membersModel->users()) {
+        if (user->userId() != selfId) {
+            _users << user->username();
+        }
+    }
+    readableName = _users.join(", ");
+}
+

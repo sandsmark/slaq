@@ -99,6 +99,7 @@ public slots:
     void addUsers(const QJsonArray &usersData);
     QPointer<User> user(const QString &id);
     int fooCount() { return m_users.count(); }
+    QList<QPointer<User>> users() { return m_users.values(); }
 
 private:
     QMap<QString, QPointer<User>> m_users;

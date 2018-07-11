@@ -169,18 +169,6 @@ private:
     void parsePresenceChange(const QJsonObject& message);
     void parseNotification(const QJsonObject& message);
 
-    QVariantMap parseChannel(const QJsonObject& data);
-    QVariantMap parseGroup(const QJsonObject& group);
-
-    void parseUsers(const QJsonObject& data);
-    void parseUser(const QJsonObject &user);
-    void parseBots(const QJsonObject& data);
-    void parseChannels(const QJsonObject& data);
-    void parseGroups(const QJsonObject& data);
-    void parseChats(const QJsonObject& data);
-
-    void findNewUsers(const QString &message);
-
     void sendNotification(const QString& channelId, const QString& title, const QString& content);
     void clearNotifications();
 

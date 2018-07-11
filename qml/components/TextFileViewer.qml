@@ -14,7 +14,6 @@ Item {
         width: paintedWidth
         height: paintedHeight
         text: fileshare.preview_highlight
-        onTextChanged: console.log("text share", text)
         wrapMode: Text.WordWrap
         textFormat: Text.RichText
         renderType: Text.QtRendering

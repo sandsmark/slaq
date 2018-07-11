@@ -27,15 +27,21 @@ void TeamInfo::parseTeamInfoData(const QJsonObject &teamObj) {
     << teamIconObj.value(QStringLiteral("image_original")).toString());
 }
 
+void TeamInfo::parseSelfData(const QJsonObject &selfObj) {
+    m_selfId = selfObj.value(QStringLiteral("id")).toString();
+}
+
 void TeamInfo::addTeamData(const QJsonObject &teamData)
 {
     qDebug() << "start" << __FUNCTION__;
-    parseTeamInfoData(teamData["team"].toObject());
+
+    parseTeamInfoData(teamData.value("team").toObject());
+    parseSelfData(teamData.value("self").toObject());
     m_users = new UsersModel;
     m_users->addUsers(teamData.value(QStringLiteral("users")).toArray());
     m_users->addUsers(teamData.value(QStringLiteral("bots")).toArray());
 
-    m_chats = new ChatsModel(nullptr, m_users);
+    m_chats = new ChatsModel(m_selfId, nullptr, m_users);
     m_chats->addChats(teamData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);
     m_chats->addChats(teamData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
     m_chats->addChats(teamData.value(QStringLiteral("ims")).toArray(), ChatsModel::Conversation);
@@ -44,6 +50,11 @@ void TeamInfo::addTeamData(const QJsonObject &teamData)
 
     QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+}
+
+QString TeamInfo::selfId() const
+{
+    return m_selfId;
 }
 
 ChatsModel *TeamInfo::chats() const
