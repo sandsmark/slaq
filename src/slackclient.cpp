@@ -99,7 +99,12 @@ void SlackTeamClient::clearNotifications()
     //      }
 
     //      delete n;
-    //  }
+            //  }
+}
+
+QString SlackTeamClient::getChannelName(const QString &channelId)
+{
+    return teamInfo()->chats()->chat(channelId).name;
 }
 
 void SlackTeamClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible)

@@ -18,10 +18,13 @@ Page {
 
     title: channelName
     property var usersTyping: []
+    onChannelIdChanged: {
+        channelName = SlackClient.getChannelName(teamRoot.teamId, channelRoot.channelId);
+    }
 
     function setChannelActive() {
-        console.log("channel active", channelRoot.title)
-        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId)
+        console.log("channel active", channelRoot.title);
+        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId);
         input.forceActiveFocus()
         listView.markLatest()
     }

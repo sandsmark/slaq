@@ -83,7 +83,6 @@ public slots:
     bool isDevice() const;
     QString lastChannel(const QString& teamId);
 
-    QUrl avatarUrl(const QString& teamId, const QString &userId);
     QString userName(const QString& teamId, const QString &userId);
     bool handleAccessTokenReply(const QJsonObject &bootData);
 
@@ -92,8 +91,7 @@ public slots:
     void joinChannel(const QString& teamId, const QString& channelId);
     void leaveChannel(const QString& teamId, const QString& channelId);
     void leaveGroup(const QString& teamId, const QString& groupId);
-    QVariantList getChannels(const QString& teamId);
-    QVariant getChannel(const QString& teamId, const QString& channelId);
+    QString getChannelName(const QString& teamId, const QString& channelId);
 
     //messages
     void searchMessages(const QString& teamId, const QString& searchString);

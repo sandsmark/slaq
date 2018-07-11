@@ -1,11 +1,7 @@
 #include "teaminfo.h"
 #include "slackclientthreadspawner.h"
 
-extern SlackClientThreadSpawner* g_slackThread;
-
-TeamInfo::TeamInfo(QObject *parent): QObject(parent)
-{
-}
+TeamInfo::TeamInfo(QObject *parent): QObject(parent) {}
 
 void TeamInfo::parseTeamInfoData(const QJsonObject &teamObj) {
     QString _id = teamObj.value(QStringLiteral("id")).toString();

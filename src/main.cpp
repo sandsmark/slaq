@@ -22,8 +22,6 @@
 #include "QQmlObjectListModel.h"
 #include "downloadmanager.h"
 
-SlackClientThreadSpawner* g_slackThread = nullptr;
-
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -65,15 +63,15 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
     engine.rootContext()->setContextProperty(QStringLiteral("emojiCategoriesModel"),
                                              ImagesCache::instance()->emojiCategoriesModel());
-    g_slackThread = new SlackClientThreadSpawner;
-    engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), g_slackThread);
-    engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), g_slackThread->teamsModel());
+    SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
+    engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), _slackThread);
+    engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), _slackThread->teamsModel());
     engine.rootContext()->setContextProperty(QStringLiteral("SlackConfig"), SlackConfig::instance());
-    g_slackThread->start();
+    _slackThread->start();
 
-//    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
-//        _slackThread->quit();
-//    });
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
+        _slackThread->quit();
+    });
     //    NotificationListener* listener = new NotificationListener(&engine);
     //    new DBusAdaptor(listener);
     //    QDBusConnection connection = QDBusConnection::sessionBus();

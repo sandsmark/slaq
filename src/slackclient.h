@@ -116,7 +116,8 @@ public slots:
     void requestTeamInfo();
     void requestTeamEmojis();
 
-    QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
+    QString getChannelName(const QString& channelId);
+
     QString userName(const QString &userId);
     QString lastChannel();
     bool isOnline() const;
