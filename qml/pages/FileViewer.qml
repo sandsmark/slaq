@@ -6,24 +6,25 @@ import ".."
 import "../components"
 
 Item {
+    property variant fileshare
     width: loader.item.width + Theme.paddingMedium
     height: loader.item.height + Theme.paddingMedium
 
     Platform.FileDialog {
         id: fileSaveDialog
         title: "Please choose file name"
-        file: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation) + "/" + model.name
+        file: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation) + "/" + fileshare.name
         folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation)
         fileMode: Platform.FileDialog.SaveFile
         onAccepted: {
             progressBar.value = 0
-            downloadManager.append(model.url_download, file, SlackClient.teamToken(teamId))
+            downloadManager.append(fileshare.url_private_download, file, SlackClient.teamToken(teamId))
         }
     }
     Connections {
         target: downloadManager
         onDownloaded: {
-            if (url === model.url_download) {
+            if (url === fileshare.url_private_download) {
                 progressBar.value = progress
             }
         }
@@ -35,11 +36,11 @@ Item {
         Loader {
             id: loader
             Component.onCompleted: {
-                if (model.mimetype.indexOf("video") !== -1) {
+                if (fileshare.mimetype.indexOf("video") !== -1) {
                     setSource("qrc:/qml/components/VideoFileViewer.qml")
-                } else if (model.mimetype.indexOf("image") !== -1) {
+                } else if (fileshare.mimetype.indexOf("image") !== -1) {
                     setSource("qrc:/qml/components/ImageFileViewer.qml")
-                } else if (model.mimetype.indexOf("text") !== -1) {
+                } else if (fileshare.mimetype.indexOf("text") !== -1) {
                     setSource("qrc:/qml/components/TextFileViewer.qml")
                 }
             }
@@ -47,6 +48,7 @@ Item {
             MouseArea {
                 id: mouArea
                 anchors.fill: parent
+                enabled: fileshare.mimetype.indexOf("video") === -1
                 hoverEnabled: true
                 z: loader.item.z + 100 //workaround since for Text item
                 onContainsMouseChanged: {

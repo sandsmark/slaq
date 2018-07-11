@@ -219,30 +219,6 @@ Message::~Message()
     qDeleteAll(attachments);
     attachments.clear();
 }
-
-//    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
-//    const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
-//    const QJsonValue& innerMessage = message.value(QStringLiteral("message"));
-//    if (innerMessage.isUndefined()) {
-//        data = getMessageData(message, teamId);
-//    } else {
-//        //TODO(unknown): handle messages threads
-//        data = getMessageData(innerMessage.toObject(), teamId);
-//        if (subtype.toString() == "message_changed") {
-//            data[QStringLiteral("edited")] = true;
-//        }
-//    }
-
-//    QString channelId = message.value(QStringLiteral("channel")).toString();
-
-//    if (!data.value("channel").isValid()) {
-//        data["channel"] = QVariant(channelId);
-//    }
-
-//    if (m_storage.channelMessagesExist(channelId)) {
-//        m_storage.appendChannelMessage(channelId, data);
-//    }
-
 //    QVariantMap channel = m_storage.channel(channelId);
 
 //    QString messageTime = data.value(QStringLiteral("time")).toString();
@@ -288,49 +264,34 @@ void Message::setData(const QJsonObject &data)
         reactions.append(reaction);
     }
 
-    foreach (const QJsonValue &attachmentValue, data.value(QStringLiteral("attachments")).toArray()) {
+    for (const QJsonValue &attachmentValue : data.value(QStringLiteral("attachments")).toArray()) {
         Attachment* attachment = new Attachment;
         attachment->setData(attachmentValue.toObject());
         QQmlEngine::setObjectOwnership(attachment, QQmlEngine::CppOwnership);
         attachments.append(attachment);
     }
+
+    if (subtype == QStringLiteral("file_share")) {
+        //qDebug().noquote() << "file share json:" << QJsonDocument(data).toJson();;
+        const QJsonValue& filesArrayValue = data.value(QStringLiteral("files"));
+        if (filesArrayValue.isUndefined()) {
+            const QJsonValue& fileValue = data.value(QStringLiteral("file"));
+            if (!fileValue.isUndefined()) {
+                FileShare* fileshare = new FileShare;
+                fileshare->setData(fileValue.toObject());
+                QQmlEngine::setObjectOwnership(fileshare, QQmlEngine::CppOwnership);
+                fileshares.append(fileshare);
+            }
+        } else {
+            for (const QJsonValue &filesValue : filesArrayValue.toArray()) {
+                FileShare* fileshare = new FileShare;
+                fileshare->setData(filesValue.toObject());
+                QQmlEngine::setObjectOwnership(fileshare, QQmlEngine::CppOwnership);
+                fileshares.append(fileshare);
+            }
+        }
+    }
 }
-
-//QString titleLink = attachmentObject.value(QStringLiteral("title_link")).toString();
-//QString title = attachmentObject.value(QStringLiteral("title")).toString();
-//QString pretext = attachment.value(QStringLiteral("pretext")).toString();
-//QString text = attachment.value(QStringLiteral("text")).toString();
-//QString fallback = attachment.value(QStringLiteral("fallback")).toString();
-//QString color = getAttachmentColor(attachment);
-//QVariantList fields = getAttachmentFields(attachment);
-//QVariantList images = getAttachmentImages(attachment);
-
-//m_formatter.replaceLinks(pretext);
-//m_formatter.replaceLinks(text);
-//m_formatter.replaceLinks(fallback);
-//m_formatter.replaceEmoji(text);
-//m_formatter.replaceEmoji(pretext);
-//m_formatter.replaceEmoji(fallback);
-//m_formatter.replaceSpecialCharacters(text);
-//m_formatter.replaceSpecialCharacters(pretext);
-//m_formatter.replaceSpecialCharacters(fallback);
-
-//int index = text.indexOf(' ', 250);
-//if (index > 0) {
-//    text = text.left(index) + "...";
-//}
-
-//if (!title.isEmpty() && !titleLink.isEmpty()) {
-//    title = "<a href=\"" + titleLink + "\">" + title + "</a>";
-//}
-
-//data.insert(QStringLiteral("title"), QVariant(title));
-//data.insert(QStringLiteral("pretext"), QVariant(pretext));
-//data.insert(QStringLiteral("content"), QVariant(text));
-//data.insert(QStringLiteral("fallback"), QVariant(fallback));
-//data.insert(QStringLiteral("indicatorColor"), QVariant(color));
-//data.insert(QStringLiteral("fields"), QVariant(fields));
-//data.insert(QStringLiteral("images"), QVariant(images));
 
 Attachment::Attachment(QObject *parent): QObject(parent) {}
 
@@ -426,4 +387,80 @@ void AttachmentField::setData(const QJsonObject &data)
     isShort = data.value(QStringLiteral("short")).toBool();
 }
 
+FileShare::FileShare(QObject *parent) : QObject (parent) {}
 
+void FileShare::setData(const QJsonObject &data)
+{
+    m_id = data.value(QStringLiteral("id")).toString();
+    m_created = slackToDateTime(data.value(QStringLiteral("created")).toString());
+    m_timestamp = slackToDateTime(data.value(QStringLiteral("timestamp")).toString());
+    m_name = data.value(QStringLiteral("name")).toString();
+    m_title = data.value(QStringLiteral("title")).toString();
+    m_mimetype = data.value(QStringLiteral("mimetype")).toString();
+    m_filetype = data.value(QStringLiteral("filetype")).toString();
+    m_pretty_type = data.value(QStringLiteral("pretty_type")).toString();
+    QPointer<User> m_user;//" : "U2147483697",
+    const QString& _mode = data.value(QStringLiteral("mode")).toString();
+    if (_mode == "hosted") {
+        m_mode = Hosted;
+    } if (_mode == "external") {
+        m_mode = External;
+    } if (_mode == "snippet") {
+        m_mode = Snipped;
+    } if (_mode == "post") {
+        m_mode = Post;
+    }
+    m_editable = data.value(QStringLiteral("external_type")).toBool(true);
+    m_is_external = data.value(QStringLiteral("external_type")).toBool(false);
+    m_external_type = data.value(QStringLiteral("external_type")).toString();
+    m_username = data.value(QStringLiteral("username")).toString();
+    m_size = (quint64)data.value(QStringLiteral("size")).toInt(0);
+    m_url_private = QUrl(data.value(QStringLiteral("url_private")).toString());
+    m_url_private_download = QUrl(data.value(QStringLiteral("url_private_download")).toString());
+    m_thumb_video = QUrl(data.value(QStringLiteral("thumb_video")).toString());
+    m_thumb_64 = QUrl(data.value(QStringLiteral("thumb_64")).toString());
+    m_thumb_80 = QUrl(data.value(QStringLiteral("thumb_80")).toString());
+    m_thumb_360 = QUrl(data.value(QStringLiteral("thumb_360")).toString());
+    m_thumb_360_gif = QUrl(data.value(QStringLiteral("thumb_360_gif")).toString());
+    m_thumb_360_size = QSize(data.value(QStringLiteral("thumb_360_w")).toInt(100),
+                             data.value(QStringLiteral("thumb_360_h")).toInt(100));
+    m_thumb_480 = QUrl(data.value(QStringLiteral("thumb_480")).toString());
+    m_thumb_480_size = QSize(data.value(QStringLiteral("thumb_480_w")).toInt(100),
+                             data.value(QStringLiteral("thumb_480_h")).toInt(100));
+    m_original_size = QSize(data.value(QStringLiteral("original_w")).toInt(100),
+                             data.value(QStringLiteral("original_h")).toInt(100));
+    m_thumb_160 = QUrl(data.value(QStringLiteral("thumb_160")).toString());
+    m_permalink = QUrl(data.value(QStringLiteral("permalink")).toString());
+    m_permalink_public = QUrl(data.value(QStringLiteral("permalink_public")).toString());
+    m_edit_link = QUrl(data.value(QStringLiteral("edit_link")).toString());
+    m_preview = data.value(QStringLiteral("preview")).toString();
+    m_preview_highlight = data.value(QStringLiteral("preview_highlight")).toString();
+    m_lines = data.value(QStringLiteral("lines")).toInt(0);
+    m_lines_more = data.value(QStringLiteral("lines_more")).toInt(0);
+    m_is_public = data.value(QStringLiteral("external_type")).toBool(true);
+    m_public_url_shared = data.value(QStringLiteral("external_type")).toBool(true);
+    m_display_as_bot = data.value(QStringLiteral("external_type")).toBool(false);
+    foreach (const QJsonValue &channelValue, data.value(QStringLiteral("channels")).toArray()) {
+        m_channels << channelValue.toString();
+    }
+    foreach (const QJsonValue &groupValue, data.value(QStringLiteral("groups")).toArray()) {
+        m_groups << groupValue.toString();
+    }
+    foreach (const QJsonValue &imValue, data.value(QStringLiteral("ims")).toArray()) {
+        m_ims << imValue.toString();
+    }
+    m_initial_comment = data.value(QStringLiteral("initial_comment")).toString();
+    m_num_stars = data.value(QStringLiteral("num_stars")).toInt(0);
+    m_is_starred = data.value(QStringLiteral("external_type")).toBool(false);
+    foreach (const QJsonValue &pinnedlValue, data.value(QStringLiteral("pinned_to")).toArray()) {
+        m_pinned_to << pinnedlValue.toString();
+    }
+
+    for (const QJsonValue &reactionValue : data.value("reactions").toArray()) {
+        Reaction *reaction = new Reaction;
+        reaction->setData(reactionValue.toObject());
+        QQmlEngine::setObjectOwnership(reaction, QQmlEngine::CppOwnership);
+        m_reactions.append(reaction);
+    }
+    m_comments_count = data.value(QStringLiteral("m_comments_count")).toInt(0);
+}

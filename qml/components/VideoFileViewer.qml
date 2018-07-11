@@ -11,7 +11,7 @@ Item {
         anchors.fill: parent
         asynchronous: true
         fillMode: Image.PreserveAspectFit
-        source: "team://" + teamId + "/" + model.thumbUrl
+        source: "team://" + teamId + "/" + fileshare.thumb_video
         visible: video.playbackState === MediaPlayer.StoppedState
         onStatusChanged: {
             if (status === Image.Ready) {
@@ -19,15 +19,16 @@ Item {
                 videoItem.height = width / (sourceSize.width / sourceSize.height)
             }
         }
+        onSourceChanged: console.log("thumb video source", fileshare.thumb_video)
     }
 
     MediaPlayer {
         id: video
-        source: model.url_download
+        source: fileshare.url_private_download
         audioRole: MediaPlayer.VideoRole
         Component.onCompleted: {
             if (availability === MediaPlayer.Available) {
-                SlackClient.setMediaSource(this, teamId, model.url_download)
+                SlackClient.setMediaSource(this, teamId, fileshare.url_private_download)
             }
         }
 

@@ -1458,52 +1458,6 @@ QVariantMap SlackTeamClient::user(const QJsonObject &data)
     return QVariantMap();
 }
 
-QVariantList SlackTeamClient::getFileShares(const QJsonObject& message)
-{
-    DEBUG_BLOCK
-
-    QVariantList images;
-
-    if (message.value(QStringLiteral("subtype")).toString() == QStringLiteral("file_share")) {
-        //qDebug() << "file share json:" << message;
-
-        QJsonObject file = message.value(QStringLiteral("file")).toObject();
-        QString fileType = file.value(QStringLiteral("filetype")).toString();
-
-        QString thumbItem = file.contains(QStringLiteral("thumb_480")) ?
-                    QStringLiteral("480") :
-                    QStringLiteral("360");
-
-        QVariantMap thumbSize;
-        thumbSize.insert(QStringLiteral("width"), file.value("thumb_" + thumbItem + "_w").toVariant());
-        thumbSize.insert(QStringLiteral("height"), file.value("thumb_" + thumbItem + "_h").toVariant());
-
-        QVariantMap imageSize;
-        imageSize.insert(QStringLiteral("width"), file.value("original_w").toVariant());
-        imageSize.insert(QStringLiteral("height"), file.value("original_h").toVariant());
-
-        QVariantMap fileData;
-        fileData.insert(QStringLiteral("filetype"), fileType);
-        fileData.insert(QStringLiteral("name"), file.value(QStringLiteral("name")).toVariant());
-        fileData.insert(QStringLiteral("url"), file.value(QStringLiteral("url_private")).toVariant());
-        fileData.insert(QStringLiteral("url_download"), file.value(QStringLiteral("url_private_download")).toVariant());
-        fileData.insert(QStringLiteral("size"), imageSize);
-        fileData.insert(QStringLiteral("thumbSize"), thumbSize);
-        fileData.insert(QStringLiteral("preview_highlight"), file.value(QStringLiteral("preview_highlight")).toVariant());
-        if (!file.value(QStringLiteral("thumb_video")).isUndefined()) {
-            fileData.insert(QStringLiteral("thumbUrl"), file.value("thumb_video").toVariant());
-        } else {
-            fileData.insert(QStringLiteral("thumbUrl"), file.value("thumb_" + thumbItem).toVariant());
-        }
-        fileData.insert(QStringLiteral("mimetype"), file.value("mimetype").toVariant());
-
-        images.append(fileData);
-        //qDebug() << "images" << fileData;
-    }
-
-    return images;
-}
-
 void SlackTeamClient::sendNotification(const QString& channelId, const QString& title, const QString& text)
 {
     DEBUG_BLOCK

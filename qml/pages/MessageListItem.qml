@@ -166,7 +166,9 @@ ItemDelegate {
             id: fileSharesRepeater
             model: FileShares
 
-            delegate: FileViewer {}
+            delegate: FileViewer {
+                fileshare: FileShares[index]
+            }
         }
 
         Repeater {

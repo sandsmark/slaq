@@ -21,8 +21,11 @@ namespace {
 QDateTime slackToDateTime(const QString& slackts) {
     QDateTime dt;
     QStringList ts_ = slackts.split(".");
-    if (ts_.size() == 2) {
+    if (ts_.size() >= 1) {
         dt = QDateTime::fromSecsSinceEpoch(ts_.at(0).toLongLong());
+    }
+
+    if (ts_.size() == 2) {
         int msecs = ts_.at(1).toInt();
         dt = dt.addMSecs(msecs);
     }
@@ -118,27 +121,113 @@ public:
     QList<QObject*> fields;
 };
 
-class FileShare {
-    Q_GADGET
-    Q_PROPERTY(QString titleLink MEMBER titleLink CONSTANT)
-    Q_PROPERTY(QString title MEMBER title CONSTANT)
-    Q_PROPERTY(QString pretext MEMBER pretext CONSTANT)
-    Q_PROPERTY(QString text MEMBER text CONSTANT)
-    Q_PROPERTY(QString fallback MEMBER fallback CONSTANT)
-    Q_PROPERTY(QString color MEMBER color CONSTANT)
+class FileShare: public QObject {
+    Q_OBJECT
+    Q_PROPERTY(QString id MEMBER m_id CONSTANT)
+    Q_PROPERTY(QDateTime created MEMBER m_created CONSTANT)
+    Q_PROPERTY(QDateTime timestamp MEMBER m_timestamp CONSTANT)
+    Q_PROPERTY(QString name MEMBER m_name CONSTANT)
+    Q_PROPERTY(QString title MEMBER m_title CONSTANT)
+    Q_PROPERTY(QString mimetype MEMBER m_mimetype CONSTANT)
+    Q_PROPERTY(QString filetype MEMBER m_filetype CONSTANT)
+    Q_PROPERTY(QString pretty_type MEMBER m_pretty_type CONSTANT)
+    Q_PROPERTY(QPointer<User> user MEMBER m_user CONSTANT)
+    Q_PROPERTY(FileShareModes mode MEMBER m_mode CONSTANT)
+    Q_PROPERTY(bool editable MEMBER m_editable CONSTANT)
+    Q_PROPERTY(bool is_external MEMBER m_is_external CONSTANT)
+    Q_PROPERTY(QString external_type MEMBER m_external_type CONSTANT)
+    Q_PROPERTY(QString username MEMBER m_username CONSTANT)
+    Q_PROPERTY(quint64 size MEMBER m_size CONSTANT)
+    Q_PROPERTY(QUrl url_private MEMBER m_url_private CONSTANT)
+    Q_PROPERTY(QUrl url_private_download MEMBER m_url_private_download CONSTANT)
+    Q_PROPERTY(QUrl thumb_video MEMBER m_thumb_video CONSTANT)
+    Q_PROPERTY(QUrl thumb_64 MEMBER m_thumb_64 CONSTANT)
+    Q_PROPERTY(QUrl thumb_80 MEMBER m_thumb_80 CONSTANT)
+    Q_PROPERTY(QUrl thumb_160 MEMBER m_thumb_160 CONSTANT)
+    Q_PROPERTY(QUrl thumb_360 MEMBER m_thumb_360 CONSTANT)
+    Q_PROPERTY(QUrl thumb_360_gif MEMBER m_thumb_360_gif CONSTANT)
+    Q_PROPERTY(QUrl thumb_480 MEMBER m_thumb_480 CONSTANT)
+    Q_PROPERTY(QSize thumb_360_size MEMBER m_thumb_360_size CONSTANT)
+    Q_PROPERTY(QSize thumb_480_size MEMBER m_thumb_480_size CONSTANT)
+    Q_PROPERTY(QSize original_size MEMBER m_original_size CONSTANT)
+    Q_PROPERTY(QUrl permalink MEMBER m_permalink CONSTANT)
+    Q_PROPERTY(QUrl permalink_public MEMBER m_permalink_public CONSTANT)
+    Q_PROPERTY(QUrl edit_link MEMBER m_edit_link CONSTANT)
+    Q_PROPERTY(QString preview MEMBER m_preview CONSTANT)
+    Q_PROPERTY(QString preview_highlight MEMBER m_preview_highlight CONSTANT)
+    Q_PROPERTY(int lines MEMBER m_lines CONSTANT)
+    Q_PROPERTY(int lines_more MEMBER m_lines_more CONSTANT)
+    Q_PROPERTY(bool is_public MEMBER m_is_public CONSTANT)
+    Q_PROPERTY(bool public_url_shared MEMBER m_public_url_shared CONSTANT)
+    Q_PROPERTY(bool display_as_bot MEMBER m_display_as_bot CONSTANT)
+    Q_PROPERTY(QStringList channels MEMBER m_channels CONSTANT)
+    Q_PROPERTY(QStringList groups MEMBER m_groups CONSTANT)
+    Q_PROPERTY(QStringList ims MEMBER m_ims CONSTANT)
+    Q_PROPERTY(QString initial_comment MEMBER m_initial_comment CONSTANT)
+    Q_PROPERTY(int num_stars MEMBER m_num_stars CONSTANT)
+    Q_PROPERTY(bool is_starred MEMBER m_is_starred CONSTANT)
+    Q_PROPERTY(QStringList pinned_to MEMBER m_pinned_to CONSTANT)
+    Q_PROPERTY(QList<QObject*> reactions MEMBER m_reactions CONSTANT)
+    Q_PROPERTY(int comments_count MEMBER m_comments_count CONSTANT)
 
 public:
-    FileShare(const QJsonObject &data);
+    FileShare(QObject* parent = nullptr);
+    void setData(const QJsonObject &data);
 
-    QString titleLink;
-    QString title;
-    QString pretext;
-    QString text;
-    QString fallback;
-    QString color;
+    enum FileShareModes {
+        Hosted,
+        External,
+        Snipped,
+        Post
+    };
+    Q_ENUM(FileShareModes)
 
-    QUrl imageUrl;
-    QSize imageSize;
+    QString m_id;
+    QDateTime m_created;
+    QDateTime m_timestamp;
+    QString m_name;
+    QString m_title;
+    QString m_mimetype;
+    QString m_filetype;
+    QString m_pretty_type;
+    QPointer<User> m_user;
+    FileShareModes m_mode { Hosted };
+    bool m_editable { true };
+    bool m_is_external {false };
+    QString m_external_type;
+    QString m_username;
+    quint64 m_size;
+    QUrl m_url_private;
+    QUrl m_url_private_download;
+    QUrl m_thumb_64;
+    QUrl m_thumb_80;
+    QUrl m_thumb_360;
+    QUrl m_thumb_360_gif;
+    QSize m_thumb_360_size;
+    QUrl m_thumb_480;
+    QSize m_thumb_480_size;
+    QSize m_original_size;
+    QUrl m_thumb_160;
+    QUrl m_thumb_video;
+    QUrl m_permalink;
+    QUrl m_permalink_public;
+    QUrl m_edit_link;
+    QString m_preview;
+    QString m_preview_highlight;
+    int m_lines;
+    int m_lines_more;
+    bool m_is_public { true };
+    bool m_public_url_shared { false };
+    bool m_display_as_bot { false };
+    QStringList m_channels;
+    QStringList m_groups;
+    QStringList m_ims;
+    QString m_initial_comment;
+    int m_num_stars;
+    bool m_is_starred { false };
+    QStringList m_pinned_to;
+    QList<QObject*> m_reactions;
+    int m_comments_count;
 };
 
 class Message: public QObject {

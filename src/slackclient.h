@@ -169,8 +169,6 @@ private:
     void parsePresenceChange(const QJsonObject& message);
     void parseNotification(const QJsonObject& message);
 
-    QVariantList getFileShares(const QJsonObject& message);
-
     QVariantMap parseChannel(const QJsonObject& data);
     QVariantMap parseGroup(const QJsonObject& group);
 
