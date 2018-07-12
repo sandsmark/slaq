@@ -283,6 +283,7 @@ public:
     void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages);
     Message* message(const QDateTime& ts);
+    Message* message(int row);
 
 private:
     void preprocessFormatting(::Chat* chat, Message *message);

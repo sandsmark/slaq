@@ -25,7 +25,7 @@ public:
         Type,
         Name,
         IsOpen,
-        LastReadId,
+        LastRead,
         UnreadCount,
         UnreadCountDisplay,
         MembersModel,
@@ -58,6 +58,7 @@ public:
     Q_INVOKABLE MessageListModel *messages(const QString &id);
     UsersModel *members(const QString &id);
     Chat& chat(const QString &id);
+    void chatChanged(const Chat& chat);
 
 private:
     QString getSectionName(const Chat& chat) const;
@@ -81,7 +82,10 @@ struct Chat
     QString name;
     QString readableName;
     bool isOpen = false;
-    QString lastReadId;
+    bool isPrivate = false;
+    bool isMpim = false;
+
+    QDateTime lastRead;
     int unreadCount = 0;
     int unreadCountDisplay = 0;
     QPointer<UsersModel> membersModel;

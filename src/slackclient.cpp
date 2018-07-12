@@ -265,13 +265,7 @@ void SlackTeamClient::parseGroupJoin(const QJsonObject& message)
 void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK
-//TODO: redesign
-//    QString id = message.value(QStringLiteral("channel")).toString();
-//    QVariantMap channel = m_storage.channel(id);
-//    channel.insert(QStringLiteral("lastRead"), message.value(QStringLiteral("ts")).toVariant());
-//    channel.insert(QStringLiteral("unreadCount"), message.value(QStringLiteral("unread_count_display")).toVariant());
-//    m_storage.saveChannel(channel);
-//    emit channelUpdated(m_teamInfo.teamId(), channel);
+    emit channelUpdated(message);
 }
 
 //TODO: investigate comment type
@@ -1104,17 +1098,17 @@ void SlackTeamClient::handleLoadMessagesReply()
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 
-QString SlackTeamClient::markMethod(const QString& type)
+QString SlackTeamClient::markMethod(ChatsModel::ChatType type)
 {
     DEBUG_BLOCK
 
-    if (type == QStringLiteral("channel")) {
+    if (type == ChatsModel::Channel) {
         return QStringLiteral("channels.mark");
-    } else if (type == QStringLiteral("group")) {
+    } else if (type == ChatsModel::Group) {
         return QStringLiteral("groups.mark");
-    } else if (type == QStringLiteral("mpim")) {
+    } else if (type == ChatsModel::MultiUserConversation) {
         return QStringLiteral("mpim.mark");
-    } else if (type == QStringLiteral("im")) {
+    } else if (type == ChatsModel::Conversation) {
         return QStringLiteral("im.mark");
     } else {
         return "";
@@ -1139,13 +1133,20 @@ TeamInfo *SlackTeamClient::teamInfo()
     return &m_teamInfo;
 }
 
-void SlackTeamClient::markChannel(const QString& type, const QString& channelId, const QString& time)
+void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime &time)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    params.insert(QStringLiteral("ts"), time);
+    QDateTime dt = time;
+    if (dt.isNull()) {
+        auto messagesModel = teamInfo()->chats()->messages(channelId);
+        if (messagesModel != nullptr && messagesModel->rowCount(QModelIndex()) > 0) {
+            dt = messagesModel->message(0)->time;
+        }
+    }
+    params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleMarkChannelReply);

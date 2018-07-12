@@ -87,7 +87,7 @@ public slots:
     bool handleAccessTokenReply(const QJsonObject &bootData);
 
     //channels
-    void markChannel(const QString& teamId, const QString& type, const QString& channelId, const QString& time);
+    void markChannel(const QString& teamId, ChatsModel::ChatType type, const QString& channelId, const QDateTime &time = QDateTime());
     void joinChannel(const QString& teamId, const QString& channelId);
     void leaveChannel(const QString& teamId, const QString& channelId);
     void leaveGroup(const QString& teamId, const QString& groupId);
@@ -103,6 +103,7 @@ public slots:
 
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message);
+    void onChannelUpdated(const QJsonObject &channelData);
 
     //chats
     void openChat(const QString& teamId, const QString& chatId);

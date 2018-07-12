@@ -70,7 +70,7 @@ signals:
 
     void messageReceived(Message* message);
     void messageUpdated(Message* message);
-    void channelUpdated(const QString& teamId, QVariantMap channel);
+    void channelUpdated(const QJsonObject& message);
     void channelJoined(const QString& teamId, QVariantMap channel);
     void channelLeft(const QString& teamId, QVariantMap channel);
     void userUpdated(const QString& teamId, QVariantMap user);
@@ -107,7 +107,7 @@ public slots:
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
-    void markChannel(const QString& type, const QString& channelId, const QString& time);
+    void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
     void leaveGroup(const QString& groupId);
@@ -176,7 +176,7 @@ private:
     QVariantMap user(const QJsonObject &data);
 
     QString historyMethod(const ChatsModel::ChatType type);
-    QString markMethod(const QString& type);
+    QString markMethod(ChatsModel::ChatType type);
 
     QPointer<QNetworkAccessManager> networkAccessManager;
     QPointer<SlackConfig> config;

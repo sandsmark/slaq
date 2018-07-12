@@ -125,8 +125,8 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return chat.readableName.isEmpty() ? chat.name : chat.readableName;
     case IsOpen:
         return chat.isOpen;
-    case LastReadId:
-        return chat.lastReadId;
+    case LastRead:
+        return chat.lastRead;
     case UnreadCountDisplay:
         return chat.unreadCountDisplay;
     case UnreadCount:
@@ -154,7 +154,7 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
     names[Type] = "Type";
     names[Name] = "Name";
     names[IsOpen] = "IsOpen";
-    names[LastReadId] = "LastReadId";
+    names[LastRead] = "LastRead";
     names[UnreadCount] = "UnreadCount";
     names[UnreadCountDisplay] = "UnreadCountDisplay";
     names[MembersModel] = "MembersModel";
@@ -187,7 +187,7 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
         }
     }
 
-    if (type != Channel) {
+    if (type != Channel && chat.name.startsWith("mpdm")) {
         chat.setReadableName(m_selfId);
     }
     m_chatIds.append(chat.id);
@@ -227,6 +227,13 @@ Chat &ChatsModel::chat(const QString &id)
     return m_chats[id];
 }
 
+void ChatsModel::chatChanged(const Chat &chat)
+{
+    beginResetModel();
+    m_chats[chat.id] = chat;
+    endResetModel();
+}
+
 Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
     id = data.value(QStringLiteral("id")).toString();
@@ -235,7 +242,9 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
     presence = QStringLiteral("none");
     isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
                                              data.value(QStringLiteral("is_open")).toBool();
-    lastReadId = data.value(QStringLiteral("last_read")).toString();
+    isMpim = data.value(QStringLiteral("is_mpim")).toBool();
+    isPrivate = data.value(QStringLiteral("is_private")).toBool();
+    lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();
 }

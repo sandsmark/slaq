@@ -84,6 +84,11 @@ Message *MessageListModel::message(const QDateTime &ts)
     return nullptr;
 }
 
+Message *MessageListModel::message(int row)
+{
+    return m_messages.at(row);
+}
+
 void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
 {
     findNewUsers(message->text);

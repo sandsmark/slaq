@@ -12,7 +12,7 @@ ListView {
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
-    property string latestRead: ""
+    property var latestRead
 
     signal loadCompleted()
     signal loadStarted()
@@ -39,6 +39,7 @@ ListView {
         onLoadMessagesSuccess: {
             if (teamId === teamRoot.teamId) {
                 listView.model = teamRoot.slackClient.currentChatsModel().messages(channelId)
+                SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
                 inputEnabled = true
                 loadCompleted()
             }
@@ -92,9 +93,7 @@ ListView {
         if (appActive && atBottom /*&& model.count*/
                 && teamId === SlackClient.lastTeam
                 && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channelId) {
-            //latestRead = model.get(0).time
-            //SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId, latestRead)
-            //latestRead = ""
+            SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
         }
     }
 
