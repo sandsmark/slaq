@@ -264,8 +264,14 @@ void SlackTeamClient::parseGroupJoin(const QJsonObject& message)
 
 void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
 {
-    DEBUG_BLOCK
-    emit channelUpdated(message);
+    DEBUG_BLOCK;
+    //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
+    const QString& channelId = message.value(QStringLiteral("channel")).toString();
+    ChatsModel* chatsModel = m_teamInfo.chats();
+    Chat chat = chatsModel->chat(channelId);
+    chat.unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
+    chat.lastRead = slackToDateTime(message.value(QStringLiteral("channel")).toString());
+    emit channelUpdated(chat);
 }
 
 //TODO: investigate comment type
@@ -294,40 +300,6 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
     } else {
         emit messageReceived(message_);
     }
-//    const QString& teamId = message.value(QStringLiteral("team_id")).toString();
-//    const QJsonValue& subtype = message.value(QStringLiteral("subtype"));
-//    const QJsonValue& innerMessage = message.value(QStringLiteral("message"));
-//    if (innerMessage.isUndefined()) {
-//        data = getMessageData(message, teamId);
-//    } else {
-//        //TODO(unknown): handle messages threads
-//        data = getMessageData(innerMessage.toObject(), teamId);
-//        if (subtype.toString() == "message_changed") {
-//            data[QStringLiteral("edited")] = true;
-//        }
-//    }
-
-//    QString channelId = message.value(QStringLiteral("channel")).toString();
-
-//    if (!data.value("channel").isValid()) {
-//        data["channel"] = QVariant(channelId);
-//    }
-
-//    if (m_storage.channelMessagesExist(channelId)) {
-//        m_storage.appendChannelMessage(channelId, data);
-//    }
-
-//    QVariantMap channel = m_storage.channel(channelId);
-
-//    QString messageTime = data.value(QStringLiteral("time")).toString();
-//    QString latestRead = channel.value(QStringLiteral("lastRead")).toString();
-
-//    if (messageTime > latestRead) {
-//        int unreadCount = channel.value(QStringLiteral("unreadCount")).toInt() + 1;
-//        channel.insert(QStringLiteral("unreadCount"), unreadCount);
-//        m_storage.saveChannel(channel);
-//        emit channelUpdated(m_teamInfo.teamId(), channel);
-//    }
 
 //    if (!channel.value(QStringLiteral("isOpen")).toBool()) {
 //        if (channel.value(QStringLiteral("type")).toString() == QStringLiteral("im")) {
@@ -389,10 +361,25 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
 
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 //TODO: redesign
-//    QVariant userId = message.value(QStringLiteral("user")).toVariant();
-//    QVariant presence = message.value(QStringLiteral("presence")).toVariant();
+
+    QList<QPointer<User>> _users;
+    const QJsonValue& _userValue = message.value(QStringLiteral("user"));
+    if (!_userValue.isUndefined()) {
+        const QString& userId = _userValue.toString();
+        _users.append(m_teamInfo.users()->user(userId));
+    }
+    const QJsonValue& _usersValue = message.value(QStringLiteral("users"));
+    if (!_usersValue.isUndefined()) {
+        for (const QJsonValue& jsonUser : _usersValue.toArray()) {
+            const QString& userId = jsonUser.toString();
+            _users.append(m_teamInfo.users()->user(userId));
+        }
+    }
+
+    const QString& presence = message.value(QStringLiteral("presence")).toString();
+    emit usersPresenceChanged(_users, presence);
 
 //    QVariantMap user = m_storage.user(userId);
 //    if (!user.isEmpty()) {
@@ -675,7 +662,9 @@ void SlackTeamClient::startClient()
     }
 
     qDebug() << "Start init";
-    QNetworkReply *reply = executeGet(QStringLiteral("rtm.start"));
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("batch_presence_aware"), QStringLiteral("1"));
+    QNetworkReply *reply = executeGet(QStringLiteral("rtm.start"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleStartReply);
 }
 
@@ -798,16 +787,15 @@ QString SlackTeamClient::lastChannel()
 {
     DEBUG_BLOCK
     QString _lastChannel;
-//TODO: redesign
-//    const QVariantList& chList = m_storage.channels();
-
-//    if (!chList.isEmpty()) {
-//        _lastChannel = chList.first().toMap()[QStringLiteral("id")].toString();
-//    }
 
     if (!m_teamInfo.lastChannel().isEmpty()) {
         _lastChannel = m_teamInfo.lastChannel();
     }
+    ChatsModel* _chatsModel = m_teamInfo.chats();
+    if (_lastChannel.isEmpty() && _chatsModel != nullptr && _chatsModel->rowCount() > 0) {
+        _lastChannel = _chatsModel->chat(0).id;
+    }
+
     //qDebug() << "last channel" << _lastChannel;
     return _lastChannel;
 }
@@ -1140,12 +1128,14 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
     QDateTime dt = time;
-    if (dt.isNull()) {
-        auto messagesModel = teamInfo()->chats()->messages(channelId);
+    auto chatsModel = teamInfo()->chats();
+    if (dt.isNull() || !dt.isValid()) {
+        auto messagesModel = chatsModel->messages(channelId);
         if (messagesModel != nullptr && messagesModel->rowCount(QModelIndex()) > 0) {
             dt = messagesModel->message(0)->time;
         }
     }
+    //chatsModel->chat(channelId)
     params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
 
     QNetworkReply *reply = executeGet(markMethod(type), params);

@@ -30,7 +30,8 @@ Column {
 
         Rectangle {
             id: color
-            width: Theme.paddingSmall
+            radius: 5
+            width: 5
             height: parent.height
             color: attachment.color === "theme" ? palette.highlight : attachment.color
         }
@@ -63,23 +64,21 @@ Column {
 
             RowLayout {
                 width: parent.width
-                Column {
-                    Layout.fillWidth: true
+                ColumnLayout {
+                    Layout.maximumWidth: value.paintedWidth
                     Label {
-                        width: parent.width
+                        id: title
                         font.pointSize: Theme.fontSizeSmall
-                        font.weight: Font.Bold
+                        font.bold: true
                         text: attachment.title
-                        visible: text.length > 0
                         onLinkActivated: linkClicked(link)
                     }
 
                     Label {
-                        width: parent.width
+                        id: value
                         font.pointSize: Theme.fontSizeSmall
                         text: attachment.text
                         wrapMode: Text.Wrap
-                        visible: text.length > 0
                         onLinkActivated: linkClicked(link)
                     }
                 }

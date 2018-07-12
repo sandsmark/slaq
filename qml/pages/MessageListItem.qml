@@ -9,7 +9,6 @@ import "../components"
 ItemDelegate {
     id: itemDelegate
     height: column.height
-    width: listView.width
     hoverEnabled: true
     highlighted: hovered
     property bool isSearchResult: false
@@ -101,8 +100,9 @@ ItemDelegate {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
-                    font.pointSize: Theme.fontSizeSmall
+                    font.pointSize: Theme.fontSizeMedium
                     font.italic: model.IsChanged
+                    verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
                     text: model.Text
                     renderType: Text.QtRendering

@@ -48,7 +48,7 @@ signals:
 
     void messageReceived(const QString& teamId, QVariantMap message);
     void messageUpdated(const QString& teamId, QVariantMap message);
-    void channelUpdated(const QString& teamId, QVariantMap channel);
+    void channelCountersUpdated(const QString& teamId, const QString& channelId, int unread_messages);
     void channelJoined(const QString& teamId, QVariantMap channel);
     void channelLeft(const QString& teamId, QVariantMap channel);
     void userUpdated(const QString& teamId, QVariantMap user);
@@ -92,6 +92,7 @@ public slots:
     void leaveChannel(const QString& teamId, const QString& channelId);
     void leaveGroup(const QString& teamId, const QString& groupId);
     QString getChannelName(const QString& teamId, const QString& channelId);
+    int getTotalUnread(const QString& teamId, ChatsModel::ChatType type);
 
     //messages
     void searchMessages(const QString& teamId, const QString& searchString);
@@ -103,7 +104,7 @@ public slots:
 
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message);
-    void onChannelUpdated(const QJsonObject &channelData);
+    void onChannelUpdated(const Chat &chat);
 
     //chats
     void openChat(const QString& teamId, const QString& chatId);

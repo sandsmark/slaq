@@ -96,13 +96,13 @@ ChatsModel::ChatsModel(const QString &selfId, QObject *parent, UsersModel *netwo
 QString ChatsModel::getSectionName(const Chat& chat) const {
     switch (chat.type) {
     case Channel:
-        return chat.unreadCountDisplay > 0 ? tr("Unread channels") : tr("Channels");
+        return tr("Channels");
 
     case Group:
-        return chat.unreadCountDisplay > 0 ? tr("Unread chats") : tr("Chats");
+        return tr("Chats");
 
     case Conversation:
-        return chat.unreadCountDisplay > 0 ? tr("Unread DM") : tr("Direct messages");
+        return tr("Direct messages");
 
     }
     return tr("Other");
@@ -222,16 +222,21 @@ UsersModel *ChatsModel::members(const QString &id)
     return m_chats[id].membersModel;
 }
 
-Chat &ChatsModel::chat(const QString &id)
-{
+Chat& ChatsModel::chat(const QString &id) {
     return m_chats[id];
+}
+
+Chat &ChatsModel::chat(int row)
+{
+    return m_chats[m_chatIds[row]];
 }
 
 void ChatsModel::chatChanged(const Chat &chat)
 {
-    beginResetModel();
+    int row = m_chatIds.indexOf(chat.id);
     m_chats[chat.id] = chat;
-    endResetModel();
+    QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
+    emit dataChanged(index, index);
 }
 
 Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)

@@ -228,6 +228,23 @@ QString SlackClientThreadSpawner::getChannelName(const QString &teamId, const QS
 
 }
 
+int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::ChatType type)
+{
+    int total = 0;
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return 0;
+    }
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    for (int i = 0; i < _chatsModel->rowCount(); i++) {
+        Chat chat = _chatsModel->chat(i);
+        if (chat.type == type) {
+            total += chat.unreadCountDisplay;
+        }
+    }
+    return total;
+}
+
 void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString &channelId, const QString& content)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
@@ -279,15 +296,29 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
 void SlackClientThreadSpawner::onMessageReceived(Message *message)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    UsersModel* users = _slackClient->teamInfo()->users();
-    MessageListModel *messages = _slackClient->teamInfo()->chats()->messages(message->channel_id);
-    if (messages == nullptr || users == nullptr) {
+
+    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
+
+    if (chatsModel == nullptr) {
+        qWarning() << "No chats";
+        delete message;
+        return;
+    }
+    MessageListModel *messages = chatsModel->messages(message->channel_id);
+    if (messages == nullptr) {
         qWarning() << "No messages in chat" << message->channel_id;
         delete message;
         return;
     }
-    message->user = users->user(message->user_id);
+
+    if (message->user.isNull()) {
+        UsersModel* users = _slackClient->teamInfo()->users();
+        message->user = users->user(message->user_id);
+    }
+
     messages->addMessage(message);
+    Chat chat = chatsModel->chat(message->channel_id);
+    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
 }
 
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
@@ -303,16 +334,12 @@ void SlackClientThreadSpawner::onMessageUpdated(Message *message)
     messages->updateMessage(message);
 }
 
-void SlackClientThreadSpawner::onChannelUpdated(const QJsonObject &channelData)
+void SlackClientThreadSpawner::onChannelUpdated(const Chat &chat)
 {
-    //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
-    const QString& channelId = channelData.value(QStringLiteral("channel")).toString();
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    Chat chat = chatsModel->chat(channelId);
-    chat.unreadCountDisplay = channelData.value(QStringLiteral("unread_count_display")).toInt();
-    chat.lastRead = slackToDateTime(channelData.value(QStringLiteral("channel")).toString());
     chatsModel->chatChanged(chat);
+    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
 }
 
 void SlackClientThreadSpawner::openChat(const QString& teamId, const QString &chatId)
@@ -489,6 +516,11 @@ void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addTeamData(teamData);
     emit chatsModelChanged(_slackClient->teamInfo()->teamId());
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    for(int i = 0; i < _chatsModel->rowCount(); i++) {
+        Chat& chat = _chatsModel->chat(i);
+        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
+    }
 }
 
 void SlackClientThreadSpawner::run()

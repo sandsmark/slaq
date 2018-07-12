@@ -58,6 +58,7 @@ public:
     Q_INVOKABLE MessageListModel *messages(const QString &id);
     UsersModel *members(const QString &id);
     Chat& chat(const QString &id);
+    Chat& chat(int row);
     void chatChanged(const Chat& chat);
 
 private:

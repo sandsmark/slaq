@@ -70,7 +70,7 @@ signals:
 
     void messageReceived(Message* message);
     void messageUpdated(Message* message);
-    void channelUpdated(const QJsonObject& message);
+    void channelUpdated(const Chat& chat);
     void channelJoined(const QString& teamId, QVariantMap channel);
     void channelLeft(const QString& teamId, QVariantMap channel);
     void userUpdated(const QString& teamId, QVariantMap user);
@@ -94,6 +94,7 @@ signals:
 
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
     void teamDataChanged(const QJsonObject &teamData);
+    void usersPresenceChanged(const QList<QPointer<User>>& users, const QString& presence);
 	
 
 public slots:

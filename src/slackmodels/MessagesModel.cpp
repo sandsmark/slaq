@@ -110,15 +110,20 @@ void MessageListModel::addMessage(Message* message)
         qWarning() << "user is null for " << message->user_id;
     }
     Q_ASSERT_X(!message->user.isNull(), "addMessage .user is null", "");
+    ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
     Chat chat;
-    if (parent() != nullptr) {
+    if (_chatsModel != nullptr) {
         chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
     }
     preprocessFormatting(&chat, message);
-    beginInsertRows(QModelIndex(), 0, 0);
     qDebug() << "adding message:" << message->text;
+    beginInsertRows(QModelIndex(), 0, 0);
     m_messages.insert(0, message);
     endInsertRows();
+    if (message->time > chat.lastRead) {
+        chat.unreadCountDisplay++;
+        _chatsModel->chatChanged(chat);
+    }
 }
 
 void MessageListModel::updateMessage(Message *message)
@@ -169,10 +174,11 @@ void MessageListModel::addMessages(const QJsonArray &messages)
     qDebug() << "Adding" << messages.count() << "messages";
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count());
 
-    //assum we have parent;
+    //assume we have parent;
+    ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
     Chat chat;
-    if (parent() != nullptr) {
-        chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
+    if (_chatsModel != nullptr) {
+        chat = _chatsModel->chat(m_channelId);
     }
     for (const QJsonValue &messageData : messages) {
         const QJsonObject messageObject = messageData.toObject();
@@ -180,7 +186,6 @@ void MessageListModel::addMessages(const QJsonArray &messages)
         //qDebug() << "message obj" << messageObject;
         message->setData(messageObject);
         message->channel_id = m_channelId;
-
         if (message->user_id.isEmpty()) {
             qWarning() << "user id is empty" << messageObject;
         }

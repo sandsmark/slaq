@@ -91,7 +91,7 @@ void MessageFormatter::replaceEmoji(QString &message)
             } else {
                 QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
                         .arg(captured)
-                        .arg(QStringLiteral("middle"))
+                        .arg(QStringLiteral("center"))
                         .arg(24)
                         .arg(24);
 

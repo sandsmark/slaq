@@ -5,7 +5,7 @@ import QtQuick.Window 2.3
 
 import Qt.labs.settings 1.0
 import Qt.labs.platform 1.0 as Platform
-
+import com.iskrembilen 1.0
 import "."
 import "pages"
 import "dialogs"
@@ -174,20 +174,14 @@ ApplicationWindow {
                             }
                             Connections {
                                 target: SlackClient
-                                onChannelUpdated: {
-                                    if (model.teamId === teamId) {
-                                        var total = 0
-                                        var totalIm = 0
-                                        SlackClient.getChannels(model.teamId).forEach(function(channel) {
-                                            if (channel.isOpen && channel.unreadCount > 0) {
-                                                if (channel.type === "im") {
-                                                    totalIm += channel.unreadCount
-                                                } else {
-                                                    total += channel.unreadCount
-                                                }
-                                            }
-                                        })
-                                        console.log("channel updated", channel.unreadCount, total)
+                                onChannelCountersUpdated: {
+                                    if (teamId === model.teamId) {
+                                        //unread_messages
+                                        var total = SlackClient.getTotalUnread(teamId, ChatsModel.Channel)
+                                        var totalIm = SlackClient.getTotalUnread(teamId, ChatsModel.Group)
+                                        totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.Conversation)
+                                        totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.MultiUserConversation)
+                                        console.log("channel updated", total)
                                         tabButton.unreadChannelMessages = total
                                         tabButton.unreadIMMessages = totalIm
                                         window.recalcUnread()

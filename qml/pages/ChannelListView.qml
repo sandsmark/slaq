@@ -51,7 +51,6 @@ ListView {
         visible: model.IsOpen
         enabled: visible
         height: model.IsOpen ? delegate.implicitHeight : 0
-//        icon.name: Channel.getIcon(model)
         icon.name: {
             switch (model.Type) {
             case ChatsModel.Channel:
@@ -73,6 +72,24 @@ ListView {
                 return ""
             }
         }
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: listView.ScrollBar.vertical.visible ?
+                                     listView.ScrollBar.vertical.width + Theme.paddingMedium :
+                                     Theme.paddingMedium
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: parent.height/2
+            implicitHeight: parent.height/2
+            radius: height/2
+            color: model.Type === ChatsModel.Channel ? "green" : "red"
+            visible: model.UnreadCountDisplay > 0
+            Text {
+                anchors.centerIn: parent
+                color: "white"
+                font.pixelSize: parent.height/1.5
+                text: model.UnreadCountDisplay
+            }
+        }
 
         width: listView.width
 
@@ -83,11 +100,11 @@ ListView {
 
             SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
 
-//            var channel = List
-//            console.log(Object.keys(channel))
-//            console.log(channel.Name)
-//            console.log(channel.Type)
-//            console.log(channel.Id)
+            //            var channel = List
+            //            console.log(Object.keys(channel))
+            //            console.log(channel.Name)
+            //            console.log(channel.Type)
+            //            console.log(channel.Id)
 
             pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id, "channelName": model.Name, "channelType": model.Type})
         }
@@ -101,38 +118,29 @@ ListView {
             onClicked: if (hasActions) { actionsMenu.popup() }
         }
 
-         Menu {
-             id: actionsMenu
+        Menu {
+            id: actionsMenu
 
             MenuItem {
                 text: model.Type === ChatsModel.Channel ? qsTr("Leave") : qsTr("Close")
                 onClicked: {
                     switch (model.Type) {
-                        case ChatsModel.Channel:
-                            SlackClient.leaveChannel(teamRoot.teamId, model.Id)
-                            break
+                    case ChatsModel.Channel:
+                        SlackClient.leaveChannel(teamRoot.teamId, model.Id)
+                        break
 
-                        case "group":
-                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name })
-                            dialog.accepted.connect(function() {
-                                SlackClient.leaveGroup(teamRoot.teamId, model.Id)
-                            })
-                            break
+                    case "group":
+                        var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name })
+                        dialog.accepted.connect(function() {
+                            SlackClient.leaveGroup(teamRoot.teamId, model.Id)
+                        })
+                        break
 
-                        case "im":
-                            SlackClient.closeChat(teamRoot.teamId,  model.Id)
+                    case "im":
+                        SlackClient.closeChat(teamRoot.teamId,  model.Id)
                     }
                 }
             }
         }
-    }
-
-    Component.onCompleted: {
-        console.log("channel list view component completed", teamRoot.teamId)
-        //ChannelList.init()
-    }
-
-    Component.onDestruction: {
-        //ChannelList.disconnect()
     }
 }

@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<Attachment>("com.iskrembilen", 1, 0, "Attachment", "Only instantiated by c++");
 
     qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
+    qRegisterMetaType<Chat>("Chat");
 
     qmlRegisterUncreatableType<MessageListModel>("com.iskrembilen", 1, 0, "MessageListModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
