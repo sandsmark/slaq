@@ -130,14 +130,15 @@ ListView {
                         SlackClient.leaveChannel(teamRoot.teamId, model.Id)
                         break
 
-                    case "group":
+                    case ChatsModel.Group:
+                    case ChatsModel.MultiUserConversation:
                         var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name })
                         dialog.accepted.connect(function() {
                             SlackClient.leaveGroup(teamRoot.teamId, model.Id)
                         })
                         break
 
-                    case "im":
+                    case ChatsModel.Conversation:
                         SlackClient.closeChat(teamRoot.teamId,  model.Id)
                     }
                 }

@@ -123,7 +123,7 @@ void MessageListModel::addMessage(Message* message)
     preprocessFormatting(&chat, message);
     qDebug() << "adding message:" << message->text;
     beginInsertRows(QModelIndex(), 0, 0);
-    m_messages.insert(0, message);
+    m_messages.prepend(message);
     endInsertRows();
     if (message->time > chat.lastRead) {
         chat.unreadCountDisplay++;
@@ -258,7 +258,9 @@ void Message::setData(const QJsonObject &data)
     type = data.value(QStringLiteral("type")).toString();
     ts = data.value(QStringLiteral("ts")).toString();
     time = slackToDateTime(ts);
-    //qDebug() << ts << time;
+    qDebug() << ts << time;
+    Q_ASSERT(time.isValid());
+
     text = data.value(QStringLiteral("text")).toString();
 
     channel_id = data.value(QStringLiteral("channel")).toString();

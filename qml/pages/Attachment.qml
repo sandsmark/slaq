@@ -65,7 +65,7 @@ Column {
             RowLayout {
                 width: parent.width
                 ColumnLayout {
-                    Layout.maximumWidth: valueId.paintedWidth
+                    Layout.fillWidth: true
                     Label {
                         id: titleId
                         font.pointSize: Theme.fontSizeSmall

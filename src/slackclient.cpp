@@ -715,20 +715,6 @@ void SlackTeamClient::handleStartReply()
     emit initSuccess(m_teamInfo.teamId());
 }
 
-QVariantList SlackTeamClient::getChannels()
-{
-    DEBUG_BLOCK
-
-    return QVariantList(); //TODO: redesign: m_storage.channels();
-}
-
-QVariant SlackTeamClient::getChannel(const QString& channelId)
-{
-    DEBUG_BLOCK
-
-    return QVariant(); //TODO: redesign: m_storage.channel(QVariant(channelId));
-}
-
 QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, const int cursorPosition)
 {
     DEBUG_BLOCK
@@ -748,15 +734,14 @@ QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, cons
     const QString relevant = currentText.mid(whitespaceBefore, whitespaceAfter- whitespaceBefore);
 
     QStringList nicks;
-//TODO: redesign
-//    for (const QString &memberId : m_storage.channel(m_teamInfo.lastChannel()).value("members").toStringList()) {
-//        const QString nick = m_storage.user(memberId).value("name").toString();
-//        if (relevant.isEmpty()) {
-//            nicks.append(nick);
-//        } else if (nick.contains(relevant, Qt::CaseInsensitive)) {
-//            nicks.append(nick);
-//        }
-//    }
+    for (QPointer<User> user : m_teamInfo.users()->users()) {
+        const QString nick = user->username();
+        if (relevant.isEmpty()) {
+            nicks.append(nick);
+        } else if (nick.contains(relevant, Qt::CaseInsensitive)) {
+            nicks.append(nick);
+        }
+    }
 
     return nicks;
 }
@@ -907,6 +892,7 @@ void SlackTeamClient::openChat(const QString& chatId)
 
     if (chat.user.isNull()) {
         qWarning() << "No user for chat" << chatId;
+        return;
     }
     QMap<QString, QString> params;
     params.insert(QStringLiteral("user"), chat.user->userId());
@@ -1142,7 +1128,13 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
         auto messagesModel = chatsModel->messages(channelId);
         if (messagesModel != nullptr && messagesModel->rowCount(QModelIndex()) > 0) {
             dt = messagesModel->message(0)->time;
+        } else {
+            qDebug() << "message model not ready for the channel" << channelId;
         }
+    }
+    if (!dt.isValid()) {
+        qWarning() << "Cant find timestamp for the channel" << channelId;
+        return;
     }
     //chatsModel->chat(channelId)
     params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
@@ -1283,38 +1275,6 @@ void SlackTeamClient::handlePostImage()
     }
 
     reply->deleteLater();
-}
-
-QVariantMap SlackTeamClient::user(const QJsonObject &data)
-{
-    DEBUG_BLOCK;
-//TODO: redesign
-//    QString type = data.value(QStringLiteral("subtype")).toString(QStringLiteral("default"));
-//    QVariant userId;
-
-//    if (type == QStringLiteral("bot_message")) {
-//        userId = data.value(QStringLiteral("bot_id")).toVariant();
-//    } else {
-//        userId = data.value(QStringLiteral("user")).toVariant();
-//    }
-
-//    QVariantMap userData = m_storage.user(userId);
-
-//    if (userData.isEmpty()) {
-//        userData.insert(QStringLiteral("id"), data.value(QStringLiteral("user")).toVariant());
-//        userData.insert(QStringLiteral("name"), QVariant(QStringLiteral("Unknown")));
-//        userData.insert(QStringLiteral("presence"), QVariant(QStringLiteral("away")));
-//    }
-
-//    QString username = data.value(QStringLiteral("username")).toString();
-//    if (!username.isEmpty()) {
-//        QRegularExpression newUserPattern(QStringLiteral("<@([A-Z0-9]+)\\|([^>]+)>"));
-//        username.replace(newUserPattern, QStringLiteral("\\2"));
-//        userData.insert(QStringLiteral("name"), username);
-//    }
-
-//    return userData;
-    return QVariantMap();
 }
 
 void SlackTeamClient::sendNotification(const QString& channelId, const QString& title, const QString& text)

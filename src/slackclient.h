@@ -33,8 +33,6 @@ public:
     Q_INVOKABLE void setAppActive(bool active);
     Q_INVOKABLE void setActiveWindow(const QString &windowId);
 
-    Q_INVOKABLE QVariantList getChannels();
-    Q_INVOKABLE QVariant getChannel(const QString& channelId);
     Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
     Q_INVOKABLE TeamInfo *teamInfo();
 
@@ -174,8 +172,6 @@ private:
 
     void sendNotification(const QString& channelId, const QString& title, const QString& content);
     void clearNotifications();
-
-    QVariantMap user(const QJsonObject &data);
 
     QString historyMethod(const ChatsModel::ChatType type);
     QString markMethod(ChatsModel::ChatType type);
