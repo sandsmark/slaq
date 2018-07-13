@@ -19,7 +19,7 @@ ListView {
         target: SlackClient
         onChatsModelChanged: {
             if (teamId === teamRoot.teamId) {
-                listView.model = teamRoot.slackClient.currentChatsModel()
+                listView.model = chatsModel//teamRoot.slackClient.currentChatsModel()
             }
         }
     }
@@ -60,6 +60,7 @@ ListView {
                     return "irc-channel-inactive"
                 }
             case ChatsModel.Group:
+            case ChatsModel.MultiUserConversation:
                 return "icon-s-secure"
             case ChatsModel.Conversation:
                 if (model.IsOpen === "active") {

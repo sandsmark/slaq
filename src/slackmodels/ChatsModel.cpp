@@ -99,6 +99,7 @@ QString ChatsModel::getSectionName(const Chat& chat) const {
         return tr("Channels");
 
     case Group:
+    case MultiUserConversation:
         return tr("Chats");
 
     case Conversation:
@@ -166,10 +167,30 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
 
 }
 
-void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
+void ChatsModel::addChat(const QJsonObject &data, const ChatsModel::ChatType type)
+{
+    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count());
+    doAddChat(data, type);
+    endInsertRows();
+}
+
+void ChatsModel::removeChat(const QString &channelId)
+{
+    int row = m_chatIds.indexOf(channelId);
+    if (row < 0) {
+        qWarning() << "Channel ID not found" << channelId;
+        return;
+    }
+    beginRemoveRows(QModelIndex(), row, row);
+    m_chats.remove(channelId);
+    m_chatIds.removeAt(row);
+    endRemoveRows();
+}
+
+void ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
 {
 //    qDebug() << type;
-//    qDebug().noquote() << QJsonDocument(data).toJson();
+    //qDebug().noquote() << QJsonDocument(data).toJson();
 
     Chat chat(data, type);
 
@@ -179,7 +200,7 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
     QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
 
 
-    if (type == Conversation) {
+    if (chat.type == Conversation) {
         chat.user = m_networkUsers->user(data["user"].toString());
     } else {
         for (const QJsonValue &userId : data["members"].toArray()) {
@@ -187,7 +208,7 @@ void ChatsModel::addChat(const QJsonObject &data, const ChatType type)
         }
     }
 
-    if (type != Channel && chat.name.startsWith("mpdm")) {
+    if (chat.type != Channel && chat.name.startsWith("mpdm")) {
         chat.setReadableName(m_selfId);
     }
     m_chatIds.append(chat.id);
@@ -201,7 +222,7 @@ void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
 
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count());
     for (const QJsonValue &value : chats) {
-        addChat(value.toObject(), type);
+        doAddChat(value.toObject(), type);
     }
 
     endInsertRows();
@@ -243,15 +264,26 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
     id = data.value(QStringLiteral("id")).toString();
     type = type_;
+    if (data.value(QStringLiteral("is_mpim")).toBool(false)) {
+        type = ChatsModel::MultiUserConversation;
+    } else if (data.value(QStringLiteral("is_group")).toBool(false)) {
+        type = ChatsModel::Group;
+    } else if (data.value(QStringLiteral("is_channel")).toBool(false)) {
+        type = ChatsModel::Channel;
+    } else if (data.value(QStringLiteral("is_im")).toBool(false)) {
+        type = ChatsModel::Conversation;
+    }
+
     name = data.value(QStringLiteral("name")).toString();
     presence = QStringLiteral("none");
     isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
                                              data.value(QStringLiteral("is_open")).toBool();
-    isMpim = data.value(QStringLiteral("is_mpim")).toBool();
-    isPrivate = data.value(QStringLiteral("is_private")).toBool();
+
+    isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
     lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();
+    //qDebug() << "new chat" << name << id << type;
 }
 
 void Chat::setReadableName(const QString& selfId) {

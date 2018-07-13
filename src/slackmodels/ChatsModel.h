@@ -51,6 +51,8 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void addChat(const QJsonObject &data, const ChatsModel::ChatType type);
+    void removeChat(const QString &channelId);
+    void doAddChat(const QJsonObject &data, const ChatsModel::ChatType type);
     void addChats(const QJsonArray &chats, const ChatType type);
 
     bool hasChannel(const QString &id);
@@ -84,7 +86,6 @@ struct Chat
     QString readableName;
     bool isOpen = false;
     bool isPrivate = false;
-    bool isMpim = false;
 
     QDateTime lastRead;
     int unreadCount = 0;

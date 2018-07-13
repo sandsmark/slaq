@@ -213,7 +213,7 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 
 void UsersModel::addUser(User *user)
 {
-    beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + 1);
+    beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
     m_userIds.append(user->userId());
     m_users.insert(user->userId(), user);
     endInsertRows();

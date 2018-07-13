@@ -234,23 +234,19 @@ void SlackTeamClient::parseChatClose(const QJsonObject& message)
 
 void SlackTeamClient::parseChannelJoin(const QJsonObject& message)
 {
-    DEBUG_BLOCK
-//TODO: redesign
-//    QVariantMap data = parseChannel(message.value(QStringLiteral("channel")).toObject());
-//    m_storage.saveChannel(data);
-//    currentChatsModel()->addChat(message.value(QStringLiteral("channel")).toObject(), ChatsModel::Channel);
-//    emit channelJoined(m_teamInfo.teamId(), data);
+    DEBUG_BLOCK;
+    emit channelJoined(message.value(QStringLiteral("channel")).toObject());
 }
 
 void SlackTeamClient::parseChannelLeft(const QJsonObject& message)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 //TODO: redesign
 //    QString id = message.value(QStringLiteral("channel")).toString();
 //    QVariantMap channel = m_storage.channel(id);
 //    channel.insert(QStringLiteral("isOpen"), QVariant(false));
 //    m_storage.saveChannel(channel);
-//    emit channelLeft(m_teamInfo.teamId(), channel);
+    emit channelLeft(message.value(QStringLiteral("channel")).toString());
 }
 
 void SlackTeamClient::parseGroupJoin(const QJsonObject& message)
@@ -293,10 +289,13 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
         message_->channel_id = channel_id;
     }
     if (subtype == "message_changed") {
-       //qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
+       qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
        message_->isChanged = true;
        emit messageUpdated(message_);
-    } if (subtype == "message_deleted") {
+       //TODO: implement handling all empty subtypes
+    } else if (subtype == "message_deleted") {
+    } else if (subtype == "file_comment") {
+    } else if (subtype == "message_replied") {
     } else {
         emit messageReceived(message_);
     }
@@ -819,15 +818,20 @@ QString SlackTeamClient::historyMethod(const ChatsModel::ChatType type)
 
 void SlackTeamClient::joinChannel(const QString& channelId)
 {
-    DEBUG_BLOCK
-//TODO: redesign
-//    QVariantMap channel = m_storage.channel(QVariant(channelId));
+    DEBUG_BLOCK;
 
-//    QMap<QString, QString> params;
-//    params.insert(QStringLiteral("name"), channel.value(QStringLiteral("name")).toString());
+    Chat chat = m_teamInfo.chats()->chat(channelId);
 
-//    QNetworkReply *reply = executeGet(QStringLiteral("channels.join"), params);
-//    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleJoinChannelReply);
+    if(chat.id.isEmpty()) {
+        qWarning() << "Invalid channel ID provided" << channelId;
+        return;
+    }
+
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("name"), "#"+chat.name);
+
+    QNetworkReply *reply = executeGet(QStringLiteral("channels.join"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleJoinChannelReply);
 }
 
 void SlackTeamClient::handleJoinChannelReply()
@@ -897,15 +901,18 @@ void SlackTeamClient::handleLeaveGroupReply()
 
 void SlackTeamClient::openChat(const QString& chatId)
 {
-    DEBUG_BLOCK
-//TODO: redesign
-//    QVariantMap channel = m_storage.channel(QVariant(chatId));
+    DEBUG_BLOCK;
 
-//    QMap<QString, QString> params;
-//    params.insert(QStringLiteral("user"), channel.value(QStringLiteral("userId")).toString());
+    Chat chat = m_teamInfo.chats()->chat(chatId);
 
-//    QNetworkReply *reply = executeGet(QStringLiteral("im.open"), params);
-//    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleOpenChatReply);
+    if (chat.user.isNull()) {
+        qWarning() << "No user for chat" << chatId;
+    }
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("user"), chat.user->userId());
+
+    QNetworkReply *reply = executeGet(QStringLiteral("im.open"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleOpenChatReply);
 }
 
 void SlackTeamClient::handleOpenChatReply()
@@ -1037,19 +1044,21 @@ void SlackTeamClient::handleTeamEmojisReply()
     imagesCache->sendEmojisUpdated();
 }
 
-void SlackTeamClient::loadMessages(const ChatsModel::ChatType type, const QString& channelId)
+void SlackTeamClient::loadMessages(const QString& channelId)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << type << channelId;
+    qDebug() << "Loading messages" << channelId;
     if (channelId.isEmpty()) {
         qWarning() << "Empty channel id";
         return;
     }
+    ChatsModel* chatsModel = m_teamInfo.chats();
+    Chat chat = chatsModel->chat(channelId);
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
 
-    QNetworkReply *reply = executeGet(historyMethod(type), params);
+    QNetworkReply *reply = executeGet(historyMethod(chat.type), params);
     reply->setProperty("channelId", channelId);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLoadMessagesReply);
@@ -1082,7 +1091,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     MessageListModel *messageModel = chatModel->messages(channelId);
     messageModel->addMessages(messageList);
 
-    qDebug() << "messages loaded for" << channelId << m_teamInfo.teamId();
+    qDebug() << "messages loaded for" << channelId << chatModel->chat(channelId).name << m_teamInfo.teamId() << m_teamInfo.name();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 

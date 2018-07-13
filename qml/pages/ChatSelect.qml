@@ -1,8 +1,8 @@
 import QtQuick 2.2
 import QtQuick.Controls 2.2
+import com.iskrembilen 1.0
+
 import ".."
-//import com.iskrembilen.slaq 1.0 as Slack
-import "../Channel.js" as Channel
 
 Page {
     id: page
@@ -35,41 +35,46 @@ Page {
                 focus: true
                 placeholderText: qsTr("Search")
 
-                onTextChanged: {
-                    channelListModel.update()
-                }
+                onTextChanged: {}
             }
 
-            model: ListModel {
-                id: channelListModel
-
-                property var available: SlackClient.getChannels(teamRoot.teamId).filter(Channel.isJoinableChat)
-
-                Component.onCompleted: update()
-
-                function matchesSearch(channel) {
-                    return listView.headerItem.text === "" || channel.name.toLowerCase().indexOf(listView.headerItem.text.toLowerCase()) >= 0
-                }
-
-                function update() {
-                    var channels = available.filter(matchesSearch)
-                    channels.sort(Channel.compareByName)
-
-                    clear()
-                    channels.forEach(function(c) {
-                        append(c)
-                    })
-                }
-            }
+            model: teamRoot.slackClient.currentChatsModel()
 
             delegate: ItemDelegate {
                 id: delegate
-                icon: Channel.getIcon(model)
-                text: model.name
+                icon.name: {
+                    switch (model.Type) {
+                    case ChatsModel.Channel:
+                        if (model.presence === "active") {
+                            return "irc-channel-active"
+                        } else {
+                            return "irc-channel-inactive"
+                        }
+                    case ChatsModel.Group:
+                    case ChatsModel.MultiUserConversation:
+                        return "icon-s-secure"
+                    case ChatsModel.Conversation:
+                        if (model.IsOpen === "active") {
+                            return "im-user"
+                        } else {
+                            return "im-user-inactive"
+                        }
+                    default:
+                        console.log("unhandled type: " + model.Type)
+                        return ""
+                    }
+                }
+                text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
+                visible: !model.IsOpen
+                height: visible ? implicitHeight : 0
 
                 onClicked: {
-                    SlackClient.openChat(teamRoot.teamId, model.id)
-                    pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
+                    if (model.Type === ChatsModel.Channel) {
+                        SlackClient.joinChannel(teamRoot.teamId, model.Id)
+                    } else if (model.Type === ChatsModel.Conversation) {
+                        SlackClient.openChat(teamRoot.teamId, model.Id)
+                    }
+                    pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id})
                 }
             }
         }

@@ -68,11 +68,12 @@ signals:
     void reconnectFail(const QString& teamId);
     void reconnectAccessTokenFail(const QString& teamId);
 
+    // signals to main thread
     void messageReceived(Message* message);
     void messageUpdated(Message* message);
     void channelUpdated(const Chat& chat);
-    void channelJoined(const QString& teamId, QVariantMap channel);
-    void channelLeft(const QString& teamId, QVariantMap channel);
+    void channelJoined(const QJsonObject& data);
+    void channelLeft(const QString& channelId);
     void userUpdated(const QString& teamId, QVariantMap user);
 
     void postImageSuccess(const QString& teamId);
@@ -103,7 +104,7 @@ public slots:
     void startClient();
     void testLogin();
     void searchMessages(const QString& searchString);
-    void loadMessages(const ChatsModel::ChatType type, const QString& channelId);
+    void loadMessages(const QString& channelId);
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);

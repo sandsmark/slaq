@@ -1,7 +1,6 @@
 import QtQuick 2.8
-import QtQuick.Controls 2.3
-import "../ChannelList.js" as ChannelList
-import "../Channel.js" as Channel
+import QtQuick.Controls 2.4
+
 import "."
 
 import "../dialogs"

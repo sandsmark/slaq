@@ -2,7 +2,6 @@ import QtQuick 2.8
 import QtQuick.Controls 2.3
 import com.iskrembilen 1.0
 import ".."
-import "../Message.js" as Message
 
 ListView {
     id: listView
@@ -37,10 +36,16 @@ ListView {
     Connections {
         target: SlackClient
         onLoadMessagesSuccess: {
+            console.log("load messages success", channelName, teamId, teamRoot.teamId)
             if (teamId === teamRoot.teamId) {
                 listView.model = teamRoot.slackClient.currentChatsModel().messages(channelId)
                 SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
                 inputEnabled = true
+                loadCompleted()
+            }
+        }
+        onLoadMessagesFail: {
+            if (teamId === teamRoot.teamId) {
                 loadCompleted()
             }
         }
@@ -80,6 +85,7 @@ ListView {
     }
 
     function loadMessages() {
-        SlackClient.loadMessages(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
+        console.log("load messages start", channelName, teamRoot.teamId, channelRoot.channelType)
+        SlackClient.loadMessages(teamRoot.teamId, channelRoot.channelId)
     }
 }

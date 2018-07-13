@@ -62,19 +62,19 @@ public:
 };
 
 class AttachmentField: public QObject  {
-    Q_GADGET
-    Q_PROPERTY(QString title MEMBER title CONSTANT)
-    Q_PROPERTY(QString value MEMBER value CONSTANT)
-    Q_PROPERTY(bool isShort MEMBER isShort CONSTANT)
+    Q_OBJECT
+    Q_PROPERTY(QString fieldTitle MEMBER m_title CONSTANT)
+    Q_PROPERTY(QString fieldValue MEMBER m_value CONSTANT)
+    Q_PROPERTY(bool fieldIsShort MEMBER m_isShort CONSTANT)
 
 public:
     AttachmentField(QObject* parent = nullptr);
 
     void setData(const QJsonObject &data);
 
-    QString title;
-    QString value;
-    bool isShort { false };
+    QString m_title;
+    QString m_value;
+    bool m_isShort { true };
 };
 
 //TODO: implement actions

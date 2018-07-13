@@ -94,14 +94,14 @@ QStringList SlackClientThreadSpawner::getNickSuggestions(const QString& teamId, 
     return retVal;
 }
 
-void SlackClientThreadSpawner::loadMessages(const QString& teamId, ChatsModel::ChatType type, const QString &channelId)
+void SlackClientThreadSpawner::loadMessages(const QString& teamId, const QString &channelId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
         return;
     }
     QMetaObject::invokeMethod(_slackClient, "loadMessages", Qt::QueuedConnection,
-                              Q_ARG(ChatsModel::ChatType, type), Q_ARG(QString, channelId));
+                              Q_ARG(QString, channelId));
 }
 
 bool SlackClientThreadSpawner::isDevice() const
@@ -342,6 +342,20 @@ void SlackClientThreadSpawner::onChannelUpdated(const Chat &chat)
     emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
 }
 
+void SlackClientThreadSpawner::onChannelJoined(const QJsonObject &data)
+{
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
+    chatsModel->addChat(data, ChatsModel::Channel);
+}
+
+void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
+{
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
+    chatsModel->removeChat(channelId);
+}
+
 void SlackClientThreadSpawner::openChat(const QString& teamId, const QString &chatId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
@@ -390,8 +404,8 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::messageReceived, this, &SlackClientThreadSpawner::onMessageReceived, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::messageUpdated, this, &SlackClientThreadSpawner::onMessageUpdated, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelUpdated, this, &SlackClientThreadSpawner::onChannelUpdated, Qt::QueuedConnection);
-    connect(_slackClient, &SlackTeamClient::channelJoined, this, &SlackClientThreadSpawner::channelJoined, Qt::QueuedConnection);
-    connect(_slackClient, &SlackTeamClient::channelLeft, this, &SlackClientThreadSpawner::channelLeft, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::channelJoined, this, &SlackClientThreadSpawner::onChannelJoined, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::channelLeft, this, &SlackClientThreadSpawner::onChannelLeft, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::userUpdated, this, &SlackClientThreadSpawner::userUpdated, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::postImageSuccess, this, &SlackClientThreadSpawner::postImageSuccess, Qt::QueuedConnection);
@@ -515,12 +529,17 @@ void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
     DEBUG_BLOCK
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addTeamData(teamData);
-    emit chatsModelChanged(_slackClient->teamInfo()->teamId());
+    emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
     for(int i = 0; i < _chatsModel->rowCount(); i++) {
         Chat& chat = _chatsModel->chat(i);
         emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
     }
+}
+
+void SlackClientThreadSpawner::onChatJoined(const QJsonObject &data)
+{
+
 }
 
 void SlackClientThreadSpawner::run()

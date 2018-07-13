@@ -65,9 +65,9 @@ Column {
             RowLayout {
                 width: parent.width
                 ColumnLayout {
-                    Layout.maximumWidth: value.paintedWidth
+                    Layout.maximumWidth: valueId.paintedWidth
                     Label {
-                        id: title
+                        id: titleId
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                         text: attachment.title
@@ -75,7 +75,7 @@ Column {
                     }
 
                     Label {
-                        id: value
+                        id: valueId
                         font.pointSize: Theme.fontSizeSmall
                         text: attachment.text
                         wrapMode: Text.Wrap

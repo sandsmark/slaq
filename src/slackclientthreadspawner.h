@@ -68,7 +68,7 @@ signals:
     void searchResultsReady(const QString& teamId, const QVariantList& messages);
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
 
-    void chatsModelChanged(const QString& teamId);
+    void chatsModelChanged(const QString& teamId, ChatsModel* chatsModel);
 
 
 public slots:
@@ -96,15 +96,18 @@ public slots:
 
     //messages
     void searchMessages(const QString& teamId, const QString& searchString);
-    void loadMessages(const QString& teamId, ChatsModel::ChatType type, const QString& channelId);
+    void loadMessages(const QString& teamId, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
     void addReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
 
+    //from slack thread to main thread
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message);
     void onChannelUpdated(const Chat &chat);
+    void onChannelJoined(const QJsonObject &data);
+    void onChannelLeft(const QString &channelId);
 
     //chats
     void openChat(const QString& teamId, const QString& chatId);
@@ -122,6 +125,7 @@ public slots:
     QString teamToken(const QString& teamId);
 
     void onTeamDataChanged(const QJsonObject &teamData);
+    void onChatJoined(const QJsonObject &data);
 
 protected:
     void run();

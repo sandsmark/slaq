@@ -181,7 +181,6 @@ ApplicationWindow {
                                         var totalIm = SlackClient.getTotalUnread(teamId, ChatsModel.Group)
                                         totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.Conversation)
                                         totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.MultiUserConversation)
-                                        console.log("channel updated", total)
                                         tabButton.unreadChannelMessages = total
                                         tabButton.unreadIMMessages = totalIm
                                         window.recalcUnread()
@@ -287,15 +286,9 @@ ApplicationWindow {
                         }
                     }
                     MenuItem {
-                        text: qsTr("Open chat")
+                        text: qsTr("Open/Join chat")
                         onClicked: {
                             teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
-                        }
-                    }
-                    MenuItem {
-                        text: qsTr("Join channel")
-                        onClicked: {
-                            teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChannelSelect.qml"))
                         }
                     }
                     MenuItem {

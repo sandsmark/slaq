@@ -13,17 +13,30 @@ GridLayout {
     Repeater {
         id: repeater
 
-//        onModelChanged: {
-//            console.log("attachment fields", model)
-//        }
+        onModelChanged: {
+            if (model.length > 0)
+            console.log("attachment fields", model[0].fieldValue)
+        }
 
-        Label {
-            Layout.columnSpan: model.isShort ? 1 : 2
-            Layout.preferredWidth: model.isShort ? grid.width / 2 : grid.width
+        Column {
+            Layout.columnSpan: repeater.model[index].fieldIsShort ? 1 : 2
+            Layout.preferredWidth: repeater.model[index].fieldIsShort ? grid.width / 2 : grid.width
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-            font.pointSize: Theme.fontSizeTiny
-            font.weight: model.isShort ? Font.Bold : Font.Normal
-            text: model.title != undefined ? model.title : model.value != undefined ? model.value : ""
+
+            Label {
+                font.pointSize: Theme.fontSizeTiny
+                font.weight: Font.Bold
+                renderType: Text.QtRendering
+                textFormat: Text.RichText
+                text: repeater.model[index].fieldTitle
+            }
+            Label {
+                font.pointSize: Theme.fontSizeTiny
+                font.weight: Font.Normal
+                renderType: Text.QtRendering
+                textFormat: Text.RichText
+                text: repeater.model[index].fieldValue
+            }
         }
     }
 }

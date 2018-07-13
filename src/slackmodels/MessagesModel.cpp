@@ -93,15 +93,20 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
 {
     findNewUsers(message->text);
     updateReactionUsers(message);
-    if (!message->user.isNull()) {
-        m_formatter.replaceUserInfo(message->user, message->text);
+    m_formatter.replaceAll(message->user, chat, message->text);
+    for (QObject* attachmentObj : message->attachments) {
+        Attachment* attachment = static_cast<Attachment*>(attachmentObj);
+        m_formatter.replaceAll(message->user, chat, attachment->text);
+        m_formatter.replaceAll(message->user, chat, attachment->pretext);
+        m_formatter.replaceAll(message->user, chat, attachment->fallback);
+        m_formatter.replaceAll(message->user, chat, attachment->title);
+        m_formatter.replaceAll(message->user, chat, attachment->footer);
+        for (QObject* attachmentFieldObj : attachment->fields) {
+            AttachmentField* attachmentField = static_cast<AttachmentField*>(attachmentFieldObj);
+            m_formatter.replaceAll(message->user, chat, attachmentField->m_title);
+            m_formatter.replaceAll(message->user, chat, attachmentField->m_value);
+        }
     }
-    m_formatter.replaceTargetInfo(message->text);
-    m_formatter.replaceChannelInfo(chat, message->text);
-    m_formatter.replaceLinks(message->text);
-    m_formatter.replaceSpecialCharacters(message->text);
-    m_formatter.replaceMarkdown(message->text);
-    m_formatter.replaceEmoji(message->text);
 }
 
 void MessageListModel::addMessage(Message* message)
@@ -128,7 +133,6 @@ void MessageListModel::addMessage(Message* message)
 
 void MessageListModel::updateMessage(Message *message)
 {
-    updateReactionUsers(message);
     for (int i = 0; i < m_messages.count(); i++) {
         Message* oldmessage = m_messages.at(i);
         if (oldmessage->time == message->time) {
@@ -145,8 +149,9 @@ void MessageListModel::updateMessage(Message *message)
             }
             preprocessFormatting(&chat, message);
             m_messages.replace(i, message);
-            QModelIndex index = QAbstractListModel::index (i, 0,  QModelIndex());
+            QModelIndex index = QAbstractListModel::index(i, 0,  QModelIndex());
             emit dataChanged(index, index);
+            delete oldmessage;
             break;
         }
     }
@@ -198,7 +203,6 @@ void MessageListModel::addMessages(const QJsonArray &messages)
         Q_ASSERT_X(!message->user.isNull(), "user is null", "");
 
         preprocessFormatting(&chat, message);
-
         m_messages.append(std::move(message));
     }
 
@@ -336,40 +340,11 @@ void Attachment::setData(const QJsonObject &data)
     } else if (!color.startsWith("#")) {
         color = "#" + color;
     }
-    MessageFormatter formatter;
-    formatter.replaceLinks(text);
-    formatter.replaceEmoji(text);
-    formatter.replaceSpecialCharacters(text);
-    formatter.replaceLinks(pretext);
-    formatter.replaceEmoji(pretext);
-    formatter.replaceSpecialCharacters(pretext);
-    formatter.replaceLinks(fallback);
-    formatter.replaceEmoji(fallback);
-    formatter.replaceSpecialCharacters(fallback);
-    formatter.replaceLinks(title);
-    formatter.replaceEmoji(title);
-    formatter.replaceSpecialCharacters(title);
-    formatter.replaceLinks(footer);
-    formatter.replaceEmoji(footer);
-    formatter.replaceSpecialCharacters(footer);
 
-    const QJsonArray& fieldList = data.value(QStringLiteral("fields")).toArray();
 
-    foreach (const QJsonValue &fieldValue, fieldList) {
+    foreach (const QJsonValue &fieldValue, data.value(QStringLiteral("fields")).toArray()) {
         AttachmentField* field = new AttachmentField;
         field->setData((fieldValue.toObject()));
-
-        if (!field->title.isEmpty()) {
-            formatter.replaceLinks(field->title);
-            formatter.replaceMarkdown(field->title);
-            formatter.replaceSpecialCharacters(field->title);
-        }
-
-        if (!field->value.isEmpty()) {
-            formatter.replaceLinks(field->value);
-            formatter.replaceMarkdown(field->value);
-            formatter.replaceSpecialCharacters(field->value);
-        }
         fields.append(field);
     }
 }
@@ -392,9 +367,9 @@ AttachmentField::AttachmentField(QObject *parent): QObject(parent) {}
 
 void AttachmentField::setData(const QJsonObject &data)
 {
-    title = data.value(QStringLiteral("title")).toString();
-    value = data.value(QStringLiteral("value")).toString();
-    isShort = data.value(QStringLiteral("short")).toBool();
+    m_title = data.value(QStringLiteral("title")).toString();
+    m_value = data.value(QStringLiteral("value")).toString();
+    m_isShort = data.value(QStringLiteral("short")).toBool();
 }
 
 FileShare::FileShare(QObject *parent) : QObject (parent) {}
@@ -438,7 +413,7 @@ void FileShare::setData(const QJsonObject &data)
     m_thumb_480_size = QSize(data.value(QStringLiteral("thumb_480_w")).toInt(100),
                              data.value(QStringLiteral("thumb_480_h")).toInt(100));
     m_original_size = QSize(data.value(QStringLiteral("original_w")).toInt(100),
-                             data.value(QStringLiteral("original_h")).toInt(100));
+                            data.value(QStringLiteral("original_h")).toInt(100));
     m_thumb_160 = QUrl(data.value(QStringLiteral("thumb_160")).toString());
     m_permalink = QUrl(data.value(QStringLiteral("permalink")).toString());
     m_permalink_public = QUrl(data.value(QStringLiteral("permalink_public")).toString());

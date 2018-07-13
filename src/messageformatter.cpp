@@ -102,6 +102,21 @@ void MessageFormatter::replaceEmoji(QString &message)
     }
 }
 
+void MessageFormatter::replaceAll(User *user, Chat *chat, QString &message)
+{
+    if (user != nullptr) {
+        replaceUserInfo(user, message);
+    }
+    if (chat != nullptr) {
+        replaceChannelInfo(chat, message);
+    }
+    replaceTargetInfo(message);
+    replaceSpecialCharacters(message);
+    replaceLinks(message);
+    replaceMarkdown(message);
+    replaceEmoji(message);
+}
+
 void MessageFormatter::replaceTargetInfo(QString &message)
 {
     message.replace(m_variableLabelPattern, QStringLiteral("<a href=\"slaq://target/\\1\">\\2</a>"));
