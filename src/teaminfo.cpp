@@ -1,5 +1,6 @@
 #include "teaminfo.h"
 #include "slackclientthreadspawner.h"
+#include "searchmessagesmodel.h"
 
 TeamInfo::TeamInfo(QObject *parent): QObject(parent) {}
 
@@ -42,10 +43,12 @@ void TeamInfo::addTeamData(const QJsonObject &teamData)
     m_chats->addChats(teamData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
     m_chats->addChats(teamData.value(QStringLiteral("ims")).toArray(), ChatsModel::Conversation);
 
+    m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
     qDebug() << "Chats count" << m_chats->rowCount();
 
     QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+    QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
 }
 
 QString TeamInfo::selfId() const
@@ -61,6 +64,11 @@ ChatsModel *TeamInfo::chats() const
 UsersModel *TeamInfo::users() const
 {
     return m_users;
+}
+
+SearchMessagesModel *TeamInfo::searches() const
+{
+    return m_searchMessages;
 }
 
 void TeamInfo::setTeamId(const QString &teamId)

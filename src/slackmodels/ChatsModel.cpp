@@ -220,7 +220,7 @@ void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
 {
     qDebug() << "addChats" << type << chats.count();
 
-    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count());
+    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count() - 1);
     for (const QJsonValue &value : chats) {
         doAddChat(value.toObject(), type);
     }
@@ -254,6 +254,9 @@ Chat &ChatsModel::chat(int row)
 
 void ChatsModel::chatChanged(const Chat &chat)
 {
+    if (chat.id.isEmpty()) {
+        return;
+    }
     int row = m_chatIds.indexOf(chat.id);
     m_chats[chat.id] = chat;
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());

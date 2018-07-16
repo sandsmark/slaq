@@ -230,10 +230,9 @@ public:
     int m_comments_count;
 };
 
-class Message: public QObject {
-    Q_OBJECT
+class Message {
 public:
-    Message(QObject* parent = nullptr);
+    Message();
     ~Message();
 
     void setData(const QJsonObject &data);
@@ -248,6 +247,11 @@ public:
     bool isStarred;
     QStringList pinnedTo;
     bool isChanged { false };
+
+    //available only in search results
+    QString channelName;
+    QString userName;
+    QUrl permalink;
 
     QPointer<User> user;
     QList<QObject*> reactions;
@@ -270,7 +274,10 @@ public:
         FileShares,
         IsStarred,
         IsChanged,
-        MessageFieldCount
+        MessageFieldCount,
+        SearchChannelName,
+        SearchUserName,
+        SearchPermalink
     };
 
     MessageListModel(QObject *parent, UsersModel *usersModel, const QString& channelId);
@@ -284,18 +291,26 @@ public:
     void addMessages(const QJsonArray &messages);
     Message* message(const QDateTime& ts);
     Message* message(int row);
+    void clear();
+
+protected:
+    void preprocessFormatting(::Chat* chat, Message *message);
 
 private:
-    void preprocessFormatting(::Chat* chat, Message *message);
     void findNewUsers(const QString &message);
     void updateReactionUsers(Message *message);
 
-private:
-    QList<Message*> m_messages;
-    QMap<QString, Reaction*> m_reactions;
+protected:
+    QVector<Message*> m_messages;
     UsersModel *m_usersModel;
+    mutable QMutex m_modelMutex;
+
+private:
+    QMap<QString, Reaction*> m_reactions;
+
     QString m_channelId;
     MessageFormatter m_formatter;
     QRegularExpression m_newUserPattern;
+
 };
 

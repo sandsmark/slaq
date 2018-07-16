@@ -7,6 +7,8 @@
 #include "UsersModel.h"
 #include "ChatsModel.h"
 
+class SearchMessagesModel;
+
 class TeamInfo: public QObject {
     Q_OBJECT
 
@@ -48,6 +50,7 @@ public:
     QString lastChannel() const { return m_lastChannel; }
     ChatsModel *chats() const;
     UsersModel* users() const;
+    SearchMessagesModel *searches() const;
 
     void parseTeamInfoData(const QJsonObject &teamObj);
     void parseSelfData(const QJsonObject &selfObj);
@@ -95,8 +98,10 @@ private:
     QString m_teamToken;
     QString m_lastChannel;
     QString m_selfId;
+
     ChatsModel* m_chats {nullptr};
     UsersModel* m_users {nullptr};
+    SearchMessagesModel* m_searchMessages { nullptr };
 };
 
 QML_DECLARE_TYPE(TeamInfo)

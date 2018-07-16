@@ -29,10 +29,12 @@ Column {
         width: parent.width
         spacing: Theme.paddingMedium
 
-        TextField {
+        TextArea {
             id: messageInput
             width: parent.width - sendButton.width - uploadButton.width - emojiButton.width - Theme.paddingMedium * 4
             selectByMouse: true
+            wrapMode: TextArea.Wrap
+            focus: true
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]
@@ -79,12 +81,28 @@ Column {
                 }
             }
 
-            onAccepted: {
+            function doEditingFinished() {
                 if (nickPopupVisible) {
                     insertSuggestion()
                     hideNickPopup()
                 } else {
                     handleSendMessage()
+                }
+            }
+
+            onEditingFinished: {
+                doEditingFinished()
+            }
+
+            Keys.onReturnPressed: {
+                if (event.modifiers & Qt.ControlModifier) {
+                    doEditingFinished()
+                }
+            }
+
+            Keys.onEnterPressed: {
+                if (event.modifiers & Qt.ControlModifier) {
+                    doEditingFinished()
                 }
             }
 
@@ -112,7 +130,7 @@ Column {
                 }
             }
 
-            onTextEdited: {
+            onTextChanged: {
                 if (nickPopupVisible) {
                     updateSuggestions()
                 }

@@ -1,5 +1,6 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQuick.Layouts 1.3
 import ".."
 import "../pages"
 
@@ -12,39 +13,57 @@ Drawer {
     edge: Qt.RightEdge
     width: 0.6 * window.width
     height: window.height - Theme.paddingMedium
-
-    function getDisplayDate(message) {
-        return new Date(parseInt(message.ts, 10) * 1000).toLocaleString(Qt.locale(), "MMMM d, yyyy")
-    }
+    property string searchQuery: ""
+    property int currentPage: -1
+    property int totalPages: -1
 
     Connections {
         target: SlackClient
         onSearchResultsReady: {
-            searchResultsModel.clear()
-            messages.forEach(function(message) {
-                message.day = getDisplayDate(message)
-                searchResultsModel.append(message)
-            })
-
-            if (searchResultsModel.count) {
-                searchResultsDialog.open()
+            if (listView.model == null) {
+                listView.model = SlackClient.getSearchMessages(teamsSwipe.currentItem.item.teamId)
             }
+            searchResultsDialog.searchQuery = query
+            searchResultsDialog.currentPage = page
+            searchResultsDialog.totalPages = pages
+            searchResultsDialog.open()
+            busy.visible = false
+        }
+        onSearchStarted: {
+            busy.visible = true
         }
     }
 
-    ListModel {
-        id: searchResultsModel
-    }
-
-    ListView {
-        id: listView
+    ColumnLayout {
         anchors.fill: parent
-        model: searchResultsModel
-        ScrollIndicator.vertical: ScrollIndicator { }
-        clip: true
+        anchors.margins: Theme.paddingSmall
         spacing: Theme.paddingMedium
-        delegate: MessageListItem {
-            isSearchResult: true
+        Label {
+            Layout.fillWidth: true
+            font.bold: true
+            font.pixelSize: Theme.fontSizeHuge
+            text: qsTr("Search results for: ") + searchQuery
+        }
+
+        ListView {
+            id: listView
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ScrollIndicator.vertical: ScrollIndicator { }
+            verticalLayoutDirection: ListView.BottomToTop
+            clip: true
+            spacing: Theme.paddingMedium
+            delegate: MessageListItem {
+                isSearchResult: true
+            }
+
+            BusyIndicator {
+                id: busy
+                z: listView.z + 10
+                anchors.centerIn: parent
+                visible: false
+                running: visible
+            }
         }
     }
 }

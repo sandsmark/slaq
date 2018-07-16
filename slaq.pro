@@ -38,7 +38,8 @@ SOURCES += src/main.cpp \
     src/teaminfo.cpp \
     src/slackmodels/ChatsModel.cpp \
     src/slackmodels/MessagesModel.cpp \
-    src/slackmodels/UsersModel.cpp
+    src/slackmodels/UsersModel.cpp \
+    src/slackmodels/searchmessagesmodel.cpp
 
 OTHER_FILES += translations/*.ts \
     slaq.desktop \
@@ -63,7 +64,8 @@ HEADERS += \
     src/debugblock.h \
     src/slackmodels/ChatsModel.h \
     src/slackmodels/MessagesModel.h \
-    src/slackmodels/UsersModel.h
+    src/slackmodels/UsersModel.h \
+    src/slackmodels/searchmessagesmodel.h
 
 DISTFILES += \
     qml/dialogs/*.qml \

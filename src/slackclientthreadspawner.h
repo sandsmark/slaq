@@ -26,6 +26,8 @@ public:
 
     bool isOnline();
 
+    Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
+
 signals:
     void threadStarted();
 
@@ -65,11 +67,11 @@ signals:
     void lastChannelChanged(const QString& teamId);
     void lastTeamChanged(QString lastTeam);
     void onlineChanged(bool isOnline);
-    void searchResultsReady(const QString& teamId, const QVariantList& messages);
+    void searchResultsReady(const QString& query, int page, int pages);
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
 
     void chatsModelChanged(const QString& teamId, ChatsModel* chatsModel);
-
+    void searchStarted();
 
 public slots:
     void startClient(const QString& teamId);
@@ -95,7 +97,7 @@ public slots:
     int getTotalUnread(const QString& teamId, ChatsModel::ChatType type);
 
     //messages
-    void searchMessages(const QString& teamId, const QString& searchString);
+    void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
@@ -108,6 +110,7 @@ public slots:
     void onChannelUpdated(const Chat &chat);
     void onChannelJoined(const QJsonObject &data);
     void onChannelLeft(const QString &channelId);
+    void onSearchMessagesReceived(const QJsonArray &messages, int total, const QString &query, int page, int pages);
 
     //chats
     void openChat(const QString& teamId, const QString& chatId);

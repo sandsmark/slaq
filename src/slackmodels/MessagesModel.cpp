@@ -4,7 +4,7 @@
 #include <QQmlEngine>
 #include <QDateTime>
 #include <QJsonArray>
-
+#include <QMutexLocker>
 #include "UsersModel.h"
 #include "ChatsModel.h"
 #include "MessagesModel.h"
@@ -24,33 +24,48 @@ int MessageListModel::rowCount(const QModelIndex &parent) const
 
 QVariant MessageListModel::data(const QModelIndex &index, int role) const
 {
+    QMutexLocker locker(&m_modelMutex);
+
     int row = index.row();
     if (row >= m_messages.count() || row < 0) {
         qWarning() << "Invalid row" << row;
         return QVariant();
     }
+
+    const Message* message = m_messages.at(row);
+    if (message == nullptr) {
+        qWarning() << "No message for row" << row;
+        return QVariant();
+    }
+
     switch(role) {
     case Text:
         return m_messages[row]->text;
     case User:
         //qDebug() << "User for row" << row << m_messages[row].user.data();
-        return QVariant::fromValue(m_messages[row]->user.data());
+        return QVariant::fromValue(message->user.data());
     case Time:
-        return m_messages[row]->time;
+        return message->time;
     case SlackTimestamp:
-        return m_messages[row]->ts;
+        return message->ts;
     case Attachments:
         //qDebug() << "Attachment for row" << row << m_messages[row]->attachments.count();
-        return QVariant::fromValue(m_messages[row]->attachments);
+        return QVariant::fromValue(message->attachments);
     case Reactions:
         //qDebug() << "Reactions for row" << row << m_messages[row]->reactions.count();
-        return QVariant::fromValue(m_messages[row]->reactions);
+        return QVariant::fromValue(message->reactions);
     case FileShares:
-        return QVariant::fromValue(m_messages[row]->fileshares);
+        return QVariant::fromValue(message->fileshares);
     case IsStarred:
-        return QVariant::fromValue(m_messages[row]->isStarred);
+        return QVariant::fromValue(message->isStarred);
     case IsChanged:
-        return QVariant::fromValue(m_messages[row]->isChanged);
+        return QVariant::fromValue(message->isChanged);
+    case SearchChannelName:
+        return message->channelName;
+    case SearchUserName:
+        return message->userName;
+    case SearchPermalink:
+        return message->permalink;
     default:
         qWarning() << "Unhandled role" << role;
         return QVariant();
@@ -75,6 +90,7 @@ void MessageListModel::updateReactionUsers(Message* message) {
 
 Message *MessageListModel::message(const QDateTime &ts)
 {
+    QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
         if (message->time == ts) {
@@ -86,7 +102,19 @@ Message *MessageListModel::message(const QDateTime &ts)
 
 Message *MessageListModel::message(int row)
 {
+    QMutexLocker locker(&m_modelMutex);
     return m_messages.at(row);
+}
+
+void MessageListModel::clear()
+{
+    QMutexLocker locker(&m_modelMutex);
+    beginResetModel();
+    for (Message* msg : m_messages) {
+        delete msg;
+    }
+    m_messages.clear();
+    endResetModel();
 }
 
 void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
@@ -111,6 +139,8 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
 
 void MessageListModel::addMessage(Message* message)
 {
+    qDebug() << "adding message:" << message->text;
+    QMutexLocker locker(&m_modelMutex);
     if (message->user.isNull()) {
         qWarning() << "user is null for " << message->user_id;
     }
@@ -118,14 +148,13 @@ void MessageListModel::addMessage(Message* message)
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
     Chat chat;
     if (_chatsModel != nullptr) {
-        chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
+        chat = _chatsModel->chat(m_channelId);
     }
     preprocessFormatting(&chat, message);
-    qDebug() << "adding message:" << message->text;
     beginInsertRows(QModelIndex(), 0, 0);
     m_messages.prepend(message);
     endInsertRows();
-    if (message->time > chat.lastRead) {
+    if (!chat.id.isEmpty() && message->time > chat.lastRead) {
         chat.unreadCountDisplay++;
         _chatsModel->chatChanged(chat);
     }
@@ -134,7 +163,9 @@ void MessageListModel::addMessage(Message* message)
 void MessageListModel::updateMessage(Message *message)
 {
     for (int i = 0; i < m_messages.count(); i++) {
+        m_modelMutex.lock();
         Message* oldmessage = m_messages.at(i);
+        m_modelMutex.unlock();
         if (oldmessage->time == message->time) {
             if (message->user.isNull()) {
                 message->user = oldmessage->user;
@@ -148,7 +179,10 @@ void MessageListModel::updateMessage(Message *message)
                 chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
             }
             preprocessFormatting(&chat, message);
+            qDebug() << "updating message:" << message->text;
+            m_modelMutex.lock();
             m_messages.replace(i, message);
+            m_modelMutex.unlock();
             QModelIndex index = QAbstractListModel::index(i, 0,  QModelIndex());
             emit dataChanged(index, index);
             delete oldmessage;
@@ -177,7 +211,8 @@ void MessageListModel::findNewUsers(const QString &message)
 void MessageListModel::addMessages(const QJsonArray &messages)
 {
     qDebug() << "Adding" << messages.count() << "messages";
-    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count());
+    QMutexLocker locker(&m_modelMutex);
+    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
 
     //assume we have parent;
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
@@ -222,16 +257,19 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[FileShares] = "FileShares";
     names[IsStarred] = "IsStarred";
     names[IsChanged] = "IsChanged";
+    names[SearchChannelName] = "ChannelName";
+    names[SearchUserName] = "UserName";
+    names[SearchPermalink] = "Permalink";
     return names;
 }
 
-Message::Message(QObject *parent) : QObject(parent)
-{}
+Message::Message() {}
 
 Message::~Message()
 {
     qDeleteAll(attachments);
-    attachments.clear();
+    qDeleteAll(reactions);
+    qDeleteAll(fileshares);
 }
 //    QVariantMap channel = m_storage.channel(channelId);
 
@@ -258,14 +296,23 @@ void Message::setData(const QJsonObject &data)
     type = data.value(QStringLiteral("type")).toString();
     ts = data.value(QStringLiteral("ts")).toString();
     time = slackToDateTime(ts);
-    qDebug() << ts << time;
-    Q_ASSERT(time.isValid());
+//    qDebug() << ts << time;
+//    Q_ASSERT(time.isValid());
 
     text = data.value(QStringLiteral("text")).toString();
-
-    channel_id = data.value(QStringLiteral("channel")).toString();
+    const QJsonValue chan_ = data.value(QStringLiteral("channel"));
+    if (chan_.isString()) {
+        channel_id = chan_.toString();
+    } else if (chan_.isObject()) {
+        const QJsonObject& chanObj = chan_.toObject();
+        channel_id = chanObj.value(QStringLiteral("id")).toString();
+        channelName = chanObj.value(QStringLiteral("name")).toString();
+    }
     user_id = data.value(QStringLiteral("user")).toString();
     subtype = data.value(QStringLiteral("subtype")).toString();
+    //search results
+    userName = data.value(QStringLiteral("username")).toString();
+    permalink = data.value(QStringLiteral("permalink")).toString();
     if (user_id.isEmpty()) {
         const QString& subtype = data.value(QStringLiteral("subtype")).toString(QStringLiteral("default"));
         if (subtype == QStringLiteral("bot_message")) {

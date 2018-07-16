@@ -68,6 +68,7 @@ signals:
 
     // signals to main thread
     void messageReceived(Message* message);
+    void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message);
     void channelUpdated(const Chat& chat);
     void channelJoined(const QJsonObject& data);
@@ -89,7 +90,6 @@ signals:
 
     void teamInfoChanged(const QString& teamId);
     void stateChanged(const QString& teamId);
-    void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
     void teamDataChanged(const QJsonObject &teamData);
@@ -101,7 +101,7 @@ public slots:
     void startConnections();
     void startClient();
     void testLogin();
-    void searchMessages(const QString& searchString);
+    void searchMessages(const QString& searchString, int page =  1);
     void loadMessages(const QString& channelId);
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
@@ -122,6 +122,7 @@ public slots:
     QString lastChannel();
     bool isOnline() const;
     bool isDevice() const;
+    void onFetchMoreSearchData(const QString& query, int page);
 
 private slots:
     void handleStartReply();

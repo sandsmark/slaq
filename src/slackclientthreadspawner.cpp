@@ -1,6 +1,8 @@
-#include "slackclientthreadspawner.h"
 #include <QtMultimedia/QMediaPlayer>
 #include <QtMultimedia/QMediaContent>
+
+#include "slackclientthreadspawner.h"
+#include "searchmessagesmodel.h"
 
 SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
     QThread(parent)
@@ -70,14 +72,18 @@ void SlackClientThreadSpawner::setActiveWindow(const QString& teamId, const QStr
 }
 
 
-void SlackClientThreadSpawner::searchMessages(const QString &teamId, const QString &searchString)
+void SlackClientThreadSpawner::searchMessages(const QString &teamId, const QString &searchString, int page)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
         return;
     }
+    //cleanup previous search
+    _slackClient->teamInfo()->searches()->setSearchQuery("");
+    emit searchStarted();
     QMetaObject::invokeMethod(_slackClient, "searchMessages", Qt::QueuedConnection,
-                              Q_ARG(QString, searchString));
+                              Q_ARG(QString, searchString),
+                              Q_ARG(int, page));
 }
 
 QStringList SlackClientThreadSpawner::getNickSuggestions(const QString& teamId, const QString &currentText, const int cursorPosition)
@@ -356,6 +362,37 @@ void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
     chatsModel->removeChat(channelId);
 }
 
+void SlackClientThreadSpawner::onSearchMessagesReceived(const QJsonArray& messages, int total,
+                                                        const QString& query, int page, int pages)
+{
+    qDebug() << "onSearchMessagesReceived thread" << QThread::currentThreadId();
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+
+    TeamInfo* teamInfo = _slackClient->teamInfo();
+    ChatsModel* chatsModel = teamInfo->chats();
+
+    if (chatsModel == nullptr) {
+        qWarning() << "No chats";
+        return;
+    }
+    SearchMessagesModel* _searchMessages = teamInfo->searches();
+
+    if (_searchMessages->searchQuery() != query) { //new query, cleanup
+        _searchMessages->setSearchQuery(query);
+        _searchMessages->clear();
+        _searchMessages->preallocateTotal(total);
+    }
+    if (_searchMessages->searchPagesRetrieved().contains(page)) {
+        // page for query already retrieved
+        return;
+    }
+    _searchMessages->addSearchMessages(messages, page);
+
+    _searchMessages->searchPageRetrieved(page, messages.count());
+    qDebug() << "search ready" << page << pages;
+    emit searchResultsReady(query, page, pages);
+}
+
 void SlackClientThreadSpawner::openChat(const QString& teamId, const QString &chatId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
@@ -407,6 +444,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::channelJoined, this, &SlackClientThreadSpawner::onChannelJoined, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelLeft, this, &SlackClientThreadSpawner::onChannelLeft, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::userUpdated, this, &SlackClientThreadSpawner::userUpdated, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::searchMessagesReceived, this, &SlackClientThreadSpawner::onSearchMessagesReceived, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::postImageSuccess, this, &SlackClientThreadSpawner::postImageSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::postImageFail, this, &SlackClientThreadSpawner::postImageFail, Qt::QueuedConnection);
@@ -422,13 +460,19 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::teamInfoChanged, this, &SlackClientThreadSpawner::onTeamInfoChanged, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::isOnlineChanged, this, &SlackClientThreadSpawner::onOnlineChanged, Qt::QueuedConnection);
-
-    connect(_slackClient, &SlackTeamClient::searchResultsReady, this, &SlackClientThreadSpawner::searchResultsReady, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::userTyping, this, &SlackClientThreadSpawner::userTyping, Qt::QueuedConnection);
-
     connect(_slackClient, &SlackTeamClient::teamDataChanged, this, &SlackClientThreadSpawner::onTeamDataChanged, Qt::QueuedConnection);
 
     return _slackClient;
+}
+
+MessageListModel *SlackClientThreadSpawner::getSearchMessages(const QString& teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient != nullptr) {
+        return _slackClient->teamInfo()->searches();
+    }
+    return nullptr;
 }
 
 void SlackClientThreadSpawner::connectToTeam(const QString &teamId, const QString &accessToken)
@@ -526,7 +570,7 @@ QString SlackClientThreadSpawner::teamToken(const QString &teamId)
 // this method should be run on GUI thread since QML engine cant connect to models, created in thread, differs from QML Engine
 void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addTeamData(teamData);
     emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
@@ -535,6 +579,7 @@ void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
         Chat& chat = _chatsModel->chat(i);
         emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
     }
+    connect(_slackClient->teamInfo()->searches(), &SearchMessagesModel::fetchMoreData, _slackClient, &SlackTeamClient::onFetchMoreSearchData);
 }
 
 void SlackClientThreadSpawner::onChatJoined(const QJsonObject &data)

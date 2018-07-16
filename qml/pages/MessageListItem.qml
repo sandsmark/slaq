@@ -73,7 +73,7 @@ ItemDelegate {
                         id: channelLabel
                         enabled: isSearchResult
                         visible: isSearchResult
-                        text: model.channel !== undefined ? "#" + model.channel.name : ""
+                        text: model.ChannelName//model.channel !== undefined ? "#" + model.channel.name : ""
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
@@ -184,8 +184,8 @@ ItemDelegate {
     }
 
     onClicked: {
-        if (permalink !== "") {
-            Qt.openUrlExternally(permalink)
+        if (model.Permalink !== "") {
+            Qt.openUrlExternally(model.Permalink)
         }
     }
 

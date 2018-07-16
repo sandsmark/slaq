@@ -249,7 +249,7 @@ void UsersModel::addUser(const QJsonObject &userData)
 
 void UsersModel::addUsers(const QJsonArray &usersData)
 {
-    beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + usersData.count());
+    beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + usersData.count() - 1);
     for (const QJsonValue &value : usersData) {
         QJsonObject userData = value.toObject();
         User *user = new User(this);

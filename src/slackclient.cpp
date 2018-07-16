@@ -157,7 +157,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
     const QString& type = message.value(QStringLiteral("type")).toString();
 
     if (type != "pong") {
-        qDebug() << "stream message" << type;
+        qDebug() << "stream message type" << type;
     }
 //    qDebug().noquote() << QJsonDocument(message).toJson();
 
@@ -338,6 +338,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
             if (r == nullptr) {
                 r = new Reaction;
                 QString emojiPrepare = QString(":%1:").arg(reaction);
+                qDebug() << "added new reaction" << emojiPrepare;
                 MessageFormatter _formatter;
                 _formatter.replaceEmoji(emojiPrepare);
                 r->emoji = emojiPrepare;
@@ -606,7 +607,7 @@ void SlackTeamClient::handleTestLoginReply()
     //startClient();
 }
 
-void SlackTeamClient::searchMessages(const QString &searchString)
+void SlackTeamClient::searchMessages(const QString &searchString, int page)
 {
     DEBUG_BLOCK;
 
@@ -614,6 +615,8 @@ void SlackTeamClient::searchMessages(const QString &searchString)
     params.insert(QStringLiteral("query"), searchString);
     params.insert(QStringLiteral("highlight"), QStringLiteral("false"));
     params.insert(QStringLiteral("sort"), QStringLiteral("timestamp"));
+    params.insert(QStringLiteral("count"), QStringLiteral("100"));
+    params.insert(QStringLiteral("page"), QString("%1").arg(page));
 
     QNetworkReply *reply = executeGet(QStringLiteral("search.messages"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleSearchMessagesReply);
@@ -631,25 +634,15 @@ void SlackTeamClient::handleSearchMessagesReply()
         emit testLoginFail(m_teamInfo.teamId());
         return;
     }
-    QVariantList searchResults;
-    QJsonObject messages = data.value(QStringLiteral("messages")).toObject();
+    QString query = data.value(QStringLiteral("query")).toString();
+    const QJsonObject& messages = data.value(QStringLiteral("messages")).toObject();
+    const QJsonObject& paging = messages.value(QStringLiteral("paging")).toObject();
+    //qDebug().noquote() << "paging" << QJsonDocument(paging).toJson();
     int _total = messages.value(QStringLiteral("total")).toInt();
+    int _page = paging.value(QStringLiteral("page")).toInt();
+    int _pages = paging.value(QStringLiteral("pages")).toInt();
     QJsonArray matches = messages.value(QStringLiteral("matches")).toArray();
-    for (const QJsonValue& match : matches) {
-        const QJsonObject& matchObj = match.toObject();
-        //TODO: redesign
-//        QVariantMap searchResult = getMessageData(matchObj, matchObj.value(QStringLiteral("team")).toString());
-//        searchResult.insert(QStringLiteral("permalink"), matchObj.value(QStringLiteral("permalink")).toVariant());
-
-//        const QJsonObject& channelObj = matchObj.value(QStringLiteral("channel")).toObject();
-//        QVariantMap channel;
-//        channel[QStringLiteral("id")] = channelObj.value(QStringLiteral("id"));
-//        channel[QStringLiteral("name")] = channelObj.value(QStringLiteral("name"));
-//        searchResult.insert(QStringLiteral("channel"), channel);
-//        searchResults.append(searchResult);
-    }
-    qDebug() << "search result. found entries" << _total;
-    emit searchResultsReady(m_teamInfo.teamId(), searchResults);
+    emit searchMessagesReceived(messages.value(QStringLiteral("matches")).toArray(), _total, query, _page, _pages);
 }
 
 void SlackTeamClient::startClient()
@@ -765,6 +758,11 @@ bool SlackTeamClient::isDevice() const
 #else
     return false;
 #endif
+}
+
+void SlackTeamClient::onFetchMoreSearchData(const QString &query, int page)
+{
+    searchMessages(query, page);
 }
 
 QString SlackTeamClient::lastChannel()
