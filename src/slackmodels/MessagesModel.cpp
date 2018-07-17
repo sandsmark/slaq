@@ -40,7 +40,7 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
 
     switch(role) {
     case Text:
-        return m_messages[row]->text;
+        return message->text;
     case User:
         //qDebug() << "User for row" << row << m_messages[row].user.data();
         return QVariant::fromValue(message->user.data());

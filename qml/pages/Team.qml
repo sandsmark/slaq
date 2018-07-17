@@ -72,7 +72,7 @@ Page {
         StackView {
             id: pageStack
             height: parent.height
-            width: parent.width - channelsList.width
+            width: parent.width - channelsList.width - Theme.paddingMedium
             transform: Translate {
                 x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
             }
