@@ -196,7 +196,7 @@ public:
     bool m_is_external {false };
     QString m_external_type;
     QString m_username;
-    quint64 m_size;
+    quint64 m_size { 0 };
     QUrl m_url_private;
     QUrl m_url_private_download;
     QUrl m_thumb_64;
@@ -214,8 +214,8 @@ public:
     QUrl m_edit_link;
     QString m_preview;
     QString m_preview_highlight;
-    int m_lines;
-    int m_lines_more;
+    int m_lines { 0 };
+    int m_lines_more { 0 };
     bool m_is_public { true };
     bool m_public_url_shared { false };
     bool m_display_as_bot { false };
@@ -223,40 +223,42 @@ public:
     QStringList m_groups;
     QStringList m_ims;
     QString m_initial_comment;
-    int m_num_stars;
+    int m_num_stars { 0 };
     bool m_is_starred { false };
     QStringList m_pinned_to;
     QList<QObject*> m_reactions;
-    int m_comments_count;
+    int m_comments_count { 0 };
 };
 
-class Message {
-public:
+struct Message {
     Message();
     ~Message();
-
     void setData(const QJsonObject &data);
+
     QString text;
     QString ts;
-    QDateTime time;
     QString type;
     QString subtype;
     QString channel_id;
     QString user_id;
     QString team_id;
-    bool isStarred;
-    QStringList pinnedTo;
-    bool isChanged { false };
-
     //available only in search results
     QString channelName;
     QString userName;
+
+    QStringList pinnedTo;
+    QDateTime time;
     QUrl permalink;
 
     QPointer<User> user;
+
     QList<QObject*> reactions;
     QList<QObject*> attachments;
     QList<QObject*> fileshares;
+
+    bool isChanged { false };
+    bool isStarred { false };
+
 };
 
 class MessageListModel : public QAbstractListModel

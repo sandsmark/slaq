@@ -50,9 +50,9 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void addChat(const QJsonObject &data, const ChatsModel::ChatType type);
+    QString addChat(const QJsonObject &data, const ChatsModel::ChatType type);
     void removeChat(const QString &channelId);
-    void doAddChat(const QJsonObject &data, const ChatsModel::ChatType type);
+    QString doAddChat(const QJsonObject &data, const ChatsModel::ChatType type);
     void addChats(const QJsonArray &chats, const ChatType type);
 
     bool hasChannel(const QString &id);

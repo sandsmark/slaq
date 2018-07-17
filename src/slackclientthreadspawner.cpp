@@ -334,7 +334,6 @@ void SlackClientThreadSpawner::onMessageUpdated(Message *message)
     MessageListModel *messages = _slackClient->teamInfo()->chats()->messages(message->channel_id);
     if (messages == nullptr) {
         qWarning() << "No messages in chat" << message->channel_id;
-        delete message;
         return;
     }
     messages->updateMessage(message);
@@ -352,7 +351,8 @@ void SlackClientThreadSpawner::onChannelJoined(const QJsonObject &data)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    chatsModel->addChat(data, ChatsModel::Channel);
+    QString channelId = chatsModel->addChat(data, ChatsModel::Channel);
+    emit channelJoined(_slackClient->teamInfo()->teamId(), channelId);
 }
 
 void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
@@ -360,6 +360,7 @@ void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
     chatsModel->removeChat(channelId);
+    emit channelLeft(_slackClient->teamInfo()->teamId(), channelId);
 }
 
 void SlackClientThreadSpawner::onSearchMessagesReceived(const QJsonArray& messages, int total,

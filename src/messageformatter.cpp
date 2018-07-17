@@ -39,6 +39,9 @@ MessageFormatter::MessageFormatter() :
 
 void MessageFormatter::replaceUserInfo(User* user, QString &message)
 {
+    if (user == nullptr) {
+        return;
+    }
     QRegularExpression userIdPattern("<@" + user->userId() + "(\\|[^>]+)?>");
     QString displayName = "<a href=\"slaq://user/" + user->userId() + "\">@" + user->username() + "</a>";
 
@@ -47,6 +50,9 @@ void MessageFormatter::replaceUserInfo(User* user, QString &message)
 
 void MessageFormatter::replaceChannelInfo(Chat *chat, QString &message)
 {
+    if (chat == nullptr) {
+        return;
+    }
     QRegularExpression channelIdPattern("<#" + chat->id + "(\\|[^>]+)?>");
     QString displayName = "<a href=\"slaq://channel/" + chat->id + "\">#" + chat->name + "</a>";
 
@@ -104,12 +110,8 @@ void MessageFormatter::replaceEmoji(QString &message)
 
 void MessageFormatter::replaceAll(User *user, Chat *chat, QString &message)
 {
-    if (user != nullptr) {
-        replaceUserInfo(user, message);
-    }
-    if (chat != nullptr) {
-        replaceChannelInfo(chat, message);
-    }
+    replaceUserInfo(user, message);
+    replaceChannelInfo(chat, message);
     replaceTargetInfo(message);
     replaceSpecialCharacters(message);
     replaceLinks(message);

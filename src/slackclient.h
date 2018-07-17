@@ -70,9 +70,13 @@ signals:
     void messageReceived(Message* message);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message);
+
     void channelUpdated(const Chat& chat);
     void channelJoined(const QJsonObject& data);
     void channelLeft(const QString& channelId);
+    void chatJoined(const QString& channelId);
+    void chatLeft(const QString& channelId);
+
     void userUpdated(const QString& teamId, QVariantMap user);
 
     void postImageSuccess(const QString& teamId);
@@ -163,11 +167,6 @@ private:
     void parseMessageUpdate(const QJsonObject& message);
     void parseReactionUpdate(const QJsonObject& message);
     void parseChannelUpdate(const QJsonObject& message);
-    void parseChannelJoin(const QJsonObject& message);
-    void parseChannelLeft(const QJsonObject& message);
-    void parseGroupJoin(const QJsonObject& message);
-    void parseChatOpen(const QJsonObject& message);
-    void parseChatClose(const QJsonObject& message);
     void parsePresenceChange(const QJsonObject& message);
     void parseNotification(const QJsonObject& message);
 
@@ -181,15 +180,9 @@ private:
     QPointer<SlackConfig> config;
     QPointer<SlackStream> stream;
     QPointer<QTimer> reconnectTimer;
-    //Storage m_storage;
 
     QNetworkAccessManager::NetworkAccessibility networkAccessible;
-    QHash<QString, QUrl> m_userAvatars;
 
-    QString m_clientId;
-    QString m_clientId2;
-
-    MessageFormatter m_formatter;
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
 };

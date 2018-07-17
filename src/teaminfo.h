@@ -41,7 +41,6 @@ public:
     QString name() const { return m_name; }
     QString domain() const { return m_domain; }
     QStringList icons() const { return m_icons; }
-    bool image_default() const { return m_image_default; }
     QString teamToken() const { return m_teamToken; }
     QString emailDomain() const { return m_emailDomain; }
     bool imageDefault() const { return m_imageDefault; }
@@ -89,10 +88,9 @@ private:
     QString m_domain;
     QString m_emailDomain;
     QStringList m_icons;
-    bool m_image_default { false };
     QString m_token;
     QString m_teamId;
-    bool m_imageDefault;
+    bool m_imageDefault { false };
     QString m_enterpriseId;
     QString m_enterpriseName;
     QString m_teamToken;

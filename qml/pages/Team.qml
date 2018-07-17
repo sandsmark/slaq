@@ -2,6 +2,7 @@ import QtQuick 2.8
 import QtQuick.Controls 2.4
 
 import "."
+import ".."
 
 import "../dialogs"
 import "../cover"
@@ -13,6 +14,7 @@ Page {
     property alias pageStack: pageStack
     property string teamId
     property string teamName
+    property string previousChannelId
 
     onSlackClientChanged: {
         if (slackClient !== null) {
@@ -31,13 +33,26 @@ Page {
             if (teamRoot.teamId == teamId) {
                 var _lastChannel = SlackClient.lastChannel(teamRoot.teamId);
                 console.log("loading page. adding channel component:", _lastChannel, teamRoot.teamId)
+                previousChannelId = _lastChannel
                 pageStack.replace(channelComponent, {"channelId" : _lastChannel })
+
             }
         }
 
         onTestLoginFail: {
             //TODO: inform main to open login dialog
             //pageStack.push(Qt.resolvedUrl("pages/LoginPage.qml"))
+        }
+        onChannelJoined: {
+            if (teamRoot.teamId == teamId) {
+                previousChannelId = pageStack.currentItem.channelId
+                pageStack.replace(channelComponent, {"channelId" : channelId })
+            }
+        }
+        onChannelLeft: {
+            if (teamRoot.teamId == teamId) {
+                pageStack.replace(channelComponent, {"channelId" : previousChannelId })
+            }
         }
     }
     Component {
@@ -47,7 +62,7 @@ Page {
 
     Row {
         anchors.fill: parent
-        spacing: 0
+        spacing: Theme.paddingMedium
         ChannelList {
             id: channelsList
             height: parent.height

@@ -51,8 +51,8 @@ signals:
     void messageReceived(const QString& teamId, QVariantMap message);
     void messageUpdated(const QString& teamId, QVariantMap message);
     void channelCountersUpdated(const QString& teamId, const QString& channelId, int unread_messages);
-    void channelJoined(const QString& teamId, QVariantMap channel);
-    void channelLeft(const QString& teamId, QVariantMap channel);
+    void channelJoined(const QString& teamId, const QString& channelId);
+    void channelLeft(const QString& teamId, const QString& channelId);
     void userUpdated(const QString& teamId, QVariantMap user);
 
     void postImageSuccess(const QString& teamId);
@@ -140,7 +140,7 @@ private:
     QQmlObjectListModel<TeamInfo> m_teamsModel;
     QMap<QString, SlackTeamClient*> m_knownTeams;
     QString m_lastTeam;
-    bool m_isOnline;
+    bool m_isOnline { false };
 };
 
 #endif

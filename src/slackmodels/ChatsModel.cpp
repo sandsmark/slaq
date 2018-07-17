@@ -167,11 +167,12 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
 
 }
 
-void ChatsModel::addChat(const QJsonObject &data, const ChatsModel::ChatType type)
+QString ChatsModel::addChat(const QJsonObject &data, const ChatsModel::ChatType type)
 {
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count());
-    doAddChat(data, type);
+    QString channelId = doAddChat(data, type);
     endInsertRows();
+    return channelId;
 }
 
 void ChatsModel::removeChat(const QString &channelId)
@@ -187,7 +188,7 @@ void ChatsModel::removeChat(const QString &channelId)
     endRemoveRows();
 }
 
-void ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
+QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
 {
 //    qDebug() << type;
     //qDebug().noquote() << QJsonDocument(data).toJson();
@@ -203,7 +204,7 @@ void ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
     if (chat.type == Conversation) {
         chat.user = m_networkUsers->user(data["user"].toString());
     } else {
-        for (const QJsonValue &userId : data["members"].toArray()) {
+        for (const QJsonValueRef &userId : data.value("members").toArray()) {
             chat.membersModel->addUser(m_networkUsers->user(userId.toString()));
         }
     }
@@ -214,6 +215,7 @@ void ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
     m_chatIds.append(chat.id);
 
     m_chats.insert(chat.id, chat);
+    return chat.id;
 }
 
 void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
@@ -249,6 +251,8 @@ Chat& ChatsModel::chat(const QString &id) {
 
 Chat &ChatsModel::chat(int row)
 {
+    Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chat", "m_chats.size() and m_chatIds.size() should be equal");
+    //TODO: check why chats size != chat ids size
     return m_chats[m_chatIds[row]];
 }
 
@@ -259,6 +263,7 @@ void ChatsModel::chatChanged(const Chat &chat)
     }
     int row = m_chatIds.indexOf(chat.id);
     m_chats[chat.id] = chat;
+    Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chatChanged", "m_chats.size() and m_chatIds.size() should be equal");
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index);
 }
@@ -291,7 +296,7 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
 
 void Chat::setReadableName(const QString& selfId) {
     QStringList _users;
-    for (QPointer<User> user : membersModel->users()) {
+    for (const QPointer<User>& user : membersModel->users()) {
         if (user->userId() != selfId) {
             _users << user->username();
         }

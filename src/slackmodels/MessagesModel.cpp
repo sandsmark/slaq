@@ -179,13 +179,16 @@ void MessageListModel::updateMessage(Message *message)
                 chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
             }
             preprocessFormatting(&chat, message);
-            qDebug() << "updating message:" << message->text;
-            m_modelMutex.lock();
-            m_messages.replace(i, message);
-            m_modelMutex.unlock();
+            qDebug() << "updating message:" << message->text << message << oldmessage;
+            if (message != oldmessage) {
+                m_modelMutex.lock();
+                m_messages.replace(i, message);
+                m_modelMutex.unlock();
+                delete oldmessage;
+            }
             QModelIndex index = QAbstractListModel::index(i, 0,  QModelIndex());
             emit dataChanged(index, index);
-            delete oldmessage;
+
             break;
         }
     }

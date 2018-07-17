@@ -54,7 +54,7 @@ Page {
                     case ChatsModel.MultiUserConversation:
                         return "icon-s-secure"
                     case ChatsModel.Conversation:
-                        if (model.IsOpen === "active") {
+                        if (model.presence === "active") {
                             return "im-user"
                         } else {
                             return "im-user-inactive"
@@ -74,7 +74,7 @@ Page {
                     } else if (model.Type === ChatsModel.Conversation) {
                         SlackClient.openChat(teamRoot.teamId, model.Id)
                     }
-                    pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id})
+                    page.StackView.view.pop()
                 }
             }
         }
