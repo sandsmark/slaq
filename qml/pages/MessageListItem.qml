@@ -14,6 +14,9 @@ ItemDelegate {
     property bool isSearchResult: false
     property bool emojiSelectorCalled: false
 
+    // counts as same if previouse user is same and last message was within 3 minutes
+    readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000
+
     Connections {
         target: emojiSelector
         enabled: itemDelegate.emojiSelectorCalled
@@ -35,24 +38,26 @@ ItemDelegate {
             width: parent.width
             height: childrenRect.height
             spacing: Theme.paddingMedium
+            leftPadding: sameuser ? Theme.avatarSize + spacing : 0
 
             Image {
                 id: avatarImage
+                y: Theme.paddingMedium/2
+                visible: !sameuser
                 height: Theme.avatarSize
                 cache: true
                 asynchronous: true
                 width: height
-                source: model.User.avatarUrl
+                source: visible ? model.User.avatarUrl : ""
             }
 
             Column {
                 height: childrenRect.height
                 width: parent.width
-                spacing: Theme.paddingMedium/2
+                spacing: 0
 
-                Row {
-                    height: childrenRect.height
-                    width: parent.width
+                RowLayout {
+                    height: emojiButton.implicitHeight
                     spacing: Theme.paddingMedium
 
                     Label {
@@ -66,23 +71,24 @@ ItemDelegate {
                         text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
-                        verticalAlignment: "AlignBottom"
+                        verticalAlignment: Text.AlignVCenter
                     }
 
                     Label {
                         id: channelLabel
                         enabled: isSearchResult
                         visible: isSearchResult
-                        text: model.ChannelName//model.channel !== undefined ? "#" + model.channel.name : ""
+                        text: model.ChannelName
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
 
                     EmojiButton {
                         id: emojiButton
+                        padding: 0
                         visible: itemDelegate.hovered && !isSearchResult
-                        height: Theme.headerSize
-                        width: height
+                        implicitHeight: nickLabel.paintedHeight * 2
+                        implicitWidth: nickLabel.paintedHeight * 2
                         text: "😎"
                         font.bold: true
                         font.pixelSize: parent.height/2
@@ -100,7 +106,7 @@ ItemDelegate {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
-                    font.pointSize: Theme.fontSizeMedium
+                    font.pixelSize: Theme.fontSizeMedium
                     font.italic: model.IsChanged
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
@@ -153,20 +159,17 @@ ItemDelegate {
         Item {
             height: Theme.paddingMedium
             width: height
-        }
-
-
-        Item {
-            height: Theme.paddingMedium
-            width: height
             visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }
 
         Repeater {
             id: fileSharesRepeater
             model: FileShares
+            x: Theme.avatarSize + column.spacing
 
             delegate: FileViewer {
+                width: column.width - x
+                x: Theme.avatarSize + column.spacing
                 fileshare: FileShares[index]
             }
         }
@@ -176,7 +179,8 @@ ItemDelegate {
             model: Attachments
 
             Attachment {
-                width: column.width
+                width: column.width - x
+                x: Theme.avatarSize + column.spacing
                 attachment: Attachments[index]
                 onLinkClicked: handleLink(link)
             }

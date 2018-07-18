@@ -258,6 +258,8 @@ struct Message {
 
     bool isChanged { false };
     bool isStarred { false };
+    bool isSameUser { false }; //indicates that previuos message has same user
+    qint64 timeDiffMs { 0 }; // time difference with previous message
 
 };
 
@@ -277,6 +279,8 @@ public:
         IsStarred,
         IsChanged,
         MessageFieldCount,
+        SameUser,
+        TimeDiff,
         SearchChannelName,
         SearchUserName,
         SearchPermalink

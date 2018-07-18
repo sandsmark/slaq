@@ -7,7 +7,6 @@ ListView {
     id: listView
 
     property alias atBottom: listView.atYEnd
-    //property variant channel
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
@@ -17,7 +16,7 @@ ListView {
     signal loadStarted()
     clip: true
 
-    spacing: Theme.paddingMedium
+    spacing: Theme.paddingSmall
     verticalLayoutDirection: ListView.BottomToTop
 
     ScrollBar.vertical: ScrollBar { }

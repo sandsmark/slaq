@@ -476,6 +476,13 @@ MessageListModel *SlackClientThreadSpawner::getSearchMessages(const QString& tea
     return nullptr;
 }
 
+void SlackClientThreadSpawner::reconnectClient()
+{
+    for (SlackTeamClient* _slackClient : m_knownTeams.values()) {
+        QMetaObject::invokeMethod(_slackClient, "reconnectClient", Qt::QueuedConnection);
+    }
+}
+
 void SlackClientThreadSpawner::connectToTeam(const QString &teamId, const QString &accessToken)
 {
     if (teamId.isEmpty()) {

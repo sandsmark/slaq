@@ -28,6 +28,8 @@ public:
 
     Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
 
+    Q_INVOKABLE void reconnectClient();
+
 signals:
     void threadStarted();
 

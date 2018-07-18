@@ -66,6 +66,10 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return message->userName;
     case SearchPermalink:
         return message->permalink;
+    case SameUser:
+        return message->isSameUser;
+    case TimeDiff:
+        return message->timeDiffMs;
     default:
         qWarning() << "Unhandled role" << role;
         return QVariant();
@@ -151,6 +155,11 @@ void MessageListModel::addMessage(Message* message)
         chat = _chatsModel->chat(m_channelId);
     }
     preprocessFormatting(&chat, message);
+    if (!m_messages.isEmpty()) {
+        Message* prevMsg = m_messages.first();
+        message->isSameUser = (prevMsg->user_id == message->user_id);
+        message->timeDiffMs = (message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
+    }
     beginInsertRows(QModelIndex(), 0, 0);
     m_messages.prepend(message);
     endInsertRows();
@@ -241,7 +250,12 @@ void MessageListModel::addMessages(const QJsonArray &messages)
         Q_ASSERT_X(!message->user.isNull(), "user is null", "");
 
         preprocessFormatting(&chat, message);
-        m_messages.append(std::move(message));
+        if (!m_messages.isEmpty()) {
+            Message* prevMsg = m_messages.last();
+            prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
+            prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+        }
+        m_messages.append(message);
     }
 
     endInsertRows();
@@ -260,6 +274,8 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[FileShares] = "FileShares";
     names[IsStarred] = "IsStarred";
     names[IsChanged] = "IsChanged";
+    names[SameUser] = "SameUser";
+    names[TimeDiff] = "TimeDiff";
     names[SearchChannelName] = "ChannelName";
     names[SearchUserName] = "UserName";
     names[SearchPermalink] = "Permalink";
