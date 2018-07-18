@@ -12,17 +12,12 @@ Page {
         SlackClient.setAppActive(teamRoot.teamId, appActive)
     }
 
-    header: Rectangle {
+    header: Label {
+        text: page.title
+        verticalAlignment: "AlignVCenter"
+        font.bold: true
+        horizontalAlignment: Text.AlignHCenter
         height: Theme.headerSize
-        border.color: "#00050505"
-        border.width: 1
-        radius: 5
-        Label {
-            text: page.title
-            anchors.centerIn: parent
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-        }
     }
 
     ChannelListView {

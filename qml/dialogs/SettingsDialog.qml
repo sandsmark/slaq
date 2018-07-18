@@ -17,6 +17,7 @@ Dialog {
         ImagesCache.setEmojiImagesSet(setsBox.displayText)
         settingsDialog.close()
     }
+
     onRejected: {
         setsBox.currentIndex = setsBox.setIndex
         settingsDialog.close()
@@ -42,6 +43,22 @@ Dialog {
                     if (setIndex !== -1)
                         currentIndex = setIndex
                 }
+                Layout.fillWidth: true
+            }
+        }
+
+        RowLayout {
+            spacing: 10
+
+            Label {
+                text: "Theme:"
+            }
+
+            ComboBox {
+                property int setIndex: 0
+                model: ["Light", "Dark", "System Default"]
+                currentIndex: settings.theme
+                onCurrentIndexChanged: settings.theme = currentIndex
                 Layout.fillWidth: true
             }
         }

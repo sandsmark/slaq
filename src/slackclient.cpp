@@ -120,7 +120,11 @@ void SlackTeamClient::handleNetworkAccessibleChanged(QNetworkAccessManager::Netw
 
 void SlackTeamClient::reconnectClient()
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
+
+    if (m_state != ClientStates::DISCONNECTED) {
+        return;
+    }
 
     qDebug() << "Reconnecting";
     setState(ClientStates::RECONNECTING);
@@ -624,6 +628,7 @@ void SlackTeamClient::handleStartReply()
 
     if (isError(data)) {
         qDebug() << "Start result error";
+        setState(ClientStates::DISCONNECTED);
         emit disconnected(m_teamInfo.teamId());
 
         if (data.isEmpty()) {

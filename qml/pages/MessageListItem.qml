@@ -6,11 +6,10 @@ import QtQuick.Layouts 1.3
 import ".."
 import "../components"
 
-ItemDelegate {
+MouseArea {
     id: itemDelegate
     height: column.height
     hoverEnabled: true
-    highlighted: hovered
     property bool isSearchResult: false
     property bool emojiSelectorCalled: false
 
@@ -87,7 +86,7 @@ ItemDelegate {
                         EmojiButton {
                             id: emojiButton
                             padding: 0
-                            visible: itemDelegate.hovered && !isSearchResult
+                            visible: itemDelegate.containsMouse && !isSearchResult
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: "😎"
@@ -104,7 +103,8 @@ ItemDelegate {
                         EmojiButton {
                             id: trashButton
                             padding: 0
-                            visible: itemDelegate.hovered && !isSearchResult && model.User.userId === teamRoot.slackClient.teamInfo().selfId
+                            visible: itemDelegate.containsMouse && !isSearchResult &&
+                                     model.User.userId === teamRoot.slackClient.teamInfo().selfId
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: "\uD83D\uDDD1"
@@ -117,7 +117,7 @@ ItemDelegate {
                     }
                 }
 
-                TextEdit {
+                TextArea {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
@@ -127,9 +127,9 @@ ItemDelegate {
                     textFormat: Text.RichText
                     text: model.Text
                     renderType: Text.QtRendering
-                    selectByKeyboard: true
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
+                    activeFocusOnPress: false
                     onLinkHovered:  {
                         if (link !== "") {
                             mouseArea.cursorShape = Qt.PointingHandCursor
@@ -137,14 +137,25 @@ ItemDelegate {
                             mouseArea.cursorShape = Qt.ArrowCursor
                         }
                     }
+                    onSelectedTextChanged: {
+                        if (selectedText !== "") {
+                            forceActiveFocus()
+                        } else {
+                            input.forceActiveFocus()
+                        }
+                    }
                     wrapMode: Text.Wrap
+
+                    // To avoid the border on some styles, we only want a textarea to be able to select things
+                    background: Item {}
+
                     //Due to bug in images not rendered until app resize
                     //trigger redraw changing width
                     onTextChanged: {
                         Qt.callLater(function() {
-                            var tmp = width
-                            width = 0
-                            width = tmp
+                            var tmp = contentItem.width
+                            contentItem.width = 0
+                            contentItem.width = tmp
                         })
                     }
 
