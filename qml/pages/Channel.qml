@@ -47,17 +47,12 @@ Page {
          }
      }
 
-    header: Rectangle {
+    header: Label {
+        text: "#" + channelRoot.title
+        horizontalAlignment: "AlignHCenter"
+        verticalAlignment: "AlignVCenter"
         height: Theme.headerSize
-        border.color: "#00050505"
-        border.width: 1
-        radius: 5
-        Label {
-            text: "#" + channelRoot.title
-            anchors.centerIn: parent
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-        }
+        font.bold: true
     }
 
     BusyIndicator {
@@ -150,7 +145,6 @@ Page {
             GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.5) }
         }
     }
-
 
     Rectangle {
         anchors {

@@ -23,7 +23,7 @@ Drawer {
         }
 
         BusyIndicator {
-            running: !SlackClient.isOnline
+            id: busyIndicator
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -32,7 +32,6 @@ Drawer {
             text: qsTr("Reconnect")
             anchors.verticalCenter: parent.verticalCenter
             enabled: !SlackClient.isOnline
-            visible: enabled
             onClicked: {
                 SlackClient.reconnectClient()
             }
@@ -44,22 +43,29 @@ Drawer {
         onConnected: {
             statusMessage.text = qsTr("Connected")
             connectionPanel.close()
+            busyIndicator.running = false
+            reconnectButton.enabled = false
         }
 
         onReconnecting: {
             statusMessage.text = qsTr("Reconnecting")
             connectionPanel.open()
+            busyIndicator.running = true
+            reconnectButton.enabled = false
         }
 
         onDisconnected: {
             statusMessage.text = qsTr("Disconnected")
             connectionPanel.open()
-
+            busyIndicator.running = false
+            reconnectButton.enabled = true
         }
 
         onNetworkOff: {
             statusMessage.text = qsTr("No network connection")
             connectionPanel.open()
+            busyIndicator.running = false
+            reconnectButton.enabled = false
         }
     }
 }

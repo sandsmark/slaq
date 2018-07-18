@@ -43,6 +43,7 @@ public:
         CONNECTED,
         RECONNECTING
     };
+    Q_ENUM(ClientStates)
 
     ClientStates getState() const;
     void setState(ClientStates state);
