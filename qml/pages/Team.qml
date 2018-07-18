@@ -1,5 +1,6 @@
-import QtQuick 2.8
+import QtQuick 2.11
 import QtQuick.Controls 2.4
+import QtQuick.Dialogs 1.2
 
 import "."
 import ".."
@@ -25,6 +26,24 @@ Page {
 
     function setCurrentTeam() {
         pageStack.currentItem.setChannelActive()
+    }
+
+    function deleteMessage(channelId, ts) {
+        deleteMessageDialog.channelId = channelId
+        deleteMessageDialog.ts = ts
+        deleteMessageDialog.open()
+    }
+
+    MessageDialog {
+        id: deleteMessageDialog
+        property string channelId: ""
+        property date ts
+        icon: StandardIcon.Warning
+        standardButtons: StandardButton.Yes | StandardButton.Cancel
+        text: qsTr("You going to delete message. Are you sure?")
+        onYes: {
+            SlackClient.deleteMessage(teamId, channelId, ts)
+        }
     }
 
     Connections {

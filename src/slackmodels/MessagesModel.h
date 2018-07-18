@@ -296,6 +296,7 @@ public:
     void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages, bool hasMore);
     Message* message(const QDateTime& ts);
+    bool deleteMessage(const QDateTime& ts);
     Message* message(int row);
     void clear();
 

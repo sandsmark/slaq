@@ -104,6 +104,22 @@ Message *MessageListModel::message(const QDateTime &ts)
     return nullptr;
 }
 
+bool MessageListModel::deleteMessage(const QDateTime &ts)
+{
+    QMutexLocker locker(&m_modelMutex);
+    for (int i = 0; i < m_messages.count(); i++) {
+        Message* message = m_messages.at(i);
+        if (message->time == ts) {
+            beginRemoveRows(QModelIndex(), i, i);
+            m_messages.remove(i);
+            endRemoveRows();
+            delete message;
+            return true;
+        }
+    }
+    return false;
+}
+
 Message *MessageListModel::message(int row)
 {
     QMutexLocker locker(&m_modelMutex);

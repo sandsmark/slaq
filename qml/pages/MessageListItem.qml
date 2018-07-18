@@ -82,22 +82,37 @@ ItemDelegate {
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
-
-                    EmojiButton {
-                        id: emojiButton
-                        padding: 0
-                        visible: itemDelegate.hovered && !isSearchResult
-                        implicitHeight: nickLabel.paintedHeight * 2
-                        implicitWidth: nickLabel.paintedHeight * 2
-                        text: "😎"
-                        font.bold: true
-                        font.pixelSize: parent.height/2
-                        onClicked: {
-                            emojiSelector.x = emojiButton.x
-                            emojiSelector.y = emojiButton.y
-                            emojiSelector.state = "reaction"
-                            itemDelegate.emojiSelectorCalled = true
-                            emojiSelector.open()
+                    Row {
+                        spacing: Theme.paddingSmall
+                        EmojiButton {
+                            id: emojiButton
+                            padding: 0
+                            visible: itemDelegate.hovered && !isSearchResult
+                            implicitHeight: nickLabel.paintedHeight * 2
+                            implicitWidth: nickLabel.paintedHeight * 2
+                            text: "😎"
+                            font.bold: true
+                            font.pixelSize: parent.height/2
+                            onClicked: {
+                                emojiSelector.x = emojiButton.x
+                                emojiSelector.y = emojiButton.y
+                                emojiSelector.state = "reaction"
+                                itemDelegate.emojiSelectorCalled = true
+                                emojiSelector.open()
+                            }
+                        }
+                        EmojiButton {
+                            id: trashButton
+                            padding: 0
+                            visible: itemDelegate.hovered && !isSearchResult && model.User.userId === teamRoot.slackClient.teamInfo().selfId
+                            implicitHeight: nickLabel.paintedHeight * 2
+                            implicitWidth: nickLabel.paintedHeight * 2
+                            text: "\uD83D\uDDD1"
+                            font.bold: false
+                            font.pixelSize: parent.height/2
+                            onClicked: {
+                                teamRoot.deleteMessage(channelId, model.Time)
+                            }
                         }
                     }
                 }
@@ -165,7 +180,6 @@ ItemDelegate {
         Repeater {
             id: fileSharesRepeater
             model: FileShares
-            x: Theme.avatarSize + column.spacing
 
             delegate: FileViewer {
                 width: column.width - x

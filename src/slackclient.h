@@ -70,6 +70,7 @@ signals:
     void messageReceived(Message* message);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message);
+    void messageDeleted(const QString& channelId, const QDateTime& ts);
 
     void channelUpdated(const Chat& chat);
     void channelJoined(const QJsonObject& data);
@@ -98,10 +99,8 @@ signals:
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
     void teamDataChanged(const QJsonObject &teamData);
     void usersPresenceChanged(const QList<QPointer<User>>& users, const QString& presence);
-	
 
 public slots:
-
     void startConnections();
     void startClient();
     void testLogin();
@@ -110,6 +109,7 @@ public slots:
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
+    void deleteMessage(const QString& channelId, const QDateTime& ts);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
     void joinChannel(const QString& channelId);
@@ -150,6 +150,7 @@ private slots:
     void handleTeamInfoReply();
     void handleTeamEmojisReply();
     void handleSearchMessagesReply();
+    void handleDeleteMessageReply();
 
 private:
     bool appActive;

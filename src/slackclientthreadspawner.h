@@ -102,6 +102,7 @@ public slots:
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content);
+    void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
     void addReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
@@ -109,6 +110,7 @@ public slots:
     //from slack thread to main thread
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message);
+    void onMessageDeleted(const QString& channelId, const QDateTime& ts);
     void onChannelUpdated(const Chat &chat);
     void onChannelJoined(const QJsonObject &data);
     void onChannelLeft(const QString &channelId);

@@ -31,7 +31,6 @@ Item {
     }
 
     Column {
-        anchors.centerIn: parent
         anchors.margins: Theme.paddingMedium/2
         Loader {
             id: loader

@@ -20,7 +20,8 @@
 SlackTeamClient::SlackTeamClient(const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
+    QQmlEngine::setObjectOwnership(&m_teamInfo, QQmlEngine::CppOwnership);
     m_teamInfo.setTeamId(teamId);
     config = SlackConfig::instance();
     config->loadTeamInfo(m_teamInfo);
@@ -239,6 +240,9 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
        emit messageUpdated(message_);
        //TODO: implement handling all empty subtypes
     } else if (subtype == "message_deleted") {
+        const QDateTime& deleted_ts = slackToDateTime(message.value(QStringLiteral("deleted_ts")).toString());
+        const QString& channel_id = message.value(QStringLiteral("channel")).toString();
+        emit messageDeleted(channel_id, deleted_ts);
     } else if (subtype == "file_comment") {
     } else if (subtype == "message_replied") {
     } else {
@@ -1142,7 +1146,7 @@ void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
 
 void SlackTeamClient::postMessage(const QString& channelId, QString content)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("text"), content);
@@ -1153,46 +1157,62 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content)
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostMessageReply);
 }
 
-void SlackTeamClient::handleDeleteReactionReply()
+void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
+    QMap<QString, QString> data;
+    data.insert(QStringLiteral("channel"), channelId);
+    data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+    data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
+
+    QNetworkReply *reply = executePost(QStringLiteral("chat.delete"), data);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleDeleteMessageReply);
+}
+
+void SlackTeamClient::handleDeleteMessageReply()
+{
+    DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    QJsonObject data = getResult(reply);
+    qDebug() << "Delete message result" << data;
+    reply->deleteLater();
+}
 
+void SlackTeamClient::handleDeleteReactionReply()
+{
+    DEBUG_BLOCK;
+
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
     qDebug() << "Delete reaction result" << data;
-
     reply->deleteLater();
 }
 
 void SlackTeamClient::handleAddReactionReply()
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-
     QJsonObject data = getResult(reply);
     qDebug() << "Add reaction result" << data;
-
     reply->deleteLater();
 }
 
 void SlackTeamClient::handlePostMessageReply()
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-
     QJsonObject data = getResult(reply);
     qDebug() << "Post message result" << data;
-
     reply->deleteLater();
 }
 
 void SlackTeamClient::postImage(const QString& channelId, const QString& imagePath,
                             const QString& title, const QString& comment)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channels"), channelId);
