@@ -15,6 +15,7 @@ Page {
     property alias pageStack: pageStack
     property string teamId
     property string teamName
+    property string currentChannelId: pageStack.currentItem.channelId != undefined ? pageStack.currentItem.channelId : ""
     property string previousChannelId
 
     onSlackClientChanged: {
@@ -74,6 +75,7 @@ Page {
             }
         }
     }
+
     Component {
         id: channelComponent
         Channel {}
@@ -95,9 +97,7 @@ Page {
             transform: Translate {
                 x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
             }
-
             initialItem: Item { BusyIndicator { anchors.centerIn: parent } }
         }
     }
-
 }
