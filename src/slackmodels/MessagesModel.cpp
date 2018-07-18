@@ -166,11 +166,11 @@ void MessageListModel::addMessage(Message* message)
     }
     Q_ASSERT_X(!message->user.isNull(), "addMessage .user is null", "");
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat chat;
+    Chat* chat;
     if (_chatsModel != nullptr) {
         chat = _chatsModel->chat(m_channelId);
     }
-    preprocessFormatting(&chat, message);
+    preprocessFormatting(chat, message);
     if (!m_messages.isEmpty()) {
         Message* prevMsg = m_messages.first();
         message->isSameUser = (prevMsg->user_id == message->user_id);
@@ -179,8 +179,8 @@ void MessageListModel::addMessage(Message* message)
     beginInsertRows(QModelIndex(), 0, 0);
     m_messages.prepend(message);
     endInsertRows();
-    if (!chat.id.isEmpty() && message->time > chat.lastRead) {
-        chat.unreadCountDisplay++;
+    if (!chat->id.isEmpty() && message->time > chat->lastRead) {
+        chat->unreadCountDisplay++;
         _chatsModel->chatChanged(chat);
     }
 }
@@ -199,11 +199,11 @@ void MessageListModel::updateMessage(Message *message)
                     Q_ASSERT_X(!message->user.isNull(), "user is null", "");
                 }
             }
-            Chat chat;
+            Chat* chat;
             if (parent() != nullptr) {
                 chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
             }
-            preprocessFormatting(&chat, message);
+            preprocessFormatting(chat, message);
             qDebug() << "updating message:" << message->text << message << oldmessage;
             if (message != oldmessage) {
                 m_modelMutex.lock();
@@ -245,7 +245,7 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
 
     //assume we have parent;
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat chat;
+    Chat* chat;
     if (_chatsModel != nullptr) {
         chat = _chatsModel->chat(m_channelId);
     }
@@ -269,7 +269,7 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
         }
         Q_ASSERT_X(!message->user.isNull(), "user is null", "");
 
-        preprocessFormatting(&chat, message);
+        preprocessFormatting(chat, message);
         if (!m_messages.isEmpty()) {
             Message* prevMsg = m_messages.last();
             prevMsg->isSameUser = (prevMsg->user_id == message->user_id);

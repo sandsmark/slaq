@@ -100,7 +100,12 @@ void SlackTeamClient::clearNotifications()
 
 QString SlackTeamClient::getChannelName(const QString &channelId)
 {
-    return teamInfo()->chats()->chat(channelId).name;
+    return teamInfo()->chats()->chat(channelId)->name;
+}
+
+Chat *SlackTeamClient::getChannel(const QString &channelId)
+{
+    return teamInfo()->chats()->chat(channelId);
 }
 
 void SlackTeamClient::handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible)
@@ -214,9 +219,9 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
     //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* chatsModel = m_teamInfo.chats();
-    Chat chat = chatsModel->chat(channelId);
-    chat.unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
-    chat.lastRead = slackToDateTime(message.value(QStringLiteral("channel")).toString());
+    Chat* chat = chatsModel->chat(channelId);
+    chat->unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
+    chat->lastRead = slackToDateTime(message.value(QStringLiteral("channel")).toString());
     emit channelUpdated(chat);
 }
 
@@ -733,7 +738,7 @@ QString SlackTeamClient::lastChannel()
     }
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_lastChannel.isEmpty() && _chatsModel != nullptr && _chatsModel->rowCount() > 0) {
-        _lastChannel = _chatsModel->chat(0).id;
+        _lastChannel = _chatsModel->chat(0)->id;
     }
 
     //qDebug() << "last channel" << _lastChannel;
@@ -761,15 +766,15 @@ void SlackTeamClient::joinChannel(const QString& channelId)
 {
     DEBUG_BLOCK;
 
-    Chat chat = m_teamInfo.chats()->chat(channelId);
+    Chat* chat = m_teamInfo.chats()->chat(channelId);
 
-    if(chat.id.isEmpty()) {
+    if(chat->id.isEmpty()) {
         qWarning() << "Invalid channel ID provided" << channelId;
         return;
     }
 
     QMap<QString, QString> params;
-    params.insert(QStringLiteral("name"), "#"+chat.name);
+    params.insert(QStringLiteral("name"), "#"+chat->name);
 
     QNetworkReply *reply = executeGet(QStringLiteral("channels.join"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleJoinChannelReply);
@@ -844,14 +849,14 @@ void SlackTeamClient::openChat(const QString& chatId)
 {
     DEBUG_BLOCK;
 
-    Chat chat = m_teamInfo.chats()->chat(chatId);
+    Chat* chat = m_teamInfo.chats()->chat(chatId);
 
-    if (chat.user.isNull()) {
+    if (chat->membersModel->users().first().isNull()) {
         qWarning() << "No user for chat" << chatId;
         return;
     }
     QMap<QString, QString> params;
-    params.insert(QStringLiteral("user"), chat.user->userId());
+    params.insert(QStringLiteral("user"), chat->membersModel->users().first()->userId());
 
     QNetworkReply *reply = executeGet(QStringLiteral("im.open"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleOpenChatReply);
@@ -999,7 +1004,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
         return;
     }
     ChatsModel* chatsModel = m_teamInfo.chats();
-    Chat chat = chatsModel->chat(channelId);
+    Chat* chat = chatsModel->chat(channelId);
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
@@ -1007,7 +1012,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
         params.insert(QStringLiteral("latest"), dateTimeToSlack(latest));
     }
 
-    QNetworkReply *reply = executeGet(historyMethod(chat.type), params);
+    QNetworkReply *reply = executeGet(historyMethod(chat->type), params);
     reply->setProperty("channelId", channelId);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLoadMessagesReply);
@@ -1045,7 +1050,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     }
     messageModel->addMessages(messageList, _hasMore);
 
-    qDebug() << "messages loaded for" << channelId << chatModel->chat(channelId).name << m_teamInfo.teamId() << m_teamInfo.name();
+    qDebug() << "messages loaded for" << channelId << chatModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 

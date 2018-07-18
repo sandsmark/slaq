@@ -73,7 +73,7 @@ signals:
     void messageUpdated(Message* message);
     void messageDeleted(const QString& channelId, const QDateTime& ts);
 
-    void channelUpdated(const Chat& chat);
+    void channelUpdated(Chat* chat);
     void channelJoined(const QJsonObject& data);
     void channelLeft(const QString& channelId);
     void chatJoined(const QString& channelId);
@@ -122,6 +122,7 @@ public slots:
     void requestTeamEmojis();
 
     QString getChannelName(const QString& channelId);
+    Chat *getChannel(const QString& channelId);
 
     QString userName(const QString &userId);
     QString lastChannel();
