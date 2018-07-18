@@ -45,7 +45,7 @@ int FileModel::rowCount(const QModelIndex &parent) const
     return fileList.size();
 }
 
-void FileModel::searchFiles(QString path)
+void FileModel::searchFiles(const QString& path)
 {
     QDir dir(path);
     QStringList accepted;

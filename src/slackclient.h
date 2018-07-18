@@ -13,25 +13,26 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 
+#include "storage.h"
 #include "slackconfig.h"
 #include "slackstream.h"
 #include "messageformatter.h"
 #include "teaminfo.h"
 #include "storage.h"
+#include "debugblock.h"
 
-class SlackClient : public QObject
+class SlackTeamClient : public QObject
 {
     Q_OBJECT
 
+
 public:
-    explicit SlackClient(const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
-    virtual ~SlackClient();
+    explicit SlackTeamClient(const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
+    virtual ~SlackTeamClient();
 
     Q_INVOKABLE void setAppActive(bool active);
     Q_INVOKABLE void setActiveWindow(const QString &windowId);
 
-    Q_INVOKABLE QVariantList getChannels();
-    Q_INVOKABLE QVariant getChannel(const QString& channelId);
     Q_INVOKABLE QStringList getNickSuggestions(const QString &currentText, const int cursorPosition);
     Q_INVOKABLE TeamInfo *teamInfo();
 
@@ -46,6 +47,8 @@ public:
     ClientStates getState() const;
     void setState(ClientStates state);
 
+    Q_INVOKABLE ChatsModel *currentChatsModel();
+
 signals:
     void testConnectionFail(const QString& teamId);
     void testLoginSuccess(QString userId, QString teamId, QString team);
@@ -54,7 +57,7 @@ signals:
     void accessTokenSuccess(QString userId, QString teamId, QString team);
     void accessTokenFail(const QString& teamId);
 
-    void loadMessagesSuccess(const QString& teamId, QString channelId, QVariantList messages);
+    void loadMessagesSuccess(const QString& teamId, QString channelId);
     void loadMessagesFail(const QString& teamId);
 
     void initFail(const QString& teamId, const QString &why);
@@ -63,11 +66,18 @@ signals:
     void reconnectFail(const QString& teamId);
     void reconnectAccessTokenFail(const QString& teamId);
 
-    void messageReceived(const QString& teamId, QVariantMap message);
-    void messageUpdated(const QString& teamId, QVariantMap message);
-    void channelUpdated(const QString& teamId, QVariantMap channel);
-    void channelJoined(const QString& teamId, QVariantMap channel);
-    void channelLeft(const QString& teamId, QVariantMap channel);
+    // signals to main thread
+    void messageReceived(Message* message);
+    void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
+    void messageUpdated(Message* message);
+    void messageDeleted(const QString& channelId, const QDateTime& ts);
+
+    void channelUpdated(const Chat& chat);
+    void channelJoined(const QJsonObject& data);
+    void channelLeft(const QString& channelId);
+    void chatJoined(const QString& channelId);
+    void chatLeft(const QString& channelId);
+
     void userUpdated(const QString& teamId, QVariantMap user);
 
     void postImageSuccess(const QString& teamId);
@@ -85,22 +95,23 @@ signals:
 
     void teamInfoChanged(const QString& teamId);
     void stateChanged(const QString& teamId);
-    void searchResultsReady(const QString& teamId, const QVariantList& messages);
 
-    void userTyping(const QString& teamId, const QString& channelId, const QString& userId);
+    void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
+    void teamDataChanged(const QJsonObject &teamData);
+    void usersPresenceChanged(const QList<QPointer<User>>& users, const QString& presence);
 
 public slots:
-
     void startConnections();
     void startClient();
     void testLogin();
-    void searchMessages(const QString& searchString);
-    void loadMessages(const QString& type, const QString& channelId);
-    void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
-    void addReaction(const QString &channelId, const QString &ts, const QString &reaction);
+    void searchMessages(const QString& searchString, int page =  1);
+    void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());
+    void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
+    void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);
+    void deleteMessage(const QString& channelId, const QDateTime& ts);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
-    void markChannel(const QString& type, const QString& channelId, const QString& time);
+    void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
     void leaveGroup(const QString& groupId);
@@ -109,10 +120,13 @@ public slots:
     void requestTeamInfo();
     void requestTeamEmojis();
 
-    QUrl avatarUrl(const QString &userId) { return m_userAvatars.value(userId); }
-    QString userName(const QString &userId) { return m_storage.user(userId).value(QStringLiteral("name")).toString(); }
+    QString getChannelName(const QString& channelId);
+
+    QString userName(const QString &userId);
     QString lastChannel();
     bool isOnline() const;
+    bool isDevice() const;
+    void onFetchMoreSearchData(const QString& query, int page);
 
 private slots:
     void handleStartReply();
@@ -136,6 +150,7 @@ private slots:
     void handleTeamInfoReply();
     void handleTeamEmojisReply();
     void handleSearchMessagesReply();
+    void handleDeleteMessageReply();
 
 private:
     bool appActive;
@@ -153,62 +168,26 @@ private:
     void parseMessageUpdate(const QJsonObject& message);
     void parseReactionUpdate(const QJsonObject& message);
     void parseChannelUpdate(const QJsonObject& message);
-    void parseChannelJoin(const QJsonObject& message);
-    void parseChannelLeft(const QJsonObject& message);
-    void parseGroupJoin(const QJsonObject& message);
-    void parseChatOpen(const QJsonObject& message);
-    void parseChatClose(const QJsonObject& message);
     void parsePresenceChange(const QJsonObject& message);
     void parseNotification(const QJsonObject& message);
-
-    QVariantMap getMessageData(const QJsonObject& message, const QString& teamId);
-
-    QString getContent(const QJsonObject& message);
-    QVariantList getAttachments(const QJsonObject& message);
-    QVariantList getFileShares(const QJsonObject& message);
-    QString getAttachmentColor(const QJsonObject& attachment);
-    QVariantList getAttachmentFields(const QJsonObject& attachment);
-    QVariantList getAttachmentImages(const QJsonObject& attachment);
-
-    QVariantList getReactions(const QJsonObject& message);
-
-    QVariantMap parseChannel(const QJsonObject& data);
-    QVariantMap parseGroup(const QJsonObject& group);
-
-    void parseUsers(const QJsonObject& data);
-    void parseUser(const QJsonObject &user);
-    void parseBots(const QJsonObject& data);
-    void parseChannels(const QJsonObject& data);
-    void parseGroups(const QJsonObject& data);
-    void parseChats(const QJsonObject& data);
-
-    void findNewUsers(const QString &message);
 
     void sendNotification(const QString& channelId, const QString& title, const QString& content);
     void clearNotifications();
 
-    QVariantMap user(const QJsonObject &data);
-
-    QString historyMethod(const QString& type);
-    QString markMethod(const QString& type);
+    QString historyMethod(const ChatsModel::ChatType type);
+    QString markMethod(ChatsModel::ChatType type);
 
     QPointer<QNetworkAccessManager> networkAccessManager;
     QPointer<SlackConfig> config;
     QPointer<SlackStream> stream;
     QPointer<QTimer> reconnectTimer;
-    Storage m_storage;
 
     QNetworkAccessManager::NetworkAccessibility networkAccessible;
-    QHash<QString, QUrl> m_userAvatars;
 
-    QString m_clientId;
-    QString m_clientId2;
-
-    MessageFormatter m_formatter;
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
 };
 
-QML_DECLARE_TYPE(SlackClient)
+QML_DECLARE_TYPE(SlackTeamClient)
 
 #endif // SLACKCLIENT_H

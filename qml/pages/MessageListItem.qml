@@ -4,23 +4,26 @@ import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 
 import ".."
+import "../components"
 
 ItemDelegate {
-    id: item
+    id: itemDelegate
     height: column.height
-    width: listView.width
     hoverEnabled: true
     highlighted: hovered
     property bool isSearchResult: false
     property bool emojiSelectorCalled: false
 
+    // counts as same if previouse user is same and last message was within 3 minutes
+    readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000
+
     Connections {
         target: emojiSelector
-        enabled: item.emojiSelectorCalled
+        enabled: itemDelegate.emojiSelectorCalled
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamId, channel.id, time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamId, channelId, model.Time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -35,63 +38,81 @@ ItemDelegate {
             width: parent.width
             height: childrenRect.height
             spacing: Theme.paddingMedium
+            leftPadding: sameuser ? Theme.avatarSize + spacing : 0
 
             Image {
                 id: avatarImage
+                y: Theme.paddingMedium/2
+                visible: !sameuser
                 height: Theme.avatarSize
                 cache: true
                 asynchronous: true
                 width: height
-                source: SlackClient.avatarUrl(teamId, user.id)
+                source: visible ? model.User.avatarUrl : ""
             }
 
             Column {
                 height: childrenRect.height
                 width: parent.width
-                spacing: Theme.paddingMedium/2
+                spacing: 0
 
-                Row {
-                    height: childrenRect.height
-                    width: parent.width
+                RowLayout {
+                    height: emojiButton.implicitHeight
                     spacing: Theme.paddingMedium
 
                     Label {
                         id: nickLabel
-                        text: user.name
+                        text: User.fullName
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
 
                     Label {
-                        text: new Date(parseInt(time, 10) * 1000).toLocaleString(Qt.locale(), "H:mm")
+                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
-                        verticalAlignment: "AlignBottom"
+                        verticalAlignment: Text.AlignVCenter
                     }
 
                     Label {
                         id: channelLabel
                         enabled: isSearchResult
                         visible: isSearchResult
-                        text: model.channel !== undefined ? "#" + model.channel.name : ""
+                        text: model.ChannelName
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
-
-                    EmojiButton {
-                        id: emojiButton
-                        visible: item.hovered && !isSearchResult
-                        height: Theme.headerSize
-                        width: height
-                        text: "😎"
-                        font.bold: true
-                        font.pixelSize: parent.height/2
-                        onClicked: {
-                            emojiSelector.x = emojiButton.x
-                            emojiSelector.y = emojiButton.y
-                            emojiSelector.state = "reaction"
-                            item.emojiSelectorCalled = true
-                            emojiSelector.open()
+                    Row {
+                        spacing: Theme.paddingSmall
+                        EmojiButton {
+                            id: emojiButton
+                            padding: 0
+                            visible: itemDelegate.hovered && !isSearchResult
+                            implicitHeight: nickLabel.paintedHeight * 2
+                            implicitWidth: nickLabel.paintedHeight * 2
+                            text: "😎"
+                            font.bold: true
+                            font.pixelSize: parent.height/2
+                            onClicked: {
+                                emojiSelector.x = emojiButton.x
+                                emojiSelector.y = emojiButton.y
+                                emojiSelector.state = "reaction"
+                                itemDelegate.emojiSelectorCalled = true
+                                emojiSelector.open()
+                            }
+                        }
+                        EmojiButton {
+                            id: trashButton
+                            padding: 0
+                            visible: itemDelegate.hovered && !isSearchResult && model.User.userId === teamRoot.slackClient.teamInfo().selfId
+                            implicitHeight: nickLabel.paintedHeight * 2
+                            implicitWidth: nickLabel.paintedHeight * 2
+                            text: "\uD83D\uDDD1"
+                            font.bold: false
+                            font.pixelSize: parent.height/2
+                            onClicked: {
+                                teamRoot.deleteMessage(channelId, model.Time)
+                            }
                         }
                     }
                 }
@@ -100,9 +121,11 @@ ItemDelegate {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
-                    font.pointSize: Theme.fontSizeSmall
+                    font.pixelSize: Theme.fontSizeMedium
+                    font.italic: model.IsChanged
+                    verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
-                    text: content
+                    text: model.Text
                     renderType: Text.QtRendering
                     selectByKeyboard: true
                     selectByMouse: true
@@ -138,67 +161,10 @@ ItemDelegate {
 
                     Repeater {
                         id: reactionsRepeater
-                        model: reactions
+                        model: Reactions
 
-                        Button {
-                            //TODO: check for Theme
-                            id: control
-
-                            hoverEnabled: true
-                            ToolTip.text: users
-                            ToolTip.delay: 500
-                            ToolTip.timeout: 5000
-                            ToolTip.visible: hovered
-                            text: emoji
-                            height: Theme.headerSize
-                            width: (ImagesCache.isUnicode ? contentItem.contentWidth : Theme.headerSize - 4)
-                                   + Theme.paddingMedium*2
-                                   + countLabel.contentWidth
-
-                            onClicked: {
-                                SlackClient.deleteReaction(teamId, channel.id, time, name)
-                            }
-
-                            contentItem: Item {
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: Theme.headerSize - 4
-                                    height: Theme.headerSize - 4
-                                    smooth: true
-                                    visible: !ImagesCache.isUnicode
-                                    source: "image://emoji/" + name
-                                }
-
-                                Text {
-                                    visible: ImagesCache.isUnicode
-                                    anchors.centerIn: parent
-                                    text: control.text
-                                    font.family: "Twitter Color Emoji"
-                                    font.pixelSize: Theme.headerSize - 6
-                                    renderType: Text.QtRendering
-                                    verticalAlignment: Text.AlignVCenter
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                            }
-
-                            background: Rectangle {
-                                color: "#eaf4f5"
-                                implicitWidth: 100
-                                implicitHeight: parent.height
-                                opacity: enabled ? 1 : 0.3
-                                border.color: "#bdbdbd"
-                                border.width: 1
-                                radius: 3
-                                Text {
-                                    id: countLabel
-                                    anchors.right: parent.right; anchors.rightMargin: Theme.paddingSmall
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    font.pointSize: Theme.fontSizeSmall
-                                    renderType: Text.QtRendering
-                                    color: "#0f0f0f"
-                                    text: reactionscount
-                                }
-                            }
+                        Reaction {
+                            reaction: Reactions[index]
                         }
                     }
                 }
@@ -208,37 +174,36 @@ ItemDelegate {
         Item {
             height: Theme.paddingMedium
             width: height
-        }
-
-
-        Item {
-            height: Theme.paddingMedium
-            width: height
             visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }
 
         Repeater {
             id: fileSharesRepeater
-            model: fileShares
+            model: FileShares
 
-            delegate: FileViewer {}
+            delegate: FileViewer {
+                width: column.width - x
+                x: Theme.avatarSize + column.spacing
+                fileshare: FileShares[index]
+            }
         }
 
         Repeater {
             id: attachmentRepeater
-            model: attachments
+            model: Attachments
 
             Attachment {
-                width: column.width
-                attachment: model
+                width: column.width - x
+                x: Theme.avatarSize + column.spacing
+                attachment: Attachments[index]
                 onLinkClicked: handleLink(link)
             }
         }
     }
 
     onClicked: {
-        if (permalink !== "") {
-            Qt.openUrlExternally(permalink)
+        if (model.Permalink !== "") {
+            Qt.openUrlExternally(model.Permalink)
         }
     }
 

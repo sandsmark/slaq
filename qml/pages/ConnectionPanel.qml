@@ -34,7 +34,7 @@ Drawer {
             enabled: !SlackClient.isOnline
             visible: enabled
             onClicked: {
-                SlackClient.reconnect()
+                SlackClient.reconnectClient()
             }
         }
     }

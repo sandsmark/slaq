@@ -1,6 +1,11 @@
 #include "storage.h"
 
 #include <QDebug>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QQmlEngine>
+#include <QDateTime>
+#include <QJsonArray>
 
 void Storage::saveUser(const QVariantMap& user)
 {
@@ -10,6 +15,10 @@ void Storage::saveUser(const QVariantMap& user)
 void Storage::updateUsersList()
 {
     userList = userMap.values();
+}
+
+Storage::Storage()
+{
 }
 
 QVariantMap Storage::user(const QVariant& id)
@@ -68,3 +77,5 @@ void Storage::clearChannels()
 {
     channelMap.clear();
 }
+
+

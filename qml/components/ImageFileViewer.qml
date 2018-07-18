@@ -6,16 +6,16 @@ import ".."
 Item {
     id: imageItem
     property bool expanded: false
-    width: expanded ? listView.width - Theme.paddingLarge * 4 : model.thumbSize.width
-    height: expanded ? width / (model.size.width / model.size.height) : model.thumbSize.height
+    width: expanded ? listView.width - Theme.paddingLarge * 4 : fileshare.thumb_360_size.width
+    height: expanded ? width / (fileshare.original_size.width / fileshare.original_size.height) : fileshare.thumb_360_size.height
 
     Image {
         id: thumbImage
         anchors.fill: parent
         asynchronous: true
         fillMode: Image.PreserveAspectFit
-        source: "team://" + teamId + "/" + model.thumbUrl
-        sourceSize: Qt.size(model.thumbSize.width, model.thumbSize.height)
+        source: "team://" + teamId + "/" + fileshare.thumb_360
+        sourceSize: fileshare.thumb_360_size
         visible: !imageItem.expanded
     }
 
@@ -24,7 +24,7 @@ Item {
         anchors.fill: parent
         //to preserve memory, cache is turned off, so to see animation again need to re-expand image
         //TODO: create settings to change the behavior
-        source: imageItem.expanded ? "team://" + teamId + "/" + model.url : ""
+        source: imageItem.expanded ? "team://" + teamId + "/" + fileshare.url_private : ""
         asynchronous: true
         fillMode: Image.PreserveAspectFit
         visible: imageItem.expanded
@@ -49,7 +49,7 @@ Item {
 
     function clicked() {
         if (SlackClient.isDevice) {
-            pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": model, "teamId": teamId})
+            pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": fileshare, "teamId": teamId})
         } else {
             imageItem.expanded = !imageItem.expanded
         }

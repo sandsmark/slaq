@@ -6,14 +6,14 @@ Item {
 
     function hovered(mouseArea) {}
     function clicked() {
-        channelRoot.showText(model.url_download, model.name, user.name)
+        channelRoot.showText(fileshare.url_private_download, fileshare.name, fileshare.username)
     }
 
     Text {
         id: textEdit
         width: paintedWidth
         height: paintedHeight
-        text: model.preview_highlight
+        text: fileshare.preview_highlight
         wrapMode: Text.WordWrap
         textFormat: Text.RichText
         renderType: Text.QtRendering

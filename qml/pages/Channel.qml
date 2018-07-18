@@ -1,6 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
+import com.iskrembilen 1.0
 
 import ".."
 
@@ -8,19 +9,22 @@ Page {
     id: channelRoot
 
     property string channelId
-    property variant channel
+    property string channelName
+    property int channelType
     property bool initialized: false
-    property url textToShowUrl
-    property string textToShowName
-    property string textToShowUserName
+    property url textToShowUrl: ""
+    property string textToShowUserName: ""
+    property string textToShowName: ""
 
-    title: channel !== undefined ? channel.name : ""
+    title: channelName
     property var usersTyping: []
+    onChannelIdChanged: {
+        channelName = SlackClient.getChannelName(teamRoot.teamId, channelRoot.channelId);
+    }
 
     function setChannelActive() {
-        console.log("channel active", channelRoot.title)
-        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId)
-        channelRoot.channel = SlackClient.getChannel(teamRoot.teamId, channelRoot.channelId)
+        console.log("channel active", channelRoot.title);
+        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId);
         input.forceActiveFocus()
         listView.markLatest()
     }
@@ -110,8 +114,6 @@ Page {
 
     MessageListView {
         id: listView
-        channel: channelRoot.channel
-        onChannelChanged: console.log("channel changed", listView.channel)
 
         anchors {
             top: parent.top; bottom: input.top; left: parent.left; right: parent.right
@@ -174,9 +176,9 @@ Page {
         width: parent.width
 
         visible: listView.inputEnabled
-        placeholder: channel ? qsTr("Message %1%2").arg("#").arg(channel.name) : ""
+        placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
         onSendMessage: {
-            SlackClient.postMessage(teamRoot.teamId, channel.id, content)
+            SlackClient.postMessage(teamRoot.teamId, channelId, content)
         }
 
         nickPopupVisible: nickPopup.visible
@@ -192,9 +194,7 @@ Page {
     Connections {
         target: SlackClient
         onUserTyping: {
-            if (teamRoot.teamId === teamId && channelId === channel.id) {
-                var userName = SlackClient.userName(teamRoot.teamId, userId)
-
+            if (teamRoot.teamId === teamId && channelId === channelRoot.channelId) {
                 if (usersTyping.indexOf(userName) === -1) {
                     usersTyping.push(userName)
                 }

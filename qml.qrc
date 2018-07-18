@@ -8,7 +8,6 @@
         <file>qml/pages/Channel.qml</file>
         <file>qml/pages/ChannelList.qml</file>
         <file>qml/pages/ChannelListView.qml</file>
-        <file>qml/pages/ChannelSelect.qml</file>
         <file>qml/pages/ChatSelect.qml</file>
         <file>qml/pages/ConnectionPanel.qml</file>
         <file>qml/pages/FileSend.qml</file>
@@ -21,9 +20,6 @@
         <file>qml/pages/qmldir</file>
         <file>qml/Theme.qml</file>
         <file>qml/qmldir</file>
-        <file>qml/Channel.js</file>
-        <file>qml/ChannelList.js</file>
-        <file>qml/Message.js</file>
         <file>qml/pages/SlackImage.qml</file>
         <file>qml/pages/LoadingPage.qml</file>
         <file>icons/smile.gif</file>
@@ -43,5 +39,6 @@
         <file>qml/components/ImageFileViewer.qml</file>
         <file>qml/components/TextFileViewer.qml</file>
         <file>qml/components/VideoFileViewer.qml</file>
+        <file>qml/components/Reaction.qml</file>
     </qresource>
 </RCC>

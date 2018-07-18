@@ -39,11 +39,22 @@ int main(int argc, char *argv[])
 
     QtWebView::initialize();
     qDebug() << "GUI thread" << QThread::currentThreadId();
-    qRegisterMetaType<SlackClient*>("SlackClient*");
+    qRegisterMetaType<SlackTeamClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
+    qRegisterMetaType<Attachment*>("Attachment*");
+    qRegisterMetaType<Message*>("Message*");
     qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
+    qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
+    qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
+    qmlRegisterUncreatableType<Attachment>("com.iskrembilen", 1, 0, "Attachment", "Only instantiated by c++");
+
+    qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
+    qRegisterMetaType<Chat>("Chat");
+
+    qmlRegisterUncreatableType<MessageListModel>("com.iskrembilen", 1, 0, "MessageListModel", "Only instantiated by c++");
+    qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
     qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));

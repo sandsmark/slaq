@@ -4,10 +4,24 @@
 //#include <QObject>
 #include <QVariantMap>
 
-class Storage
+#include <QObject>
+#include <QUrl>
+#include <QVariantMap>
+#include <QPointer>
+#include <QAbstractListModel>
+#include <QSize>
+#include <QJsonArray>
+#include <QDateTime>
+
+
+
+class Storage : public QObject
 {
-    //Q_OBJECT
+    Q_OBJECT
+
 public:
+    Storage();
+
     QVariantMap user(const QVariant& id);
     const QVariantList &users();
     void saveUser(const QVariantMap& user);
@@ -23,6 +37,7 @@ public:
     void appendChannelMessage(const QVariant& channelId, const QVariantMap& message);
     void clearChannelMessages();
     void clearChannels();
+
 signals:
 
 public slots:

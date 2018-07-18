@@ -4,6 +4,10 @@
 #include <QString>
 #include <QObject>
 #include <QtQml>
+#include "UsersModel.h"
+#include "ChatsModel.h"
+
+class SearchMessagesModel;
 
 class TeamInfo: public QObject {
     Q_OBJECT
@@ -17,12 +21,13 @@ class TeamInfo: public QObject {
     Q_PROPERTY(QString enterpriseId READ enterpriseId WRITE setEnterpriseId NOTIFY enterpriseIdChanged)
     Q_PROPERTY(QString enterpriseName READ enterpriseName WRITE setEnterpriseName NOTIFY enterpriseNameChanged)
     Q_PROPERTY(QString teamToken READ teamToken WRITE setTeamToken NOTIFY teamTokenChanged)
-    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setLastChannel NOTIFY lastCHannelChanged)
+    Q_PROPERTY(QString lastChannel READ lastChannel WRITE setLastChannel NOTIFY lastChannelChanged)
+    Q_PROPERTY(QString selfId READ selfId CONSTANT)
+    Q_PROPERTY(ChatsModel* chats READ chats NOTIFY chatsChanged)
+    Q_PROPERTY(UsersModel* users READ users NOTIFY usersChanged)
 
 public:
-    explicit TeamInfo(QObject *parent = nullptr): QObject(parent)
-    {
-    }
+    explicit TeamInfo(QObject *parent = nullptr);
 
     bool operator==(const TeamInfo &rhs) const {
         return rhs.m_teamId == m_teamId;
@@ -36,104 +41,33 @@ public:
     QString name() const { return m_name; }
     QString domain() const { return m_domain; }
     QStringList icons() const { return m_icons; }
-    bool image_default() const { return m_image_default; }
     QString teamToken() const { return m_teamToken; }
     QString emailDomain() const { return m_emailDomain; }
     bool imageDefault() const { return m_imageDefault; }
     QString enterpriseId() const { return m_enterpriseId; }
     QString enterpriseName() const { return m_enterpriseName; }
     QString lastChannel() const { return m_lastChannel; }
+    ChatsModel *chats() const;
+    UsersModel* users() const;
+    SearchMessagesModel *searches() const;
+
+    void parseTeamInfoData(const QJsonObject &teamObj);
+    void parseSelfData(const QJsonObject &selfObj);
+
+    QString selfId() const;
 
 public slots:
-    void setTeamId(const QString& teamId)
-    {
-        if (m_teamId == teamId)
-            return;
-
-        m_teamId = teamId;
-        emit teamIdChanged(m_teamId);
-    }
-
-    void setName(const QString& name)
-    {
-        if (m_name == name)
-            return;
-
-        m_name = name;
-        emit nameChanged(m_name);
-    }
-
-    void setDomain(const QString& domain)
-    {
-        if (m_domain == domain)
-            return;
-
-        m_domain = domain;
-        emit domainChanged(m_domain);
-    }
-
-    void setEmailDomain(const QString& emailDomain)
-    {
-        if (m_emailDomain == emailDomain)
-            return;
-
-        m_emailDomain = emailDomain;
-        emit emailDomainChanged(m_emailDomain);
-    }
-
-    void setIcons(const QStringList& icons)
-    {
-        if (m_icons == icons)
-            return;
-
-        m_icons = icons;
-        emit iconsChanged(m_icons);
-    }
-
-    void setImageDefault(bool imageDefault)
-    {
-        if (m_imageDefault == imageDefault)
-            return;
-
-        m_imageDefault = imageDefault;
-        emit imageDefaultChanged(m_imageDefault);
-    }
-
-    void setEnterpriseId(const QString& enterpriseId)
-    {
-        if (m_enterpriseId == enterpriseId)
-            return;
-
-        m_enterpriseId = enterpriseId;
-        emit enterpriseIdChanged(m_enterpriseId);
-    }
-
-    void setEnterpriseName(const QString& enterpriseName)
-    {
-        if (m_enterpriseName == enterpriseName)
-            return;
-
-        m_enterpriseName = enterpriseName;
-        emit enterpriseNameChanged(m_enterpriseName);
-    }
-
-    void setTeamToken(const QString& teamToken) {
-        if (m_teamToken == teamToken)
-            return;
-
-        m_teamToken = teamToken;
-        emit teamTokenChanged(m_teamToken);
-    }
-
-
-    void setLastChannel(const QString& lastChannel)
-    {
-        if (m_lastChannel == lastChannel)
-            return;
-
-        m_lastChannel = lastChannel;
-        emit lastCHannelChanged(m_lastChannel);
-    }
+    void setTeamId(const QString& teamId);
+    void setName(const QString& name);
+    void setDomain(const QString& domain);
+    void setEmailDomain(const QString& emailDomain);
+    void setIcons(const QStringList& icons);
+    void setImageDefault(bool imageDefault);
+    void setEnterpriseId(const QString& enterpriseId);
+    void setEnterpriseName(const QString& enterpriseName);
+    void setTeamToken(const QString& teamToken);
+    void setLastChannel(const QString& lastChannel);
+    void addTeamData(const QJsonObject &teamData);
 
 signals:
     void teamIdChanged(QString teamId);
@@ -145,21 +79,27 @@ signals:
     void enterpriseIdChanged(QString enterpriseId);
     void enterpriseNameChanged(QString enterpriseName);
     void teamTokenChanged(QString teamToken);
-    void lastCHannelChanged(QString lastChannel);
+    void lastChannelChanged(QString lastChannel);
+    void chatsChanged(ChatsModel* chats);
+    void usersChanged(UsersModel* users);
 
 private:
     QString m_name;
     QString m_domain;
     QString m_emailDomain;
     QStringList m_icons;
-    bool m_image_default { false };
     QString m_token;
     QString m_teamId;
-    bool m_imageDefault;
+    bool m_imageDefault { false };
     QString m_enterpriseId;
     QString m_enterpriseName;
     QString m_teamToken;
     QString m_lastChannel;
+    QString m_selfId;
+
+    ChatsModel* m_chats {nullptr};
+    UsersModel* m_users {nullptr};
+    SearchMessagesModel* m_searchMessages { nullptr };
 };
 
 QML_DECLARE_TYPE(TeamInfo)

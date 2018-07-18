@@ -8,8 +8,8 @@
 #include <QJsonArray>
 #include "imagescache.h"
 
-#include "storage.h"
-
+#include "UsersModel.h"
+#include "ChatsModel.h"
 
 MessageFormatter::MessageFormatter() :
     m_labelPattern(QRegularExpression (QStringLiteral("<(http[^\\|>]+)\\|([^>]+)>"))),
@@ -37,34 +37,26 @@ MessageFormatter::MessageFormatter() :
     m_emojiPattern.optimize();
 }
 
-#include <QDebug>
-
-void MessageFormatter::replaceUserInfo(const QVariantList& users, QString &message)
+void MessageFormatter::replaceUserInfo(User* user, QString &message)
 {
-    foreach (const QVariant &value, users) {
-        QVariantMap user = value.toMap();
-        QString id = user.value(QStringLiteral("id")).toString();
-        QString name = user.value(QStringLiteral("name")).toString();
-
-        QRegularExpression userIdPattern("<@" + id + "(\\|[^>]+)?>");
-        QString displayName = "<a href=\"slaq://user/" + id + "\">@" + name + "</a>";
-
-        message.replace(userIdPattern, displayName);
+    if (user == nullptr) {
+        return;
     }
+    QRegularExpression userIdPattern("<@" + user->userId() + "(\\|[^>]+)?>");
+    QString displayName = "<a href=\"slaq://user/" + user->userId() + "\">@" + user->username() + "</a>";
+
+    message.replace(userIdPattern, displayName);
 }
 
-void MessageFormatter::replaceChannelInfo(const QVariantList& channels, QString &message)
+void MessageFormatter::replaceChannelInfo(Chat *chat, QString &message)
 {
-    foreach (const QVariant &value, channels) {
-        QVariantMap channel = value.toMap();
-        QString id = channel.value(QStringLiteral("id")).toString();
-        QString name = channel.value(QStringLiteral("name")).toString();
-
-        QRegularExpression channelIdPattern("<#" + id + "(\\|[^>]+)?>");
-        QString displayName = "<a href=\"slaq://channel/" + id + "\">#" + name + "</a>";
-
-        message.replace(channelIdPattern, displayName);
+    if (chat == nullptr) {
+        return;
     }
+    QRegularExpression channelIdPattern("<#" + chat->id + "(\\|[^>]+)?>");
+    QString displayName = "<a href=\"slaq://channel/" + chat->id + "\">#" + chat->name + "</a>";
+
+    message.replace(channelIdPattern, displayName);
 }
 
 void MessageFormatter::replaceLinks(QString &message)
@@ -79,8 +71,8 @@ void MessageFormatter::replaceMarkdown(QString &message)
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));
     message.replace(m_boldPattern, QStringLiteral("\\1<b>\\2</b>\\3"));
     message.replace(m_strikePattern, QStringLiteral("\\1<s>\\2</s>\\3"));
-    message.replace(m_codePattern, QStringLiteral("\\1<code>\\2</code>\\3"));
-    message.replace(m_codeBlockPattern, QStringLiteral("<br/><code>\\1</code><br/>"));
+    message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:rgba(255,0,0,0.07); color:black\">\\2</span>\\3"));
+    message.replace(m_codeBlockPattern, QStringLiteral("<br/><span style=\"background-color:rgba(255,0,0,0.07); color:black\">\\1</span><br/>"));
 
     message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
 }
@@ -105,7 +97,7 @@ void MessageFormatter::replaceEmoji(QString &message)
             } else {
                 QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
                         .arg(captured)
-                        .arg(QStringLiteral("middle"))
+                        .arg(QStringLiteral("center"))
                         .arg(24)
                         .arg(24);
 
@@ -114,6 +106,17 @@ void MessageFormatter::replaceEmoji(QString &message)
             }
         }
     }
+}
+
+void MessageFormatter::replaceAll(User *user, Chat *chat, QString &message)
+{
+    replaceUserInfo(user, message);
+    replaceChannelInfo(chat, message);
+    replaceTargetInfo(message);
+    replaceSpecialCharacters(message);
+    replaceLinks(message);
+    replaceMarkdown(message);
+    replaceEmoji(message);
 }
 
 void MessageFormatter::replaceTargetInfo(QString &message)

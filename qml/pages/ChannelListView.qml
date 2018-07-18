@@ -1,11 +1,9 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Controls.Material 2.4
 
 import ".."
-
-import "../ChannelList.js" as ChannelList
-import "../Channel.js" as Channel
+import com.iskrembilen 1.0
 
 ListView {
     id: listView
@@ -17,15 +15,22 @@ ListView {
     }
     interactive: true
 
-    model: ListModel {
-        id: channelListModel
+    Connections {
+        target: SlackClient
+        onChatsModelChanged: {
+            if (teamId === teamRoot.teamId) {
+                listView.model = chatsModel//teamRoot.slackClient.currentChatsModel()
+            }
+        }
     }
 
+    onModelChanged: console.log("channels list model", model)
+
     section {
-        property: "section"
+        property: "Section"
         criteria: ViewSection.FullString
         delegate: Label {
-            text: getSectionName(section)
+            text: section
             padding: Theme.paddingMedium
 
             background: Rectangle {
@@ -40,24 +45,72 @@ ListView {
 
     delegate: ItemDelegate {
         id: delegate
-        text: model.name
+        text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
-        highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.id
+        highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.Id
+        visible: model.IsOpen
+        enabled: visible
+        height: model.IsOpen ? delegate.implicitHeight : 0
+        icon.name: {
+            switch (model.Type) {
+            case ChatsModel.Channel:
+                if (model.presence === "active") {
+                    return "irc-channel-active"
+                } else {
+                    return "irc-channel-inactive"
+                }
+            case ChatsModel.Group:
+            case ChatsModel.MultiUserConversation:
+                return "icon-s-secure"
+            case ChatsModel.Conversation:
+                if (model.IsOpen === "active") {
+                    return "im-user"
+                } else {
+                    return "im-user-inactive"
+                }
+            default:
+                console.log("unhandled type: " + model.Type)
+                return ""
+            }
+        }
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: listView.ScrollBar.vertical.visible ?
+                                     listView.ScrollBar.vertical.width + Theme.paddingMedium :
+                                     Theme.paddingMedium
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: parent.height/2
+            implicitHeight: parent.height/2
+            radius: height/2
+            color: model.Type === ChatsModel.Channel ? "green" : "red"
+            visible: model.UnreadCountDisplay > 0
+            Text {
+                anchors.centerIn: parent
+                color: "white"
+                font.pixelSize: parent.height/1.5
+                text: model.UnreadCountDisplay
+            }
+        }
 
-        icon.name: Channel.getIcon(model)
         width: listView.width
 
         onClicked: {
-            if (model.id === SlackClient.lastChannel(teamRoot.teamId)) {
+            if (model.Id === SlackClient.lastChannel(teamRoot.teamId)) {
                 return
             }
 
-            SlackClient.setActiveWindow(teamRoot.teamId, model.id)
+            SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
 
-            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.id})
+            //            var channel = List
+            //            console.log(Object.keys(channel))
+            //            console.log(channel.Name)
+            //            console.log(channel.Type)
+            //            console.log(channel.Id)
+
+            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id, "channelName": model.Name, "channelType": model.Type})
         }
 
-        property bool hasActions: model.category === "channel" || model.type === "im"
+        property bool hasActions: model.Type === ChatsModel.Channel || model.Type === ChatsModel.Conversation
         onPressAndHold: if (hasActions) { actionsMenu.popup() }
 
         MouseArea {
@@ -66,56 +119,30 @@ ListView {
             onClicked: if (hasActions) { actionsMenu.popup() }
         }
 
-         Menu {
-             id: actionsMenu
+        Menu {
+            id: actionsMenu
 
             MenuItem {
-                text: model.category === "channel" ? qsTr("Leave") : qsTr("Close")
+                text: model.Type === ChatsModel.Channel ? qsTr("Leave") : qsTr("Close")
                 onClicked: {
-                    switch (model.type) {
-                        case "channel":
-                            SlackClient.leaveChannel(teamRoot.teamId, model.id)
-                            break
+                    switch (model.Type) {
+                    case ChatsModel.Channel:
+                        SlackClient.leaveChannel(teamRoot.teamId, model.Id)
+                        break
 
-                        case "group":
-                            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.name})
-                            dialog.accepted.connect(function() {
-                                SlackClient.leaveGroup(teamRoot.teamId, model.id)
-                            })
-                            break
+                    case ChatsModel.Group:
+                    case ChatsModel.MultiUserConversation:
+                        var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name })
+                        dialog.accepted.connect(function() {
+                            SlackClient.leaveGroup(teamRoot.teamId, model.Id)
+                        })
+                        break
 
-                        case "im":
-                            SlackClient.closeChat(teamRoot.teamId,  model.id)
+                    case ChatsModel.Conversation:
+                        SlackClient.closeChat(teamRoot.teamId,  model.Id)
                     }
                 }
             }
         }
-    }
-
-    Component.onCompleted: {
-        console.log("channel list view component completed",SlackClient.getChannels(teamRoot.teamId).length, teamRoot.teamId)
-        ChannelList.init()
-    }
-
-    Component.onDestruction: {
-        ChannelList.disconnect()
-    }
-
-    function getSectionName(section) {
-        switch (section) {
-            case "unreadchannel":
-                return qsTr("Unread channels")
-
-            case "unreadchat":
-                return qsTr("Unread chats")
-
-            case "channel":
-                return qsTr("Channels")
-
-            case "chat":
-                return qsTr("Direct messages")
-        }
-
-        return qsTr("Other")
     }
 }

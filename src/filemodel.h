@@ -63,7 +63,7 @@ public:
 
 private:
     QList<FileInfo *> fileList;
-    void searchFiles(QString path);
+    void searchFiles(const QString &path);
 
 signals:
 

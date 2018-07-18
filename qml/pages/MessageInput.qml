@@ -29,14 +29,16 @@ Column {
         width: parent.width
         spacing: Theme.paddingMedium
 
-        TextField {
+        TextArea {
             id: messageInput
             width: parent.width - sendButton.width - uploadButton.width - emojiButton.width - Theme.paddingMedium * 4
             selectByMouse: true
+            wrapMode: TextArea.Wrap
+            focus: true
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]
-                nickSuggestions = SlackClient.getNickSuggestions(teamRoot.teamId, xt, cursorPosition)
+                nickSuggestions = SlackClient.getNickSuggestions(teamRoot.teamId, text, cursorPosition)
                 var nickPosition = nickSuggestions.indexOf(selectedNick)
                 if (nickPosition > 0) {
                     currentNickSuggestionIndex = nickPosition
@@ -79,7 +81,7 @@ Column {
                 }
             }
 
-            onAccepted: {
+            function doEditingFinished() {
                 if (nickPopupVisible) {
                     insertSuggestion()
                     hideNickPopup()
@@ -88,7 +90,30 @@ Column {
                 }
             }
 
+            onEditingFinished: {
+                doEditingFinished()
+            }
+
+            Keys.onReturnPressed: {
+                if (event.modifiers & Qt.ControlModifier) {
+                    doEditingFinished()
+                    event.accepted = true
+                    return
+                }
+                event.accepted = false
+            }
+
+            Keys.onEnterPressed: {
+                if (event.modifiers & Qt.ControlModifier) {
+                    doEditingFinished()
+                    event.accepted = true
+                    return
+                }
+                event.accepted = false
+            }
+
             Keys.onTabPressed: {
+                console.log("pressed tab")
                 if (nickPopupVisible) {
                     currentNickSuggestionIndex =  (currentNickSuggestionIndex + 1) % nickSuggestions.length
                 } else {
@@ -111,7 +136,7 @@ Column {
                 }
             }
 
-            onTextEdited: {
+            onTextChanged: {
                 if (nickPopupVisible) {
                     updateSuggestions()
                 }

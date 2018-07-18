@@ -75,7 +75,7 @@ void SlackConfig::clearWebViewCache()
 {
     QStringList dataPaths = QStandardPaths::standardLocations(QStandardPaths::DataLocation);
 
-    if (dataPaths.size()) {
+    if (!dataPaths.isEmpty()) {
         QDir webData(QDir(dataPaths.at(0)).filePath(QStringLiteral(".QtWebKit")));
         if (webData.exists()) {
             webData.removeRecursively();

@@ -1,5 +1,6 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQuick.Layouts 1.3
 import ".."
 
 Column {
@@ -29,47 +30,101 @@ Column {
 
         Rectangle {
             id: color
-            width: Theme.paddingSmall
+            radius: 5
+            width: 5
             height: parent.height
-            color: attachment.indicatorColor === "theme" ? palette.highlight : attachment.indicatorColor
+            color: attachment.color === "theme" ? palette.highlight : attachment.color
         }
 
         Column {
             width: parent.width - color.width - Theme.paddingMedium
             spacing: Theme.paddingSmall
 
-            Label {
+            Row {
+                id: authorRow
                 width: parent.width
-                font.pointSize: Theme.fontSizeSmall
-                font.weight: Font.Bold
-                text: attachment.title
-                visible: text.length > 0
-                onLinkActivated: linkClicked(link)
+                height: visible ? 16 : 0
+                visible: attachment.author_name !== ""
+                spacing: Theme.paddingMedium
+                Image {
+                    width: 16
+                    height: 16
+                    source: attachment.author_icon
+                    sourceSize: Qt.size(16, 16)
+                }
+                Label {
+                    width: parent.width
+                    font.pointSize: Theme.fontSizeSmall
+                    verticalAlignment: Text.AlignVCenter
+                    font.weight: Font.Bold
+                    text: attachment.author_name
+                    onLinkActivated: linkClicked(link)
+                }
             }
 
-            Label {
+            RowLayout {
                 width: parent.width
-                font.pointSize: Theme.fontSizeSmall
-                text: attachment.content
-                wrapMode: Text.Wrap
-                visible: text.length > 0
-                onLinkActivated: linkClicked(link)
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        id: titleId
+                        font.pointSize: Theme.fontSizeSmall
+                        font.bold: true
+                        text: attachment.title
+                        onLinkActivated: linkClicked(link)
+                    }
+
+                    Label {
+                        id: valueId
+                        font.pointSize: Theme.fontSizeSmall
+                        text: attachment.text
+                        wrapMode: Text.Wrap
+                        onLinkActivated: linkClicked(link)
+                    }
+                }
+                Image {
+                    width: 75
+                    height: 75
+                    source: attachment.thumb_url
+                    sourceSize: Qt.size(75, 75)
+                }
             }
 
             AttachmentFieldGrid {
                 fieldList: attachment.fields
             }
 
-            Repeater {
-                model: attachment.images
+            Image {
                 anchors.left: parent.left
-
-                Image {
-                    fillMode: Image.PreserveAspectFit
-                    source: "team://" + teamId + "/" + model.url
-                    sourceSize: Qt.size(model.size.width, model.size.height)
-                }
+                fillMode: Image.PreserveAspectFit
+                source: attachment.imageUrl
+                //source: "team://" + teamId + "/" + attachment.imageUrl
+                sourceSize:  attachment.imageSize
             }
+        }
+    }
+    Row {
+        id: footerRow
+        anchors.left: parent.left
+        spacing: Theme.paddingMedium
+        Image {
+            fillMode: Image.PreserveAspectFit
+            source: attachment.footer_icon
+            sourceSize: Qt.size(16, 16)
+        }
+        Label {
+            font.pointSize: Theme.fontSizeSmall
+            text: attachment.footer
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.Wrap
+            visible: text.length > 0
+        }
+        Label {
+            font.pointSize: Theme.fontSizeSmall
+            text: Qt.formatDateTime(attachment.ts, "dd MMM yyyy hh:mm")
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.Wrap
+            visible: attachment.ts > 0
         }
     }
 }

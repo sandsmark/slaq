@@ -104,9 +104,6 @@ ImagesCache *ImagesCache::instance()
     return &imageCache;
 }
 
-ImagesCache::~ImagesCache() {
-}
-
 bool ImagesCache::isExist(const QString &id)
 {
     return m_emojiList.contains(id);

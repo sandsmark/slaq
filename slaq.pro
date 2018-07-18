@@ -19,6 +19,8 @@ QT += quick webview xml quickcontrols2 multimedia widgets
 CONFIG += c++1x
 QT += websockets
 
+INCLUDEPATH += src src/slackmodels
+
 SOURCES += src/main.cpp \
     src/slackclient.cpp \
     src/slackconfig.cpp \
@@ -32,7 +34,12 @@ SOURCES += src/main.cpp \
     src/emojiprovider.cpp \
     src/imagescache.cpp \
     src/slackclientthreadspawner.cpp \
-    src/downloadmanager.cpp
+    src/downloadmanager.cpp \
+    src/teaminfo.cpp \
+    src/slackmodels/ChatsModel.cpp \
+    src/slackmodels/MessagesModel.cpp \
+    src/slackmodels/UsersModel.cpp \
+    src/slackmodels/searchmessagesmodel.cpp
 
 OTHER_FILES += translations/*.ts \
     slaq.desktop \
@@ -53,7 +60,12 @@ HEADERS += \
     src/slackclientthreadspawner.h \
     src/emojiinfo.h \
     src/teaminfo.h \
-    src/downloadmanager.h
+    src/downloadmanager.h \
+    src/debugblock.h \
+    src/slackmodels/ChatsModel.h \
+    src/slackmodels/MessagesModel.h \
+    src/slackmodels/UsersModel.h \
+    src/slackmodels/searchmessagesmodel.h
 
 DISTFILES += \
     qml/dialogs/*.qml \
