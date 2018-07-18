@@ -231,7 +231,15 @@ QString SlackClientThreadSpawner::getChannelName(const QString &teamId, const QS
                               Q_RETURN_ARG(QString, retVal),
                               Q_ARG(QString, channelId));
     return retVal;
+}
 
+Chat* SlackClientThreadSpawner::getChannel(const QString &teamId, const QString &channelId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return nullptr;
+    }
+    return _slackClient->getChannel(channelId);
 }
 
 int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::ChatType type)
@@ -243,9 +251,9 @@ int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::
     }
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
     for (int i = 0; i < _chatsModel->rowCount(); i++) {
-        Chat chat = _chatsModel->chat(i);
-        if (chat.type == type) {
-            total += chat.unreadCountDisplay;
+        Chat* chat = _chatsModel->chat(i);
+        if (chat->type == type) {
+            total += chat->unreadCountDisplay;
         }
     }
     return total;
@@ -334,8 +342,8 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     }
 
     messages->addMessage(message);
-    Chat chat = chatsModel->chat(message->channel_id);
-    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
+    Chat* chat = chatsModel->chat(message->channel_id);
+    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 }
 
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
@@ -362,12 +370,12 @@ void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, const 
     messages->deleteMessage(ts);
 }
 
-void SlackClientThreadSpawner::onChannelUpdated(const Chat &chat)
+void SlackClientThreadSpawner::onChannelUpdated(Chat* chat)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
     chatsModel->chatChanged(chat);
-    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
+    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 }
 
 void SlackClientThreadSpawner::onChannelJoined(const QJsonObject &data)
@@ -375,8 +383,8 @@ void SlackClientThreadSpawner::onChannelJoined(const QJsonObject &data)
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
     QString channelId = chatsModel->addChat(data, ChatsModel::Channel);
-    Chat& chat = chatsModel->chat(channelId);
-    connect(chat.messagesModel.data(), &MessageListModel::fetchMoreMessages,
+    Chat* chat = chatsModel->chat(channelId);
+    connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
             _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
     emit channelJoined(_slackClient->teamInfo()->teamId(), channelId);
 }
@@ -385,8 +393,8 @@ void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    Chat& chat = chatsModel->chat(channelId);
-    disconnect(chat.messagesModel.data(), &MessageListModel::fetchMoreMessages,
+    Chat* chat = chatsModel->chat(channelId);
+    disconnect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
             _slackClient, &SlackTeamClient::loadMessages);
     chatsModel->removeChat(channelId);
     emit channelLeft(_slackClient->teamInfo()->teamId(), channelId);
@@ -614,9 +622,9 @@ void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
     emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
     for(int i = 0; i < _chatsModel->rowCount(); i++) {
-        Chat& chat = _chatsModel->chat(i);
-        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat.id, chat.unreadCountDisplay);
-        connect(chat.messagesModel.data(), &MessageListModel::fetchMoreMessages,
+        Chat* chat = _chatsModel->chat(i);
+        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
+        connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
                 _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
     }
     connect(_slackClient->teamInfo()->searches(), &SearchMessagesModel::fetchMoreData,

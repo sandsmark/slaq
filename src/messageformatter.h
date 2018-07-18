@@ -4,7 +4,7 @@
 #include <QRegularExpression>
 
 class User;
-struct Chat;
+class Chat;
 
 class MessageFormatter
 {

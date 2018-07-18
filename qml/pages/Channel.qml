@@ -15,11 +15,16 @@ Page {
     property url textToShowUrl: ""
     property string textToShowUserName: ""
     property string textToShowName: ""
+    property Chat channel: null
 
-    title: channelName
     property var usersTyping: []
     onChannelIdChanged: {
-        channelName = SlackClient.getChannelName(teamRoot.teamId, channelRoot.channelId);
+        channel = SlackClient.getChannel(teamRoot.teamId, channelRoot.channelId);
+        title = (channel.type === ChatsModel.Conversation ||
+                 channel.type === ChatsModel.MultiUserConversation ||
+                 channel.type === ChatsModel.Group)
+                && channel.readableName != "" ? channel.readableName : channel.name
+        console.log("channel", channel.id, channel.name, channel.readableName, channel.isPrivate)
     }
 
     function setChannelActive() {
@@ -47,12 +52,22 @@ Page {
          }
      }
 
-    header: Label {
-        text: "#" + channelRoot.title
-        horizontalAlignment: "AlignHCenter"
-        verticalAlignment: "AlignVCenter"
-        height: Theme.headerSize
-        font.bold: true
+    header: Row {
+        spacing: 10
+        Label {
+            text: "#" + channelRoot.title
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            height: Theme.headerSize
+            font.bold: true
+        }
+        Label {
+            text: channelRoot.channel != null ? channelRoot.channel.topic : ""
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            height: Theme.headerSize
+            font.bold: false
+        }
     }
 
     BusyIndicator {

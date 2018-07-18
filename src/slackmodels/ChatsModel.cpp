@@ -93,8 +93,8 @@
 ChatsModel::ChatsModel(const QString &selfId, QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
     m_selfId(selfId), m_networkUsers(networkUsers) {}
 
-QString ChatsModel::getSectionName(const Chat& chat) const {
-    switch (chat.type) {
+QString ChatsModel::getSectionName(Chat* chat) const {
+    switch (chat->type) {
     case Channel:
         return tr("Channels");
 
@@ -116,30 +116,30 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         qWarning() << "invalid row" << row;
         return QVariant();
     }
-    const Chat &chat = m_chats[m_chatIds[row]];
+    Chat* chat = m_chats[m_chatIds[row]];
     switch (role) {
     case Id:
-        return chat.id;
+        return chat->id;
     case Type:
-        return chat.type;
+        return chat->type;
     case Name:
-        return chat.readableName.isEmpty() ? chat.name : chat.readableName;
+        return chat->readableName.isEmpty() ? chat->name : chat->readableName;
     case IsOpen:
-        return chat.isOpen;
+        return chat->isOpen;
     case LastRead:
-        return chat.lastRead;
+        return chat->lastRead;
     case UnreadCountDisplay:
-        return chat.unreadCountDisplay;
+        return chat->unreadCountDisplay;
     case UnreadCount:
-        return chat.unreadCount;
+        return chat->unreadCount;
     case Presence:
-        return chat.presence;
+        return chat->presence;
     case MembersModel:
-        return QVariant::fromValue(chat.membersModel.data());
+        return QVariant::fromValue(chat->membersModel.data());
     case MessagesModel:
-        return QVariant::fromValue(chat.messagesModel.data());
+        return QVariant::fromValue(chat->messagesModel.data());
     case UserObject:
-        return QVariant::fromValue(chat.user.data());
+        return QVariant::fromValue(chat->membersModel->users().first().data());
     case Section:
         return getSectionName(chat);
     default:
@@ -193,29 +193,31 @@ QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
 //    qDebug() << type;
     //qDebug().noquote() << QJsonDocument(data).toJson();
 
-    Chat chat(data, type);
+    Chat* chat = new Chat(data, type);
 
-    chat.membersModel = new UsersModel(this);
-    chat.messagesModel = new MessageListModel(this, m_networkUsers, chat.id);
-    QQmlEngine::setObjectOwnership(chat.membersModel, QQmlEngine::CppOwnership);
-    QQmlEngine::setObjectOwnership(chat.messagesModel, QQmlEngine::CppOwnership);
+    chat->membersModel = new UsersModel(this);
+    chat->messagesModel = new MessageListModel(this, m_networkUsers, chat->id);
+    QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);
+    QQmlEngine::setObjectOwnership(chat->membersModel, QQmlEngine::CppOwnership);
+    QQmlEngine::setObjectOwnership(chat->messagesModel, QQmlEngine::CppOwnership);
 
 
-    if (chat.type == Conversation) {
-        chat.user = m_networkUsers->user(data["user"].toString());
+    if (chat->type == Conversation) {
+        chat->membersModel->addUser(m_networkUsers->user(data.value("user").toString()));
+        qDebug() << "user for conv" << chat->membersModel->users().first()->userId();
     } else {
         for (const QJsonValueRef &userId : data.value("members").toArray()) {
-            chat.membersModel->addUser(m_networkUsers->user(userId.toString()));
+            chat->membersModel->addUser(m_networkUsers->user(userId.toString()));
         }
     }
 
-    if (chat.type != Channel && chat.name.startsWith("mpdm")) {
-        chat.setReadableName(m_selfId);
+    if (chat->type == Conversation || chat->name.startsWith("mpdm")) {
+        chat->setReadableName(m_selfId);
     }
-    m_chatIds.append(chat.id);
+    m_chatIds.append(chat->id);
 
-    m_chats.insert(chat.id, chat);
-    return chat.id;
+    m_chats.insert(chat->id, chat);
+    return chat->id;
 }
 
 void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
@@ -237,38 +239,38 @@ bool ChatsModel::hasChannel(const QString &id)
 
 MessageListModel *ChatsModel::messages(const QString &id)
 {
-    return m_chats[id].messagesModel;
+    return m_chats[id]->messagesModel;
 }
 
 UsersModel *ChatsModel::members(const QString &id)
 {
-    return m_chats[id].membersModel;
+    return m_chats[id]->membersModel;
 }
 
-Chat& ChatsModel::chat(const QString &id) {
+Chat* ChatsModel::chat(const QString &id) {
     return m_chats[id];
 }
 
-Chat &ChatsModel::chat(int row)
+Chat* ChatsModel::chat(int row)
 {
     Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chat", "m_chats.size() and m_chatIds.size() should be equal");
     //TODO: check why chats size != chat ids size
     return m_chats[m_chatIds[row]];
 }
 
-void ChatsModel::chatChanged(const Chat &chat)
+void ChatsModel::chatChanged(Chat *chat)
 {
-    if (chat.id.isEmpty()) {
+    if (chat->id.isEmpty()) {
         return;
     }
-    int row = m_chatIds.indexOf(chat.id);
-    m_chats[chat.id] = chat;
+    int row = m_chatIds.indexOf(chat->id);
+    m_chats[chat->id] = chat;
     Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chatChanged", "m_chats.size() and m_chatIds.size() should be equal");
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index);
 }
 
-Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
+Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *parent) : QObject (parent)
 {
     id = data.value(QStringLiteral("id")).toString();
     type = type_;
@@ -289,8 +291,11 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_)
 
     isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
     lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());
+    creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();
+    topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
+    purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
     //qDebug() << "new chat" << name << id << type;
 }
 

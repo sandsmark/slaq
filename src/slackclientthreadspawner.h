@@ -16,19 +16,16 @@ class SlackClientThreadSpawner : public QThread
 
 public:
     explicit SlackClientThreadSpawner(QObject *parent = nullptr);
-
     virtual ~SlackClientThreadSpawner();
-    Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
-
-    Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
 
     QString lastTeam() const;
-
     bool isOnline();
 
+    Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
+    Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
     Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
-
     Q_INVOKABLE void reconnectClient();
+    Q_INVOKABLE Chat *getChannel(const QString& teamId, const QString& channelId);
 
 signals:
     void threadStarted();
@@ -111,7 +108,7 @@ public slots:
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message);
     void onMessageDeleted(const QString& channelId, const QDateTime& ts);
-    void onChannelUpdated(const Chat &chat);
+    void onChannelUpdated(Chat *chat);
     void onChannelJoined(const QJsonObject &data);
     void onChannelLeft(const QString &channelId);
     void onSearchMessagesReceived(const QJsonArray &messages, int total, const QString &query, int page, int pages);
