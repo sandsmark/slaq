@@ -19,12 +19,10 @@ ListView {
         target: SlackClient
         onChatsModelChanged: {
             if (teamId === teamRoot.teamId) {
-                listView.model = chatsModel//teamRoot.slackClient.currentChatsModel()
+                listView.model = chatsModel
             }
         }
     }
-
-    onModelChanged: console.log("channels list model", model)
 
     section {
         property: "Section"
@@ -47,7 +45,7 @@ ListView {
         id: delegate
         text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
-        highlighted: SlackClient.lastChannel(teamRoot.teamId) === model.Id
+        highlighted: teamRoot.currentChannelId === model.Id
         visible: model.IsOpen
         enabled: visible
         height: model.IsOpen ? delegate.implicitHeight : 0
