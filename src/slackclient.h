@@ -106,7 +106,7 @@ public slots:
     void startClient();
     void testLogin();
     void searchMessages(const QString& searchString, int page =  1);
-    void loadMessages(const QString& channelId);
+    void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void postMessage(const QString& channelId, QString content);

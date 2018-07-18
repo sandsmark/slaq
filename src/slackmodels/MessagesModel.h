@@ -294,14 +294,18 @@ public:
 
     void addMessage(Message *message);
     void updateMessage(Message *message);
-    void addMessages(const QJsonArray &messages);
+    void addMessages(const QJsonArray &messages, bool hasMore);
     Message* message(const QDateTime& ts);
     Message* message(int row);
     void clear();
 
 protected:
     void preprocessFormatting(::Chat* chat, Message *message);
+    bool canFetchMore(const QModelIndex &parent) const override;
+    void fetchMore(const QModelIndex &parent) override;
 
+signals:
+    void fetchMoreMessages(const QString& channelId, const QDateTime& latest);
 private:
     void findNewUsers(const QString &message);
     void updateReactionUsers(Message *message);
@@ -317,6 +321,6 @@ private:
     QString m_channelId;
     MessageFormatter m_formatter;
     QRegularExpression m_newUserPattern;
-
+    bool m_hasMore { false }; //indicator if there is more data in the channel's history
 };
 

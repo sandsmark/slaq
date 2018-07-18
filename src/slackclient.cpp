@@ -981,12 +981,12 @@ void SlackTeamClient::handleTeamEmojisReply()
     imagesCache->sendEmojisUpdated();
 }
 
-void SlackTeamClient::loadMessages(const QString& channelId)
+void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& latest)
 {
     DEBUG_BLOCK;
     qDebug() << "Loading messages" << channelId;
     if (channelId.isEmpty()) {
-        qWarning() << "Empty channel id";
+        qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
     }
     ChatsModel* chatsModel = m_teamInfo.chats();
@@ -994,6 +994,9 @@ void SlackTeamClient::loadMessages(const QString& channelId)
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
+    if (latest.isValid()) {
+        params.insert(QStringLiteral("latest"), dateTimeToSlack(latest));
+    }
 
     QNetworkReply *reply = executeGet(historyMethod(chat.type), params);
     reply->setProperty("channelId", channelId);
@@ -1016,6 +1019,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     }
 
     QJsonArray messageList = data.value(QStringLiteral("messages")).toArray();
+    bool _hasMore = data.value(QStringLiteral("has_more")).toBool(false);
 
     QString channelId = reply->property("channelId").toString();
     ChatsModel *chatModel = m_teamInfo.chats();
@@ -1030,7 +1034,7 @@ void SlackTeamClient::handleLoadMessagesReply()
         emit loadMessagesFail(m_teamInfo.teamId());
         return;
     }
-    messageModel->addMessages(messageList);
+    messageModel->addMessages(messageList, _hasMore);
 
     qDebug() << "messages loaded for" << channelId << chatModel->chat(channelId).name << m_teamInfo.teamId() << m_teamInfo.name();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);

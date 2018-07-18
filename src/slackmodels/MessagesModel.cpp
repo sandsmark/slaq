@@ -220,10 +220,11 @@ void MessageListModel::findNewUsers(const QString &message)
     }
 }
 
-void MessageListModel::addMessages(const QJsonArray &messages)
+void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
 {
     qDebug() << "Adding" << messages.count() << "messages";
     QMutexLocker locker(&m_modelMutex);
+    m_hasMore = hasMore;
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
 
     //assume we have parent;
@@ -234,6 +235,9 @@ void MessageListModel::addMessages(const QJsonArray &messages)
     }
     for (const QJsonValue &messageData : messages) {
         const QJsonObject messageObject = messageData.toObject();
+        if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
+            continue; //TODO: not yet supported
+        }
         Message* message = new Message;
         //qDebug() << "message obj" << messageObject;
         message->setData(messageObject);
@@ -261,6 +265,22 @@ void MessageListModel::addMessages(const QJsonArray &messages)
     endInsertRows();
 }
 
+bool MessageListModel::canFetchMore(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent)
+    return m_hasMore;
+}
+
+void MessageListModel::fetchMore(const QModelIndex &parent)
+{
+    Q_UNUSED(parent)
+    qDebug() << "called fetch more" << parent;
+    if (m_messages.isEmpty()) {
+        emit fetchMoreMessages(m_channelId, QDateTime());
+    } else {
+        emit fetchMoreMessages(m_channelId, m_messages.last()->time);
+    }
+}
 
 QHash<int, QByteArray> MessageListModel::roleNames() const
 {
