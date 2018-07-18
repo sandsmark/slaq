@@ -97,13 +97,19 @@ Column {
             Keys.onReturnPressed: {
                 if (event.modifiers & Qt.ControlModifier) {
                     doEditingFinished()
+                    event.accepted = true
+                    return
                 }
+                event.accepted = false
             }
 
             Keys.onEnterPressed: {
                 if (event.modifiers & Qt.ControlModifier) {
                     doEditingFinished()
+                    event.accepted = true
+                    return
                 }
+                event.accepted = false
             }
 
             Keys.onTabPressed: {
