@@ -166,7 +166,7 @@ void MessageListModel::addMessage(Message* message)
     }
     Q_ASSERT_X(!message->user.isNull(), "addMessage .user is null", "");
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat* chat;
+    Chat* chat = nullptr;
     if (_chatsModel != nullptr) {
         chat = _chatsModel->chat(m_channelId);
     }
@@ -179,7 +179,10 @@ void MessageListModel::addMessage(Message* message)
     beginInsertRows(QModelIndex(), 0, 0);
     m_messages.prepend(message);
     endInsertRows();
-    if (!chat->id.isEmpty() && message->time > chat->lastRead) {
+    if (m_messages.size() > 1) {
+        Q_ASSERT_X(m_messages.first()->time != m_messages.at(1)->time, __PRETTY_FUNCTION__, "Time should not be equal");
+    }
+    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
         chat->unreadCountDisplay++;
         _chatsModel->chatChanged(chat);
     }
@@ -187,10 +190,11 @@ void MessageListModel::addMessage(Message* message)
 
 void MessageListModel::updateMessage(Message *message)
 {
+    int _index_to_replace = -1;
+    Message* oldmessage = nullptr;
+    m_modelMutex.lock();
     for (int i = 0; i < m_messages.count(); i++) {
-        m_modelMutex.lock();
         Message* oldmessage = m_messages.at(i);
-        m_modelMutex.unlock();
         if (oldmessage->time == message->time) {
             if (message->user.isNull()) {
                 message->user = oldmessage->user;
@@ -199,23 +203,27 @@ void MessageListModel::updateMessage(Message *message)
                     Q_ASSERT_X(!message->user.isNull(), "user is null", "");
                 }
             }
-            Chat* chat;
+            Chat* chat = nullptr;
             if (parent() != nullptr) {
                 chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
             }
             preprocessFormatting(chat, message);
-            qDebug() << "updating message:" << message->text << message << oldmessage;
-            if (message != oldmessage) {
-                m_modelMutex.lock();
-                m_messages.replace(i, message);
-                m_modelMutex.unlock();
-                delete oldmessage;
-            }
-            QModelIndex index = QAbstractListModel::index(i, 0,  QModelIndex());
-            emit dataChanged(index, index);
-
+            _index_to_replace = i;
             break;
         }
+    }
+    m_modelMutex.unlock();
+    if (_index_to_replace >= 0) {
+        qDebug() << "updating message:" << message->text << message << oldmessage;
+        if (message != oldmessage) {
+            m_modelMutex.lock();
+            m_messages.replace(_index_to_replace, message);
+            m_modelMutex.unlock();
+            Q_ASSERT_X(m_messages.first()->time != m_messages.at(1)->time, __PRETTY_FUNCTION__, "Time should not be equal");
+            delete oldmessage;
+        }
+        QModelIndex modelIndex = index(_index_to_replace);
+        emit dataChanged(modelIndex, modelIndex, roleNames().keys().toVector());
     }
 }
 
@@ -245,7 +253,7 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
 
     //assume we have parent;
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat* chat;
+    Chat* chat = nullptr;
     if (_chatsModel != nullptr) {
         chat = _chatsModel->chat(m_channelId);
     }
