@@ -67,7 +67,7 @@ MouseArea {
                     }
 
                     Label {
-                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
+                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss.zzz")
                         font.pointSize: Theme.fontSizeTiny
                         height: nickLabel.height
                         verticalAlignment: Text.AlignVCenter
@@ -121,7 +121,7 @@ MouseArea {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
                     readOnly: true
-                    font.pixelSize: Theme.fontSizeMedium
+                    font.pixelSize: Theme.fontSizeLarge
                     font.italic: model.IsChanged
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText

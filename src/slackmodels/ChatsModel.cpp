@@ -117,6 +117,10 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
     Chat* chat = m_chats[m_chatIds[row]];
+    if (chat == nullptr) {
+        qWarning() << "Chat for channel ID" << m_chatIds[row] << "not found";
+        return QVariant();
+    }
     switch (role) {
     case Id:
         return chat->id;
@@ -194,7 +198,10 @@ QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
     //qDebug().noquote() << QJsonDocument(data).toJson();
 
     Chat* chat = new Chat(data, type);
-
+    if (chat == nullptr) {
+        qWarning() << __PRETTY_FUNCTION__ << "Error allocating memory for Chat";
+        return QString();
+    }
     chat->membersModel = new UsersModel(this);
     chat->messagesModel = new MessageListModel(this, m_networkUsers, chat->id);
     QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);

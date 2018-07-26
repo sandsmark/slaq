@@ -220,6 +220,10 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* chatsModel = m_teamInfo.chats();
     Chat* chat = chatsModel->chat(channelId);
+    if (chat == nullptr) {
+        qWarning() << "Chat for channel ID" << channelId << "not found";
+        return;
+    }
     chat->unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
     chat->lastRead = slackToDateTime(message.value(QStringLiteral("channel")).toString());
     emit channelUpdated(chat);
@@ -768,7 +772,7 @@ void SlackTeamClient::joinChannel(const QString& channelId)
 
     Chat* chat = m_teamInfo.chats()->chat(channelId);
 
-    if(chat->id.isEmpty()) {
+    if(chat == nullptr || chat->id.isEmpty()) {
         qWarning() << "Invalid channel ID provided" << channelId;
         return;
     }
@@ -850,7 +854,10 @@ void SlackTeamClient::openChat(const QString& chatId)
     DEBUG_BLOCK;
 
     Chat* chat = m_teamInfo.chats()->chat(chatId);
-
+    if (chat == nullptr) {
+        qWarning() << "Chat for channel ID" << chatId << "not found";
+        return;
+    }
     if (chat->membersModel->users().first().isNull()) {
         qWarning() << "No user for chat" << chatId;
         return;
@@ -1005,7 +1012,10 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
     }
     ChatsModel* chatsModel = m_teamInfo.chats();
     Chat* chat = chatsModel->chat(channelId);
-
+    if (chat == nullptr) {
+        qWarning() << "Chat for channel ID" << channelId << "not found";
+        return;
+    }
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
     if (latest.isValid()) {
