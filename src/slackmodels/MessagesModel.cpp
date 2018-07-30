@@ -13,6 +13,7 @@
 MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId) : QAbstractListModel(parent),
     m_usersModel(usersModel), m_channelId(channelId) {
     m_newUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)\\|([^>]+)>"));
+    m_existingUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)>"));
 }
 
 int MessageListModel::rowCount(const QModelIndex &parent) const
@@ -141,18 +142,18 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
 {
     findNewUsers(message->text);
     updateReactionUsers(message);
-    m_formatter.replaceAll(message->user, chat, message->text);
+    m_formatter.replaceAll(chat, message->text);
     for (QObject* attachmentObj : message->attachments) {
         Attachment* attachment = static_cast<Attachment*>(attachmentObj);
-        m_formatter.replaceAll(message->user, chat, attachment->text);
-        m_formatter.replaceAll(message->user, chat, attachment->pretext);
-        m_formatter.replaceAll(message->user, chat, attachment->fallback);
-        m_formatter.replaceAll(message->user, chat, attachment->title);
-        m_formatter.replaceAll(message->user, chat, attachment->footer);
+        m_formatter.replaceAll(chat, attachment->text);
+        m_formatter.replaceAll(chat, attachment->pretext);
+        m_formatter.replaceAll(chat, attachment->fallback);
+        m_formatter.replaceAll(chat, attachment->title);
+        m_formatter.replaceAll(chat, attachment->footer);
         for (QObject* attachmentFieldObj : attachment->fields) {
             AttachmentField* attachmentField = static_cast<AttachmentField*>(attachmentFieldObj);
-            m_formatter.replaceAll(message->user, chat, attachmentField->m_title);
-            m_formatter.replaceAll(message->user, chat, attachmentField->m_value);
+            m_formatter.replaceAll(chat, attachmentField->m_title);
+            m_formatter.replaceAll(chat, attachmentField->m_value);
         }
     }
 }
@@ -219,7 +220,10 @@ void MessageListModel::updateMessage(Message *message)
             m_modelMutex.lock();
             m_messages.replace(_index_to_replace, message);
             m_modelMutex.unlock();
-            Q_ASSERT_X(m_messages.first()->time != m_messages.at(1)->time, __PRETTY_FUNCTION__, "Time should not be equal");
+            if (m_messages.size() > 1) {
+                // hunting double massages
+                Q_ASSERT_X(m_messages.first()->time != m_messages.at(1)->time, __PRETTY_FUNCTION__, "Time should not be equal");
+            }
             delete oldmessage;
         }
         QModelIndex modelIndex = index(_index_to_replace);
@@ -227,19 +231,30 @@ void MessageListModel::updateMessage(Message *message)
     }
 }
 
-void MessageListModel::findNewUsers(const QString &message)
+void MessageListModel::findNewUsers(QString& message)
 {
     //DEBUG_BLOCK
 
+    QPointer<::User> user;
     QRegularExpressionMatchIterator i = m_newUserPattern.globalMatch(message);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
-        QString id = match.captured(1);
-
-        if (m_usersModel->user(id).isNull()) {
+        const QString& id = match.captured(1);
+        user = m_usersModel->user(id);
+        if (user.isNull()) {
             QString name = match.captured(2);
-            QPointer<::User> user = new ::User(id, name, this);
+            user = new ::User(id, name, this);
             m_usersModel->addUser(user);
+            m_formatter.replaceUserInfo(user.data(), message);
+        }
+    }
+    i = m_existingUserPattern.globalMatch(message);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        const QString& id = match.captured(1);
+        user = m_usersModel->user(id);
+        if (!user.isNull()) {
+            m_formatter.replaceUserInfo(user.data(), message);
         }
     }
 }
@@ -278,6 +293,7 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
         Q_ASSERT_X(!message->user.isNull(), "user is null", "");
 
         preprocessFormatting(chat, message);
+
         if (!m_messages.isEmpty()) {
             Message* prevMsg = m_messages.last();
             prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
@@ -352,7 +368,6 @@ Message::~Message()
 //        }
 //    }
 
-
 void Message::setData(const QJsonObject &data)
 {
     //qDebug() << "message" << data;
@@ -396,10 +411,11 @@ void Message::setData(const QJsonObject &data)
         QQmlEngine::setObjectOwnership(attachment, QQmlEngine::CppOwnership);
         attachments.append(attachment);
     }
+    const QJsonValue& filesArrayValue = data.value(QStringLiteral("files"));
 
-    if (subtype == QStringLiteral("file_share")) {
+    //sometimes messages dont have subtype, but have "files" array
+    if (subtype == QStringLiteral("file_share") || filesArrayValue.isUndefined() == false) {
         //qDebug().noquote() << "file share json:" << QJsonDocument(data).toJson();
-        const QJsonValue& filesArrayValue = data.value(QStringLiteral("files"));
         if (filesArrayValue.isUndefined()) {
             const QJsonValue& fileValue = data.value(QStringLiteral("file"));
             if (!fileValue.isUndefined()) {
