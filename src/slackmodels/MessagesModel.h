@@ -308,7 +308,7 @@ protected:
 signals:
     void fetchMoreMessages(const QString& channelId, const QDateTime& latest);
 private:
-    void findNewUsers(const QString &message);
+    void findNewUsers(QString &message);
     void updateReactionUsers(Message *message);
 
 protected:
@@ -322,6 +322,7 @@ private:
     QString m_channelId;
     MessageFormatter m_formatter;
     QRegularExpression m_newUserPattern;
+    QRegularExpression m_existingUserPattern;
     bool m_hasMore { false }; //indicator if there is more data in the channel's history
 };
 

@@ -19,7 +19,7 @@ public:
     void replaceMarkdown(QString &message);
     void replaceEmoji(QString &message);
 
-    void replaceAll(User *user, Chat* chat,  QString &message);
+    void replaceAll(Chat* chat,  QString &message);
 
 signals:
 
