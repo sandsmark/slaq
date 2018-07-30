@@ -25,6 +25,8 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+
+    QtWebView::initialize();
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
 
@@ -37,7 +39,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
-    QtWebView::initialize();
+
     qDebug() << "GUI thread" << QThread::currentThreadId();
     qRegisterMetaType<SlackTeamClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");

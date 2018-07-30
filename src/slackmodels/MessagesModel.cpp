@@ -195,7 +195,7 @@ void MessageListModel::updateMessage(Message *message)
     Message* oldmessage = nullptr;
     m_modelMutex.lock();
     for (int i = 0; i < m_messages.count(); i++) {
-        Message* oldmessage = m_messages.at(i);
+        oldmessage = m_messages.at(i);
         if (oldmessage->time == message->time) {
             if (message->user.isNull()) {
                 message->user = oldmessage->user;
@@ -215,7 +215,7 @@ void MessageListModel::updateMessage(Message *message)
     }
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
-        qDebug() << "updating message:" << message->text << message << oldmessage;
+        qDebug() << "updating message:" << message->text << message << oldmessage << _index_to_replace;
         if (message != oldmessage) {
             m_modelMutex.lock();
             m_messages.replace(_index_to_replace, message);
