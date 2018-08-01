@@ -36,6 +36,15 @@ ApplicationWindow {
         window.totalUnreadIMMessages = totalIm
     }
 
+    Action {
+           id: openAction
+           text: "&Open"
+           shortcut: "Ctrl+D"
+           onTriggered: {
+               console.log("ctrl-d")
+               SlackClient.dumpChannel(teamsSwipe.currentItem.item.teamId, teamsSwipe.currentItem.item.currentChannelId);
+           }
+       }
     Material.theme: settings.theme
 
     Platform.SystemTrayIcon {

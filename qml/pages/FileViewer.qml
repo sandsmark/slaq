@@ -72,7 +72,7 @@ Item {
 
     Control {
         id: overlayControls
-        width: loader.item.width
+        width: loader.item != null ? loader.item.width : 0
         height: 20
         hoverEnabled: true
         anchors {

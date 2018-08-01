@@ -211,7 +211,7 @@ QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
 
     if (chat->type == Conversation) {
         chat->membersModel->addUser(m_networkUsers->user(data.value("user").toString()));
-        qDebug() << "user for conv" << chat->membersModel->users().first()->userId();
+        //qDebug() << "user for conv" << chat->membersModel->users().first()->userId();
     } else {
         for (const QJsonValueRef &userId : data.value("members").toArray()) {
             chat->membersModel->addUser(m_networkUsers->user(userId.toString()));
