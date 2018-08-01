@@ -1005,11 +1005,12 @@ void SlackTeamClient::handleTeamEmojisReply()
 void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& latest)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << channelId;
+    qDebug() << "Loading messages" << channelId << latest;
     if (channelId.isEmpty()) {
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
     }
+    QDateTime _latest = latest;
     ChatsModel* chatsModel = m_teamInfo.chats();
     Chat* chat = chatsModel->chat(channelId);
     if (chat == nullptr) {
@@ -1018,8 +1019,17 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
     }
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    if (latest.isValid()) {
-        params.insert(QStringLiteral("latest"), dateTimeToSlack(latest));
+    if (!_latest.isValid()) {
+        MessageListModel* mesgs = chatsModel->messages(channelId);
+        if (mesgs != nullptr) {
+            _latest = mesgs->firstMessageTs();
+        }
+    }
+    if (_latest.isValid()) {
+        params.insert(QStringLiteral("latest"), dateTimeToSlack(_latest));
+        params.insert(QStringLiteral("inclusive"), "0");
+    } else {
+        qWarning() << "NO LATEST!!";
     }
 
     QNetworkReply *reply = executeGet(historyMethod(chat->type), params);

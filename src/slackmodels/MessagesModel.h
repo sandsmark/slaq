@@ -260,6 +260,19 @@ struct Message {
     bool isStarred { false };
     bool isSameUser { false }; //indicates that previuos message has same user
     qint64 timeDiffMs { 0 }; // time difference with previous message
+    QJsonObject toJson() {
+        QJsonObject jo;
+        jo["text"] = text;
+        jo["type"] = type;
+        jo["subtype"] = subtype;
+        jo["channel_id"] = channel_id;
+        jo["channel_name"] = channelName;
+        jo["user_id"] = user_id;
+        jo["team_id"] = team_id;
+        jo["userName"] = userName;
+        jo["time_slack"] = dateTimeToSlack(time);
+        return jo;
+    }
 
 };
 
@@ -299,7 +312,11 @@ public:
     bool deleteMessage(const QDateTime& ts);
     Message* message(int row);
     void clear();
+    void modelDump();
 
+    // to provide for channel history in case if history fetched after new messages comes via RTM
+    // avoid duplicates
+    Q_INVOKABLE QDateTime firstMessageTs();
 protected:
     void preprocessFormatting(::Chat* chat, Message *message);
     bool canFetchMore(const QModelIndex &parent) const override;
@@ -312,7 +329,7 @@ private:
     void updateReactionUsers(Message *message);
 
 protected:
-    QVector<Message*> m_messages;
+    QList<Message*> m_messages;
     UsersModel *m_usersModel;
     mutable QMutex m_modelMutex;
 

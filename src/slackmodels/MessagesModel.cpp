@@ -112,7 +112,7 @@ bool MessageListModel::deleteMessage(const QDateTime &ts)
         Message* message = m_messages.at(i);
         if (message->time == ts) {
             beginRemoveRows(QModelIndex(), i, i);
-            m_messages.remove(i);
+            m_messages.removeAt(i);
             endRemoveRows();
             delete message;
             return true;
@@ -138,6 +138,29 @@ void MessageListModel::clear()
     endResetModel();
 }
 
+void MessageListModel::modelDump()
+{
+    QString fileName = QString("dump_ch_%1.json").arg(m_channelId);
+    QFile dumpFile(fileName);
+    dumpFile.open(QIODevice::WriteOnly);
+    QJsonArray msgArray;
+    for (Message* msg : m_messages) {
+        msgArray.append(msg->toJson());
+    }
+    QJsonDocument jdoc(msgArray);
+    dumpFile.write(jdoc.toJson());
+    dumpFile.close();
+}
+
+QDateTime MessageListModel::firstMessageTs()
+{
+    QDateTime _time;
+    if (!m_messages.isEmpty()) {
+        _time = m_messages.last()->time;
+    }
+    return _time;
+}
+
 void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
 {
     findNewUsers(message->text);
@@ -160,8 +183,8 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
 
 void MessageListModel::addMessage(Message* message)
 {
-    qDebug() << "adding message:" << message->text;
-    QMutexLocker locker(&m_modelMutex);
+    qDebug() << "adding message:" << message->text << m_messages.size();
+
     if (message->user.isNull()) {
         qWarning() << "user is null for " << message->user_id;
     }
@@ -172,21 +195,26 @@ void MessageListModel::addMessage(Message* message)
         chat = _chatsModel->chat(m_channelId);
     }
     preprocessFormatting(chat, message);
+
+    m_modelMutex.lock();
     if (!m_messages.isEmpty()) {
         Message* prevMsg = m_messages.first();
         message->isSameUser = (prevMsg->user_id == message->user_id);
         message->timeDiffMs = (message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
+        Q_ASSERT_X(prevMsg->time != message->time, __PRETTY_FUNCTION__, "Time should not be equal");
     }
     beginInsertRows(QModelIndex(), 0, 0);
     m_messages.prepend(message);
+
+    //unlock before endInsertRows to make sure mutex will be released on data() call
+    m_modelMutex.unlock();
     endInsertRows();
-    if (m_messages.size() > 1) {
-        Q_ASSERT_X(m_messages.first()->time != m_messages.at(1)->time, __PRETTY_FUNCTION__, "Time should not be equal");
-    }
     if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
+        chat->lastRead = message->time;
         chat->unreadCountDisplay++;
         _chatsModel->chatChanged(chat);
     }
+    qDebug() << "adding messages, after" << m_messages.size();
 }
 
 void MessageListModel::updateMessage(Message *message)

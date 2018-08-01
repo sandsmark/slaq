@@ -26,6 +26,7 @@ public:
     Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
     Q_INVOKABLE void reconnectClient();
     Q_INVOKABLE Chat *getChannel(const QString& teamId, const QString& channelId);
+    Q_INVOKABLE void dumpChannel(const QString& teamId, const QString& channelId);
 
 signals:
     void threadStarted();

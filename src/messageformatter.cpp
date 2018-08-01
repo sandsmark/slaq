@@ -71,7 +71,7 @@ void MessageFormatter::replaceMarkdown(QString &message)
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));
     message.replace(m_boldPattern, QStringLiteral("\\1<b>\\2</b>\\3"));
     message.replace(m_strikePattern, QStringLiteral("\\1<s>\\2</s>\\3"));
-    message.replace(m_codeBlockPattern, QStringLiteral("<span style=\"background-color:rgba(255,0,0,0.07); color:black; white-space:pre;\"> \\1 </span>"));
+    message.replace(m_codeBlockPattern, QStringLiteral("<span style=\"background-color:rgba(255,0,0,0.07); color:black; white-space:pre;\">\\1</span>"));
     message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:rgba(255,0,0,0.07); color:black; white-space:pre;\"> \\2 </span>\\3"));
     message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
 }
