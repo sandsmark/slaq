@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import com.iskrembilen 1.0
 
 import ".."
+import "../dialogs"
 
 Page {
     id: channelRoot
@@ -16,6 +17,7 @@ Page {
     property string textToShowUserName: ""
     property string textToShowName: ""
     property Chat channel: null
+    property alias nickPopup: nickPopup
 
     property var usersTyping: []
     onChannelIdChanged: {
@@ -39,6 +41,18 @@ Page {
         textToShowName = name
         textToShowUserName = userName
         downloadManager.append(url, "buffer", SlackClient.teamToken(teamId))
+    }
+
+    function openReplies(repliesModel, threadTs) {
+        replieslist.model = repliesModel
+        replieslist.channelName = channel.name
+        replieslist.thread_ts = threadTs
+        console.log("channel name " + channel.name + " : " + replieslist.channelName)
+        replieslist.open()
+    }
+
+    RepliesList {
+        id: replieslist
     }
 
     Connections {

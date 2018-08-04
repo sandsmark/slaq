@@ -276,7 +276,7 @@ int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::
     return total;
 }
 
-void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString &channelId, const QString& content)
+void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString &channelId, const QString& content, const QDateTime &thread_ts)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -284,7 +284,8 @@ void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString 
     }
     QMetaObject::invokeMethod(_slackClient, "postMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(QString, content));
+                              Q_ARG(QString, content),
+                              Q_ARG(QDateTime, thread_ts));
 }
 
 void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId, const QDateTime &ts)
@@ -356,6 +357,10 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     if (message->user.isNull()) {
         UsersModel* users = _slackClient->teamInfo()->users();
         message->user = users->user(message->user_id);
+        if (message->user.isNull()) {
+            qWarning() << "user is null for " << message->user_id;
+            Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+        }
     }
 
     messages->addMessage(message);

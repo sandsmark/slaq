@@ -43,17 +43,14 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     case Text:
         return message->text;
     case User:
-        //qDebug() << "User for row" << row << m_messages[row].user.data();
         return QVariant::fromValue(message->user.data());
     case Time:
         return message->time;
     case SlackTimestamp:
         return message->ts;
     case Attachments:
-        //qDebug() << "Attachment for row" << row << m_messages[row]->attachments.count();
         return QVariant::fromValue(message->attachments);
     case Reactions:
-        //qDebug() << "Reactions for row" << row << m_messages[row]->reactions.count();
         return QVariant::fromValue(message->reactions);
     case FileShares:
         return QVariant::fromValue(message->fileshares);
@@ -71,6 +68,14 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return message->isSameUser;
     case TimeDiff:
         return message->timeDiffMs;
+    case ThreadReplies:
+        return QVariant::fromValue(message->replies);
+    case ThreadRepliesModel:
+        return QVariant::fromValue(message->messageThread);
+    case ThreadIsParentMessage:
+        return isMessageThreadParent(message);
+    case ThreadTs:
+        return message->thread_ts;
     default:
         qWarning() << "Unhandled role" << role;
         return QVariant();
@@ -116,6 +121,12 @@ bool MessageListModel::deleteMessage(const QDateTime &ts)
             endRemoveRows();
             delete message;
             return true;
+        } else {
+            if (message->messageThread != nullptr) {
+                if (message->messageThread->deleteMessage(ts) == true) {
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -138,6 +149,24 @@ void MessageListModel::clear()
     endResetModel();
 }
 
+void MessageListModel::appendMessageToModel(Message *message)
+{
+    m_modelMutex.lock();
+    beginInsertRows(QModelIndex(), m_messages.size(), m_messages.size());
+    m_messages.append(message);
+    m_modelMutex.unlock();
+    endInsertRows();
+}
+
+void MessageListModel::prependMessageToModel(Message *message)
+{
+    m_modelMutex.lock();
+    beginInsertRows(QModelIndex(), 0, 0);
+    m_messages.prepend(message);
+    m_modelMutex.unlock();
+    endInsertRows();
+}
+
 void MessageListModel::modelDump()
 {
     QString fileName = QString("dump_ch_%1.json").arg(m_channelId);
@@ -150,6 +179,30 @@ void MessageListModel::modelDump()
     QJsonDocument jdoc(msgArray);
     dumpFile.write(jdoc.toJson());
     dumpFile.close();
+}
+
+void MessageListModel::sortMessages(bool asc)
+{
+    if (m_messages.size() < 2) {
+        return;
+    }
+    beginResetModel();
+    m_modelMutex.lock();
+    std::sort(m_messages.begin(), m_messages.end(), Message::compare);
+    m_modelMutex.unlock();
+    endResetModel();
+}
+
+void MessageListModel::refresh()
+{
+    beginResetModel();
+    endResetModel();
+}
+
+void MessageListModel::replaceMessage(Message *oldmessage, Message *message)
+{
+    QMutexLocker locker(&m_modelMutex);
+    m_messages.replace(m_messages.indexOf(oldmessage), message);
 }
 
 QDateTime MessageListModel::firstMessageTs()
@@ -181,9 +234,9 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
     }
 }
 
-void MessageListModel::addMessage(Message* message)
+void MessageListModel::addMessage(Message* message, bool threaded)
 {
-    qDebug() << "adding message:" << message->text << m_messages.size();
+    qDebug() << "adding message:" << message->text << m_messages.size() << QThread::currentThreadId();
 
     if (message->user.isNull()) {
         qWarning() << "user is null for " << message->user_id;
@@ -196,19 +249,52 @@ void MessageListModel::addMessage(Message* message)
     }
     preprocessFormatting(chat, message);
 
-    m_modelMutex.lock();
-    if (!m_messages.isEmpty()) {
-        Message* prevMsg = m_messages.first();
-        message->isSameUser = (prevMsg->user_id == message->user_id);
-        message->timeDiffMs = (message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
-        Q_ASSERT_X(prevMsg->time != message->time, __PRETTY_FUNCTION__, "Time should not be equal");
+    //fill up users for replys
+    for(QObject* rplyObj : message->replies) {
+        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
+        rply->m_user = m_usersModel->user(rply->m_userId);
     }
-    beginInsertRows(QModelIndex(), 0, 0);
-    m_messages.prepend(message);
+    //check for thread
+    if (threaded && isMessageThreadChild(message)) {
+        Message* parent_msg = this->message(message->thread_ts);
+        QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
+        if (thrdModel == nullptr) {
+            thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId));
+            QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
+        }
+        if (parent_msg != nullptr) {
+            if (parent_msg->messageThread.isNull()) {
+                parent_msg->messageThread = thrdModel;
+                //add parent message as a 1st message in the thread
+                thrdModel->prependMessageToModel(parent_msg);
+                thrdModel->sortMessages();
+            }
+        } else {
+            qWarning() << "no parent msg found!";
+        }
+        thrdModel->prependMessageToModel(message);
+        thrdModel->sortMessages();
+        if (!m_MessageThreads.contains(message->thread_ts)) {
+            m_MessageThreads.insert(message->thread_ts, thrdModel);
+        }
+    } else {
+        // check if the message is parent thread
+        if (m_MessageThreads.contains(message->time) && message->messageThread == nullptr) {
+            message->messageThread = m_MessageThreads.value(message->time);
+            message->messageThread->prependMessageToModel(message);
+            message->messageThread->sortMessages();
+        }
+        m_modelMutex.lock();
+        if (!m_messages.isEmpty()) {
+            Message* prevMsg = prevMsg = m_messages.first();
+            message->isSameUser = (prevMsg->user_id == message->user_id);
+            message->timeDiffMs = (message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
+            Q_ASSERT_X(prevMsg->time != message->time, __PRETTY_FUNCTION__, "Time should not be equal");
+        }
+        m_modelMutex.unlock();
+        prependMessageToModel(message);
+    }
 
-    //unlock before endInsertRows to make sure mutex will be released on data() call
-    m_modelMutex.unlock();
-    endInsertRows();
     if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
         chat->lastRead = message->time;
         chat->unreadCountDisplay++;
@@ -221,10 +307,17 @@ void MessageListModel::updateMessage(Message *message)
 {
     int _index_to_replace = -1;
     Message* oldmessage = nullptr;
+    //fill up users for replys
+    for(QObject* rplyObj : message->replies) {
+        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
+        rply->m_user = m_usersModel->user(rply->m_userId);
+    }
     m_modelMutex.lock();
     for (int i = 0; i < m_messages.count(); i++) {
         oldmessage = m_messages.at(i);
         if (oldmessage->time == message->time) {
+            message->messageThread = oldmessage->messageThread;
+
             if (message->user.isNull()) {
                 message->user = oldmessage->user;
                 if (message->user.isNull()) {
@@ -244,16 +337,18 @@ void MessageListModel::updateMessage(Message *message)
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
         qDebug() << "updating message:" << message->text << message << oldmessage << _index_to_replace;
+        if (message->messageThread != nullptr) {
+            //replace old parent message with new one in the thread
+            message->messageThread->replaceMessage(oldmessage, message);
+            message->messageThread->refresh();
+        }
         if (message != oldmessage) {
             m_modelMutex.lock();
             m_messages.replace(_index_to_replace, message);
             m_modelMutex.unlock();
-            if (m_messages.size() > 1) {
-                // hunting double massages
-                Q_ASSERT_X(m_messages.first()->time != m_messages.at(1)->time, __PRETTY_FUNCTION__, "Time should not be equal");
-            }
             delete oldmessage;
         }
+
         QModelIndex modelIndex = index(_index_to_replace);
         emit dataChanged(modelIndex, modelIndex, roleNames().keys().toVector());
     }
@@ -289,8 +384,15 @@ void MessageListModel::findNewUsers(QString& message)
 
 void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
 {
-    qDebug() << "Adding" << messages.count() << "messages";
-    QMutexLocker locker(&m_modelMutex);
+    if (thread() != QThread::currentThread()) {
+        QMetaObject::invokeMethod(this, "addMessages", Qt::QueuedConnection,
+                                  Q_ARG(const QJsonArray&, messages),
+                                  Q_ARG(bool, hasMore));
+        return;
+    }
+
+    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId();
+
     m_hasMore = hasMore;
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
 
@@ -303,16 +405,24 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
     for (const QJsonValue &messageData : messages) {
         const QJsonObject messageObject = messageData.toObject();
         if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
+            qWarning() << "file comment. skipping for now";
             continue; //TODO: not yet supported
         }
         Message* message = new Message;
         //qDebug() << "message obj" << messageObject;
         message->setData(messageObject);
+
         message->channel_id = m_channelId;
         if (message->user_id.isEmpty()) {
             qWarning() << "user id is empty" << messageObject;
         }
         message->user = m_usersModel->user(message->user_id);
+
+        //fill up users for replys
+        for(QObject* rplyObj : message->replies) {
+            ReplyField* rply = static_cast<ReplyField*>(rplyObj);
+            rply->m_user = m_usersModel->user(rply->m_userId);
+        }
         // TODO: why?
         //m_reactions.insert(reactionObject["name"].toString(), reaction);
         if (message->user.isNull()) {
@@ -322,12 +432,48 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
 
         preprocessFormatting(chat, message);
 
-        if (!m_messages.isEmpty()) {
-            Message* prevMsg = m_messages.last();
-            prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
-            prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+        //check for thread
+        if (isMessageThreadChild(message)) {
+            //qDebug().noquote() << "found message thread at" << QJsonDocument(messageObject).toJson();
+            Message* parent_msg = this->message(message->thread_ts);
+            QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
+            if (thrdModel == nullptr) {
+                thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId));
+                QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
+            }
+            if (parent_msg != nullptr) {
+                if (parent_msg->messageThread.isNull()) {
+                    parent_msg->messageThread = thrdModel;
+                    //add parent message as a 1st message in the thread
+                    //thrdModel->addMessage(parent_msg, false);
+                    thrdModel->appendMessageToModel(parent_msg);
+                    thrdModel->sortMessages();
+                }
+            } else {
+                qWarning() << "no parent msg found!";
+            }
+            //thrdModel->addMessage(message, false);
+            thrdModel->prependMessageToModel(message);
+            if (!m_MessageThreads.contains(message->thread_ts)) {
+                m_MessageThreads.insert(message->thread_ts, thrdModel);
+            }
+        } else {
+            // check if the message is parent thread
+            if (m_MessageThreads.contains(message->time) && message->messageThread == nullptr) {
+                message->messageThread = m_MessageThreads.value(message->time);
+                message->messageThread->appendMessageToModel(message);
+                message->messageThread->sortMessages();
+            }
+
+            if (!m_messages.isEmpty()) {
+                Message* prevMsg = m_messages.last();
+                prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
+                prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+            }
+            m_modelMutex.lock();
+            m_messages.append(message);
+            m_modelMutex.unlock();
         }
-        m_messages.append(message);
     }
 
     endInsertRows();
@@ -367,6 +513,10 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[SearchChannelName] = "ChannelName";
     names[SearchUserName] = "UserName";
     names[SearchPermalink] = "Permalink";
+    names[ThreadReplies] = "ThreadReplies";
+    names[ThreadRepliesModel] = "ThreadRepliesModel";
+    names[ThreadIsParentMessage] = "ThreadIsParentMessage";
+    names[ThreadTs] = "ThreadTs";
     return names;
 }
 
@@ -377,6 +527,7 @@ Message::~Message()
     qDeleteAll(attachments);
     qDeleteAll(reactions);
     qDeleteAll(fileshares);
+    qDeleteAll(replies);
 }
 //    QVariantMap channel = m_storage.channel(channelId);
 
@@ -402,6 +553,10 @@ void Message::setData(const QJsonObject &data)
     type = data.value(QStringLiteral("type")).toString();
     ts = data.value(QStringLiteral("ts")).toString();
     time = slackToDateTime(ts);
+    const QJsonValue thread_ = data.value(QStringLiteral("thread_ts"));
+    if (!thread_.isUndefined()) {
+        thread_ts = slackToDateTime(thread_.toString());
+    }
 //    qDebug() << ts << time;
 //    Q_ASSERT(time.isValid());
 
@@ -424,6 +579,13 @@ void Message::setData(const QJsonObject &data)
         if (subtype == QStringLiteral("bot_message")) {
             user_id = data.value(QStringLiteral("bot_id")).toString();
         }
+    }
+
+    for (const QJsonValue &repliesValue : data.value("replies").toArray()) {
+        ReplyField *msgReply = new ReplyField;
+        msgReply->setData(repliesValue.toObject());
+        QQmlEngine::setObjectOwnership(msgReply, QQmlEngine::CppOwnership);
+        replies.append(msgReply);
     }
 
     for (const QJsonValue &reactionValue : data.value("reactions").toArray()) {
@@ -604,4 +766,12 @@ void FileShare::setData(const QJsonObject &data)
         m_reactions.append(reaction);
     }
     m_comments_count = data.value(QStringLiteral("m_comments_count")).toInt(0);
+}
+
+ReplyField::ReplyField(QObject *parent): QObject(parent) {}
+
+void ReplyField::setData(const QJsonObject &data)
+{
+    m_userId = data.value(QStringLiteral("user")).toString();
+    m_ts = slackToDateTime(data.value(QStringLiteral("ts")).toString());
 }

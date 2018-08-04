@@ -99,7 +99,7 @@ public slots:
     //messages
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
-    void postMessage(const QString& teamId, const QString& channelId, const QString& content);
+    void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QDateTime &thread_ts = QDateTime());
     void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts);
     void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);

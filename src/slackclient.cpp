@@ -247,7 +247,7 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
         const QString& channel_id = message.value(QStringLiteral("channel")).toString();
         message_->channel_id = channel_id;
     }
-    if (subtype == "message_changed") {
+    if (subtype == "message_changed" || subtype == "message_replied") {
        qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
        message_->isChanged = true;
        emit messageUpdated(message_);
@@ -257,7 +257,6 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
         const QString& channel_id = message.value(QStringLiteral("channel")).toString();
         emit messageDeleted(channel_id, deleted_ts);
     } else if (subtype == "file_comment") {
-    } else if (subtype == "message_replied") {
     } else {
         emit messageReceived(message_);
     }
@@ -1035,12 +1034,12 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
     QNetworkReply *reply = executeGet(historyMethod(chat->type), params);
     reply->setProperty("channelId", channelId);
 
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLoadMessagesReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLoadMessagesReply, Qt::QueuedConnection);
 }
 
 void SlackTeamClient::handleLoadMessagesReply()
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
@@ -1068,6 +1067,15 @@ void SlackTeamClient::handleLoadMessagesReply()
         emit loadMessagesFail(m_teamInfo.teamId());
         return;
     }
+#if 0
+        {
+            QFile f("msglist_dumps_" + m_teamInfo.name() + "_" + channelId + ".json");
+            if (f.open(QIODevice::WriteOnly)) {
+                f.write(QJsonDocument(data).toJson());
+                f.close();
+            }
+        }
+#endif
     messageModel->addMessages(messageList, _hasMore);
 
     qDebug() << "messages loaded for" << channelId << chatModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name();
@@ -1174,7 +1182,7 @@ void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleAddReactionReply);
 }
 
-void SlackTeamClient::postMessage(const QString& channelId, QString content)
+void SlackTeamClient::postMessage(const QString& channelId, QString content, const QDateTime &thread_ts)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
@@ -1182,6 +1190,9 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content)
     data.insert(QStringLiteral("text"), content);
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
     data.insert(QStringLiteral("parse"), QStringLiteral("full"));
+    if (thread_ts.isValid()) {
+        data.insert(QStringLiteral("thread_ts"), dateTimeToSlack(thread_ts));
+    }
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.postMessage"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostMessageReply);

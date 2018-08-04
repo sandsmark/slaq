@@ -11,6 +11,7 @@ MouseArea {
     height: column.height
     hoverEnabled: true
     property bool isSearchResult: false
+    property bool isReplies: false
     property bool emojiSelectorCalled: false
 
     // counts as same if previouse user is same and last message was within 3 minutes
@@ -37,12 +38,12 @@ MouseArea {
             width: parent.width
             height: childrenRect.height
             spacing: Theme.paddingMedium
-            leftPadding: sameuser ? Theme.avatarSize + spacing : 0
+            leftPadding: sameuser && !(isReplies && model.ThreadIsParentMessage) ? Theme.avatarSize + spacing : 0
 
             Image {
                 id: avatarImage
                 y: Theme.paddingMedium/2
-                visible: !sameuser
+                visible: !sameuser || (isReplies && model.ThreadIsParentMessage)
                 height: Theme.avatarSize
                 cache: true
                 asynchronous: true
@@ -53,7 +54,7 @@ MouseArea {
             Column {
                 height: childrenRect.height
                 width: parent.width
-                spacing: 0
+                spacing: 1
 
                 RowLayout {
                     height: emojiButton.implicitHeight
@@ -167,6 +168,36 @@ MouseArea {
                     }
                 }
 
+                Item {
+                    visible: ThreadReplies.length > 0 && isReplies == false
+                    width: repliesRow.implicitWidth
+                    height: visible ? repliesRow.implicitHeight : 0
+                    Row {
+                        id: repliesRow
+                        spacing: 5
+                        Repeater {
+                            id: repliesRepeater
+                            model: ThreadReplies
+                            Image {
+                                source: ThreadReplies[index].user.avatarUrl
+                                sourceSize: Qt.size(16, 16)
+                            }
+                        }
+                        Label {
+                            text: ThreadReplies.length + " " + qsTr("replies")
+                        }
+                    }
+                    MouseArea {
+                        id: repliesMouseArea
+                        enabled: true //we need this just for changing cursor shape
+                        anchors.fill: parent
+                        onClicked: {
+                            console.log("clicked replies", model.ThreadRepliesModel, model.ThreadTs)
+                            channelRoot.openReplies(model.ThreadRepliesModel, model.ThreadTs)
+                        }
+                    }
+                }
+
                 Row {
                     spacing: 5
 
@@ -210,6 +241,7 @@ MouseArea {
                 onLinkClicked: handleLink(link)
             }
         }
+
     }
 
     onClicked: {

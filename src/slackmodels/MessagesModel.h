@@ -16,6 +16,7 @@
 #include "messageformatter.h"
 
 class ChatsModel;
+class MessageListModel;
 
 namespace {
 QDateTime slackToDateTime(const QString& slackts) {
@@ -75,6 +76,20 @@ public:
     QString m_title;
     QString m_value;
     bool m_isShort { true };
+};
+
+class ReplyField: public QObject  {
+    Q_OBJECT
+    Q_PROPERTY(User* user MEMBER m_user CONSTANT)
+    Q_PROPERTY(QDateTime ts MEMBER m_ts CONSTANT)
+
+public:
+    ReplyField(QObject* parent = nullptr);
+    void setData(const QJsonObject &data);
+
+    User* m_user;
+    QString m_userId;
+    QDateTime m_ts;
 };
 
 //TODO: implement actions
@@ -248,6 +263,7 @@ struct Message {
 
     QStringList pinnedTo;
     QDateTime time;
+    QDateTime thread_ts;
     QUrl permalink;
 
     QPointer<User> user;
@@ -255,11 +271,16 @@ struct Message {
     QList<QObject*> reactions;
     QList<QObject*> attachments;
     QList<QObject*> fileshares;
+    QList<QObject*> replies;
 
     bool isChanged { false };
     bool isStarred { false };
     bool isSameUser { false }; //indicates that previuos message has same user
     qint64 timeDiffMs { 0 }; // time difference with previous message
+    QSharedPointer<MessageListModel> messageThread;
+
+    static bool compare(const Message* a, const Message* b) { return a->time > b->time; }
+
     QJsonObject toJson() {
         QJsonObject jo;
         jo["text"] = text;
@@ -273,7 +294,6 @@ struct Message {
         jo["time_slack"] = dateTimeToSlack(time);
         return jo;
     }
-
 };
 
 class MessageListModel : public QAbstractListModel
@@ -296,7 +316,11 @@ public:
         TimeDiff,
         SearchChannelName,
         SearchUserName,
-        SearchPermalink
+        SearchPermalink,
+        ThreadReplies,
+        ThreadRepliesModel,
+        ThreadIsParentMessage,
+        ThreadTs
     };
 
     MessageListModel(QObject *parent, UsersModel *usersModel, const QString& channelId);
@@ -305,14 +329,23 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void addMessage(Message *message);
+    inline bool isMessageThreadParent(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts == msg->time); }
+    inline bool isMessageThreadChild(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts != msg->time); }
+
+public slots:
+    void addMessage(Message *message, bool threaded = true);
     void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages, bool hasMore);
     Message* message(const QDateTime& ts);
     bool deleteMessage(const QDateTime& ts);
     Message* message(int row);
     void clear();
+    void appendMessageToModel(Message *message);
+    void prependMessageToModel(Message *message);
     void modelDump();
+    void sortMessages(bool asc = false);
+    void refresh();
+    void replaceMessage(Message* oldmessage, Message* message);
 
     // to provide for channel history in case if history fetched after new messages comes via RTM
     // avoid duplicates
@@ -335,6 +368,7 @@ protected:
 
 private:
     QMap<QString, Reaction*> m_reactions;
+    QMap<QDateTime, QSharedPointer<MessageListModel>> m_MessageThreads;
 
     QString m_channelId;
     MessageFormatter m_formatter;
