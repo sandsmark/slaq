@@ -109,7 +109,7 @@ public slots:
     void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
-    void postMessage(const QString& channelId, QString content);
+    void postMessage(const QString& channelId, QString content, const QDateTime &thread_ts);
     void deleteMessage(const QString& channelId, const QDateTime& ts);
     void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
     void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);

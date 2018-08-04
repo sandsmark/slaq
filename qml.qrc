@@ -40,5 +40,6 @@
         <file>qml/components/TextFileViewer.qml</file>
         <file>qml/components/VideoFileViewer.qml</file>
         <file>qml/components/Reaction.qml</file>
+        <file>qml/dialogs/RepliesList.qml</file>
     </qresource>
 </RCC>
