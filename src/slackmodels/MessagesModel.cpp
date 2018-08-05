@@ -213,7 +213,7 @@ void MessageListModel::replaceMessage(Message *oldmessage, Message *message)
 
 void MessageListModel::preprocessMessage(Message *message)
 {
-    if (message->user.isNull()) {
+    if (message->user.isNull() || (!message->user.isNull() && (message->user_id != message->user->userId()))) {
         message->user = m_usersModel->user(message->user_id);
         if (message->user.isNull()) {
             qWarning() << "user is null for " << message->user_id;
@@ -352,8 +352,9 @@ void MessageListModel::updateMessage(Message *message)
     }
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
-        qDebug() << "updating message:" << message->text << message << oldmessage << _index_to_replace;
         preprocessMessage(message);
+        qDebug() << "updating message:" << message->text << message->user->userId() << message << oldmessage << _index_to_replace;
+
         if (message->messageThread != nullptr) {
             //replace old parent message with new one in the thread
             message->messageThread->replaceMessage(oldmessage, message);
