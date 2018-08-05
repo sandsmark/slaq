@@ -102,6 +102,20 @@ MouseArea {
                             }
                         }
                         EmojiButton {
+                            id: startThreadButton
+                            padding: 0
+                            visible: itemDelegate.containsMouse && !isSearchResult && !itemDelegate.ListView.view.model.isThreadModel()
+                            implicitHeight: nickLabel.paintedHeight * 2
+                            implicitWidth: nickLabel.paintedHeight * 2
+                            text: "\uD83D\uDCAC"
+                            font.bold: false
+                            font.pixelSize: parent.height/2
+                            onClicked: {
+                                console.log("index", index)
+                                channelRoot.openReplies(itemDelegate.ListView.view.model, index, model)
+                            }
+                        }
+                        EmojiButton {
                             id: trashButton
                             padding: 0
                             visible: itemDelegate.containsMouse && !isSearchResult &&
@@ -115,6 +129,7 @@ MouseArea {
                                 teamRoot.deleteMessage(channelId, model.Time)
                             }
                         }
+
                     }
                 }
 
@@ -193,7 +208,7 @@ MouseArea {
                         anchors.fill: parent
                         onClicked: {
                             console.log("clicked replies", model.ThreadRepliesModel, model.ThreadTs)
-                            channelRoot.openReplies(model.ThreadRepliesModel, model.ThreadTs)
+                            channelRoot.openReplies(itemDelegate.ListView.view.model, index, model)
                         }
                     }
                 }

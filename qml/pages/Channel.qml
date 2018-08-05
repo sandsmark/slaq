@@ -43,11 +43,11 @@ Page {
         downloadManager.append(url, "buffer", SlackClient.teamToken(teamId))
     }
 
-    function openReplies(repliesModel, threadTs) {
-        replieslist.model = repliesModel
+    function openReplies(model, messageindex, msg) {
+        replieslist.parentMessagesModel = model
+        replieslist.modelMsg = msg
+        replieslist.parentMessageIndex = messageindex
         replieslist.channelName = channel.name
-        replieslist.thread_ts = threadTs
-        console.log("channel name " + channel.name + " : " + replieslist.channelName)
         replieslist.open()
     }
 

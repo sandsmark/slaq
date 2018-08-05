@@ -46,19 +46,19 @@ int main(int argc, char *argv[])
     qRegisterMetaType<TeamInfo*>("TeamInfo*");
     qRegisterMetaType<Attachment*>("Attachment*");
     qRegisterMetaType<Message*>("Message*");
+    qRegisterMetaType<Message>("Message");
     qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
+    qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
+    qRegisterMetaType<Chat*>("Chat*");
 
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<Attachment>("com.iskrembilen", 1, 0, "Attachment", "Only instantiated by c++");
-
-    qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
-    qRegisterMetaType<Chat*>("Chat*");
-
     qmlRegisterUncreatableType<MessageListModel>("com.iskrembilen", 1, 0, "MessageListModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
     qmlRegisterUncreatableType<Chat>("com.iskrembilen", 1, 0, "Chat", "Only instantiated by c++");
+
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
     qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));
