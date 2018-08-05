@@ -13,9 +13,20 @@ Drawer {
     edge: Qt.RightEdge
     width: 0.6 * window.width
     height: window.height - Theme.paddingMedium
-    property alias model: repliesListView.model
     property string channelName: ""
-    property date thread_ts
+    property int parentMessageIndex: -1
+    property var parentMessagesModel
+    property var parentMessage
+    property var modelMsg
+
+    onAboutToShow: {
+        if (parentMessageIndex !== -1) {
+            parentMessage = parentMessagesModel.message(parentMessageIndex)
+            //no thread model. Need to create one
+            repliesListView.model = parentMessagesModel.createThread(parentMessage)
+            console.log("thread", parentMessagesModel, parentMessageIndex, modelMsg.ThreadTs)
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -47,7 +58,9 @@ Drawer {
             Layout.fillWidth: true
             placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
             onSendMessage: {
-                SlackClient.postMessage(teamRoot.teamId, channelId, content, thread_ts)
+                if (parentMessage != undefined) {
+                    SlackClient.postMessage(teamRoot.teamId, channelId, content, modelMsg.ThreadTs)
+                }
             }
 
             nickPopupVisible: channelRoot.nickPopup.visible

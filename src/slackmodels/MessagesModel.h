@@ -246,6 +246,10 @@ public:
 };
 
 struct Message {
+private:
+    Q_GADGET
+    Q_PROPERTY(QDateTime threadts MEMBER thread_ts)
+public:
     Message();
     ~Message();
     void setData(const QJsonObject &data);
@@ -296,6 +300,8 @@ struct Message {
     }
 };
 
+Q_DECLARE_METATYPE(Message)
+
 class MessageListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -329,10 +335,8 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    inline bool isMessageThreadParent(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts == msg->time); }
+    inline bool isMessageThreadParent(const Message* msg) const { return !isMessageThreadChild(msg); }
     inline bool isMessageThreadChild(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts != msg->time); }
-
-    bool isThreadModel() const;
 
 public slots:
     void addMessage(Message *message);
@@ -352,7 +356,10 @@ public slots:
 
     // to provide for channel history in case if history fetched after new messages comes via RTM
     // avoid duplicates
-    Q_INVOKABLE QDateTime firstMessageTs();
+    QDateTime firstMessageTs();
+    bool isThreadModel() const;
+    MessageListModel* createThread(Message* parentMessage);
+
 protected:
     void preprocessFormatting(::Chat* chat, Message *message);
     bool canFetchMore(const QModelIndex &parent) const override;

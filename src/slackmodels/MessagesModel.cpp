@@ -71,7 +71,7 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     case ThreadReplies:
         return QVariant::fromValue(message->replies);
     case ThreadRepliesModel:
-        return QVariant::fromValue(message->messageThread);
+        return QVariant::fromValue(message->messageThread.data());
     case ThreadIsParentMessage:
         return isMessageThreadParent(message);
     case ThreadTs:
@@ -101,6 +101,31 @@ void MessageListModel::updateReactionUsers(Message* message) {
 bool MessageListModel::isThreadModel() const
 {
     return m_isThreadModel;
+}
+
+MessageListModel *MessageListModel::createThread(Message *parentMessage)
+{
+    if (parentMessage != nullptr) {
+        if (parentMessage->messageThread.isNull()) {
+            parentMessage->thread_ts = parentMessage->time;
+            parentMessage->messageThread = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
+            QQmlEngine::setObjectOwnership(parentMessage->messageThread.data(), QQmlEngine::CppOwnership);
+            parentMessage->messageThread->prependMessageToModel(parentMessage);
+            parentMessage->messageThread->refresh();
+            if (!m_MessageThreads.contains(parentMessage->thread_ts)) {
+                m_MessageThreads.insert(parentMessage->thread_ts, parentMessage->messageThread);
+            }
+            m_modelMutex.lock();
+            int _index= m_messages.indexOf(parentMessage);
+            m_modelMutex.unlock();
+            if (_index >= 0) {
+                QModelIndex modelIndex = index(_index);
+                emit dataChanged(modelIndex, modelIndex, roleNames().keys().toVector());
+            }
+        }
+        return parentMessage->messageThread.data();
+    }
+    return nullptr;
 }
 
 Message *MessageListModel::message(const QDateTime &ts)
