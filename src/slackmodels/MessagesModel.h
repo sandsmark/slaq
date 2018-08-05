@@ -323,7 +323,7 @@ public:
         ThreadTs
     };
 
-    MessageListModel(QObject *parent, UsersModel *usersModel, const QString& channelId);
+    MessageListModel(QObject *parent, UsersModel *usersModel, const QString& channelId, bool isThreadModel = false);
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -332,8 +332,10 @@ public:
     inline bool isMessageThreadParent(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts == msg->time); }
     inline bool isMessageThreadChild(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts != msg->time); }
 
+    bool isThreadModel() const;
+
 public slots:
-    void addMessage(Message *message, bool threaded = true);
+    void addMessage(Message *message);
     void updateMessage(Message *message);
     void addMessages(const QJsonArray &messages, bool hasMore);
     Message* message(const QDateTime& ts);
@@ -346,6 +348,7 @@ public slots:
     void sortMessages(bool asc = false);
     void refresh();
     void replaceMessage(Message* oldmessage, Message* message);
+    void preprocessMessage(Message *message);
 
     // to provide for channel history in case if history fetched after new messages comes via RTM
     // avoid duplicates
@@ -375,5 +378,6 @@ private:
     QRegularExpression m_newUserPattern;
     QRegularExpression m_existingUserPattern;
     bool m_hasMore { false }; //indicator if there is more data in the channel's history
+    bool m_isThreadModel { false };
 };
 
