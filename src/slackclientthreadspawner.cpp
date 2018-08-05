@@ -354,15 +354,6 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
         return;
     }
 
-    if (message->user.isNull()) {
-        UsersModel* users = _slackClient->teamInfo()->users();
-        message->user = users->user(message->user_id);
-        if (message->user.isNull()) {
-            qWarning() << "user is null for " << message->user_id;
-            Q_ASSERT_X(!message->user.isNull(), "user is null", "");
-        }
-    }
-
     messages->addMessage(message);
     Chat* chat = chatsModel->chat(message->channel_id);
     if (chat == nullptr) {

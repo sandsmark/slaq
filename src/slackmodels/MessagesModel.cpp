@@ -10,8 +10,8 @@
 #include "MessagesModel.h"
 #include "messageformatter.h"
 
-MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId) : QAbstractListModel(parent),
-    m_usersModel(usersModel), m_channelId(channelId) {
+MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId, bool isThreadModel) : QAbstractListModel(parent),
+    m_usersModel(usersModel), m_channelId(channelId), m_isThreadModel(isThreadModel) {
     m_newUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)\\|([^>]+)>"));
     m_existingUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)>"));
 }
@@ -98,6 +98,11 @@ void MessageListModel::updateReactionUsers(Message* message) {
     }
 }
 
+bool MessageListModel::isThreadModel() const
+{
+    return m_isThreadModel;
+}
+
 Message *MessageListModel::message(const QDateTime &ts)
 {
     QMutexLocker locker(&m_modelMutex);
@@ -122,6 +127,7 @@ bool MessageListModel::deleteMessage(const QDateTime &ts)
             delete message;
             return true;
         } else {
+            //also check replies
             if (message->messageThread != nullptr) {
                 if (message->messageThread->deleteMessage(ts) == true) {
                     return true;
@@ -205,6 +211,36 @@ void MessageListModel::replaceMessage(Message *oldmessage, Message *message)
     m_messages.replace(m_messages.indexOf(oldmessage), message);
 }
 
+void MessageListModel::preprocessMessage(Message *message)
+{
+    if (message->user.isNull()) {
+        message->user = m_usersModel->user(message->user_id);
+        if (message->user.isNull()) {
+            qWarning() << "user is null for " << message->user_id;
+            Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+        }
+    }
+
+    Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+    ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
+    Chat* chat = nullptr;
+    if (_chatsModel != nullptr) {
+        chat = _chatsModel->chat(m_channelId);
+    }
+    preprocessFormatting(chat, message);
+
+    //fill up users for replys
+    for(QObject* rplyObj : message->replies) {
+        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
+        rply->m_user = m_usersModel->user(rply->m_userId);
+    }
+    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
+        chat->lastRead = message->time;
+        chat->unreadCountDisplay++;
+        _chatsModel->chatChanged(chat);
+    }
+}
+
 QDateTime MessageListModel::firstMessageTs()
 {
     QDateTime _time;
@@ -234,32 +270,17 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
     }
 }
 
-void MessageListModel::addMessage(Message* message, bool threaded)
+void MessageListModel::addMessage(Message* message)
 {
     qDebug() << "adding message:" << message->text << m_messages.size() << QThread::currentThreadId();
 
-    if (message->user.isNull()) {
-        qWarning() << "user is null for " << message->user_id;
-    }
-    Q_ASSERT_X(!message->user.isNull(), "addMessage .user is null", "");
-    ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat* chat = nullptr;
-    if (_chatsModel != nullptr) {
-        chat = _chatsModel->chat(m_channelId);
-    }
-    preprocessFormatting(chat, message);
-
-    //fill up users for replys
-    for(QObject* rplyObj : message->replies) {
-        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
-        rply->m_user = m_usersModel->user(rply->m_userId);
-    }
+    preprocessMessage(message);
     //check for thread
-    if (threaded && isMessageThreadChild(message)) {
+    if (isMessageThreadChild(message)) {
         Message* parent_msg = this->message(message->thread_ts);
         QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
         if (thrdModel == nullptr) {
-            thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId));
+            thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
             QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
         }
         if (parent_msg != nullptr) {
@@ -295,11 +316,7 @@ void MessageListModel::addMessage(Message* message, bool threaded)
         prependMessageToModel(message);
     }
 
-    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
-        chat->lastRead = message->time;
-        chat->unreadCountDisplay++;
-        _chatsModel->chatChanged(chat);
-    }
+
     qDebug() << "adding messages, after" << m_messages.size();
 }
 
@@ -307,36 +324,36 @@ void MessageListModel::updateMessage(Message *message)
 {
     int _index_to_replace = -1;
     Message* oldmessage = nullptr;
-    //fill up users for replys
-    for(QObject* rplyObj : message->replies) {
-        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
-        rply->m_user = m_usersModel->user(rply->m_userId);
-    }
+
+    const bool _isChild = isMessageThreadChild(message);
+
     m_modelMutex.lock();
     for (int i = 0; i < m_messages.count(); i++) {
         oldmessage = m_messages.at(i);
-        if (oldmessage->time == message->time) {
-            message->messageThread = oldmessage->messageThread;
-
-            if (message->user.isNull()) {
-                message->user = oldmessage->user;
+        if (_isChild && !isThreadModel()) {
+            if (oldmessage->thread_ts == message->thread_ts) {
+                oldmessage->messageThread->updateMessage(message);
+                break;
+            }
+        } else {
+            if (oldmessage->time == message->time) {
+                message->messageThread = oldmessage->messageThread;
                 if (message->user.isNull()) {
-                    qWarning() << "user is null for " << message->user_id;
-                    Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+                    message->user = oldmessage->user;
+                    if (message->user.isNull()) {
+                        qWarning() << __PRETTY_FUNCTION__ << "user is null for " << message->user_id;
+                        Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+                    }
                 }
+                _index_to_replace = i;
+                break;
             }
-            Chat* chat = nullptr;
-            if (parent() != nullptr) {
-                chat = static_cast<ChatsModel*>(parent())->chat(m_channelId);
-            }
-            preprocessFormatting(chat, message);
-            _index_to_replace = i;
-            break;
         }
     }
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
         qDebug() << "updating message:" << message->text << message << oldmessage << _index_to_replace;
+        preprocessMessage(message);
         if (message->messageThread != nullptr) {
             //replace old parent message with new one in the thread
             message->messageThread->replaceMessage(oldmessage, message);
@@ -396,12 +413,6 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
     m_hasMore = hasMore;
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
 
-    //assume we have parent;
-    ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat* chat = nullptr;
-    if (_chatsModel != nullptr) {
-        chat = _chatsModel->chat(m_channelId);
-    }
     for (const QJsonValue &messageData : messages) {
         const QJsonObject messageObject = messageData.toObject();
         if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
@@ -418,19 +429,7 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
         }
         message->user = m_usersModel->user(message->user_id);
 
-        //fill up users for replys
-        for(QObject* rplyObj : message->replies) {
-            ReplyField* rply = static_cast<ReplyField*>(rplyObj);
-            rply->m_user = m_usersModel->user(rply->m_userId);
-        }
-        // TODO: why?
-        //m_reactions.insert(reactionObject["name"].toString(), reaction);
-        if (message->user.isNull()) {
-            qWarning() << "no user for" << message->user_id << m_usersModel;
-        }
-        Q_ASSERT_X(!message->user.isNull(), "user is null", "");
-
-        preprocessFormatting(chat, message);
+        preprocessMessage(message);
 
         //check for thread
         if (isMessageThreadChild(message)) {
@@ -438,21 +437,17 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
             Message* parent_msg = this->message(message->thread_ts);
             QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
             if (thrdModel == nullptr) {
-                thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId));
+                thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
                 QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
             }
             if (parent_msg != nullptr) {
                 if (parent_msg->messageThread.isNull()) {
                     parent_msg->messageThread = thrdModel;
                     //add parent message as a 1st message in the thread
-                    //thrdModel->addMessage(parent_msg, false);
                     thrdModel->appendMessageToModel(parent_msg);
                     thrdModel->sortMessages();
                 }
-            } else {
-                qWarning() << "no parent msg found!";
             }
-            //thrdModel->addMessage(message, false);
             thrdModel->prependMessageToModel(message);
             if (!m_MessageThreads.contains(message->thread_ts)) {
                 m_MessageThreads.insert(message->thread_ts, thrdModel);
@@ -529,17 +524,6 @@ Message::~Message()
     qDeleteAll(fileshares);
     qDeleteAll(replies);
 }
-//    QVariantMap channel = m_storage.channel(channelId);
-
-//    QString messageTime = data.value(QStringLiteral("time")).toString();
-//    QString latestRead = channel.value(QStringLiteral("lastRead")).toString();
-
-//    if (messageTime > latestRead) {
-//        int unreadCount = channel.value(QStringLiteral("unreadCount")).toInt() + 1;
-//        channel.insert(QStringLiteral("unreadCount"), unreadCount);
-//        m_storage.saveChannel(channel);
-//        emit channelUpdated(m_teamInfo.teamId(), channel);
-//    }
 
 //    if (!channel.value(QStringLiteral("isOpen")).toBool()) {
 //        if (channel.value(QStringLiteral("type")).toString() == QStringLiteral("im")) {
