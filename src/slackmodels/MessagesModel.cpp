@@ -238,11 +238,17 @@ void MessageListModel::replaceMessage(Message *oldmessage, Message *message)
 
 void MessageListModel::preprocessMessage(Message *message)
 {
-    if (message->user.isNull() || (!message->user.isNull() && (message->user_id != message->user->userId()))) {
+    if (message->user.isNull()
+            || (!message->user.isNull() && (message->user_id != message->user->userId()))) {
         message->user = m_usersModel->user(message->user_id);
         if (message->user.isNull()) {
             qWarning() << "user is null for " << message->user_id;
-            Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+            //try to construct user from message
+            if (!message->user_id.isEmpty() && !message->userName.isEmpty()) {
+                QPointer<::User> _user = new ::User(message->user_id, message->userName, nullptr);
+                message->user = _user;
+                m_usersModel->addUser(_user);
+            }
         }
     }
 
