@@ -359,6 +359,7 @@ public slots:
     QDateTime firstMessageTs();
     bool isThreadModel() const;
     MessageListModel* createThread(Message* parentMessage);
+    void processChildMessage(Message *message);
 
 protected:
     void preprocessFormatting(::Chat* chat, Message *message);

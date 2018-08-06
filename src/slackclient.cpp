@@ -246,6 +246,9 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
         //channel id missed in sub messages
         const QString& channel_id = message.value(QStringLiteral("channel")).toString();
         message_->channel_id = channel_id;
+        if (message_->subtype.isEmpty()) {
+            message_->subtype = subtype;
+        }
     }
     if (subtype == "message_changed" || subtype == "message_replied") {
        qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
