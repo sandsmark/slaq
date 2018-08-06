@@ -7,7 +7,9 @@ Based on [Slackfish](https://github.com/markussammallahti/harbour-slackfish).
 
 ## How to use
 Get latest Qt framework. 
-Minimum required version is Qt 5.11
+Minimum required version is Qt 5.11. 
+
+Minimun GCC version is 5.x (Linux)
 
 We recommends online installer [here](https://www.qt.io/download-qt-installer)
 
