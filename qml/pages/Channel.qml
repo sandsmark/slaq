@@ -245,21 +245,36 @@ Page {
         }
     }
 
-    Column {
+    Popup {
         id: nickPopup
-        anchors {
-            bottom: input.top
-        }
         visible: false
+        modal: false
+        width: 200
+        height: listView.height
         x: input.cursorX
+        y: listView.y
+        focus: false
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-        Repeater {
-            id: nickSuggestions
+        ListView {
+            id: nickSuggestionsView
+            width: parent.width
+            height: parent.height - nickPopup.padding
             model: input.nickSuggestions
+            clip: true
+            ScrollBar.vertical: ScrollBar {}
 
             delegate: Text {
                 text: modelData
                 font.bold: index === input.currentNickSuggestionIndex
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        input.currentNickSuggestionIndex = index
+                        input.insertSuggestion()
+                        nickPopup.close()
+                    }
+                }
             }
         }
     }

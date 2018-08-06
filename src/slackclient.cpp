@@ -693,15 +693,20 @@ QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, cons
         whitespaceBefore++;
     }
 
-    const QString relevant = currentText.mid(whitespaceBefore, whitespaceAfter- whitespaceBefore);
+    QString relevant = currentText.mid(whitespaceBefore, whitespaceAfter- whitespaceBefore);
+    if (relevant.startsWith("@")) {
+        relevant.remove(0, 1);
+    }
 
     QStringList nicks;
     for (QPointer<User> user : m_teamInfo.users()->users()) {
         const QString nick = user->username();
-        if (relevant.isEmpty()) {
-            nicks.append(nick);
-        } else if (nick.contains(relevant, Qt::CaseInsensitive)) {
-            nicks.append(nick);
+        if (!nick.isEmpty()) {
+            if (relevant.isEmpty()) {
+                nicks.append(nick);
+            } else if (nick.contains(relevant, Qt::CaseInsensitive)) {
+                nicks.append(nick);
+            }
         }
     }
 
