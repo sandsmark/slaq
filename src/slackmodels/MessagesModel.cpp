@@ -259,7 +259,10 @@ void MessageListModel::preprocessMessage(Message *message)
         ReplyField* rply = static_cast<ReplyField*>(rplyObj);
         rply->m_user = m_usersModel->user(rply->m_userId);
     }
-    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
+    if (chat != nullptr && !chat->id.isEmpty()
+            && message->time > chat->lastRead
+            && message->subtype != "message_changed"
+            && message->subtype != "message_deleted") {
         chat->lastRead = message->time;
         chat->unreadCountDisplay++;
         _chatsModel->chatChanged(chat);
@@ -295,6 +298,30 @@ void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
     }
 }
 
+void MessageListModel::processChildMessage(Message* message) {
+    Message* parent_msg = this->message(message->thread_ts);
+    QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
+    if (thrdModel == nullptr) {
+        thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
+        QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
+    }
+    if (parent_msg != nullptr) {
+        if (parent_msg->messageThread.isNull()) {
+            parent_msg->messageThread = thrdModel;
+            //add parent message as a 1st message in the thread
+            thrdModel->prependMessageToModel(parent_msg);
+            thrdModel->sortMessages();
+        }
+    } else {
+        qWarning() << "no parent msg found!";
+    }
+    thrdModel->prependMessageToModel(message);
+    thrdModel->sortMessages();
+    if (!m_MessageThreads.contains(message->thread_ts)) {
+        m_MessageThreads.insert(message->thread_ts, thrdModel);
+    }
+}
+
 void MessageListModel::addMessage(Message* message)
 {
     qDebug() << "adding message:" << message->text << m_messages.size() << QThread::currentThreadId();
@@ -302,27 +329,7 @@ void MessageListModel::addMessage(Message* message)
     preprocessMessage(message);
     //check for thread
     if (isMessageThreadChild(message)) {
-        Message* parent_msg = this->message(message->thread_ts);
-        QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
-        if (thrdModel == nullptr) {
-            thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
-            QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
-        }
-        if (parent_msg != nullptr) {
-            if (parent_msg->messageThread.isNull()) {
-                parent_msg->messageThread = thrdModel;
-                //add parent message as a 1st message in the thread
-                thrdModel->prependMessageToModel(parent_msg);
-                thrdModel->sortMessages();
-            }
-        } else {
-            qWarning() << "no parent msg found!";
-        }
-        thrdModel->prependMessageToModel(message);
-        thrdModel->sortMessages();
-        if (!m_MessageThreads.contains(message->thread_ts)) {
-            m_MessageThreads.insert(message->thread_ts, thrdModel);
-        }
+        processChildMessage(message);
     } else {
         // check if the message is parent thread
         if (m_MessageThreads.contains(message->time) && message->messageThread == nullptr) {
@@ -459,25 +466,7 @@ void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
 
         //check for thread
         if (isMessageThreadChild(message)) {
-            //qDebug().noquote() << "found message thread at" << QJsonDocument(messageObject).toJson();
-            Message* parent_msg = this->message(message->thread_ts);
-            QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
-            if (thrdModel == nullptr) {
-                thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
-                QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
-            }
-            if (parent_msg != nullptr) {
-                if (parent_msg->messageThread.isNull()) {
-                    parent_msg->messageThread = thrdModel;
-                    //add parent message as a 1st message in the thread
-                    thrdModel->appendMessageToModel(parent_msg);
-                    thrdModel->sortMessages();
-                }
-            }
-            thrdModel->prependMessageToModel(message);
-            if (!m_MessageThreads.contains(message->thread_ts)) {
-                m_MessageThreads.insert(message->thread_ts, thrdModel);
-            }
+            processChildMessage(message);
         } else {
             // check if the message is parent thread
             if (m_MessageThreads.contains(message->time) && message->messageThread == nullptr) {
