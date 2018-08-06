@@ -54,7 +54,6 @@ Drawer {
 
         }
         MessageInput {
-            visible: listView.inputEnabled
             Layout.fillWidth: true
             placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
             onSendMessage: {

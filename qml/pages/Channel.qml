@@ -195,8 +195,8 @@ Page {
         anchors {
             bottom: parent.bottom
         }
-
-        width: parent.width
+        anchors.left: parent.left; anchors.leftMargin: Theme.paddingLarge/2
+        anchors.right: parent.right; anchors.rightMargin: Theme.paddingLarge/2
 
         visible: listView.inputEnabled
         placeholder: qsTr("Message %1%2").arg("#").arg(channelName)

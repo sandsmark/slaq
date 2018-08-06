@@ -1,10 +1,11 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 import QtQuick.Window 2.3
+import QtQuick.Layouts 1.3
 import ".."
 import "../dialogs"
 
-Column {
+ColumnLayout {
     id: messageInputColumn
     property alias placeholder: messageInput.placeholderText
     property int cursorX: mapFromItem(messageInput, messageInput.cursorRectangle.x, messageInput.cursorRectangle.y).x
@@ -17,7 +18,9 @@ Column {
     signal showNickPopup()
     signal hideNickPopup()
 
-    width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 1 : 0)
+    Layout.fillWidth: true
+    Layout.leftMargin: Theme.paddingLarge/2
+    Layout.rightMargin: Theme.paddingLarge/2
     onFocusChanged: if (focus) { messageInput.focus = true; }
 
     Item {
@@ -25,16 +28,17 @@ Column {
         width: height
     }
 
-    Row {
+    RowLayout {
         width: parent.width
         spacing: Theme.paddingMedium
 
         TextArea {
             id: messageInput
-            width: parent.width - sendButton.width - uploadButton.width - emojiButton.width - Theme.paddingMedium * 4
+            Layout.fillWidth: true
             selectByMouse: true
             wrapMode: TextArea.Wrap
             focus: true
+            persistentSelection: true
 
             function updateSuggestions() {
                 var selectedNick = nickSuggestions[currentNickSuggestionIndex]
@@ -90,26 +94,24 @@ Column {
                 }
             }
 
-            onEditingFinished: {
-                doEditingFinished()
-            }
-
+            // Enter - sends message,
+            // Shift-Enter - new line
             Keys.onReturnPressed: {
-                if (event.modifiers & Qt.ControlModifier) {
+                if (event.modifiers == 0) {
                     doEditingFinished()
                     event.accepted = true
-                    return
+                } else {
+                    event.accepted = false
                 }
-                event.accepted = false
             }
 
             Keys.onEnterPressed: {
-                if (event.modifiers & Qt.ControlModifier) {
+                if (event.modifiers == 0) {
                     doEditingFinished()
                     event.accepted = true
-                    return
+                } else {
+                    event.accepted = false
                 }
-                event.accepted = false
             }
 
             Keys.onTabPressed: {
@@ -125,10 +127,25 @@ Column {
                         showNickPopup()
                     }
                 }
+                event.accepted = true
             }
 
-            Keys.onUpPressed: currentNickSuggestionIndex = Math.max(currentNickSuggestionIndex - 1, 0)
-            Keys.onDownPressed: currentNickSuggestionIndex = Math.min(currentNickSuggestionIndex + 1, nickSuggestions.length - 1)
+            Keys.onUpPressed: {
+                if (nickPopupVisible) {
+                    currentNickSuggestionIndex = Math.max(currentNickSuggestionIndex - 1, 0)
+                    event.accepted = true
+                } else {
+                    event.accepted = false
+                }
+            }
+            Keys.onDownPressed: {
+                if (nickPopupVisible) {
+                    currentNickSuggestionIndex = Math.min(currentNickSuggestionIndex + 1, nickSuggestions.length - 1)
+                    event.accepted = true
+                } else {
+                    event.accepted = false
+                }
+            }
 
             onCursorPositionChanged: {
                 if (nickPopupVisible) {
