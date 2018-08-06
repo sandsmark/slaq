@@ -23,6 +23,36 @@ ColumnLayout {
     Layout.rightMargin: Theme.paddingLarge/2
     onFocusChanged: if (focus) { messageInput.focus = true; }
 
+    function insertSuggestion() {
+        var lastSpace = messageInput.text.indexOf(' ', messageInput.cursorPosition)
+        var after = " "
+        if (lastSpace >= 0) {
+            after = messageInput.text.substring(lastSpace)
+        }
+        var firstSpace = messageInput.text.lastIndexOf(' ', messageInput.cursorPosition - 1)
+        if (firstSpace < 0) {
+            firstSpace = 0
+        } else {
+            firstSpace++
+        }
+        var firstAt = messageInput.text.lastIndexOf('@', messageInput.cursorPosition - 1)
+        if (firstAt >= 0) {
+            firstAt++
+        }
+
+        var cursorBefore = messageInput.cursorPosition
+        var before = ""
+        if (firstAt != -1) {
+            before = messageInput.text.substring(0, firstAt)
+            messageInput.text = before + nickSuggestions[currentNickSuggestionIndex] + after
+            messageInput.cursorPosition = cursorBefore + nickSuggestions[currentNickSuggestionIndex].length + 1
+        } else {
+            before = messageInput.text.substring(0, firstSpace)
+            messageInput.text = before + "@" + nickSuggestions[currentNickSuggestionIndex] + after
+            messageInput.cursorPosition = cursorBefore - (lastSpace - firstSpace) + nickSuggestions[currentNickSuggestionIndex].length + 1
+        }
+    }
+
     Item {
         height: Theme.paddingLarge
         width: height
@@ -41,8 +71,8 @@ ColumnLayout {
             persistentSelection: true
 
             function updateSuggestions() {
-                var selectedNick = nickSuggestions[currentNickSuggestionIndex]
                 nickSuggestions = SlackClient.getNickSuggestions(teamRoot.teamId, text, cursorPosition)
+                var selectedNick = nickSuggestions[currentNickSuggestionIndex]
                 var nickPosition = nickSuggestions.indexOf(selectedNick)
                 if (nickPosition > 0) {
                     currentNickSuggestionIndex = nickPosition
@@ -53,26 +83,6 @@ ColumnLayout {
                 if (nickSuggestions.length === 0) {
                     hideNickPopup()
                 }
-            }
-
-            function insertSuggestion() {
-                var lastSpace = text.indexOf(' ', cursorPosition)
-                var after = " "
-                if (lastSpace >= 0) {
-                    after = text.substring(lastSpace)
-                }
-                var firstSpace = text.lastIndexOf(' ', cursorPosition - 1)
-                if (firstSpace < 0) {
-                    firstSpace = 0
-                } else {
-                    firstSpace++
-                }
-
-                var before = text.substring(0, firstSpace)
-
-                var cursorBefore = cursorPosition
-                text = before + "@" + nickSuggestions[currentNickSuggestionIndex] + after
-                cursorPosition = cursorBefore - (lastSpace - firstSpace) + nickSuggestions[currentNickSuggestionIndex].length + 1
             }
 
             Connections {
@@ -156,6 +166,12 @@ ColumnLayout {
             onTextChanged: {
                 if (nickPopupVisible) {
                     updateSuggestions()
+                } else {
+                    if (text[cursorPosition - 1] === "@") {
+                        currentNickSuggestionIndex = 0
+                        updateSuggestions()
+                        showNickPopup()
+                    }
                 }
             }
         }
