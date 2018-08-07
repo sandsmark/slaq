@@ -54,6 +54,7 @@ Drawer {
             clip: true
             spacing: Theme.paddingMedium
             delegate: MessageListItem {
+                width: listView.width - listView.ScrollIndicator.vertical.width
                 isSearchResult: true
             }
 
