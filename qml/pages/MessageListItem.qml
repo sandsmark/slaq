@@ -58,13 +58,35 @@ MouseArea {
 
                 RowLayout {
                     height: emojiButton.implicitHeight
-                    spacing: Theme.paddingMedium
+                    spacing: Theme.paddingMedium/2
 
                     Label {
                         id: nickLabel
                         text: User.fullName
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
+                    }
+
+                    Item {
+                        width: 16
+                        height: 16
+                        visible: User.statusEmoji.length > 0
+                        Image {
+                            sourceSize: Qt.size(parent.width, parent.height)
+                            visible: !ImagesCache.isUnicode
+                            smooth: true
+                            cache: false
+                            source: visible ? "image://emoji/" + User.statusEmoji.slice(1, -1) : ""
+                        }
+                        Text {
+                            visible: ImagesCache.isUnicode
+                            text: ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1))
+                            font.family: "Twitter Color Emoji"
+                            font.pixelSize: parent.height - 2
+                            renderType: Text.QtRendering
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignHCenter
+                        }
                     }
 
                     Label {

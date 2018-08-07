@@ -149,7 +149,7 @@ void SlackTeamClient::handleStreamStart()
 void SlackTeamClient::handleStreamEnd(){
     DEBUG_BLOCK
     qDebug() << "Stream ended";
-    setState(ClientStates::RECONNECTING);
+    setState(ClientStates::DISCONNECTED);
     emit reconnecting(m_teamInfo.teamId());
     reconnectTimer->setSingleShot(true);
     reconnectTimer->start(10000);
