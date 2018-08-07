@@ -12,7 +12,7 @@ struct DebugHelperClass {
     }
 
     ~DebugHelperClass() {
-        if (m_timer.elapsed() > 0) {
+        if (m_timer.elapsed() > 50) {
             qDebug().noquote() /*<< QByteArray(debugHelper_indent, '\t')*/ << "\t" << m_funcInfo << m_timer.elapsed() << "ms";
         }
     }
