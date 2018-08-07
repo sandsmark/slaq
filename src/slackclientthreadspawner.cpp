@@ -288,6 +288,18 @@ void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString 
                               Q_ARG(QDateTime, thread_ts));
 }
 
+void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QString &channelId, const QString &content, const QDateTime &ts)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "updateMessage", Qt::QueuedConnection,
+                              Q_ARG(QString, channelId),
+                              Q_ARG(QString, content),
+                              Q_ARG(QDateTime, ts));
+}
+
 void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId, const QDateTime &ts)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);

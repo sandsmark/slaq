@@ -151,7 +151,29 @@ MouseArea {
                                 teamRoot.deleteMessage(channelId, model.Time)
                             }
                         }
-
+                        EmojiButton {
+                            id: editButton
+                            padding: 0
+                            visible: itemDelegate.containsMouse && !isSearchResult &&
+                                     model.User.userId === teamRoot.slackClient.teamInfo().selfId
+                            implicitHeight: nickLabel.paintedHeight * 2
+                            implicitWidth: nickLabel.paintedHeight * 2
+                            text: contentLabel.readOnly ? "✎" : "💾"
+                            font.bold: false
+                            font.pixelSize: parent.height/2
+                            onClicked: {
+                                if (contentLabel.readOnly == true) {
+                                    contentLabel.readOnly = false
+                                    contentLabel.forceActiveFocus();
+                                } else {
+                                    var editedText = contentLabel.getText(0, contentLabel.text.length);
+                                    SlackClient.updateMessage(teamRoot.teamId, channelId, editedText, model.Time)
+                                    contentLabel.focus = false
+                                    contentLabel.readOnly = true
+                                    input.forceActiveFocus()
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -181,6 +203,11 @@ MouseArea {
                         } else {
                             input.forceActiveFocus()
                         }
+                    }
+                    onEditingFinished: {
+                        undo();
+                        readOnly = true
+                        input.forceActiveFocus()
                     }
                     wrapMode: Text.Wrap
 

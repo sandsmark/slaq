@@ -1206,6 +1206,20 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostMessageReply);
 }
 
+void SlackTeamClient::updateMessage(const QString &channelId, QString content, const QDateTime &ts)
+{
+    DEBUG_BLOCK;
+    QMap<QString, QString> data;
+    data.insert(QStringLiteral("channel"), channelId);
+    data.insert(QStringLiteral("text"), content);
+    data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
+    data.insert(QStringLiteral("parse"), QStringLiteral("full"));
+    data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+
+    QNetworkReply *reply = executePost(QStringLiteral("chat.update"), data);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostMessageReply);
+}
+
 void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts)
 {
     DEBUG_BLOCK;
@@ -1251,10 +1265,9 @@ void SlackTeamClient::handleAddReactionReply()
 void SlackTeamClient::handlePostMessageReply()
 {
     DEBUG_BLOCK;
-
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
-    qDebug() << "Post message result" << data;
+    qDebug() << "Post/update message result" << data;
     reply->deleteLater();
 }
 
