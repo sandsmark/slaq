@@ -88,10 +88,10 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
 
 }
 
-QString ChatsModel::addChat(const QJsonObject &data, const ChatsModel::ChatType type)
+QString ChatsModel::addChat(Chat* chat)
 {
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count());
-    QString channelId = doAddChat(data, type);
+    QString channelId = doAddChat(chat);
     endInsertRows();
     return channelId;
 }
@@ -109,16 +109,11 @@ void ChatsModel::removeChat(const QString &channelId)
     endRemoveRows();
 }
 
-QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
+QString ChatsModel::doAddChat(Chat *chat)
 {
 //    qDebug() << type;
-    //qDebug().noquote() << QJsonDocument(data).toJson();
+    qDebug() << __PRETTY_FUNCTION__ << chat->id << chat->type;
 
-    Chat* chat = new Chat(data, type);
-    if (chat == nullptr) {
-        qWarning() << __PRETTY_FUNCTION__ << "Error allocating memory for Chat";
-        return QString();
-    }
     chat->membersModel = new UsersModel(this);
     chat->messagesModel = new MessageListModel(this, m_networkUsers, chat->id);
     QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);
@@ -127,15 +122,12 @@ QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
 
 
     if (chat->type == Conversation) {
-        chat->membersModel->addUser(m_networkUsers->user(data.value("user").toString()));
-        //qDebug() << "user for conv" << chat->membersModel->users().first()->userId();
-    } else {
-        for (const QJsonValueRef &userId : data.value("members").toArray()) {
-            chat->membersModel->addUser(m_networkUsers->user(userId.toString()));
-        }
+        chat->membersModel->addUser(m_networkUsers->user(chat->user));
+        chat->isOpen = true;
+        chat->name = chat->membersModel->users().first()->fullName();
     }
 
-    if (chat->type == Conversation || chat->name.startsWith("mpdm")) {
+    if (chat->name.startsWith("mpdm")) {
         chat->setReadableName(m_selfId);
     }
     m_chatIds.append(chat->id);
@@ -143,16 +135,31 @@ QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
     return chat->id;
 }
 
-void ChatsModel::addChats(const QJsonArray &chats, const ChatType type)
+void ChatsModel::addChats(const QList<Chat*>& chats)
 {
-    qDebug() << "addChats" << type << chats.count();
+    qDebug() << "addChats" << chats.count();
 
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count() - 1);
-    for (const QJsonValue &value : chats) {
-        doAddChat(value.toObject(), type);
+    for (Chat *chat : chats) {
+        doAddChat(chat);
     }
-
     endInsertRows();
+}
+
+void ChatsModel::addMembers(const QString &channelId, const QStringList &members)
+{
+    Chat* _chat = chat(channelId);
+    if (_chat == nullptr) {
+        return;
+    }
+    for (const QString &userId : members) {
+        _chat->membersModel->addUser(m_networkUsers->user(userId));
+    }
+    if (_chat->type == Conversation || _chat->name.startsWith("mpdm")) {
+        _chat->setReadableName(m_selfId);
+        qDebug() << "readable name" << _chat->id << _chat->readableName;
+    }
+    chatChanged(_chat);
 }
 
 bool ChatsModel::hasChannel(const QString &id)
@@ -217,6 +224,7 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *p
     presence = QStringLiteral("none");
     isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
                                              data.value(QStringLiteral("is_open")).toBool();
+    user = data.value("user").toString();
 
     isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
     lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());

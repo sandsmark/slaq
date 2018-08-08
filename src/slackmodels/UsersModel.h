@@ -15,6 +15,7 @@ class User : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QString userId MEMBER m_userId CONSTANT)
+    Q_PROPERTY(QString botId MEMBER m_botId CONSTANT)
     Q_PROPERTY(QString appId MEMBER m_appId CONSTANT)
     Q_PROPERTY(QString username MEMBER m_username CONSTANT)
     Q_PROPERTY(QString fullName MEMBER m_fullName CONSTANT)
@@ -49,12 +50,14 @@ public:
     QString fullName() const;
     QUrl avatarUrl() const;
     bool isBot() const;
+    QString botId() const;
 
 signals:
     void presenceChanged();
 
 private:
     QString m_userId;
+    QString m_botId;
     QString m_appId;
     QString m_username;
     QString m_fullName;

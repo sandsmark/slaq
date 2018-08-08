@@ -111,7 +111,7 @@ public slots:
     void onMessageUpdated(Message* message);
     void onMessageDeleted(const QString& channelId, const QDateTime& ts);
     void onChannelUpdated(Chat *chat);
-    void onChannelJoined(const QJsonObject &data);
+    void onChannelJoined(Chat *chat);
     void onChannelLeft(const QString &channelId);
     void onSearchMessagesReceived(const QJsonArray &messages, int total, const QString &query, int page, int pages);
 
@@ -130,8 +130,11 @@ public slots:
     void setMediaSource(QObject *mediaPlayer, const QString& teamId, const QString& url);
     QString teamToken(const QString& teamId);
 
-    void onTeamDataChanged(const QJsonObject &teamData);
     void onChatJoined(const QJsonObject &data);
+
+    void onUsersDataChanged(const QJsonObject &usersData, bool last);
+    void onConversationsDataChanged(const QList<Chat *> &chats, bool last);
+    void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
 
 protected:
     void run();

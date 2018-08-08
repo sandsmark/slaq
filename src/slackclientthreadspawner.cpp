@@ -407,16 +407,11 @@ void SlackClientThreadSpawner::onChannelUpdated(Chat* chat)
     emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 }
 
-void SlackClientThreadSpawner::onChannelJoined(const QJsonObject &data)
+void SlackClientThreadSpawner::onChannelJoined(Chat* chat)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    QString channelId = chatsModel->addChat(data, ChatsModel::Channel);
-    Chat* chat = chatsModel->chat(channelId);
-    if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << channelId << "not found";
-        return;
-    }
+    QString channelId = chatsModel->addChat(chat);
     connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
             _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
     emit channelJoined(_slackClient->teamInfo()->teamId(), channelId);
@@ -537,7 +532,9 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
 
     connect(_slackClient, &SlackTeamClient::isOnlineChanged, this, &SlackClientThreadSpawner::onOnlineChanged, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::userTyping, this, &SlackClientThreadSpawner::userTyping, Qt::QueuedConnection);
-    connect(_slackClient, &SlackTeamClient::teamDataChanged, this, &SlackClientThreadSpawner::onTeamDataChanged, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::usersDataChanged, this, &SlackClientThreadSpawner::onUsersDataChanged, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::conversationsDataChanged, this, &SlackClientThreadSpawner::onConversationsDataChanged, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::conversationMembersChanged, this, &SlackClientThreadSpawner::onConversationMembersChanged, Qt::QueuedConnection);
 
     return _slackClient;
 }
@@ -650,31 +647,46 @@ QString SlackClientThreadSpawner::teamToken(const QString &teamId)
     return _slackClient->teamInfo()->teamToken();
 }
 
-// this method should be run on GUI thread since QML engine cant connect to models, created in thread, differs from QML Engine
-void SlackClientThreadSpawner::onTeamDataChanged(const QJsonObject &teamData)
-{
-    DEBUG_BLOCK;
-    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    _slackClient->teamInfo()->addTeamData(teamData);
-    emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
-    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
-    for(int i = 0; i < _chatsModel->rowCount(); i++) {
-        Chat* chat = _chatsModel->chat(i);
-        if (chat == nullptr) {
-            qWarning() << "Chat for not found";
-            return;
-        }
-        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
-        connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
-                _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
-    }
-    connect(_slackClient->teamInfo()->searches(), &SearchMessagesModel::fetchMoreData,
-            _slackClient, &SlackTeamClient::onFetchMoreSearchData, Qt::QueuedConnection);
-}
-
 void SlackClientThreadSpawner::onChatJoined(const QJsonObject &data)
 {
 
+}
+
+void SlackClientThreadSpawner::onUsersDataChanged(const QJsonObject &usersData, bool last) {
+    DEBUG_BLOCK;
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+    _slackClient->teamInfo()->addUsersData(usersData, last);
+}
+
+void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& chats, bool last)
+{
+    DEBUG_BLOCK;
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+    _slackClient->teamInfo()->addConversationsData(chats, last);
+    if (last) {
+        emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
+        ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+        for(int i = 0; i < _chatsModel->rowCount(); i++) {
+            Chat* chat = _chatsModel->chat(i);
+            if (chat == nullptr) {
+                qWarning() << "Chat for not found";
+                return;
+            }
+            emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
+            connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
+                    _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
+        }
+        connect(_slackClient->teamInfo()->searches(), &SearchMessagesModel::fetchMoreData,
+                _slackClient, &SlackTeamClient::onFetchMoreSearchData, Qt::QueuedConnection);
+    }
+}
+
+void SlackClientThreadSpawner::onConversationMembersChanged(const QString& channelId, const QStringList &members, bool last)
+{
+    DEBUG_BLOCK;
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    _chatsModel->addMembers(channelId, members);
 }
 
 void SlackClientThreadSpawner::run()

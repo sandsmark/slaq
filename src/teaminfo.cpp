@@ -30,25 +30,69 @@ void TeamInfo::parseSelfData(const QJsonObject &selfObj) {
 
 void TeamInfo::addTeamData(const QJsonObject &teamData)
 {
-    qDebug() << "start" << __FUNCTION__;
+    qDebug() << "start" << __PRETTY_FUNCTION__;
 
-    parseTeamInfoData(teamData.value("team").toObject());
-    parseSelfData(teamData.value("self").toObject());
-    m_users = new UsersModel;
-    m_users->addUsers(teamData.value(QStringLiteral("users")).toArray());
-    m_users->addUsers(teamData.value(QStringLiteral("bots")).toArray());
+//    parseTeamInfoData(teamData.value("team").toObject());
+//    parseSelfData(teamData.value("self").toObject());
+//    m_users = new UsersModel;
+//    m_users->addUsers(teamData.value(QStringLiteral("users")).toArray());
+//    m_users->addUsers(teamData.value(QStringLiteral("bots")).toArray());
 
-    m_chats = new ChatsModel(m_selfId, nullptr, m_users);
-    m_chats->addChats(teamData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);
-    m_chats->addChats(teamData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
-    m_chats->addChats(teamData.value(QStringLiteral("ims")).toArray(), ChatsModel::Conversation);
+//    m_chats = new ChatsModel(m_selfId, nullptr, m_users);
+//    m_chats->addChats(teamData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);
+//    m_chats->addChats(teamData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
+//    m_chats->addChats(teamData.value(QStringLiteral("ims")).toArray(), ChatsModel::Conversation);
 
-    m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
-    qDebug() << "Chats count" << m_chats->rowCount();
+//    m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
+//    qDebug() << "Chats count" << m_chats->rowCount();
 
-    QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
-    QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
-    QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
+//    QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
+//    QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+//    QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
+}
+
+void TeamInfo::addUsersData(const QJsonObject &usersData, bool last)
+{
+    qDebug() << "start" << __PRETTY_FUNCTION__;
+#if 0
+        {
+            QFile f("userlist_dumps_" + name() + ".json");
+            if (f.open(QIODevice::Append)) {
+                f.write(QJsonDocument(usersData).toJson());
+                f.close();
+            }
+        }
+#endif
+    if (m_users == nullptr) {
+        m_users = new UsersModel;
+        QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
+    }
+    m_users->addUsers(usersData.value(QStringLiteral("members")).toArray());
+}
+
+void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
+{
+
+    if (m_chats == nullptr) {
+        m_chats = new ChatsModel(m_selfId, nullptr, m_users);
+        QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+    }
+
+#if 0
+        {
+            QFile f("chatslist_dumps_" + name() + ".json");
+            if (f.open(QIODevice::WriteOnly|QIODevice::Append)) {
+                f.write(QJsonDocument(conversationData).toJson());
+                f.close();
+            }
+        }
+#endif
+    m_chats->addChats(chats);
+
+    if (m_searchMessages == nullptr) {
+        m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
+        QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
+    }
 }
 
 QString TeamInfo::selfId() const
