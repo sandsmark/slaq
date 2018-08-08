@@ -41,7 +41,7 @@ ListView {
 
     delegate: ItemDelegate {
         id: delegate
-        text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
+        text: model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
         highlighted: teamRoot.currentChannelId === model.Id
         visible: model.IsOpen

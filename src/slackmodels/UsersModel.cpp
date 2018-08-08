@@ -98,14 +98,8 @@ void User::setData(const QJsonObject &data)
     //qDebug().noquote() << "user parse" << QJsonDocument(data).toJson();
 
     m_userId = data.value(QStringLiteral("id")).toString();
-    if (m_userId.isEmpty()) {
-        qWarning() << "No user id";
-        return;
-    }
-
-    if (m_userId.startsWith('B')) {
-        m_isBot = true;
-    }
+    m_isBot = data.value(QStringLiteral("is_bot")).toBool(false);
+    const QJsonObject& profile = data.value(QStringLiteral("profile")).toObject();
 
     if (m_isBot) {
         if (data.value(QStringLiteral("deleted")).toBool()) {
@@ -116,6 +110,7 @@ void User::setData(const QJsonObject &data)
         QJsonObject icons = data.value(QStringLiteral("icons")).toObject();
         m_avatarUrl = QUrl(icons[QStringLiteral("image_72")].toString());
         m_appId = data.value(QStringLiteral("app_id")).toString();
+        m_botId = profile.value(QStringLiteral("bot_id")).toString();
     } else {
         m_fullName = data.value(QStringLiteral("real_name")).toString();
         m_username = data.value(QStringLiteral("name")).toString();
@@ -124,6 +119,9 @@ void User::setData(const QJsonObject &data)
         }
 
         m_color = QColor("#" + data.value(QStringLiteral("color")).toString());
+        m_presence = Unknown;
+        //presence is deprecated. need to subscribe for changes
+        /*
         const QString presenceString = data.value(QStringLiteral("presence")).toString();
         if (presenceString == "active") {
             m_presence = Active;
@@ -132,9 +130,8 @@ void User::setData(const QJsonObject &data)
         } else {
             qWarning() << "Unknown presence type" << presenceString;
             m_presence = Unknown;
-        }
+        }*/
 
-        QJsonObject profile = data.value(QStringLiteral("profile")).toObject();
         m_avatarUrl = QUrl(profile.value(QStringLiteral("image_72")).toString());
         if (!m_avatarUrl.isValid()) {
             //qWarning() << "No avatar URL";
@@ -178,6 +175,11 @@ QUrl User::avatarUrl() const
 bool User::isBot() const
 {
     return m_isBot;
+}
+
+QString User::botId() const
+{
+    return m_botId;
 }
 
 
@@ -255,13 +257,24 @@ void UsersModel::addUsers(const QJsonArray &usersData)
         User *user = new User(this);
         user->setData(userData);
         QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
-        if (m_users[user->userId()]) {
-            m_users[user->userId()]->deleteLater();
+        if (m_users.contains(user->userId())) {
+            m_users.value(user->userId())->deleteLater();
             m_userIds.removeAll(user->userId());
         }
 
         m_userIds.append(user->userId());
         m_users[user->userId()] = user;
+
+        //if user is a bot as well
+        if (user->isBot() || !user->botId().isEmpty()) {
+            if (m_users.contains(user->botId())) {
+                m_users.value(user->botId())->deleteLater();
+                m_userIds.removeAll(user->botId());
+            }
+
+            m_userIds.append(user->botId());
+            m_users[user->botId()] = user;
+        }
         //qDebug() << "Added user" << user->userId() << this;
     }
 

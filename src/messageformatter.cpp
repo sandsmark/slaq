@@ -65,7 +65,9 @@ void MessageFormatter::replaceChannelInfo(ChatsModel *chatModel, QString &messag
         if (chat != nullptr) {
             doReplaceChannelInfo(chat, message);
         } else {
-            qWarning() << "channel not found" << id;
+            if (!id.isEmpty()) {
+                qWarning() << "channel not found" << id;
+            }
         }
     }
 }

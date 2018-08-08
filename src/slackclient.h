@@ -74,7 +74,7 @@ signals:
     void messageDeleted(const QString& channelId, const QDateTime& ts);
 
     void channelUpdated(Chat* chat);
-    void channelJoined(const QJsonObject& data);
+    void channelJoined(Chat* chat);
     void channelLeft(const QString& channelId);
     void chatJoined(const QString& channelId);
     void chatLeft(const QString& channelId);
@@ -98,8 +98,11 @@ signals:
     void stateChanged(const QString& teamId);
 
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
-    void teamDataChanged(const QJsonObject &teamData);
     void usersPresenceChanged(const QList<QPointer<User>>& users, const QString& presence);
+
+    void usersDataChanged(const QJsonObject &usersData, bool last);
+    void conversationsDataChanged(const QList<Chat*>& chats, bool last);
+    void conversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
 
 public slots:
     void startConnections();
@@ -119,7 +122,11 @@ public slots:
     void leaveGroup(const QString& groupId);
     void openChat(const QString& chatId);
     void closeChat(const QString& chatId);
+
     void requestTeamInfo();
+    void requestConversationsList(const QString& cursor);
+    void requestConversationMembers(const QString& channelId, const QString& cursor);
+    void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
 
     QString getChannelName(const QString& channelId);
@@ -154,6 +161,9 @@ private slots:
     void handleTeamEmojisReply();
     void handleSearchMessagesReply();
     void handleDeleteMessageReply();
+    void handleConversationsListReply();
+    void handleUsersListReply();
+    void handleConversationMembersReply();
 
 private:
     bool appActive;
@@ -162,7 +172,7 @@ private:
     QNetworkReply *executePost(const QString& method, const QMap<QString, QString> &data);
     QNetworkReply *executePostWithFile(const QString& method, const QMap<QString, QString> &, QFile *file);
 
-    QNetworkReply *executeGet(const QString& method, const QMap<QString, QString>& params = QMap<QString, QString>());
+    QNetworkReply *executeGet(const QString& method, const QMap<QString, QString>& params = QMap<QString, QString>(), const QVariant &attribute = QVariant());
 
     bool isOk(const QNetworkReply *reply);
     bool isError(const QJsonObject &data);

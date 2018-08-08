@@ -252,7 +252,7 @@ void MessageListModel::preprocessMessage(Message *message)
         }
     }
 
-    Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+    //Q_ASSERT_X(!message->user.isNull(), "user is null", "");
     ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
     Chat* chat = nullptr;
     if (_chatsModel != nullptr) {
@@ -320,8 +320,6 @@ void MessageListModel::processChildMessage(Message* message) {
             thrdModel->prependMessageToModel(parent_msg);
             thrdModel->sortMessages();
         }
-    } else {
-        qWarning() << "no parent msg found!";
     }
     thrdModel->prependMessageToModel(message);
     thrdModel->sortMessages();

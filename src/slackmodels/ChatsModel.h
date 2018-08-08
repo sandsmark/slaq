@@ -50,10 +50,11 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    QString addChat(const QJsonObject &data, const ChatsModel::ChatType type);
+    QString addChat(Chat *chat);
     void removeChat(const QString &channelId);
-    QString doAddChat(const QJsonObject &data, const ChatsModel::ChatType type);
-    void addChats(const QJsonArray &chats, const ChatType type);
+    QString doAddChat(Chat *chat);
+    void addChats(const QList<Chat *> &chats);
+    void addMembers(const QString &channelId, const QStringList &members);
 
     bool hasChannel(const QString &id);
 
@@ -80,6 +81,7 @@ class Chat: public QObject
 
     Q_PROPERTY(QString id MEMBER id CONSTANT)
     Q_PROPERTY(QString name MEMBER name CONSTANT)
+    Q_PROPERTY(QString user MEMBER user CONSTANT)
     Q_PROPERTY(QString readableName MEMBER readableName CONSTANT)
     Q_PROPERTY(QString topic MEMBER topic CONSTANT)
     Q_PROPERTY(QDateTime creationDate MEMBER creationDate CONSTANT)
@@ -88,22 +90,25 @@ class Chat: public QObject
     Q_PROPERTY(int unreadCountDisplay MEMBER unreadCountDisplay)
     Q_PROPERTY(bool isOpen MEMBER isOpen CONSTANT)
     Q_PROPERTY(bool isPrivate MEMBER isPrivate CONSTANT)
+    Q_PROPERTY(bool isGeneral MEMBER isGeneral CONSTANT)
     Q_PROPERTY(ChatsModel::ChatType type MEMBER type CONSTANT)
 
 public:
-    Chat(const QJsonObject &data, const ChatsModel::ChatType type, QObject* parent = nullptr);
+    Chat(const QJsonObject &data, const ChatsModel::ChatType type = ChatsModel::Channel, QObject* parent = nullptr);
     Chat() = default;
 
     QString id;
     QString presence;
     ChatsModel::ChatType type;
     QString name;
+    QString user;
     QString readableName;
     QString topic;
     QString purpose;
     QDateTime creationDate;
     bool isOpen = false;
     bool isPrivate = false;
+    bool isGeneral = false;
 
     QDateTime lastRead;
     int unreadCount = 0;
