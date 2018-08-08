@@ -22,7 +22,8 @@ MessageFormatter::MessageFormatter() :
     m_codeBlockPattern(QRegularExpression(QStringLiteral("```([^`]+)```"))),
     m_variableLabelPattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)\\|([^>]+)>"))),
     m_variablePattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)>"))),
-    m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):(:[\\w\\+\\-]+:)?[\\?\\.!]?")))
+    m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):(:[\\w\\+\\-]+:)?[\\?\\.!]?"))),
+    m_channelPattern(QRegularExpression(QStringLiteral("<#([A-Z0-9]+)|([^>]+)>")))
 {
     m_labelPattern.optimize();
     m_plainPattern.optimize();
@@ -35,6 +36,7 @@ MessageFormatter::MessageFormatter() :
     m_variableLabelPattern.optimize();
     m_variablePattern.optimize();
     m_emojiPattern.optimize();
+    m_channelPattern.optimize();
 }
 
 void MessageFormatter::replaceUserInfo(User* user, QString &message)
@@ -48,14 +50,30 @@ void MessageFormatter::replaceUserInfo(User* user, QString &message)
     message.replace(userIdPattern, displayName);
 }
 
-void MessageFormatter::replaceChannelInfo(Chat *chat, QString &message)
+void MessageFormatter::replaceChannelInfo(ChatsModel *chatModel, QString &message)
 {
-    if (chat == nullptr) {
+    if (chatModel == nullptr) {
+        qWarning() << "no chat found for message" << message;
         return;
     }
+    Chat* chat = nullptr;
+    QRegularExpressionMatchIterator i = m_channelPattern.globalMatch(message);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        const QString& id = match.captured(1);
+        chat = chatModel->chat(id);
+        if (chat != nullptr) {
+            doReplaceChannelInfo(chat, message);
+        } else {
+            qWarning() << "channel not found" << id;
+        }
+    }
+}
+
+void MessageFormatter::doReplaceChannelInfo(Chat *chat, QString &message)
+{
     QRegularExpression channelIdPattern("<#" + chat->id + "(\\|[^>]+)?>");
     QString displayName = "<a href=\"slaq://channel/" + chat->id + "\">#" + chat->name + "</a>";
-
     message.replace(channelIdPattern, displayName);
 }
 
@@ -107,7 +125,7 @@ void MessageFormatter::replaceEmoji(QString &message)
     }
 }
 
-void MessageFormatter::replaceAll(Chat *chat, QString &message)
+void MessageFormatter::replaceAll(ChatsModel *chat, QString &message)
 {
     replaceChannelInfo(chat, message);
     replaceTargetInfo(message);

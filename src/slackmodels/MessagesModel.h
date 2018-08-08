@@ -362,7 +362,7 @@ public slots:
     void processChildMessage(Message *message);
 
 protected:
-    void preprocessFormatting(::Chat* chat, Message *message);
+    void preprocessFormatting(ChatsModel *chat, Message *message);
     bool canFetchMore(const QModelIndex &parent) const override;
     void fetchMore(const QModelIndex &parent) override;
 

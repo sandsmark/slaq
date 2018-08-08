@@ -7,91 +7,8 @@
 #include <QDateTime>
 #include <QJsonArray>
 
-//Chat::Chat(const QJsonObject &data, QObject *parent) : QObject(parent),
-//    m_messages(new MessageListModel(this))
-//{
-//    data.insert(QStringLiteral("type"), QVariant(QStringLiteral("im")));
-//    data.insert(QStringLiteral("category"), QVariant(QStringLiteral("chat")));
-//    m_channelId = data.value(QStringLiteral("id")).toVariant();
-////    data.insert(QStringLiteral("userId"), userId);
-//    m_name = data.value(QStringLiteral("name"));
-//    m_presence = data.value(QStringLiteral("presence"));
-//    m_isOpen = data.value(QStringLiteral("is_open")).toBool();
-//    m_lastReadId = data.value(QStringLiteral("last_read")).toString();
-//    m_unreadCount = data.value(QStringLiteral("unread_count_display")).toInt();
-//}
-
-//void Chat::setMembers(const QList<QPointer<User> > &members)
-//{
-//    m_members.clear();
-//    for (QPointer<User> user : members) {
-//        if (!user) {
-//            qWarning() << "Handled a null user";
-//            continue;
-//        }
-//        const QString userId = user->userId();
-//        if (userId.isEmpty()) {
-//            qWarning() << "No user id, can't add user";
-//            continue;
-//        }
-//        m_members[userId] = user;
-//    }
-
-//    emit membersChanged();
-//}
-
-//void Chat::addMember(QPointer<User> user)
-//{
-//    if (!user) {
-//        qWarning() << "Can't add null user";
-//        return;
-//    }
-
-//    const QString userId = user->userId();
-//    if (userId.isEmpty()) {
-//        qWarning() << "No user id, can't add user";
-//        return;
-//    }
-
-//    if (m_members.contains(userId)) {
-//        qWarning() << "we already have user" << userId;
-//    }
-
-//    m_members[userId] = user;
-//    emit membersChanged();
-//}
-
-//void Chat::removeMember(const QString &id)
-//{
-//    if (!m_members.contains(id)) {
-//        qDebug() << "We don't have user" << id;
-//        return;
-//    }
-
-//    m_members.remove(id);
-//    emit membersChanged();
-//}
-
-//QList<User *> Chat::membersModel()
-//{
-//    QList<User*> ret;
-
-//    const QStringList userIds = m_members.uniqueKeys();
-//    for (const QString &id : userIds) {
-
-//        if (!m_members[id]) {
-//            qDebug() << "User" << id << "has gone away";
-//            m_members.remove(id);
-//            continue;
-//        }
-//        ret.append(m_members[id]);
-//    }
-
-//    return ret;
-//}
-
 ChatsModel::ChatsModel(const QString &selfId, QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
-    m_selfId(selfId), m_networkUsers(networkUsers) {}
+    m_networkUsers(networkUsers), m_selfId(selfId) {}
 
 QString ChatsModel::getSectionName(Chat* chat) const {
     switch (chat->type) {
@@ -116,7 +33,7 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         qWarning() << "invalid row" << row;
         return QVariant();
     }
-    Chat* chat = m_chats[m_chatIds[row]];
+    Chat* chat = m_chats.value(m_chatIds.at(row));
     if (chat == nullptr) {
         qWarning() << "Chat for channel ID" << m_chatIds[row] << "not found";
         return QVariant();
@@ -222,7 +139,6 @@ QString ChatsModel::doAddChat(const QJsonObject &data, const ChatType type)
         chat->setReadableName(m_selfId);
     }
     m_chatIds.append(chat->id);
-
     m_chats.insert(chat->id, chat);
     return chat->id;
 }
@@ -246,28 +162,34 @@ bool ChatsModel::hasChannel(const QString &id)
 
 MessageListModel *ChatsModel::messages(const QString &id)
 {
-    return m_chats[id]->messagesModel;
+    if (m_chats.contains(id)) {
+        return m_chats.value(id)->messagesModel;
+    }
+    return nullptr;
 }
 
 UsersModel *ChatsModel::members(const QString &id)
 {
-    return m_chats[id]->membersModel;
+    if (m_chats.contains(id)) {
+        return m_chats.value(id)->membersModel;
+    }
+    return nullptr;
 }
 
 Chat* ChatsModel::chat(const QString &id) {
-    return m_chats[id];
+    return m_chats.value(id);
 }
 
 Chat* ChatsModel::chat(int row)
 {
     Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chat", "m_chats.size() and m_chatIds.size() should be equal");
     //TODO: check why chats size != chat ids size
-    return m_chats[m_chatIds[row]];
+    return m_chats.value(m_chatIds.at(row));
 }
 
 void ChatsModel::chatChanged(Chat *chat)
 {
-    if (chat->id.isEmpty()) {
+    if (chat == nullptr || chat->id.isEmpty()) {
         return;
     }
     int row = m_chatIds.indexOf(chat->id);

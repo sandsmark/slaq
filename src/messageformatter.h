@@ -4,6 +4,7 @@
 #include <QRegularExpression>
 
 class User;
+class ChatsModel;
 class Chat;
 
 class MessageFormatter
@@ -13,14 +14,15 @@ public:
 
     void replaceUserInfo(User *user, QString &message);
     void replaceTargetInfo(QString &message);
-    void replaceChannelInfo(Chat* chat, QString &message);
+    void replaceChannelInfo(ChatsModel *chatModel, QString &message);
     void replaceSpecialCharacters(QString &message);
     void replaceLinks(QString &message);
     void replaceMarkdown(QString &message);
     void replaceEmoji(QString &message);
 
-    void replaceAll(Chat* chat,  QString &message);
+    void replaceAll(ChatsModel* chat,  QString &message);
 
+    void doReplaceChannelInfo(Chat *chat, QString &message);
 signals:
 
 public slots:
@@ -40,5 +42,6 @@ private:
     QRegularExpression m_variableLabelPattern;
     QRegularExpression m_variablePattern;
     QRegularExpression m_emojiPattern;
+    QRegularExpression m_channelPattern;
 };
 

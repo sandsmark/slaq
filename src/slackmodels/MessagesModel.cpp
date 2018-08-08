@@ -258,7 +258,8 @@ void MessageListModel::preprocessMessage(Message *message)
     if (_chatsModel != nullptr) {
         chat = _chatsModel->chat(m_channelId);
     }
-    preprocessFormatting(chat, message);
+
+    preprocessFormatting(_chatsModel, message);
 
     //fill up users for replys
     for(QObject* rplyObj : message->replies) {
@@ -268,7 +269,8 @@ void MessageListModel::preprocessMessage(Message *message)
     if (chat != nullptr && !chat->id.isEmpty()
             && message->time > chat->lastRead
             && message->subtype != "message_changed"
-            && message->subtype != "message_deleted") {
+            && message->subtype != "message_deleted"
+            && message->subtype != "message_replied") {
         chat->lastRead = message->time;
         chat->unreadCountDisplay++;
         _chatsModel->chatChanged(chat);
@@ -284,7 +286,7 @@ QDateTime MessageListModel::firstMessageTs()
     return _time;
 }
 
-void MessageListModel::preprocessFormatting(Chat *chat, Message *message)
+void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
 {
     findNewUsers(message->text);
     updateReactionUsers(message);
