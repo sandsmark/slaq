@@ -54,13 +54,35 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case UnreadCount:
         return chat->unreadCount;
     case Presence:
-        return chat->presence;
+        qWarning() << chat->membersModel->users().first()->fullName() << chat->membersModel->users().first()->presence();
+        return chat->membersModel->users().first()->presence();
+    case PresenceIcon: {
+        if (chat->type == ChatsModel::Channel
+                || chat->type == ChatsModel::Group
+                || chat->type == ChatsModel::MultiUserConversation) {
+            return "qrc:/icons/group-icon.png";
+        } else if (chat->type == ChatsModel::Conversation) {
+            if (chat->membersModel->users().isEmpty()) {
+                return "qrc:/icons/offline-icon.png";
+            } else {
+                User::Presence presence = chat->membersModel->users().first()->presence();
+                if (presence == User::Unknown) {
+                    return "qrc:/icons/offline-icon.png";
+                } else if (presence == User::Away) {
+                    return "qrc:/icons/offline-icon.png";
+                } else if (presence == User::Dnd) {
+                    return "qrc:/icons/dnd-icon.png";
+                } else if (presence == User::Active) {
+                    return "qrc:/icons/active-icon.png";
+                }
+            }
+        }
+        break;
+    }
     case MembersModel:
         return QVariant::fromValue(chat->membersModel.data());
     case MessagesModel:
         return QVariant::fromValue(chat->messagesModel.data());
-    case UserObject:
-        return QVariant::fromValue(chat->membersModel->users().first().data());
     case Section:
         return getSectionName(chat);
     default:
@@ -81,8 +103,8 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
     names[UnreadCountDisplay] = "UnreadCountDisplay";
     names[MembersModel] = "MembersModel";
     names[MessagesModel] = "MessagesModel";
-    names[UserObject] = "UserObject";
     names[Presence] = "Presence";
+    names[PresenceIcon] = "PresenceIcon";
     names[Section] = "Section";
     return names;
 
@@ -210,6 +232,20 @@ void ChatsModel::chatChanged(Chat *chat)
     Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chatChanged", "m_chats.size() and m_chatIds.size() should be equal");
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index);
+}
+
+void ChatsModel::setPresence(const QList<QPointer<User> > &users, const QString &presence)
+{
+    User::Presence _presence = (presence == "away" ? User::Away : User::Active);
+    for (Chat* chat : m_chats.values()) {
+        if (chat->type == ChatsModel::Conversation && chat->membersModel != nullptr && !chat->membersModel->users().isEmpty()) {
+            QPointer<User> _user = chat->membersModel->users().first();
+            if (users.contains(_user)) {
+                _user->setPresence(_presence);
+                chatChanged(chat);
+            }
+        }
+    }
 }
 
 Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *parent) : QObject (parent)
