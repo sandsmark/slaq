@@ -17,11 +17,12 @@ Column {
         visible: text.length > 0
         text: attachment.pretext
         onLinkActivated: linkClicked(link)
+        height: visible ? implicitHeight : 0
     }
 
     Spacer {
-        height: Theme.paddingSmall
         visible: !pretextLabel.visible
+        height: visible ? Theme.paddingSmall : 0
     }
 
     Row {
@@ -64,6 +65,9 @@ Column {
 
             RowLayout {
                 width: parent.width
+                visible: attachment.title !== "" || attachment.text !== ""
+                height: visible ? implicitHeight : 0
+
                 ColumnLayout {
                     Layout.fillWidth: true
                     Label {
@@ -107,6 +111,9 @@ Column {
         id: footerRow
         anchors.left: parent.left
         spacing: Theme.paddingMedium
+        visible: attachment.footer !== ""
+        height: visible ? implicitHeight : 0
+
         Image {
             fillMode: Image.PreserveAspectFit
             source: attachment.footer_icon

@@ -103,6 +103,21 @@ void User::setData(const QJsonObject &data)
     m_userId = data.value(QStringLiteral("id")).toString();
     m_isBot = data.value(QStringLiteral("is_bot")).toBool(false);
     const QJsonObject& profile = data.value(QStringLiteral("profile")).toObject();
+    m_fullName = data.value(QStringLiteral("real_name")).toString();
+    m_username = data.value(QStringLiteral("name")).toString();
+    if (m_fullName.isEmpty()) {
+        //qWarning() << "No full name set";
+        m_fullName = profile.value(QStringLiteral("real_name")).toString();
+    }
+    m_avatarUrl = QUrl(profile.value(QStringLiteral("image_72")).toString());
+    if (!m_avatarUrl.isValid()) {
+        //qWarning() << "No avatar URL";
+    }
+    m_statusEmoji = profile.value(QStringLiteral("status_emoji")).toString();
+    m_status = profile.value(QStringLiteral("status_text")).toString();
+    m_email = profile.value(QStringLiteral("email")).toString();
+    m_color = QColor("#" + data.value(QStringLiteral("color")).toString());
+    m_presence = Unknown;
 
     if (m_isBot) {
         if (data.value(QStringLiteral("deleted")).toBool()) {
@@ -110,38 +125,8 @@ void User::setData(const QJsonObject &data)
         } else {
             m_presence = Active;
         }
-        QJsonObject icons = data.value(QStringLiteral("icons")).toObject();
-        m_avatarUrl = QUrl(icons[QStringLiteral("image_72")].toString());
         m_appId = data.value(QStringLiteral("app_id")).toString();
         m_botId = profile.value(QStringLiteral("bot_id")).toString();
-    } else {
-        m_fullName = data.value(QStringLiteral("real_name")).toString();
-        m_username = data.value(QStringLiteral("name")).toString();
-        if (m_fullName.isEmpty()) {
-            //qWarning() << "No full name set";
-        }
-
-        m_color = QColor("#" + data.value(QStringLiteral("color")).toString());
-        m_presence = Unknown;
-        //presence is deprecated. need to subscribe for changes
-        /*
-        const QString presenceString = data.value(QStringLiteral("presence")).toString();
-        if (presenceString == "active") {
-            m_presence = Active;
-        } else if (presenceString == "away") {
-            m_presence = Away;
-        } else {
-            qWarning() << "Unknown presence type" << presenceString;
-            m_presence = Unknown;
-        }*/
-
-        m_avatarUrl = QUrl(profile.value(QStringLiteral("image_72")).toString());
-        if (!m_avatarUrl.isValid()) {
-            //qWarning() << "No avatar URL";
-        }
-        m_statusEmoji = profile.value(QStringLiteral("status_emoji")).toString();
-        m_status = profile.value(QStringLiteral("status_text")).toString();
-        m_email = profile.value(QStringLiteral("email")).toString();
     }
 }
 
@@ -255,7 +240,7 @@ void UsersModel::addUser(const QJsonObject &userData)
 void UsersModel::addUsers(const QList<QPointer<User>>& users)
 {
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + users.count() - 1);
-    for (User* user : users) {
+    for (QPointer<User> user : users) {
         if (m_users.contains(user->userId())) {
             m_users.value(user->userId())->deleteLater();
             m_userIds.removeAll(user->userId());

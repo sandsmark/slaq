@@ -53,7 +53,7 @@ void TeamInfo::addTeamData(const QJsonObject &teamData)
 
 void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
 {
-    qDebug() << "start" << __PRETTY_FUNCTION__;
+    //qDebug() << "start" << __PRETTY_FUNCTION__;
 #if 0
         {
             QFile f("userlist_dumps_" + name() + ".json");

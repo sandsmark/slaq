@@ -153,7 +153,13 @@ void ChatsModel::addMembers(const QString &channelId, const QStringList &members
         return;
     }
     for (const QString &userId : members) {
-        _chat->membersModel->addUser(m_networkUsers->user(userId));
+        QPointer<User> user = m_networkUsers->user(userId);
+        if (!user.isNull()) {
+            _chat->membersModel->addUser(user);
+        } else {
+            qWarning() << "user not found for ID" << userId;
+        }
+
     }
     if (_chat->type == Conversation || _chat->name.startsWith("mpdm")) {
         _chat->setReadableName(m_selfId);
@@ -238,9 +244,15 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *p
 
 void Chat::setReadableName(const QString& selfId) {
     QStringList _users;
-    for (const QPointer<User>& user : membersModel->users()) {
+    for (QPointer<User> user : membersModel->users()) {
         if (user->userId() != selfId) {
-            _users << user->username();
+            if (!user->fullName().isEmpty()) {
+                _users << user->fullName();
+            } else if (!user->username().isEmpty()) {
+                _users << user->username();
+            } else {
+                _users << user->userId();
+            }
         }
     }
     readableName = _users.join(", ");
