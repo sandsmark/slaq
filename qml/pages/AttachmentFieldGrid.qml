@@ -13,11 +13,6 @@ GridLayout {
     Repeater {
         id: repeater
 
-        onModelChanged: {
-            if (model.length > 0)
-            console.log("attachment fields", model[0].fieldValue)
-        }
-
         Column {
             Layout.columnSpan: repeater.model[index].fieldIsShort ? 1 : 2
             Layout.preferredWidth: repeater.model[index].fieldIsShort ? grid.width / 2 : grid.width

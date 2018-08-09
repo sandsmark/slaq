@@ -225,9 +225,14 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
         qWarning() << "Chat for channel ID" << channelId << "not found";
         return;
     }
-    chat->unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
-    chat->lastRead = slackToDateTime(message.value(QStringLiteral("channel")).toString());
-    emit channelUpdated(chat);
+    int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
+    QDateTime lastRead = slackToDateTime(message.value(QStringLiteral("ts")).toString());
+    if (unreadCountDisplay != chat->unreadCountDisplay
+            || lastRead != chat->lastRead) {
+        chat->unreadCountDisplay = unreadCountDisplay;
+        chat->lastRead = lastRead;
+        emit channelUpdated(chat);
+    }
 }
 
 //TODO: investigate comment type
@@ -1082,7 +1087,7 @@ void SlackTeamClient::handleLoadMessagesReply()
 #if 0
         {
             QFile f("msglist_dumps_" + m_teamInfo.name() + "_" + channelId + ".json");
-            if (f.open(QIODevice::WriteOnly)) {
+            if (f.open(QIODevice::Append)) {
                 f.write(QJsonDocument(data).toJson());
                 f.close();
             }

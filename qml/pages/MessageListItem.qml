@@ -44,11 +44,10 @@ MouseArea {
                 id: avatarImage
                 y: Theme.paddingMedium/2
                 visible: !sameuser || (isReplies && model.ThreadIsParentMessage)
-                height: Theme.avatarSize
+                sourceSize: visible ? Qt.size(Theme.avatarSize, Theme.avatarSize) : Qt.size(0, 0)
                 cache: true
                 asynchronous: true
-                width: height
-                source: visible ? model.User.avatarUrl : ""
+                source: visible && model.User != null ? model.User.avatarUrl : "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
             Column {
@@ -62,7 +61,7 @@ MouseArea {
 
                     Label {
                         id: nickLabel
-                        text: User.fullName.length > 0 ? User.fullName : User.Name
+                        text: User != null ? User.fullName !== "" ? User.fullName : (User.username !== "" ? User.username : "Private") : "Bot"
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
@@ -70,7 +69,7 @@ MouseArea {
                     Item {
                         width: 16
                         height: 16
-                        visible: User.statusEmoji.length > 0
+                        visible: User != null && User.statusEmoji.length > 0
                         Image {
                             sourceSize: Qt.size(parent.width, parent.height)
                             visible: !ImagesCache.isUnicode
@@ -80,7 +79,7 @@ MouseArea {
                         }
                         Text {
                             visible: ImagesCache.isUnicode
-                            text: ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1))
+                            text: User != null ? ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1)) : ""
                             font.family: "Twitter Color Emoji"
                             font.pixelSize: parent.height - 2
                             renderType: Text.QtRendering
@@ -141,7 +140,7 @@ MouseArea {
                             id: trashButton
                             padding: 0
                             visible: itemDelegate.containsMouse && !isSearchResult &&
-                                     model.User.userId === teamRoot.slackClient.teamInfo().selfId
+                                     (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId)
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: "\uD83D\uDDD1"
@@ -155,7 +154,7 @@ MouseArea {
                             id: editButton
                             padding: 0
                             visible: itemDelegate.containsMouse && !isSearchResult &&
-                                     model.User.userId === teamRoot.slackClient.teamInfo().selfId
+                                     (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId)
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: contentLabel.readOnly ? "✎" : "💾"
@@ -180,6 +179,7 @@ MouseArea {
                 TextArea {
                     id: contentLabel
                     width: parent.width - avatarImage.width - parent.spacing
+                    height: text === "" ? 0 : implicitHeight
                     readOnly: true
                     font.pixelSize: Theme.fontSizeLarge
                     font.italic: model.IsChanged
@@ -278,7 +278,7 @@ MouseArea {
         }
 
         Item {
-            height: Theme.paddingMedium
+            height: visible ? Theme.paddingMedium : 0
             width: height
             visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }
