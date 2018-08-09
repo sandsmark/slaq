@@ -62,7 +62,7 @@ MouseArea {
 
                     Label {
                         id: nickLabel
-                        text: User.fullName
+                        text: User.fullName.length > 0 ? User.fullName : User.Name
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }

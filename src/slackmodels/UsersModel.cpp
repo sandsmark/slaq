@@ -58,6 +58,9 @@ User::User(const User &copy, QObject *parent) : QObject(parent) {
     if (!copy.m_appId.isEmpty()) {
         m_appId = copy.m_appId;
     }
+    if (!copy.m_botId.isEmpty()) {
+        m_botId = copy.m_botId;
+    }
     if (!copy.m_username.isEmpty()) {
         m_username = copy.m_username;
     }
@@ -249,14 +252,10 @@ void UsersModel::addUser(const QJsonObject &userData)
     addUser(user);
 }
 
-void UsersModel::addUsers(const QJsonArray &usersData)
+void UsersModel::addUsers(const QList<QPointer<User>>& users)
 {
-    beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + usersData.count() - 1);
-    for (const QJsonValue &value : usersData) {
-        QJsonObject userData = value.toObject();
-        User *user = new User(this);
-        user->setData(userData);
-        QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+    beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + users.count() - 1);
+    for (User* user : users) {
         if (m_users.contains(user->userId())) {
             m_users.value(user->userId())->deleteLater();
             m_userIds.removeAll(user->userId());

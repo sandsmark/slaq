@@ -14,6 +14,7 @@ ListView {
         currentIndex = ind
     }
     interactive: true
+    clip: true
 
     Connections {
         target: SlackClient
@@ -41,7 +42,7 @@ ListView {
 
     delegate: ItemDelegate {
         id: delegate
-        text: model.Name
+        text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
         highlighted: teamRoot.currentChannelId === model.Id
         visible: model.IsOpen

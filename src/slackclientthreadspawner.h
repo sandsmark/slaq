@@ -132,7 +132,7 @@ public slots:
 
     void onChatJoined(const QJsonObject &data);
 
-    void onUsersDataChanged(const QJsonObject &usersData, bool last);
+    void onUsersDataChanged(const QList<QPointer<User> > &users, bool last);
     void onConversationsDataChanged(const QList<Chat *> &chats, bool last);
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
 

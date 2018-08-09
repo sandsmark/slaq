@@ -1288,7 +1288,14 @@ void SlackTeamClient::handleUsersListReply()
     QString cursor = data.value("response_metadata").toObject().value("next_cursor").toString();
     //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
-    emit usersDataChanged(data, cursor.isEmpty());
+    QList<QPointer<User>> _users;
+    for (const QJsonValue& userValue : data.value("members").toArray()) {
+        QPointer<User> user = new User(nullptr);
+        user->setData(userValue.toObject());
+        QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+        _users.append(user);
+    }
+    emit usersDataChanged(_users, cursor.isEmpty());
     if (!cursor.isEmpty()) {
         requestUsersList(cursor);
     } else {

@@ -652,10 +652,10 @@ void SlackClientThreadSpawner::onChatJoined(const QJsonObject &data)
 
 }
 
-void SlackClientThreadSpawner::onUsersDataChanged(const QJsonObject &usersData, bool last) {
+void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<User>>& users, bool last) {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    _slackClient->teamInfo()->addUsersData(usersData, last);
+    _slackClient->teamInfo()->addUsersData(users, last);
 }
 
 void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& chats, bool last)

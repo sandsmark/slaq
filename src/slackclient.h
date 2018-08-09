@@ -100,7 +100,7 @@ signals:
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
     void usersPresenceChanged(const QList<QPointer<User>>& users, const QString& presence);
 
-    void usersDataChanged(const QJsonObject &usersData, bool last);
+    void usersDataChanged(const QList<QPointer<User>>& users, bool last);
     void conversationsDataChanged(const QList<Chat*>& chats, bool last);
     void conversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
 
