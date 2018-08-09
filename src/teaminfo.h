@@ -68,7 +68,7 @@ public slots:
     void setTeamToken(const QString& teamToken);
     void setLastChannel(const QString& lastChannel);
     void addTeamData(const QJsonObject &teamData);    
-    void addUsersData(const QJsonObject &usersData, bool last);
+    void addUsersData(const QList<QPointer<User> > &users, bool last);
     void addConversationsData(const QList<Chat *> &chats, bool last);
 
 signals:

@@ -99,7 +99,7 @@ public slots:
     void addUser(User *user);
     void updateUser(const QJsonObject &userData);
     void addUser(const QJsonObject &userData);
-    void addUsers(const QJsonArray &usersData);
+    void addUsers(const QList<QPointer<User>> &users);
     QPointer<User> user(const QString &id);
     int fooCount() { return m_users.count(); }
     QList<QPointer<User>> users() { return m_users.values(); }

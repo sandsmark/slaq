@@ -51,7 +51,7 @@ void TeamInfo::addTeamData(const QJsonObject &teamData)
 //    QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
 }
 
-void TeamInfo::addUsersData(const QJsonObject &usersData, bool last)
+void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
 {
     qDebug() << "start" << __PRETTY_FUNCTION__;
 #if 0
@@ -67,7 +67,7 @@ void TeamInfo::addUsersData(const QJsonObject &usersData, bool last)
         m_users = new UsersModel;
         QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
     }
-    m_users->addUsers(usersData.value(QStringLiteral("members")).toArray());
+    m_users->addUsers(users);
 }
 
 void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
