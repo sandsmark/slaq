@@ -32,6 +32,7 @@ public:
         Unknown,
         Active,
         Away,
+        Dnd,
         Deleted //for bots
     };
     Q_ENUM(Presence)
@@ -79,14 +80,6 @@ public:
         UserObject,
         FieldsCount
     };
-
-    enum Presence {
-        Unknown,
-        Active,
-        Away,
-        Deleted //for bots
-    };
-    Q_ENUM(Presence)
 
     UsersModel(QObject *parent = nullptr);
 

@@ -336,9 +336,12 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-//TODO: redesign
 
     QList<QPointer<User>> _users;
+    if (m_teamInfo.users() == nullptr) {
+        qWarning() << "NO USERS IN TEAMINFO YET!!";
+        return;
+    }
     const QJsonValue& _userValue = message.value(QStringLiteral("user"));
     if (!_userValue.isUndefined()) {
         const QString& userId = _userValue.toString();
@@ -353,25 +356,8 @@ void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
     }
 
     const QString& presence = message.value(QStringLiteral("presence")).toString();
+    //qWarning() << "presence" << presence;
     emit usersPresenceChanged(_users, presence);
-
-//    QVariantMap user = m_storage.user(userId);
-//    if (!user.isEmpty()) {
-//        user.insert(QStringLiteral("presence"), presence);
-//        m_storage.saveUser(user);
-//        emit userUpdated(m_teamInfo.teamId(), user);
-//    }
-
-//    foreach (const auto item, m_storage.channels()) {
-//        QVariantMap channel = item.toMap();
-
-//        if (channel.value(QStringLiteral("type")) == QVariant(QStringLiteral("im")) &&
-//                channel.value(QStringLiteral("userId")) == userId) {
-//            channel.insert(QStringLiteral("presence"), presence);
-//            m_storage.saveChannel(channel);
-//            emit channelUpdated(m_teamInfo.teamId(), channel);
-//        }
-//    }
 }
 
 void SlackTeamClient::parseNotification(const QJsonObject& message)
@@ -1269,11 +1255,26 @@ void SlackTeamClient::handleConversationsListReply()
         _chats.append(chat);
     }
     emit conversationsDataChanged(_chats, cursor.isEmpty());
+
+    QJsonArray presenceIds;
+
     for (Chat* chat : _chats) {
         if (chat->type != ChatsModel::Conversation && chat->type != ChatsModel::Channel) {
             requestConversationMembers(chat->id, "");
         }
+        if (chat->type == ChatsModel::Conversation && !chat->user.isEmpty()) {
+            presenceIds.append(QJsonValue(chat->user));
+        }
     }
+    //create presence status request
+    if (presenceIds.count() > 0) {
+        QJsonObject presenceRequest;
+        presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
+        presenceRequest.insert(QStringLiteral("ids"), QJsonValue(presenceIds));
+        QJsonDocument document(presenceRequest);
+        stream->sendBinaryMessage(document.toJson(QJsonDocument::Compact));
+    }
+
     if (!cursor.isEmpty()) {
         requestConversationsList(cursor);
     } else {
@@ -1303,8 +1304,6 @@ void SlackTeamClient::handleUsersListReply()
     emit usersDataChanged(_users, cursor.isEmpty());
     if (!cursor.isEmpty()) {
         requestUsersList(cursor);
-    } else {
-        requestConversationsList("");
     }
 }
 
@@ -1320,9 +1319,11 @@ void SlackTeamClient::handleConversationMembersReply()
     //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
     reply->deleteLater();
     QStringList _members;
+
     for (const QJsonValue& memberjson : data.value("members").toArray()) {
         _members.append(memberjson.toString());
     }
+
     emit conversationMembersChanged(channelId, _members, cursor.isEmpty());
     if (!cursor.isEmpty()) {
         requestConversationMembers(channelId, cursor);

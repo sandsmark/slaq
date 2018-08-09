@@ -535,6 +535,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::usersDataChanged, this, &SlackClientThreadSpawner::onUsersDataChanged, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::conversationsDataChanged, this, &SlackClientThreadSpawner::onConversationsDataChanged, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::conversationMembersChanged, this, &SlackClientThreadSpawner::onConversationMembersChanged, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::usersPresenceChanged, this, &SlackClientThreadSpawner::onUsersPresenceChanged, Qt::QueuedConnection);
 
     return _slackClient;
 }
@@ -656,6 +657,10 @@ void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<User>>& u
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addUsersData(users, last);
+    //query conversations only when last batch of users gets loaded
+    if (last) {
+        QMetaObject::invokeMethod(_slackClient, "requestConversationsList", Qt::QueuedConnection, Q_ARG(QString, ""));
+    }
 }
 
 void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& chats, bool last)
@@ -687,6 +692,14 @@ void SlackClientThreadSpawner::onConversationMembersChanged(const QString& chann
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
     _chatsModel->addMembers(channelId, members);
+}
+
+void SlackClientThreadSpawner::onUsersPresenceChanged(const QList<QPointer<User> > &users, const QString& presence)
+{
+    DEBUG_BLOCK;
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    _chatsModel->setPresence(users, presence);
 }
 
 void SlackClientThreadSpawner::run()

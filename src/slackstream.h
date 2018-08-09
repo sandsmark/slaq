@@ -37,6 +37,8 @@ public slots:
 
     void stopStream();
 
+    void sendBinaryMessage(const QByteArray& message);
+
 private:
     QPointer<QWebSocket> webSocket;
     QPointer<QTimer> checkTimer;

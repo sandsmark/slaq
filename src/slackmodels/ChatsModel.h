@@ -30,8 +30,8 @@ public:
         UnreadCountDisplay,
         MembersModel,
         MessagesModel,
-        UserObject,
         Presence,
+        PresenceIcon,
         Section
     };
 
@@ -63,6 +63,8 @@ public:
     Chat* chat(const QString &id);
     Chat* chat(int row);
     void chatChanged(Chat* chat);
+    //only for IM aka Conversations chats
+    void setPresence(const QList<QPointer<User> > &users, const QString& presence);
 
 private:
     QString getSectionName(Chat *chat) const;

@@ -102,3 +102,10 @@ void SlackStream::stopStream()
 {
     webSocket->abort();
 }
+
+void SlackStream::sendBinaryMessage(const QByteArray &message)
+{
+    if (webSocket->isValid()) {
+        webSocket->sendBinaryMessage(message);
+    }
+}

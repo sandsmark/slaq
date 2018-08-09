@@ -41,5 +41,11 @@
         <file>qml/components/VideoFileViewer.qml</file>
         <file>qml/components/Reaction.qml</file>
         <file>qml/dialogs/RepliesList.qml</file>
+        <file>icons/away-icon.png</file>
+        <file>icons/dnd-icon.png</file>
+        <file>icons/group-icon.png</file>
+        <file>icons/offline-icon.png</file>
+        <file>icons/talking-icon.png</file>
+        <file>icons/active-icon.png</file>
     </qresource>
 </RCC>

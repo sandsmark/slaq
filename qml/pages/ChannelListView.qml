@@ -42,34 +42,15 @@ ListView {
 
     delegate: ItemDelegate {
         id: delegate
-        text: model.Type === ChatsModel.Conversation ? model.UserObject.fullName : model.Name
+        text: model.Name
         property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
         highlighted: teamRoot.currentChannelId === model.Id
         visible: model.IsOpen
         enabled: visible
         height: model.IsOpen ? delegate.implicitHeight : 0
-        icon.name: {
-            switch (model.Type) {
-            case ChatsModel.Channel:
-                if (model.presence === "active") {
-                    return "irc-channel-active"
-                } else {
-                    return "irc-channel-inactive"
-                }
-            case ChatsModel.Group:
-            case ChatsModel.MultiUserConversation:
-                return "icon-s-secure"
-            case ChatsModel.Conversation:
-                if (model.IsOpen === "active") {
-                    return "im-user"
-                } else {
-                    return "im-user-inactive"
-                }
-            default:
-                console.log("unhandled type: " + model.Type)
-                return ""
-            }
-        }
+        spacing: Theme.paddingSmall
+        icon.color: "transparent"
+        icon.source: model.PresenceIcon
         Rectangle {
             anchors.right: parent.right
             anchors.rightMargin: listView.ScrollBar.vertical.visible ?
