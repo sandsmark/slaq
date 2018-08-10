@@ -185,7 +185,6 @@ void ChatsModel::addMembers(const QString &channelId, const QStringList &members
     }
     if (_chat->type == Conversation || _chat->name.startsWith("mpdm")) {
         _chat->setReadableName(m_selfId);
-        qDebug() << "readable name" << _chat->id << _chat->readableName;
     }
     chatChanged(_chat);
 }
@@ -250,31 +249,7 @@ void ChatsModel::setPresence(const QList<QPointer<User> > &users, const QString 
 
 Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *parent) : QObject (parent)
 {
-    id = data.value(QStringLiteral("id")).toString();
-    type = type_;
-    if (data.value(QStringLiteral("is_mpim")).toBool(false)) {
-        type = ChatsModel::MultiUserConversation;
-    } else if (data.value(QStringLiteral("is_group")).toBool(false)) {
-        type = ChatsModel::Group;
-    } else if (data.value(QStringLiteral("is_channel")).toBool(false)) {
-        type = ChatsModel::Channel;
-    } else if (data.value(QStringLiteral("is_im")).toBool(false)) {
-        type = ChatsModel::Conversation;
-    }
-
-    name = data.value(QStringLiteral("name")).toString();
-    presence = QStringLiteral("none");
-    isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
-                                             data.value(QStringLiteral("is_open")).toBool();
-    user = data.value("user").toString();
-
-    isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
-    lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());
-    creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
-    unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
-    unreadCount = data.value(QStringLiteral("unread_count")).toInt();
-    topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
-    purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
+    setData(data, type_);
     //qDebug() << "new chat" << name << id << type;
 }
 
@@ -292,5 +267,34 @@ void Chat::setReadableName(const QString& selfId) {
         }
     }
     readableName = _users.join(", ");
+}
+
+void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
+{
+    id = data.value(QStringLiteral("id")).toString();
+    type = type_;
+    if (data.value(QStringLiteral("is_mpim")).toBool(false)) {
+        type = ChatsModel::MultiUserConversation;
+    } else if (data.value(QStringLiteral("is_group")).toBool(false)) {
+        type = ChatsModel::Group;
+    } else if (data.value(QStringLiteral("is_channel")).toBool(false)) {
+        type = ChatsModel::Channel;
+    } else if (data.value(QStringLiteral("is_im")).toBool(false)) {
+        type = ChatsModel::Conversation;
+    }
+
+    name = data.value(QStringLiteral("name")).toString(name);
+    presence = QStringLiteral("none");
+    isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
+                                             data.value(QStringLiteral("is_open")).toBool();
+    user = data.value("user").toString();
+
+    isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
+    lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());
+    creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
+    unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
+    unreadCount = data.value(QStringLiteral("unread_count")).toInt();
+    topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
+    purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
 }
 

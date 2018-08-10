@@ -179,7 +179,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
     } else if (type == QStringLiteral("im_open")) {
         emit chatJoined(message.value(QStringLiteral("channel")).toString());
     } else if (type == QStringLiteral("im_close")) {
-        emit chatLeft(message.value(QStringLiteral("channel")).toString());
+        emit channelLeft(message.value(QStringLiteral("channel")).toString());
     } else if (type == QStringLiteral("channel_left") || type == QStringLiteral("group_left")) {
         emit channelLeft(message.value(QStringLiteral("channel")).toString());
     } else if (type == QStringLiteral("presence_change") || type == QStringLiteral("manual_presence_change")) {
@@ -810,7 +810,7 @@ void SlackTeamClient::leaveChannel(const QString& channelId)
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
 
-    QNetworkReply *reply = executeGet(QStringLiteral("channels.leave"), params);
+    QNetworkReply *reply = executePost(QStringLiteral("conversations.leave"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLeaveChannelReply);
 }
 
@@ -895,7 +895,7 @@ void SlackTeamClient::closeChat(const QString& chatId)
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), chatId);
 
-    QNetworkReply *reply = executeGet(QStringLiteral("im.close"), params);
+    QNetworkReply *reply = executePost(QStringLiteral("conversations.close"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCloseChatReply);
 }
 
@@ -924,7 +924,7 @@ void SlackTeamClient::requestConversationsList(const QString& cursor)
 {
     QMap<QString, QString> params;
     params.insert(QStringLiteral("limit"), "1000");
-    params.insert(QStringLiteral("types"), "public_channel, private_channel, mpim, im");
+    params.insert(QStringLiteral("types"), "public_channel,private_channel,mpim,im");
     if (!cursor.isEmpty()) {
         params.insert(QStringLiteral("cursor"), cursor);
     }
@@ -960,6 +960,15 @@ void SlackTeamClient::requestTeamEmojis()
 {
     QNetworkReply *reply = executeGet(QStringLiteral("emoji.list"));
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamEmojisReply);
+}
+
+void SlackTeamClient::requestConversationInfo(const QString &channelId)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("channel"), channelId);
+    QNetworkReply *reply = executeGet(QStringLiteral("conversations.info"), params, channelId);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
 }
 
 QString SlackTeamClient::userName(const QString &userId) {
@@ -1278,6 +1287,16 @@ void SlackTeamClient::handleConversationsListReply()
     }
     emit conversationsDataChanged(_chats, cursor.isEmpty());
 
+#if 0
+        {
+            QFile f("chatslist_dumps_" + m_teamInfo.name() + ".json");
+            if (f.open(QIODevice::Append)) {
+                f.write(QJsonDocument(data).toJson());
+                f.close();
+            }
+        }
+#endif
+
     QJsonArray presenceIds;
 
     for (Chat* chat : _chats) {
@@ -1349,6 +1368,22 @@ void SlackTeamClient::handleConversationMembersReply()
     emit conversationMembersChanged(channelId, _members, cursor.isEmpty());
     if (!cursor.isEmpty()) {
         requestConversationMembers(channelId, cursor);
+    }
+}
+
+void SlackTeamClient::handleConversationInfoReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    const QJsonObject& data = getResult(reply);
+    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    const QString& channelId = reply->request().attribute(QNetworkRequest::User).toString();
+    //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
+    reply->deleteLater();
+    ChatsModel *chatsModel = m_teamInfo.chats();
+    Chat* chat = chatsModel->chat(channelId);
+    if (chat != nullptr) {
+        chat->setData(data.value("channel").toObject());
+        emit channelUpdated(chat);
     }
 }
 

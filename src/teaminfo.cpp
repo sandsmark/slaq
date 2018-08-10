@@ -78,15 +78,6 @@ void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
         QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
     }
 
-#if 0
-        {
-            QFile f("chatslist_dumps_" + name() + ".json");
-            if (f.open(QIODevice::WriteOnly|QIODevice::Append)) {
-                f.write(QJsonDocument(conversationData).toJson());
-                f.close();
-            }
-        }
-#endif
     m_chats->addChats(chats);
 
     if (m_searchMessages == nullptr) {

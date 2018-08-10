@@ -119,4 +119,5 @@ public:
     QPointer<MessageListModel> messagesModel;
 
     void setReadableName(const QString &selfId);
+    void setData(const QJsonObject &data, const ChatsModel::ChatType type_ = ChatsModel::Channel);
 };

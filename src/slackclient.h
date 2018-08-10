@@ -128,6 +128,7 @@ public slots:
     void requestConversationMembers(const QString& channelId, const QString& cursor);
     void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
+    void requestConversationInfo(const QString& channelId);
 
     QString getChannelName(const QString& channelId);
     Chat *getChannel(const QString& channelId);
@@ -165,6 +166,7 @@ private slots:
     void handleConversationsListReply();
     void handleUsersListReply();
     void handleConversationMembersReply();
+    void handleConversationInfoReply();
 
 private:
     bool appActive;

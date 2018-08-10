@@ -648,11 +648,6 @@ QString SlackClientThreadSpawner::teamToken(const QString &teamId)
     return _slackClient->teamInfo()->teamToken();
 }
 
-void SlackClientThreadSpawner::onChatJoined(const QJsonObject &data)
-{
-
-}
-
 void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<User>>& users, bool last) {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
@@ -668,6 +663,12 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addConversationsData(chats, last);
+    // request extra info about IM chats
+    for (Chat* chat : chats) {
+        if (chat->type == ChatsModel::Conversation) {
+            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, chat->id));
+        }
+    }
     if (last) {
         emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
         ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
