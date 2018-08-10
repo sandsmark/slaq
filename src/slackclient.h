@@ -137,6 +137,7 @@ public slots:
     bool isOnline() const;
     bool isDevice() const;
     void onFetchMoreSearchData(const QString& query, int page);
+    void parseUserDndChange(const QJsonObject &message);
 
 private slots:
     void handleStartReply();

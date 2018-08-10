@@ -208,6 +208,8 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
     } else if (type == QStringLiteral("pong")) {
     } else if (type == QStringLiteral("hello")) {
+    } else if (type == QStringLiteral("dnd_updated") || type == QStringLiteral("dnd_updated_user")) {
+        parseUserDndChange(message);
     } else {
         qDebug() << "Unhandled message";
         qDebug().noquote() << QJsonDocument(message).toJson();
@@ -331,6 +333,26 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
     } else {
         qWarning() << "message not found for ts" << ts;
     }
+}
+
+void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
+    QList<QPointer<User>> _users;
+    if (m_teamInfo.users() == nullptr) {
+        qWarning() << "NO USERS IN TEAMINFO YET!!";
+        return;
+    }
+    const QString& _userId = message.value(QStringLiteral("user")).toString();
+    _users.append(m_teamInfo.users()->user(_userId));
+
+    const QJsonObject& dndStatus = message.value(QStringLiteral("dnd_status")).toObject();
+    bool _dnd = dndStatus.value("dnd_enabled").toBool(false);
+    const QJsonValue& snoozeEnabled = message.value(QStringLiteral("snooze_enabled"));
+    if (!snoozeEnabled.isUndefined()) {
+        _dnd = snoozeEnabled.toBool();
+    }
+
+    QString presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
+    emit usersPresenceChanged(_users, presence);
 }
 
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
