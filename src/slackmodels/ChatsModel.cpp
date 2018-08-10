@@ -236,7 +236,7 @@ void ChatsModel::chatChanged(Chat *chat)
 
 void ChatsModel::setPresence(const QList<QPointer<User> > &users, const QString &presence)
 {
-    User::Presence _presence = (presence == "away" ? User::Away : User::Active);
+    User::Presence _presence = (presence == "away" ? User::Away : (presence == "dnd_on" ? User::Dnd : User::Active));
     for (Chat* chat : m_chats.values()) {
         if (chat->type == ChatsModel::Conversation && chat->membersModel != nullptr && !chat->membersModel->users().isEmpty()) {
             QPointer<User> _user = chat->membersModel->users().first();

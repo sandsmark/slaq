@@ -132,10 +132,7 @@ void User::setData(const QJsonObject &data)
 
 void User::setPresence(const User::Presence presence)
 {
-    if (presence == m_presence) {
-        return;
-    }
-
+    qDebug() << "presence for" << m_userId << m_fullName << presence;
     m_presence = presence;
     emit presenceChanged();
 }
