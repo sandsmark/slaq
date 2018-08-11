@@ -33,7 +33,7 @@ Page {
         console.log("channel active", channelRoot.title);
         SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId);
         input.forceActiveFocus()
-        listView.markLatest()
+        messagesListView.markLatest()
     }
 
     function showText(url, name, userName) {
@@ -85,7 +85,7 @@ Page {
     }
 
     BusyIndicator {
-        id: loader
+        id: loaderIndicator
         visible: true
         running: visible
         anchors.centerIn: parent
@@ -137,25 +137,25 @@ Page {
     }
 
     MessageListView {
-        id: listView
+        id: messagesListView
 
         anchors {
             top: parent.top; bottom: input.top; left: parent.left; right: parent.right
             margins: Theme.paddingSmall
         }
         onLoadCompleted: {
-            loader.visible = false
+            loaderIndicator.visible = false
         }
 
         onLoadStarted: {
-            loader.visible = true
+            loaderIndicator.visible = true
         }
     }
 
     Rectangle {
-        width: listView.width
+        width: messagesListView.width
         height: 50
-        opacity: listView.contentY > listView.originY ? 1 : 0
+        opacity: messagesListView.contentY > messagesListView.originY ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 100 } }
         gradient: Gradient {
             GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.5) }
@@ -164,10 +164,10 @@ Page {
     }
 
     Rectangle {
-        width: listView.width
+        width: messagesListView.width
         height: 50
-        anchors.bottom: listView.bottom
-        opacity: listView.contentY - listView.originY < listView.contentHeight - listView.height ? 1 : 0
+        anchors.bottom: messagesListView.bottom
+        opacity: messagesListView.contentY - messagesListView.originY < messagesListView.contentHeight - messagesListView.height ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 100 } }
         gradient: Gradient {
             GradientStop { position: 0.0; color: "transparent" }
@@ -198,7 +198,7 @@ Page {
         anchors.left: parent.left; anchors.leftMargin: Theme.paddingLarge/2
         anchors.right: parent.right; anchors.rightMargin: Theme.paddingLarge/2
 
-        visible: listView.inputEnabled
+        visible: messagesListView.inputEnabled
         placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
         onSendMessage: {
             SlackClient.postMessage(teamRoot.teamId, channelId, content)
@@ -250,9 +250,9 @@ Page {
         visible: false
         modal: false
         width: 200
-        height: listView.height
+        height: messagesListView.height
         x: input.cursorX
-        y: listView.y
+        y: messagesListView.y
         focus: false
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -284,7 +284,7 @@ Page {
             setChannelActive()
             if (!initialized) {
                 initialized = true
-                listView.loadMessages()
+                messagesListView.loadMessages()
             }
 
         } else {

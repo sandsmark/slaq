@@ -276,6 +276,16 @@ int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::
     return total;
 }
 
+Chat *SlackClientThreadSpawner::getGeneralChannel(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return nullptr;
+    }
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    return _chatsModel->generalChat();
+}
+
 void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString &channelId, const QString& content, const QDateTime &thread_ts)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);

@@ -21,9 +21,6 @@ Page {
     }
 
     ChannelListView {
-        id: listView
-        anchors {
-            fill: parent
-        }
+        anchors.fill: parent
     }
 }
