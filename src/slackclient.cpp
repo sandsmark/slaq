@@ -562,8 +562,13 @@ void SlackTeamClient::testLogin()
         return;
     }
 
-    QNetworkReply *reply = executeGet("auth.test");
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTestLoginReply);
+    if (m_state == CONNECTED && config->hasUserInfo()) {
+        qDebug() << "Already logged in";
+        handleTestLoginReply();
+    } else {
+        QNetworkReply *reply = executeGet("auth.test");
+        connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTestLoginReply);
+    }
 }
 
 void SlackTeamClient::handleTestLoginReply()
@@ -571,24 +576,26 @@ void SlackTeamClient::handleTestLoginReply()
     DEBUG_BLOCK
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-    reply->deleteLater();
+    if (reply != nullptr) {
+        QJsonObject data = getResult(reply);
+        reply->deleteLater();
 
-    if (isError(data)) {
-        emit testLoginFail(m_teamInfo.teamId());
-        return;
+        if (isError(data)) {
+            emit testLoginFail(m_teamInfo.teamId());
+            return;
+        }
+        //qDebug().noquote() << QJsonDocument(data).toJson();
+
+        QString teamId = data.value(QStringLiteral("team_id")).toString();
+        QString userId = data.value(QStringLiteral("user_id")).toString();
+        QString teamName = data.value(QStringLiteral("team")).toString();
+        qDebug() << "Login success" << userId << teamId << teamName;
+
+        config->setUserInfo(userId, teamId, teamName);
     }
-    //qDebug().noquote() << QJsonDocument(data).toJson();
-
-    QString teamId = data.value(QStringLiteral("team_id")).toString();
-    QString userId = data.value(QStringLiteral("user_id")).toString();
-    QString teamName = data.value(QStringLiteral("team")).toString();
-    qDebug() << "Login success" << userId << teamId << teamName;
-
-    config->setUserInfo(userId, teamId, teamName);
     requestTeamInfo();
     requestTeamEmojis();
-    emit testLoginSuccess(userId, teamId, teamName);
+    emit testLoginSuccess(config->userId(), config->teamId(), config->teamName());
     //startClient();
 }
 
@@ -916,20 +923,28 @@ void SlackTeamClient::handleCloseChatReply()
 
 void SlackTeamClient::requestTeamInfo()
 {
-    QNetworkReply *reply = executeGet(QStringLiteral("team.info"));
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamInfoReply);
+    if (m_teamInfo.selfId().isEmpty()) {
+        QNetworkReply *reply = executeGet(QStringLiteral("team.info"));
+        connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamInfoReply);
+    } else {
+        handleTeamInfoReply();
+    }
 }
 
 void SlackTeamClient::requestConversationsList(const QString& cursor)
 {
-    QMap<QString, QString> params;
-    params.insert(QStringLiteral("limit"), "1000");
-    params.insert(QStringLiteral("types"), "public_channel,private_channel,mpim,im");
-    if (!cursor.isEmpty()) {
-        params.insert(QStringLiteral("cursor"), cursor);
+    if (m_teamInfo.chats() == nullptr || m_teamInfo.chats()->rowCount() == 0 || !cursor.isEmpty()) {
+        QMap<QString, QString> params;
+        params.insert(QStringLiteral("limit"), "1000");
+        params.insert(QStringLiteral("types"), "public_channel,private_channel,mpim,im");
+        if (!cursor.isEmpty()) {
+            params.insert(QStringLiteral("cursor"), cursor);
+        }
+        QNetworkReply *reply = executeGet(QStringLiteral("conversations.list"), params);
+        connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationsListReply);
+    } else {
+        handleConversationsListReply();
     }
-    QNetworkReply *reply = executeGet(QStringLiteral("conversations.list"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationsListReply);
 }
 
 void SlackTeamClient::requestConversationMembers(const QString &channelId, const QString &cursor)
@@ -947,13 +962,17 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
-    QMap<QString, QString> params;
-    params.insert(QStringLiteral("limit"), "1000");
-    if (!cursor.isEmpty()) {
-        params.insert(QStringLiteral("cursor"), cursor);
+    if (m_teamInfo.users() == nullptr || m_teamInfo.users()->users().isEmpty() || !cursor.isEmpty()) {
+        QMap<QString, QString> params;
+        params.insert(QStringLiteral("limit"), "1000");
+        if (!cursor.isEmpty()) {
+            params.insert(QStringLiteral("cursor"), cursor);
+        }
+        QNetworkReply *reply = executeGet(QStringLiteral("users.list"), params);
+        connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersListReply);
+    } else {
+        handleUsersListReply();
     }
-    QNetworkReply *reply = executeGet(QStringLiteral("users.list"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersListReply);
 }
 
 void SlackTeamClient::requestTeamEmojis()
@@ -988,17 +1007,19 @@ void SlackTeamClient::handleTeamInfoReply()
     DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-    reply->deleteLater();
+    if (reply != nullptr) {
+        QJsonObject data = getResult(reply);
+        reply->deleteLater();
 
-    if (isError(data)) {
-        qDebug() << "Team info failed";
+        if (isError(data)) {
+            qDebug() << "Team info failed";
+        }
+        //qDebug() << "teaminfo:" << data;
+        m_teamInfo.parseTeamInfoData(data.value("team").toObject());
+        m_teamInfo.parseSelfData(data.value("self").toObject());
+
+        config->saveTeamInfo(m_teamInfo);
     }
-    //qDebug() << "teaminfo:" << data;
-    m_teamInfo.parseTeamInfoData(data.value("team").toObject());
-    m_teamInfo.parseSelfData(data.value("self").toObject());
-
-    config->saveTeamInfo(m_teamInfo);
     emit teamInfoChanged(m_teamInfo.teamId());
     requestUsersList("");
 }
@@ -1273,17 +1294,20 @@ void SlackTeamClient::handleConversationsListReply()
     DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    const QJsonObject& data = getResult(reply);
-    //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
-    QString cursor = data.value("response_metadata").toObject().value("next_cursor").toString();
-    reply->deleteLater();
     QList<Chat*> _chats;
-    for (const QJsonValue& chatValue : data.value("channels").toArray()) {
-        Chat* chat = new Chat(chatValue.toObject());
-        if (chat == nullptr) {
-            qWarning() << __PRETTY_FUNCTION__ << "Error allocating memory for Chat";
+    QString cursor;
+    if (reply != nullptr) {
+        const QJsonObject& data = getResult(reply);
+        //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
+        cursor = data.value("response_metadata").toObject().value("next_cursor").toString();
+        reply->deleteLater();
+        for (const QJsonValue& chatValue : data.value("channels").toArray()) {
+            Chat* chat = new Chat(chatValue.toObject());
+            if (chat == nullptr) {
+                qWarning() << __PRETTY_FUNCTION__ << "Error allocating memory for Chat";
+            }
+            _chats.append(chat);
         }
-        _chats.append(chat);
     }
     emit conversationsDataChanged(_chats, cursor.isEmpty());
 
@@ -1331,21 +1355,24 @@ void SlackTeamClient::handleUsersListReply()
     DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    const QJsonObject& data = getResult(reply);
-    QString cursor = data.value("response_metadata").toObject().value("next_cursor").toString();
-    //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
-    reply->deleteLater();
     QList<QPointer<User>> _users;
-    for (const QJsonValue& userValue : data.value("members").toArray()) {
-        QPointer<User> user = new User(nullptr);
-        user->setData(userValue.toObject());
-        QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
-        _users.append(user);
+    QString cursor;
+    if (reply != nullptr) {
+        const QJsonObject& data = getResult(reply);
+        cursor = data.value("response_metadata").toObject().value("next_cursor").toString();
+        //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
+        reply->deleteLater();
+        for (const QJsonValue& userValue : data.value("members").toArray()) {
+            QPointer<User> user = new User(nullptr);
+            user->setData(userValue.toObject());
+            QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+            _users.append(user);
+        }
+        if (!cursor.isEmpty()) {
+            requestUsersList(cursor);
+        }
     }
     emit usersDataChanged(_users, cursor.isEmpty());
-    if (!cursor.isEmpty()) {
-        requestUsersList(cursor);
-    }
 }
 
 void SlackTeamClient::handleConversationMembersReply()

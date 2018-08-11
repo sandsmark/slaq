@@ -25,6 +25,7 @@ public:
         Type,
         Name,
         IsOpen,
+        IsGeneral,
         LastRead,
         UnreadCount,
         UnreadCountDisplay,
@@ -62,6 +63,7 @@ public:
     UsersModel *members(const QString &id);
     Chat* chat(const QString &id);
     Chat* chat(int row);
+    Chat* generalChat();
     void chatChanged(Chat* chat);
     //only for IM aka Conversations chats
     void setPresence(const QList<QPointer<User> > &users, const QString& presence);

@@ -329,7 +329,8 @@ ApplicationWindow {
             }
 
             Loader {
-                active: true
+                id: teamloader
+                active: SwipeView.isCurrentItem
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId
@@ -340,7 +341,7 @@ ApplicationWindow {
                             return
                         }
 
-                        if (model.teamId ===  SlackClient.lastTeam) {
+                        if (model.teamId === SlackClient.lastTeam) {
                             teamsSwipe.currentIndex = index
                         }
                     }

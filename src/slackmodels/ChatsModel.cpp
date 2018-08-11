@@ -47,6 +47,8 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return chat->readableName.isEmpty() ? chat->name : chat->readableName;
     case IsOpen:
         return chat->isOpen;
+    case IsGeneral:
+        return chat->isGeneral;
     case LastRead:
         return chat->lastRead;
     case UnreadCountDisplay:
@@ -98,6 +100,7 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
     names[Type] = "Type";
     names[Name] = "Name";
     names[IsOpen] = "IsOpen";
+    names[IsGeneral] = "IsGeneral";
     names[LastRead] = "LastRead";
     names[UnreadCount] = "UnreadCount";
     names[UnreadCountDisplay] = "UnreadCountDisplay";
@@ -144,9 +147,12 @@ QString ChatsModel::doAddChat(Chat *chat)
 
 
     if (chat->type == Conversation) {
-        chat->membersModel->addUser(m_networkUsers->user(chat->user));
+        QPointer<User> _user = m_networkUsers->user(chat->user);
+        if (!_user.isNull()) {
+            chat->membersModel->addUser(_user);
+            chat->name = chat->membersModel->users().first()->fullName();
+        }
         chat->isOpen = true;
-        chat->name = chat->membersModel->users().first()->fullName();
     }
 
     if (chat->name.startsWith("mpdm")) {
@@ -211,6 +217,7 @@ UsersModel *ChatsModel::members(const QString &id)
 }
 
 Chat* ChatsModel::chat(const QString &id) {
+    qDebug() << "requesting chat" << id << m_chats.size() << m_chats.contains(id);
     return m_chats.value(id);
 }
 
@@ -219,6 +226,16 @@ Chat* ChatsModel::chat(int row)
     Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chat", "m_chats.size() and m_chatIds.size() should be equal");
     //TODO: check why chats size != chat ids size
     return m_chats.value(m_chatIds.at(row));
+}
+
+Chat *ChatsModel::generalChat()
+{
+    for(Chat* chat : m_chats.values()) {
+        if (chat->isGeneral) {
+            return chat;
+        }
+    }
+    return nullptr;
 }
 
 void ChatsModel::chatChanged(Chat *chat)
@@ -283,6 +300,7 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
         type = ChatsModel::Conversation;
     }
 
+    isGeneral = data.value(QStringLiteral("is_general")).toBool(false);
     name = data.value(QStringLiteral("name")).toString(name);
     presence = QStringLiteral("none");
     isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :

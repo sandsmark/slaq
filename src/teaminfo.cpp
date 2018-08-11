@@ -28,29 +28,6 @@ void TeamInfo::parseSelfData(const QJsonObject &selfObj) {
     m_selfId = selfObj.value(QStringLiteral("id")).toString();
 }
 
-void TeamInfo::addTeamData(const QJsonObject &teamData)
-{
-    qDebug() << "start" << __PRETTY_FUNCTION__;
-
-//    parseTeamInfoData(teamData.value("team").toObject());
-//    parseSelfData(teamData.value("self").toObject());
-//    m_users = new UsersModel;
-//    m_users->addUsers(teamData.value(QStringLiteral("users")).toArray());
-//    m_users->addUsers(teamData.value(QStringLiteral("bots")).toArray());
-
-//    m_chats = new ChatsModel(m_selfId, nullptr, m_users);
-//    m_chats->addChats(teamData.value(QStringLiteral("channels")).toArray(), ChatsModel::Channel);
-//    m_chats->addChats(teamData.value(QStringLiteral("groups")).toArray(), ChatsModel::Group);
-//    m_chats->addChats(teamData.value(QStringLiteral("ims")).toArray(), ChatsModel::Conversation);
-
-//    m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
-//    qDebug() << "Chats count" << m_chats->rowCount();
-
-//    QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
-//    QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
-//    QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
-}
-
 void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
 {
     //qDebug() << "start" << __PRETTY_FUNCTION__;

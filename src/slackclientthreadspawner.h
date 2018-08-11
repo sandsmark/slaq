@@ -95,6 +95,7 @@ public slots:
     void leaveGroup(const QString& teamId, const QString& groupId);
     QString getChannelName(const QString& teamId, const QString& channelId);
     int getTotalUnread(const QString& teamId, ChatsModel::ChatType type);
+    Chat* getGeneralChannel(const QString& teamId);
 
     //messages
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
