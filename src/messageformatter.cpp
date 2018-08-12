@@ -61,11 +61,11 @@ void MessageFormatter::replaceChannelInfo(ChatsModel *chatModel, QString &messag
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         const QString& id = match.captured(1);
-        chat = chatModel->chat(id);
-        if (chat != nullptr) {
-            doReplaceChannelInfo(chat, message);
-        } else {
-            if (!id.isEmpty()) {
+        if (!id.isEmpty()) {
+            chat = chatModel->chat(id);
+            if (chat != nullptr) {
+                doReplaceChannelInfo(chat, message);
+            } else {
                 qWarning() << "channel not found" << id;
             }
         }

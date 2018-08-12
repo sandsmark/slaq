@@ -249,6 +249,9 @@ void SlackClientThreadSpawner::dumpChannel(const QString &teamId, const QString 
         return;
     }
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
     MessageListModel* msgs =_chatsModel->messages(channelId);
     if (msgs != nullptr) {
         msgs->modelDump();
@@ -263,6 +266,9 @@ int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::
         return 0;
     }
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return 0;
+    }
     for (int i = 0; i < _chatsModel->rowCount(); i++) {
         Chat* chat = _chatsModel->chat(i);
         if (chat == nullptr) {
@@ -283,6 +289,9 @@ Chat *SlackClientThreadSpawner::getGeneralChannel(const QString &teamId)
         return nullptr;
     }
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return nullptr;
+    }
     return _chatsModel->generalChat();
 }
 
@@ -362,14 +371,14 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
 
-    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
 
-    if (chatsModel == nullptr) {
+    if (_chatsModel == nullptr) {
         qWarning() << "No chats";
         delete message;
         return;
     }
-    MessageListModel *messages = chatsModel->messages(message->channel_id);
+    MessageListModel *messages = _chatsModel->messages(message->channel_id);
     if (messages == nullptr) {
         qWarning() << "No messages in chat" << message->channel_id;
         delete message;
@@ -377,7 +386,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     }
 
     messages->addMessage(message);
-    Chat* chat = chatsModel->chat(message->channel_id);
+    Chat* chat = _chatsModel->chat(message->channel_id);
     if (chat == nullptr) {
         qWarning() << "Chat for channel ID" << message->channel_id << "not found";
         return;
@@ -389,7 +398,11 @@ void SlackClientThreadSpawner::onMessageUpdated(Message *message)
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    MessageListModel *messages = _slackClient->teamInfo()->chats()->messages(message->channel_id);
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+    MessageListModel *messages = _chatsModel->messages(message->channel_id);
     if (messages == nullptr) {
         qWarning() << "No messages in chat" << message->channel_id;
         return;
@@ -401,7 +414,11 @@ void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, const 
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    MessageListModel *messages = _slackClient->teamInfo()->chats()->messages(channelId);
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+    MessageListModel *messages = _chatsModel->messages(channelId);
     if (messages == nullptr) {
         qWarning() << "No messages in chat" << channelId;
         return;
@@ -412,16 +429,23 @@ void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, const 
 void SlackClientThreadSpawner::onChannelUpdated(Chat* chat)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    chatsModel->chatChanged(chat);
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+
+    _chatsModel->chatChanged(chat);
     emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 }
 
 void SlackClientThreadSpawner::onChannelJoined(Chat* chat)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    QString channelId = chatsModel->addChat(chat);
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+    QString channelId = _chatsModel->addChat(chat);
     connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
             _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
     emit channelJoined(_slackClient->teamInfo()->teamId(), channelId);
@@ -430,15 +454,18 @@ void SlackClientThreadSpawner::onChannelJoined(Chat* chat)
 void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    ChatsModel* chatsModel = _slackClient->teamInfo()->chats();
-    Chat* chat = chatsModel->chat(channelId);
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+    Chat* chat = _chatsModel->chat(channelId);
     if (chat == nullptr) {
         qWarning() << "Chat for channel ID" << channelId << "not found";
         return;
     }
     disconnect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
             _slackClient, &SlackTeamClient::loadMessages);
-    chatsModel->removeChat(channelId);
+    _chatsModel->removeChat(channelId);
     emit channelLeft(_slackClient->teamInfo()->teamId(), channelId);
 }
 
@@ -449,9 +476,9 @@ void SlackClientThreadSpawner::onSearchMessagesReceived(const QJsonArray& messag
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
 
     TeamInfo* teamInfo = _slackClient->teamInfo();
-    ChatsModel* chatsModel = teamInfo->chats();
+    ChatsModel* _chatsModel = teamInfo->chats();
 
-    if (chatsModel == nullptr) {
+    if (_chatsModel == nullptr) {
         qWarning() << "No chats";
         return;
     }
@@ -680,8 +707,12 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
         }
     }
     if (last) {
-        emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->chats());
         ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+        if (_chatsModel == nullptr) {
+            return;
+        }
+        emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _chatsModel);
+
         for(int i = 0; i < _chatsModel->rowCount(); i++) {
             Chat* chat = _chatsModel->chat(i);
             if (chat == nullptr) {
@@ -702,6 +733,9 @@ void SlackClientThreadSpawner::onConversationMembersChanged(const QString& chann
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
     _chatsModel->addMembers(channelId, members);
 }
 
@@ -710,6 +744,9 @@ void SlackClientThreadSpawner::onUsersPresenceChanged(const QList<QPointer<User>
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
     _chatsModel->setPresence(users, presence);
 }
 
