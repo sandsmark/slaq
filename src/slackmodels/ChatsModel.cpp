@@ -217,7 +217,7 @@ UsersModel *ChatsModel::members(const QString &id)
 }
 
 Chat* ChatsModel::chat(const QString &id) {
-    qDebug() << "requesting chat" << id << m_chats.size() << m_chats.contains(id);
+    Q_ASSERT_X(!id.isEmpty(), "ChatsModel::chat", "requested id is empty");
     return m_chats.value(id);
 }
 
