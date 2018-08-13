@@ -214,7 +214,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
         qWarning() << "no user found for" << userId;
         return;
     }
-    User *user = new User(olduser, this);
+    User *user = new User(olduser, nullptr);
     user->setData(userData);
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
     if (m_users[user->userId()]) {
@@ -228,7 +228,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
 
 void UsersModel::addUser(const QJsonObject &userData)
 {
-    User *user = new User(this);
+    User *user = new User(nullptr);
     user->setData(userData);
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
     addUser(user);
