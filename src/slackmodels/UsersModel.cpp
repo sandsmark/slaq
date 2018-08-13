@@ -132,7 +132,7 @@ void User::setData(const QJsonObject &data)
 
 void User::setPresence(const User::Presence presence)
 {
-    qDebug() << "presence for" << m_userId << m_fullName << presence;
+    //qDebug() << "presence for" << m_userId << m_fullName << presence;
     m_presence = presence;
     emit presenceChanged();
 }

@@ -56,6 +56,9 @@ public:
 
     QString selfId() const;
 
+    bool teamsEmojisUpdated() const;
+    void setTeamsEmojisUpdated(bool teamsEmojisUpdated);
+
 public slots:
     void setTeamId(const QString& teamId);
     void setName(const QString& name);
@@ -101,6 +104,7 @@ private:
     ChatsModel* m_chats {nullptr};
     UsersModel* m_users {nullptr};
     SearchMessagesModel* m_searchMessages { nullptr };
+    bool m_teamsEmojisUpdated { false };
 };
 
 QML_DECLARE_TYPE(TeamInfo)
