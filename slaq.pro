@@ -18,7 +18,7 @@ TRANSLATIONS += translations/slaq-fi.ts
 QT += quick webview xml quickcontrols2 multimedia widgets
 CONFIG += c++1x
 QT += websockets
-
+include($$PWD/src/zlib.pri)
 INCLUDEPATH += src src/slackmodels
 
 SOURCES += src/main.cpp \
