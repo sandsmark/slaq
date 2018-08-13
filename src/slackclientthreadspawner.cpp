@@ -763,5 +763,6 @@ void SlackClientThreadSpawner::run()
     qDeleteAll(m_knownTeams.values());
     QSettings settings;
     settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
-    qDebug() << "closed thread";
+    settings.sync();
+    qDebug() << "closed thread" << m_lastTeam;
 }

@@ -20,11 +20,12 @@ SlackStream::SlackStream(QObject *parent) :
 
 SlackStream::~SlackStream()
 {
+    checkTimer->stop();
     disconnect(webSocket.data(), &QWebSocket::disconnected, this, &SlackStream::handleListerEnd);
 
     if (!webSocket.isNull()) {
-        handleListerEnd();
-        webSocket->deleteLater();
+        webSocket->abort();
+        delete webSocket;
     }
 }
 
