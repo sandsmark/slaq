@@ -46,6 +46,9 @@ void SlackConfig::loadTeamInfo(TeamInfo &teamInfo)
 
 void SlackConfig::saveTeamInfo(const TeamInfo &teamInfo)
 {
+    if (teamInfo.teamId().isEmpty()) {
+        qWarning()  << "team id EMPTY!!!!!";
+    }
     m_settings.beginGroup(teamInfo.teamId());
     m_settings.setValue(QStringLiteral("id"), teamInfo.teamId());
     m_settings.setValue(QStringLiteral("name"), teamInfo.name());

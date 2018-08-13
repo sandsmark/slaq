@@ -104,11 +104,12 @@ MouseArea {
                         font.bold: true
                     }
                     Row {
+                        visible: itemDelegate.containsMouse
                         spacing: Theme.paddingSmall
                         EmojiButton {
                             id: emojiButton
                             padding: 0
-                            visible: itemDelegate.containsMouse && !isSearchResult
+                            visible: !isSearchResult
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: "😎"
@@ -125,7 +126,7 @@ MouseArea {
                         EmojiButton {
                             id: startThreadButton
                             padding: 0
-                            visible: itemDelegate.containsMouse && !isSearchResult && !itemDelegate.ListView.view.model.isThreadModel()
+                            visible: !isSearchResult && !itemDelegate.ListView.view.model.isThreadModel()
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: "\uD83D\uDCAC"
@@ -139,7 +140,7 @@ MouseArea {
                         EmojiButton {
                             id: trashButton
                             padding: 0
-                            visible: itemDelegate.containsMouse && !isSearchResult &&
+                            visible: !isSearchResult &&
                                      (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId)
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
@@ -153,8 +154,8 @@ MouseArea {
                         EmojiButton {
                             id: editButton
                             padding: 0
-                            visible: itemDelegate.containsMouse && !isSearchResult &&
-                                     (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId)
+                            visible: !isSearchResult && (model.User != null &&
+                                                         model.User.userId === teamRoot.slackClient.teamInfo().selfId)
                             implicitHeight: nickLabel.paintedHeight * 2
                             implicitWidth: nickLabel.paintedHeight * 2
                             text: contentLabel.readOnly ? "✎" : "💾"

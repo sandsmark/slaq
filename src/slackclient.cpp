@@ -693,6 +693,7 @@ void SlackTeamClient::handleStartReply()
         }
         return;
     }
+    m_teamInfo.parseSelfData(data.value("self").toObject());
 
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
@@ -955,7 +956,7 @@ void SlackTeamClient::handleCloseChatReply()
 
 void SlackTeamClient::requestTeamInfo()
 {
-    if (m_teamInfo.selfId().isEmpty()) {
+    if (m_teamInfo.domain().isEmpty()) {
         QNetworkReply *reply = executeGet(QStringLiteral("team.info"));
         connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamInfoReply);
     } else {
@@ -1046,16 +1047,15 @@ void SlackTeamClient::handleTeamInfoReply()
         reply->deleteLater();
 
         if (isError(data)) {
-            qDebug() << "Team info failed";
+            qDebug() << "Team info failed" << data;
+        } else {
+            m_teamInfo.parseTeamInfoData(data.value("team").toObject());
+            config->saveTeamInfo(m_teamInfo);
+            emit teamInfoChanged(m_teamInfo.teamId());
+            requestUsersList("");
         }
         //qDebug() << "teaminfo:" << data;
-        m_teamInfo.parseTeamInfoData(data.value("team").toObject());
-        m_teamInfo.parseSelfData(data.value("self").toObject());
-
-        config->saveTeamInfo(m_teamInfo);
     }
-    emit teamInfoChanged(m_teamInfo.teamId());
-    requestUsersList("");
 }
 
 void SlackTeamClient::handleTeamEmojisReply()
@@ -1065,7 +1065,7 @@ void SlackTeamClient::handleTeamEmojisReply()
     reply->deleteLater();
 
     if (isError(data)) {
-        qDebug() << "Team info failed";
+        qDebug() << "Team emoji failed";
     }
 
     ImagesCache* imagesCache = ImagesCache::instance();
