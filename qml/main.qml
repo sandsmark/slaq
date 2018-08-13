@@ -71,6 +71,8 @@ ApplicationWindow {
         property alias width: window.width
         property alias height: window.height
         property int theme: Material.System
+        property bool loadOnlyLastTeam: true
+        property bool unloadViewOnTeamSwitch: false
     }
 
     SettingsDialog {
@@ -330,7 +332,9 @@ ApplicationWindow {
 
             Loader {
                 id: teamloader
-                active: SwipeView.isCurrentItem
+                active: settings.unloadViewOnTeamSwitch
+                        ? SwipeView.isCurrentItem :
+                          (settings.loadOnlyLastTeam ? SlackClient.lastTeam === model.teamId : true)
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId
