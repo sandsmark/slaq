@@ -93,5 +93,8 @@ int main(int argc, char *argv[])
         //        return 1;
     }
 
-    return app.exec();
+    int ret = app.exec();
+    _slackThread->wait();
+    delete _slackThread;
+    return ret;
 }

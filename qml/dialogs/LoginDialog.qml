@@ -38,6 +38,16 @@ Dialog {
                 margins: 5
             }
             active: false
+            onStatusChanged: {
+                if (loader.status == Loader.Loading) {
+                    SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
+                    SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
+                }
+                if (loader.status == Loader.Null) {
+                    SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
+                    SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
+                }
+            }
         }
     }
 
@@ -59,17 +69,6 @@ Dialog {
                 })
             }
         }
-    }
-
-
-    Component.onCompleted: {
-        SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
-        SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
-    }
-
-    Component.onDestruction: {
-        SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
-        SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
     }
 
     function handleAccessTokenSuccess(userId, teamId, teamName) {

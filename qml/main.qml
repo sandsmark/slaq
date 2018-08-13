@@ -185,7 +185,8 @@ ApplicationWindow {
                             }
                             onClicked: {
                                 SlackClient.lastTeam = model.teamId
-                                teamsSwipe.currentIndex = index
+                                tabBar.currentIndex = index
+                                console.log("set last team", SlackClient.lastTeam)
                             }
                             Connections {
                                 target: SlackClient
@@ -362,7 +363,7 @@ ApplicationWindow {
                 Component.onCompleted: {
                     console.log("component for team", model.teamId, SlackClient.lastTeam)
                     if (model.teamId === SlackClient.lastTeam) {
-                        teamsSwipe.currentIndex = index
+                        tabBar.currentIndex = index
                         teamloader.active = true
                     }
                     if (settings.loadOnlyLastTeam === false && settings.unloadViewOnTeamSwitch === false) {

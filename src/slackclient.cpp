@@ -32,7 +32,22 @@ SlackTeamClient::SlackTeamClient(const QString &teamId, const QString &accessTok
     qDebug() << "client ctor finished" << m_teamInfo.teamToken() << m_teamInfo.teamId() << m_teamInfo.name();
 }
 
-SlackTeamClient::~SlackTeamClient() {}
+SlackTeamClient::~SlackTeamClient() {
+    reconnectTimer->stop();
+    disconnect(networkAccessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &SlackTeamClient::handleNetworkAccessibleChanged);
+    disconnect(reconnectTimer.data(), &QTimer::timeout, this, &SlackTeamClient::reconnectClient);
+
+    disconnect(stream.data(), &SlackStream::connected, this, &SlackTeamClient::handleStreamStart);
+    disconnect(stream.data(), &SlackStream::disconnected, this, &SlackTeamClient::handleStreamEnd);
+    disconnect(stream.data(), &SlackStream::messageReceived, this, &SlackTeamClient::handleStreamMessage);
+
+    disconnect(this, &SlackTeamClient::connected, this, &SlackTeamClient::isOnlineChanged);
+    disconnect(this, &SlackTeamClient::initSuccess, this, &SlackTeamClient::isOnlineChanged);
+    disconnect(this, &SlackTeamClient::disconnected, this, &SlackTeamClient::isOnlineChanged);
+    delete reconnectTimer;
+    delete stream;
+    delete networkAccessManager;
+}
 
 void SlackTeamClient::startConnections()
 {
@@ -40,10 +55,10 @@ void SlackTeamClient::startConnections()
         QMetaObject::invokeMethod(this, "startConnections", Qt::QueuedConnection);
         return;
     }
-    networkAccessManager = new QNetworkAccessManager(this);
+    networkAccessManager = new QNetworkAccessManager;
 
-    stream = new SlackStream(this);
-    reconnectTimer = new QTimer(this);
+    stream = new SlackStream;
+    reconnectTimer = new QTimer;
     networkAccessible = networkAccessManager->networkAccessible();
 
     connect(networkAccessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &SlackTeamClient::handleNetworkAccessibleChanged);
@@ -968,7 +983,7 @@ void SlackTeamClient::requestConversationsList(const QString& cursor)
 {
     if (m_teamInfo.chats() == nullptr || m_teamInfo.chats()->rowCount() == 0 || !cursor.isEmpty()) {
         QMap<QString, QString> params;
-        params.insert(QStringLiteral("limit"), "1000");
+        params.insert(QStringLiteral("limit"), "100");
         params.insert(QStringLiteral("types"), "public_channel,private_channel,mpim,im");
         if (!cursor.isEmpty()) {
             params.insert(QStringLiteral("cursor"), cursor);
@@ -983,7 +998,7 @@ void SlackTeamClient::requestConversationsList(const QString& cursor)
 void SlackTeamClient::requestConversationMembers(const QString &channelId, const QString &cursor)
 {
     QMap<QString, QString> params;
-    params.insert(QStringLiteral("limit"), "1000");
+    params.insert(QStringLiteral("limit"), "100");
     params.insert(QStringLiteral("channel"), channelId);
     if (!cursor.isEmpty()) {
         params.insert(QStringLiteral("cursor"), cursor);
