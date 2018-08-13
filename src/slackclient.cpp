@@ -12,6 +12,8 @@
 #include <QHttpMultiPart>
 #include <QtNetwork/QNetworkConfigurationManager>
 
+#include "zlib.h"
+
 #include "slackclient.h"
 #include "imagescache.h"
 
@@ -439,6 +441,56 @@ void SlackTeamClient::parseNotification(const QJsonObject& message)
     }
 }
 
+QByteArray gUncompress(const QByteArray &data)
+{
+    if (data.size() <= 4) {
+        qWarning("gUncompress: Input data is truncated");
+        return QByteArray();
+    }
+
+    QByteArray result;
+
+    int ret;
+    z_stream strm;
+    static const int CHUNK_SIZE = 1024;
+    char out[CHUNK_SIZE];
+
+    /* allocate inflate state */
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.avail_in = data.size();
+    strm.next_in = (Bytef*)(data.data());
+
+    ret = inflateInit2(&strm, 15 +  32); // gzip decoding
+    if (ret != Z_OK)
+        return QByteArray();
+
+    // run inflate()
+    do {
+        strm.avail_out = CHUNK_SIZE;
+        strm.next_out = (Bytef*)(out);
+
+        ret = inflate(&strm, Z_NO_FLUSH);
+        Q_ASSERT(ret != Z_STREAM_ERROR);  // state not clobbered
+
+        switch (ret) {
+        case Z_NEED_DICT:
+            ret = Z_DATA_ERROR;     // and fall through
+        case Z_DATA_ERROR:
+        case Z_MEM_ERROR:
+            (void)inflateEnd(&strm);
+            return QByteArray();
+        }
+
+        result.append(out, CHUNK_SIZE - strm.avail_out);
+    } while (strm.avail_out == 0);
+
+    // clean up and return
+    inflateEnd(&strm);
+    return result;
+}
+
 bool SlackTeamClient::isOk(const QNetworkReply *reply)
 {
     DEBUG_BLOCK
@@ -480,7 +532,9 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
 
     if (isOk(reply)) {
         QJsonParseError error;
-        QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
+        QByteArray baData = reply->readAll();
+        //qDebug() << "received" << baData.size() << "bytes" << gUncompress(baData);
+        QJsonDocument document = QJsonDocument::fromJson(gUncompress(baData), &error);
 
         if (error.error == QJsonParseError::NoError) {
             return document.object();
@@ -507,6 +561,8 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
     QUrl url(QStringLiteral("https://slack.com/api/") + method);
     url.setQuery(query);
     QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Accept-Encoding", "gzip, deflate");
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     if (attribute.isValid()) {
         request.setAttribute(QNetworkRequest::User, attribute);
@@ -983,7 +1039,7 @@ void SlackTeamClient::requestConversationsList(const QString& cursor)
 {
     if (m_teamInfo.chats() == nullptr || m_teamInfo.chats()->rowCount() == 0 || !cursor.isEmpty()) {
         QMap<QString, QString> params;
-        params.insert(QStringLiteral("limit"), "100");
+        params.insert(QStringLiteral("limit"), "1000");
         params.insert(QStringLiteral("types"), "public_channel,private_channel,mpim,im");
         if (!cursor.isEmpty()) {
             params.insert(QStringLiteral("cursor"), cursor);
@@ -998,7 +1054,7 @@ void SlackTeamClient::requestConversationsList(const QString& cursor)
 void SlackTeamClient::requestConversationMembers(const QString &channelId, const QString &cursor)
 {
     QMap<QString, QString> params;
-    params.insert(QStringLiteral("limit"), "100");
+    params.insert(QStringLiteral("limit"), "1000");
     params.insert(QStringLiteral("channel"), channelId);
     if (!cursor.isEmpty()) {
         params.insert(QStringLiteral("cursor"), cursor);
