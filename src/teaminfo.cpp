@@ -63,6 +63,16 @@ void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
     }
 }
 
+bool TeamInfo::teamsEmojisUpdated() const
+{
+    return m_teamsEmojisUpdated;
+}
+
+void TeamInfo::setTeamsEmojisUpdated(bool teamsEmojisUpdated)
+{
+    m_teamsEmojisUpdated = teamsEmojisUpdated;
+}
+
 QString TeamInfo::selfId() const
 {
     return m_selfId;

@@ -26,7 +26,9 @@ Page {
     }
 
     function setCurrentTeam() {
-        pageStack.currentItem.setChannelActive()
+        if (pageStack.currentItem.setChannelActive) {
+            pageStack.currentItem.setChannelActive()
+        }
     }
 
     function deleteMessage(channelId, ts) {

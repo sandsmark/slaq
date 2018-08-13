@@ -612,6 +612,7 @@ void SlackTeamClient::handleTestLoginReply()
     }
     requestTeamInfo();
     requestTeamEmojis();
+
     emit testLoginSuccess(config->userId(), config->teamId(), config->teamName());
     //startClient();
 }
@@ -1008,8 +1009,10 @@ void SlackTeamClient::requestUsersList(const QString& cursor)
 
 void SlackTeamClient::requestTeamEmojis()
 {
-    QNetworkReply *reply = executeGet(QStringLiteral("emoji.list"));
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamEmojisReply);
+    if (m_teamInfo.teamsEmojisUpdated() == false) {
+        QNetworkReply *reply = executeGet(QStringLiteral("emoji.list"));
+        connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamEmojisReply);
+    }
 }
 
 void SlackTeamClient::requestConversationInfo(const QString &channelId)
@@ -1085,6 +1088,7 @@ void SlackTeamClient::handleTeamEmojisReply()
         }
     }
     imagesCache->sendEmojisUpdated();
+    m_teamInfo.setTeamsEmojisUpdated(true);
 }
 
 void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& latest)

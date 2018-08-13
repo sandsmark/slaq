@@ -100,7 +100,7 @@ ApplicationWindow {
 //    Connections {
 //        target: SlackClient
 //        onThreadStarted: {
-//            console.log("qml: thread started")
+//            console.log("qml: thread started", SlackClient.lastTeam)
 //        }
 //    }
 
@@ -267,7 +267,7 @@ ApplicationWindow {
             ToolSeparator {}
 
             EmojiToolButton {
-                text: teamsSwipe.currentItem !== null ?
+                text: teamsSwipe.currentItem != null && teamsSwipe.currentItem.item != null ?
                           teamsSwipe.currentItem.item.pageStack.depth > 1 ?
                               "🡸" : "🡺" : ""
                 onClicked: {
@@ -281,7 +281,7 @@ ApplicationWindow {
                     }
                 }
 
-                visible: SlackClient.isDevice || teamsSwipe.currentItem !== null ?
+                visible: SlackClient.isDevice || (teamsSwipe.currentItem != null &&  teamsSwipe.currentItem.item != null) ?
                              teamsSwipe.currentItem.item.pageStack.depth > 1 : false
                 enabled: visible
             }
@@ -322,7 +322,22 @@ ApplicationWindow {
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
 
+        onCurrentIndexChanged: {
+            if (settings.unloadViewOnTeamSwitch === false) {
+                repeater.itemAt(currentIndex).active = true
+            } else {
+                for (var i = 0; i < repeater.count; i++) {
+                    if (i == currentIndex) {
+                        repeater.itemAt(currentIndex).active = true
+                    } else {
+                        repeater.itemAt(i).active = false
+                    }
+                }
+            }
+        }
+
         Repeater {
+            id: repeater
             model: teamsModel
             onCountChanged: {
                 if (count === 0 && SlackClient.lastTeam === "") {
@@ -332,27 +347,26 @@ ApplicationWindow {
 
             Loader {
                 id: teamloader
-                active: settings.unloadViewOnTeamSwitch
-                        ? SwipeView.isCurrentItem :
-                          (settings.loadOnlyLastTeam ? SlackClient.lastTeam === model.teamId : true)
+                active: false
+                asynchronous: true
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId
                     teamName: model.name
-                    Component.onCompleted: {
-                        if (SlackClient.lastTeam === "") {
-                            SlackClient.lastTeam = model.teamId
-                            return
-                        }
-
-                        if (model.teamId === SlackClient.lastTeam) {
-                            teamsSwipe.currentIndex = index
-                        }
-                    }
                 }
                 SwipeView.onIsCurrentItemChanged: {
-                    if (SwipeView.isCurrentItem  && item !== null) {
+                    if (SwipeView.isCurrentItem && item !== null) {
                         item.setCurrentTeam()
+                    }
+                }
+                Component.onCompleted: {
+                    console.log("component for team", model.teamId, SlackClient.lastTeam)
+                    if (model.teamId === SlackClient.lastTeam) {
+                        teamsSwipe.currentIndex = index
+                        teamloader.active = true
+                    }
+                    if (settings.loadOnlyLastTeam === false && settings.unloadViewOnTeamSwitch === false) {
+                        teamloader.active = true
                     }
                 }
             }
