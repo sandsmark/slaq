@@ -275,18 +275,28 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 //TODO: redesign
     const QString& subtype = message.value(QStringLiteral("subtype")).toString();
     const QJsonValue& submessage = message.value(QStringLiteral("message"));
+    //channel id missed in sub messages
+    const QString& channel_id = message.value(QStringLiteral("channel")).toString();
     Message* message_ = new Message;
     if (submessage.isUndefined()) {
         message_->setData(message);
     } else {
         message_->setData(submessage.toObject());
-        //channel id missed in sub messages
-        const QString& channel_id = message.value(QStringLiteral("channel")).toString();
         message_->channel_id = channel_id;
         if (message_->subtype.isEmpty()) {
             message_->subtype = subtype;
         }
     }
+    ChatsModel* _chatsModel = teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+    MessageListModel *_messagesModel = _chatsModel->messages(channel_id);
+    if (_messagesModel == nullptr) {
+        return;
+    }
+    _messagesModel->preprocessFormatting(_chatsModel, message_);
+
     if (subtype == "message_changed" || subtype == "message_replied") {
        qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
        message_->isChanged = true;
@@ -685,7 +695,7 @@ void SlackTeamClient::handleTestLoginReply()
     requestTeamEmojis();
 
     emit testLoginSuccess(config->userId(), config->teamId(), config->teamName());
-    //startClient();
+    m_status = LOGGEDIN;
 }
 
 void SlackTeamClient::searchMessages(const QString &searchString, int page)
@@ -768,6 +778,7 @@ void SlackTeamClient::handleStartReply()
 
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
+    m_status = STARTED;
     qDebug() << "connect success";
 }
 
@@ -1242,7 +1253,37 @@ void SlackTeamClient::handleLoadMessagesReply()
             }
         }
 #endif
-    messageModel->addMessages(messageList, _hasMore);
+
+    QList<Message*> _mlist;
+    UsersModel* _usersModel = m_teamInfo.users();
+    for (const QJsonValue &messageData : messageList) {
+        const QJsonObject messageObject = messageData.toObject();
+        if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
+            qWarning() << "file comment. skipping for now";
+            continue; //TODO: not yet supported
+        }
+        Message* message = new Message;
+        //qDebug() << "message obj" << messageObject;
+        message->setData(messageObject);
+
+        if (message->channel_id.isEmpty()) {
+            message->channel_id = channelId;
+        }
+        if (!message->user_id.isEmpty()) {
+            message->user = _usersModel->user(message->user_id);
+        } else {
+            qWarning() << "user id is empty" << messageObject;
+        }
+
+        //fill up users for replys
+        for(QObject* rplyObj : message->replies) {
+            ReplyField* rply = static_cast<ReplyField*>(rplyObj);
+            rply->m_user = _usersModel->user(rply->m_userId);
+        }
+        messageModel->preprocessFormatting(_chatsModel, message);
+        _mlist.append(message);
+    }
+    emit messagesReceived(channelId, _mlist, _hasMore);
 
     qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
@@ -1263,6 +1304,12 @@ QString SlackTeamClient::markMethod(ChatsModel::ChatType type)
     } else {
         return "";
     }
+}
+
+SlackTeamClient::ClientStatus SlackTeamClient::getStatus() const
+{
+    qDebug() << "status" << m_teamInfo.name() << m_status;
+    return m_status;
 }
 
 SlackTeamClient::ClientStates SlackTeamClient::getState() const
@@ -1461,6 +1508,7 @@ void SlackTeamClient::handleConversationsListReply()
             m_teamInfo.setLastChannel(lastChannel());
         }
         emit initSuccess(m_teamInfo.teamId());
+        m_status = INITED;
     }
 }
 

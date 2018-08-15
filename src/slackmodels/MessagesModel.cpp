@@ -259,13 +259,8 @@ void MessageListModel::preprocessMessage(Message *message)
         chat = _chatsModel->chat(m_channelId);
     }
 
-    preprocessFormatting(_chatsModel, message);
+    findNewUsers(message->text);
 
-    //fill up users for replys
-    for(QObject* rplyObj : message->replies) {
-        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
-        rply->m_user = m_usersModel->user(rply->m_userId);
-    }
     if (chat != nullptr && !chat->id.isEmpty()
             && message->time > chat->lastRead
             && message->subtype != "message_changed"
@@ -288,7 +283,6 @@ QDateTime MessageListModel::firstMessageTs()
 
 void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
 {
-    findNewUsers(message->text);
     updateReactionUsers(message);
     m_formatter.replaceAll(chat, message->text);
     for (QObject* attachmentObj : message->attachments) {
@@ -330,8 +324,6 @@ void MessageListModel::processChildMessage(Message* message) {
 
 void MessageListModel::addMessage(Message* message)
 {
-    qDebug() << "adding message:" << message->text << m_messages.size() << QThread::currentThreadId();
-
     preprocessMessage(message);
     //check for thread
     if (isMessageThreadChild(message)) {
@@ -353,9 +345,6 @@ void MessageListModel::addMessage(Message* message)
         m_modelMutex.unlock();
         prependMessageToModel(message);
     }
-
-
-    qDebug() << "adding messages, after" << m_messages.size();
 }
 
 void MessageListModel::updateMessage(Message *message)
@@ -422,7 +411,7 @@ void MessageListModel::findNewUsers(QString& message)
         user = m_usersModel->user(id);
         if (user.isNull()) {
             QString name = match.captured(2);
-            user = new ::User(id, name, this);
+            user = new ::User(id, name, nullptr);
             m_usersModel->addUser(user);
             m_formatter.replaceUserInfo(user.data(), message);
         }
@@ -438,39 +427,16 @@ void MessageListModel::findNewUsers(QString& message)
     }
 }
 
-void MessageListModel::addMessages(const QJsonArray &messages, bool hasMore)
+void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore)
 {
-    if (thread() != QThread::currentThread()) {
-        QMetaObject::invokeMethod(this, "addMessages", Qt::QueuedConnection,
-                                  Q_ARG(const QJsonArray&, messages),
-                                  Q_ARG(bool, hasMore));
-        return;
-    }
-
     qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId();
 
     m_hasMore = hasMore;
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
 
-    for (const QJsonValue &messageData : messages) {
-        const QJsonObject messageObject = messageData.toObject();
-        if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
-            qWarning() << "file comment. skipping for now";
-            continue; //TODO: not yet supported
-        }
-        Message* message = new Message;
-        //qDebug() << "message obj" << messageObject;
-        message->setData(messageObject);
-
-        message->channel_id = m_channelId;
-        if (message->user_id.isEmpty()) {
-            qWarning() << "user id is empty" << messageObject;
-        }
-        message->user = m_usersModel->user(message->user_id);
-
+    for (Message* message : messages) {
         preprocessMessage(message);
-
-        //check for thread
+        //check for message thread
         if (isMessageThreadChild(message)) {
             processChildMessage(message);
         } else {

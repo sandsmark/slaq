@@ -341,7 +341,7 @@ public:
 public slots:
     void addMessage(Message *message);
     void updateMessage(Message *message);
-    void addMessages(const QJsonArray &messages, bool hasMore);
+    void addMessages(const QList<Message *> &messages, bool hasMore);
     Message* message(const QDateTime& ts);
     bool deleteMessage(const QDateTime& ts);
     Message* message(int row);
@@ -360,9 +360,9 @@ public slots:
     bool isThreadModel() const;
     MessageListModel* createThread(Message* parentMessage);
     void processChildMessage(Message *message);
+    void preprocessFormatting(ChatsModel *chat, Message *message);
 
 protected:
-    void preprocessFormatting(ChatsModel *chat, Message *message);
     bool canFetchMore(const QModelIndex &parent) const override;
     void fetchMore(const QModelIndex &parent) override;
 

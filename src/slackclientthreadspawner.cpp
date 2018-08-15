@@ -18,6 +18,18 @@ SlackTeamClient *SlackClientThreadSpawner::slackClient(const QString &teamId) {
     return m_knownTeams.value(teamId, nullptr);
 }
 
+SlackTeamClient::ClientStatus SlackClientThreadSpawner::slackClientStatus(const QString &teamId)
+{
+    SlackTeamClient::ClientStatus retVal;
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return SlackTeamClient::UNDEFINED;
+    }
+    QMetaObject::invokeMethod(_slackClient, "getStatus", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(SlackTeamClient::ClientStatus, retVal));
+    return retVal;
+}
+
 QQmlObjectListModel<TeamInfo> *SlackClientThreadSpawner::teamsModel()
 {
     return &m_teamsModel;
@@ -394,6 +406,24 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 }
 
+void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QList<Message*> messages, bool hasMore)
+{
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+
+    ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
+
+    if (_chatsModel == nullptr) {
+        qWarning() << "No chats";
+        return;
+    }
+    MessageListModel *messagesModel = _chatsModel->messages(channelId);
+    if (messagesModel == nullptr) {
+        qWarning() << "No messages in chat" << channelId;
+        return;
+    }
+
+    messagesModel->addMessages(messages, hasMore);
+}
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
 {
     DEBUG_BLOCK;
@@ -546,6 +576,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::reconnectAccessTokenFail, this, &SlackClientThreadSpawner::reconnectAccessTokenFail, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::messageReceived, this, &SlackClientThreadSpawner::onMessageReceived, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::messagesReceived, this, &SlackClientThreadSpawner::onMessagesReceived, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::messageDeleted, this, &SlackClientThreadSpawner::onMessageDeleted, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::messageUpdated, this, &SlackClientThreadSpawner::onMessageUpdated, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelUpdated, this, &SlackClientThreadSpawner::onChannelUpdated, Qt::QueuedConnection);

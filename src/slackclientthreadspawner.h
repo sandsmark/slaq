@@ -22,6 +22,7 @@ public:
     bool isOnline();
 
     Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
+    Q_INVOKABLE SlackTeamClient::ClientStatus slackClientStatus(const QString& teamId);
     Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
     Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
     Q_INVOKABLE void reconnectClient();
@@ -135,6 +136,7 @@ public slots:
     void onConversationsDataChanged(const QList<Chat *> &chats, bool last);
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
     void onUsersPresenceChanged(const QList<QPointer<User> > &users, const QString &presence);    
+    void onMessagesReceived(const QString &channelId, QList<Message *> messages, bool hasMore);
 
 protected:
     void run();

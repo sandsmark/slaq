@@ -45,8 +45,17 @@ public:
     };
     Q_ENUM(ClientStates)
 
-    ClientStates getState() const;
+    Q_INVOKABLE ClientStates getState() const;
     void setState(ClientStates state);
+
+    enum ClientStatus {
+        UNDEFINED = -1,
+        STARTED = 0,
+        LOGGEDIN,
+        LOGINFAILED,
+        INITED
+    };
+    Q_ENUM(ClientStatus)
 
     Q_INVOKABLE ChatsModel *currentChatsModel();
 
@@ -69,6 +78,7 @@ signals:
 
     // signals to main thread
     void messageReceived(Message* message);
+    void messagesReceived(const QString &channelId, QList<Message*> messages, bool hasMore);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message);
     void messageDeleted(const QString& channelId, const QDateTime& ts);
@@ -139,6 +149,7 @@ public slots:
     bool isDevice() const;
     void onFetchMoreSearchData(const QString& query, int page);
     void parseUserDndChange(const QJsonObject &message);
+    SlackTeamClient::ClientStatus getStatus() const;
 
 private slots:
     void handleStartReply();
@@ -202,6 +213,7 @@ private:
 
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
+    ClientStatus m_status { ClientStatus::UNDEFINED };
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)
