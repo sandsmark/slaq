@@ -284,26 +284,30 @@ MouseArea {
             visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }
 
-        Repeater {
-            id: fileSharesRepeater
-            model: FileShares
+        Column {
+            Repeater {
+                id: fileSharesRepeater
+                model: FileShares
 
-            delegate: FileViewer {
-                width: column.width - x
-                x: Theme.avatarSize + column.spacing
-                fileshare: FileShares[index]
+                delegate: FileViewer {
+                    width: column.width - x
+                    x: Theme.avatarSize + column.spacing
+                    fileshare: FileShares[index]
+                }
             }
         }
 
-        Repeater {
-            id: attachmentRepeater
-            model: Attachments
+        Column {
+            Repeater {
+                id: attachmentRepeater
+                model: Attachments
 
-            Attachment {
-                width: column.width - x
-                x: Theme.avatarSize + column.spacing
-                attachment: Attachments[index]
-                onLinkClicked: handleLink(link)
+                Attachment {
+                    width: column.width - x
+                    x: Theme.avatarSize + column.spacing
+                    attachment: Attachments[index]
+                    onLinkClicked: handleLink(link)
+                }
             }
         }
 

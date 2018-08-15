@@ -1,6 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Dialogs 1.2
+import com.iskrembilen 1.0
 
 import "."
 import ".."
@@ -20,7 +21,6 @@ Page {
 
     onSlackClientChanged: {
         if (slackClient !== null) {
-            console.log("slack client", slackClient)
             SlackClient.testLogin(teamRoot.teamId)
         }
     }
@@ -57,7 +57,6 @@ Page {
                 console.log("loading page. adding channel component:", _lastChannel, teamRoot.teamId)
                 previousChannelId = _lastChannel
                 pageStack.replace(channelComponent, {"channelId" : _lastChannel })
-
             }
         }
 

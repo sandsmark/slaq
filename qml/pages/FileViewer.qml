@@ -41,6 +41,9 @@ Item {
                     setSource("qrc:/qml/components/ImageFileViewer.qml")
                 } else if (fileshare.mimetype.indexOf("text") !== -1) {
                     setSource("qrc:/qml/components/TextFileViewer.qml")
+                } else {
+                    console.warn("Unknown file type:", fileshare.mimetype)
+                    setSource("qrc:/qml/components/UnknownFileViewer.qml")
                 }
             }
 

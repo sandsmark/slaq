@@ -361,7 +361,6 @@ ApplicationWindow {
                     }
                 }
                 Component.onCompleted: {
-                    console.log("component for team", model.teamId, SlackClient.lastTeam)
                     if (model.teamId === SlackClient.lastTeam) {
                         tabBar.currentIndex = index
                         teamloader.active = true

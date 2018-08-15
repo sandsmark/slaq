@@ -9,6 +9,7 @@ import "../dialogs"
 Page {
     id: channelRoot
 
+    objectName: "channelPage"
     property string channelId
     property string channelName
     property int channelType
