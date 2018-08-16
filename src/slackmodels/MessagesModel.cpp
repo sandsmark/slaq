@@ -246,6 +246,7 @@ void MessageListModel::preprocessMessage(Message *message)
             //try to construct user from message
             if (!message->user_id.isEmpty() && !message->userName.isEmpty()) {
                 QPointer<::User> _user = new ::User(message->user_id, message->userName, nullptr);
+                QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);
                 message->user = _user;
                 m_usersModel->addUser(_user);
             }
@@ -412,6 +413,7 @@ void MessageListModel::findNewUsers(QString& message)
         if (user.isNull()) {
             QString name = match.captured(2);
             user = new ::User(id, name, nullptr);
+            QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
             m_usersModel->addUser(user);
             m_formatter.replaceUserInfo(user.data(), message);
         }
@@ -633,6 +635,7 @@ void Attachment::setData(const QJsonObject &data)
 
     foreach (const QJsonValue &fieldValue, data.value(QStringLiteral("fields")).toArray()) {
         AttachmentField* field = new AttachmentField;
+        QQmlEngine::setObjectOwnership(field, QQmlEngine::CppOwnership);
         field->setData((fieldValue.toObject()));
         fields.append(field);
     }

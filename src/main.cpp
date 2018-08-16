@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<Attachment*>("Attachment*");
     qRegisterMetaType<Message*>("Message*");
     qRegisterMetaType<Message>("Message");
+    qRegisterMetaType<QList<Message*>>("QList<Message*>");
     qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
     qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");

@@ -246,10 +246,6 @@ public:
 };
 
 struct Message {
-private:
-    Q_GADGET
-    Q_PROPERTY(QDateTime threadts MEMBER thread_ts)
-public:
     Message();
     ~Message();
     void setData(const QJsonObject &data);
@@ -299,8 +295,6 @@ public:
         return jo;
     }
 };
-
-Q_DECLARE_METATYPE(Message)
 
 class MessageListModel : public QAbstractListModel
 {

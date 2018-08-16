@@ -204,6 +204,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         parseChannelUpdate(message);
     } else if (type == QStringLiteral("channel_joined") || type == QStringLiteral("group_joined")) {
         Chat* _chat = new Chat(message.value(QStringLiteral("channel")).toObject());
+        QQmlEngine::setObjectOwnership(_chat, QQmlEngine::CppOwnership);
         emit channelJoined(_chat);
     } else if (type == QStringLiteral("im_open")) {
         emit chatJoined(message.value(QStringLiteral("channel")).toString());
@@ -331,13 +332,13 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
     if (_chatsModel == nullptr) {
         return;
     }
-    MessageListModel* messages = _chatsModel->messages(channelid);
+    MessageListModel* _messagesModel = _chatsModel->messages(channelid);
 
-    if (messages == nullptr) {
+    if (_messagesModel == nullptr) {
         qWarning() << "No messages for channel id:" << channelid;
         return;
     }
-    Message* m = messages->message(ts);
+    Message* m = _messagesModel->message(ts);
     if (m != nullptr) {
         qDebug() << "found message at" << ts << "with reactions" << m->reactions.size();
         const QString& reaction = message.value(QStringLiteral("reaction")).toString();
@@ -356,6 +357,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
         if (type == "reaction_added") {
             if (r == nullptr) {
                 r = new Reaction;
+                QQmlEngine::setObjectOwnership(r, QQmlEngine::CppOwnership);
                 QString emojiPrepare = QString(":%1:").arg(reaction);
                 qDebug() << "added new reaction" << emojiPrepare;
                 MessageFormatter _formatter;
@@ -363,6 +365,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
                 r->emoji = emojiPrepare;
                 r->name = reaction;
                 m->reactions.append(r);
+                qDebug() << "added new reaction" << emojiPrepare << m->reactions.count();
             }
             r->userIds << userid;
         } else if (type == "reaction_removed") {
@@ -373,6 +376,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
             m->reactions.removeOne(r);
             r->deleteLater();
         }
+        _messagesModel->preprocessFormatting(_chatsModel, m);
         emit messageUpdated(m);
     } else {
         qWarning() << "message not found for ts" << ts;
@@ -1464,6 +1468,7 @@ void SlackTeamClient::handleConversationsListReply()
         reply->deleteLater();
         for (const QJsonValue& chatValue : data.value("channels").toArray()) {
             Chat* chat = new Chat(chatValue.toObject());
+            QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);
             if (chat == nullptr) {
                 qWarning() << __PRETTY_FUNCTION__ << "Error allocating memory for Chat";
             }
@@ -1526,8 +1531,8 @@ void SlackTeamClient::handleUsersListReply()
         reply->deleteLater();
         for (const QJsonValue& userValue : data.value("members").toArray()) {
             QPointer<User> user = new User(nullptr);
-            user->setData(userValue.toObject());
             QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+            user->setData(userValue.toObject());
             _users.append(user);
         }
         if (!cursor.isEmpty()) {
