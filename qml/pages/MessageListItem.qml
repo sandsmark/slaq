@@ -17,6 +17,14 @@ MouseArea {
     // counts as same if previouse user is same and last message was within 3 minutes
     readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000
 
+    function updateText() {
+        var editedText = contentLabel.getText(0, contentLabel.text.length);
+        SlackClient.updateMessage(teamRoot.teamId, channelId, editedText, model.Time)
+        contentLabel.focus = false
+        contentLabel.readOnly = true
+        input.forceActiveFocus()
+    }
+
     Connections {
         target: emojiSelector
         enabled: itemDelegate.emojiSelectorCalled
@@ -166,11 +174,7 @@ MouseArea {
                                     contentLabel.readOnly = false
                                     contentLabel.forceActiveFocus();
                                 } else {
-                                    var editedText = contentLabel.getText(0, contentLabel.text.length);
-                                    SlackClient.updateMessage(teamRoot.teamId, channelId, editedText, model.Time)
-                                    contentLabel.focus = false
-                                    contentLabel.readOnly = true
-                                    input.forceActiveFocus()
+                                    updateText()
                                 }
                             }
                         }
@@ -206,9 +210,25 @@ MouseArea {
                         }
                     }
                     onEditingFinished: {
-                        undo();
-                        readOnly = true
-                        input.forceActiveFocus()
+                        //undo editing if new focus is not edit save button
+                        if (editButton.focus == false) {
+                            undo();
+                            readOnly = true
+                            input.forceActiveFocus()
+                        }
+                    }
+                    Keys.onReturnPressed: {
+                        if (readOnly == false && event.modifiers == 0) {
+                            updateText()
+                        }
+                        event.accepted = false
+                    }
+
+                    Keys.onEnterPressed: {
+                        if (readOnly == false && event.modifiers == 0) {
+                            updateText()
+                        }
+                        event.accepted = false
                     }
                     wrapMode: Text.Wrap
 
