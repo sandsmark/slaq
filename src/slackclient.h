@@ -19,7 +19,6 @@
 #include "messageformatter.h"
 #include "teaminfo.h"
 #include "storage.h"
-#include "debugblock.h"
 
 class SlackTeamClient : public QObject
 {

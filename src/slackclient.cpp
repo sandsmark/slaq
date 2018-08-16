@@ -16,6 +16,7 @@
 
 #include "slackclient.h"
 #include "imagescache.h"
+#include "debugblock.h"
 
 #include "MessagesModel.h"
 
@@ -1352,7 +1353,7 @@ TeamInfo *SlackTeamClient::teamInfo()
 
 void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime &time)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);

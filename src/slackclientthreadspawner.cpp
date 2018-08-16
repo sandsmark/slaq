@@ -3,6 +3,7 @@
 
 #include "slackclientthreadspawner.h"
 #include "searchmessagesmodel.h"
+#include "debugblock.h"
 
 SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
     QThread(parent)

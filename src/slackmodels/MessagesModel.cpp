@@ -9,6 +9,7 @@
 #include "ChatsModel.h"
 #include "MessagesModel.h"
 #include "messageformatter.h"
+#include "debugblock.h"
 
 MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId, bool isThreadModel) : QAbstractListModel(parent),
     m_usersModel(usersModel), m_channelId(channelId), m_isThreadModel(isThreadModel) {
@@ -136,7 +137,9 @@ Message *MessageListModel::message(const QDateTime &ts)
         if (message->time == ts) {
             return message;
         }
-        if (!message->messageThread.isNull()) {
+        // 1st message in the message thread is parent message
+        // so to avoid recursive search - check if the message thread its not current thread
+        if (!message->messageThread.isNull() && message->messageThread != this) {
             Message* threadedMsg = message->messageThread->message(ts);
             if (threadedMsg != nullptr) {
                 return threadedMsg;
@@ -437,7 +440,8 @@ void MessageListModel::findNewUsers(QString& message)
 
 void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore, int threadMsgsCount)
 {
-    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore;
+    DEBUG_BLOCK;
+    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore << threadMsgsCount;
 
     m_hasMore = hasMore;
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1 - threadMsgsCount);
