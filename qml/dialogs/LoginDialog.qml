@@ -39,11 +39,11 @@ Dialog {
             }
             active: false
             onStatusChanged: {
-                if (loader.status == Loader.Loading) {
+                if (webViewLoader.status == Loader.Loading) {
                     SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
                     SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
                 }
-                if (loader.status == Loader.Null) {
+                if (webViewLoader.status == Loader.Null) {
                     SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
                     SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
                 }
