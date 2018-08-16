@@ -80,16 +80,17 @@ public:
 
 class ReplyField: public QObject  {
     Q_OBJECT
-    Q_PROPERTY(User* user MEMBER m_user CONSTANT)
+    Q_PROPERTY(User* user READ user CONSTANT)
     Q_PROPERTY(QDateTime ts MEMBER m_ts CONSTANT)
 
 public:
     ReplyField(QObject* parent = nullptr);
     void setData(const QJsonObject &data);
 
-    User* m_user;
+    QPointer<User> m_user;
     QString m_userId;
     QDateTime m_ts;
+    User* user() const { return m_user.data(); }
 };
 
 //TODO: implement actions

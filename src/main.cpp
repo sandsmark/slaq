@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
     qRegisterMetaType<SlackTeamClient::ClientStatus>("SlackTeamClient::ClientStatus");
     qRegisterMetaType<Chat*>("Chat*");
+    qRegisterMetaType<User*>("User*");
 
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");

@@ -136,6 +136,12 @@ Message *MessageListModel::message(const QDateTime &ts)
         if (message->time == ts) {
             return message;
         }
+        if (!message->messageThread.isNull()) {
+            Message* threadedMsg = message->messageThread->message(ts);
+            if (threadedMsg != nullptr) {
+                return threadedMsg;
+            }
+        }
     }
     return nullptr;
 }

@@ -252,6 +252,10 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
     //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
+    if (_chatsModel == nullptr) {
+        qWarning() << "Chats model not yet allocated";
+        return;
+    }
     Chat* chat = _chatsModel->chat(channelId);
     if (chat == nullptr) {
         qWarning() << "Chat for channel ID" << channelId << "not found";
@@ -295,6 +299,12 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
     MessageListModel *_messagesModel = _chatsModel->messages(channel_id);
     if (_messagesModel == nullptr) {
         return;
+    }
+    //fill up users for replys
+    UsersModel* _usersModel = m_teamInfo.users();
+    for(QObject* rplyObj : message_->replies) {
+        ReplyField* rply = static_cast<ReplyField*>(rplyObj);
+        rply->m_user = _usersModel->user(rply->m_userId);
     }
     _messagesModel->preprocessFormatting(_chatsModel, message_);
 
@@ -1282,6 +1292,7 @@ void SlackTeamClient::handleLoadMessagesReply()
         }
 
         //fill up users for replys
+        UsersModel* _usersModel = m_teamInfo.users();
         for(QObject* rplyObj : message->replies) {
             ReplyField* rply = static_cast<ReplyField*>(rplyObj);
             rply->m_user = _usersModel->user(rply->m_userId);
