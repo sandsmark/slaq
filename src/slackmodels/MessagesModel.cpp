@@ -429,12 +429,12 @@ void MessageListModel::findNewUsers(QString& message)
     }
 }
 
-void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore)
+void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore, int threadMsgsCount)
 {
-    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId();
+    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore;
 
     m_hasMore = hasMore;
-    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
+    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1 - threadMsgsCount);
 
     for (Message* message : messages) {
         preprocessMessage(message);

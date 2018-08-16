@@ -335,7 +335,7 @@ public:
 public slots:
     void addMessage(Message *message);
     void updateMessage(Message *message);
-    void addMessages(const QList<Message *> &messages, bool hasMore);
+    void addMessages(const QList<Message *> &messages, bool hasMore, int threadMsgsCount);
     Message* message(const QDateTime& ts);
     bool deleteMessage(const QDateTime& ts);
     Message* message(int row);

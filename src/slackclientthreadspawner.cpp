@@ -406,7 +406,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 }
 
-void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QList<Message*> messages, bool hasMore)
+void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QList<Message*> messages, bool hasMore, int threadMsgsCount)
 {
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
 
@@ -422,7 +422,7 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QLis
         return;
     }
 
-    messagesModel->addMessages(messages, hasMore);
+    messagesModel->addMessages(messages, hasMore, threadMsgsCount);
 }
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
 {

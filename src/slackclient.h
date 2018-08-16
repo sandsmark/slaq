@@ -78,7 +78,7 @@ signals:
 
     // signals to main thread
     void messageReceived(Message* message);
-    void messagesReceived(const QString &channelId, QList<Message*> messages, bool hasMore);
+    void messagesReceived(const QString &channelId, QList<Message*> messages, bool hasMore, int threadMsgsCount);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message);
     void messageDeleted(const QString& channelId, const QDateTime& ts);

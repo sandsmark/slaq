@@ -1203,6 +1203,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
             _latest = mesgs->firstMessageTs();
         }
     }
+    params.insert(QStringLiteral("count"), "50");
     if (_latest.isValid()) {
         params.insert(QStringLiteral("latest"), dateTimeToSlack(_latest));
         params.insert(QStringLiteral("inclusive"), "0");
@@ -1239,7 +1240,7 @@ void SlackTeamClient::handleLoadMessagesReply()
         return;
     }
     if (!_chatsModel->hasChannel(channelId)) {
-        qWarning() << "Team" << m_teamInfo.teamId() << "does not have channel" << channelId;
+        qWarning() << __PRETTY_FUNCTION__ << "Team" << m_teamInfo.teamId() << "does not have channel" << channelId;
         return;
     }
 
@@ -1260,6 +1261,7 @@ void SlackTeamClient::handleLoadMessagesReply()
 
     QList<Message*> _mlist;
     UsersModel* _usersModel = m_teamInfo.users();
+    int threadMsgsCount = 0;
     for (const QJsonValue &messageData : messageList) {
         const QJsonObject messageObject = messageData.toObject();
         if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
@@ -1285,11 +1287,14 @@ void SlackTeamClient::handleLoadMessagesReply()
             rply->m_user = _usersModel->user(rply->m_userId);
         }
         messageModel->preprocessFormatting(_chatsModel, message);
+        if (messageModel->isMessageThreadChild(message)) {
+            threadMsgsCount++;
+        }
         _mlist.append(message);
     }
-    emit messagesReceived(channelId, _mlist, _hasMore);
+    emit messagesReceived(channelId, _mlist, _hasMore, threadMsgsCount);
 
-    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name();
+    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 
