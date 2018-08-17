@@ -33,7 +33,7 @@ Button {
             source: "image://emoji/" + reaction.name
         }
 
-        Text {
+        Label {
             visible: ImagesCache.isUnicode
             anchors.centerIn: parent
             text: control.text
@@ -46,20 +46,19 @@ Button {
     }
 
     background: Rectangle {
-        color: "#eaf4f5"
+        color: palette.alternateBase
         implicitWidth: 100
         implicitHeight: parent.height
         opacity: enabled ? 1 : 0.3
         border.color: "#bdbdbd"
         border.width: 1
         radius: 3
-        Text {
+        Label {
             id: countLabel
             anchors.right: parent.right; anchors.rightMargin: Theme.paddingSmall
             anchors.verticalCenter: parent.verticalCenter
             font.pointSize: Theme.fontSizeSmall
             renderType: Text.QtRendering
-            color: "#0f0f0f"
             text: reaction.usersCount
         }
     }

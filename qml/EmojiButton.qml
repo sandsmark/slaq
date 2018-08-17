@@ -3,7 +3,7 @@ import QtQuick.Controls 2.3
 
 Button {
     id: emojiButton
-    contentItem: Text {
+    contentItem: Label {
         text: emojiButton.text
         font.family: "Twitter Color Emoji"
         font.bold: emojiButton.font.bold

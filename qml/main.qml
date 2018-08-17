@@ -349,7 +349,7 @@ ApplicationWindow {
             Loader {
                 id: teamloader
                 active: false
-                asynchronous: true
+                asynchronous: false
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId

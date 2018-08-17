@@ -40,7 +40,7 @@ Page {
             anchors.centerIn: parent
         }
 
-        Text {
+        Label {
             id: errorMessageLabel
             anchors.centerIn: parent
             visible: text.length > 0

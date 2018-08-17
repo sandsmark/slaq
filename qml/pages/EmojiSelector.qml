@@ -58,7 +58,7 @@ Popup {
                 enabled: visible
                 height: visible ? title.implicitHeight + grid.implicitHeight + spacing : 0
 
-                Text {
+                Label {
                     id: title
                     font.capitalization: Font.Capitalize
                     text: visibleName
@@ -88,7 +88,7 @@ Popup {
                                 source: "image://emoji/" + model.modelData.shortNames[0]
                             }
 
-                            Text {
+                            Label {
                                 visible: ImagesCache.isUnicode && !(model.modelData.imagesExist & EmojiInfo.ImageSlackTeam)
                                 anchors.fill: parent
                                 text: model.modelData.unified

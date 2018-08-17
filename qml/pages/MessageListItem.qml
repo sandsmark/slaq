@@ -85,7 +85,7 @@ MouseArea {
                             cache: false
                             source: visible ? "image://emoji/" + User.statusEmoji.slice(1, -1) : ""
                         }
-                        Text {
+                        Label {
                             visible: ImagesCache.isUnicode
                             text: User != null ? ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1)) : ""
                             font.family: "Twitter Color Emoji"

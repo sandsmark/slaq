@@ -86,7 +86,7 @@ public:
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_users.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
-
+    QMap<QString, QPointer<User> > users() const;
 
 public slots:
     void addUser(User *user);
@@ -94,8 +94,6 @@ public slots:
     void addUser(const QJsonObject &userData);
     void addUsers(const QList<QPointer<User>> &users);
     QPointer<User> user(const QString &id);
-    int fooCount() { return m_users.count(); }
-    QList<QPointer<User>> users() { return m_users.values(); }
 
 private:
     QMap<QString, QPointer<User>> m_users;

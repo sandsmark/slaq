@@ -107,6 +107,7 @@ Page {
                 border.color: "#00050505"
                 border.width: 1
                 radius: 5
+                color: palette.base
                 Row {
                     anchors.centerIn: parent
                     spacing: 10
@@ -265,7 +266,7 @@ Page {
             clip: true
             ScrollBar.vertical: ScrollBar {}
 
-            delegate: Text {
+            delegate: Label {
                 text: modelData
                 font.bold: index === input.currentNickSuggestionIndex
                 MouseArea {

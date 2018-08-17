@@ -1,5 +1,5 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 
 Page {
     id: page
@@ -13,7 +13,7 @@ Page {
         Behavior on opacity { NumberAnimation { duration: 250 } }
     }
 
-    header: Text {
+    header: Label {
         text: model ? model.name : ""
     }
 

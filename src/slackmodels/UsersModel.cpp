@@ -267,4 +267,9 @@ QPointer<User> UsersModel::user(const QString &id)
     return m_users.value(id);
 }
 
+QMap<QString, QPointer<User> > UsersModel::users() const
+{
+    return m_users;
+}
+
 
