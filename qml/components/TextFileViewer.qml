@@ -1,4 +1,5 @@
 import QtQuick 2.11
+import QtQuick.Controls 2.4
 
 Item {
     width: textEdit.width
@@ -9,7 +10,7 @@ Item {
         channelRoot.showText(fileshare.url_private_download, fileshare.name, fileshare.username)
     }
 
-    Text {
+    Label {
         id: textEdit
         width: paintedWidth
         height: paintedHeight

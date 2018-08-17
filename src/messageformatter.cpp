@@ -6,6 +6,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QGuiApplication>
+#include <QPalette>
 #include "imagescache.h"
 
 #include "UsersModel.h"
@@ -88,11 +90,15 @@ void MessageFormatter::replaceLinks(QString &message)
 
 void MessageFormatter::replaceMarkdown(QString &message)
 {
+    const QPalette& palette = QGuiApplication::palette();
+    const QString& blockStyleBg = palette.color(QPalette::Highlight).name(QColor::HexRgb);
+    const QString& blockStyleFg = palette.color(QPalette::HighlightedText).name(QColor::HexRgb);
+
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));
     message.replace(m_boldPattern, QStringLiteral("\\1<b>\\2</b>\\3"));
     message.replace(m_strikePattern, QStringLiteral("\\1<s>\\2</s>\\3"));
-    message.replace(m_codeBlockPattern, QStringLiteral("<span style=\"background-color:rgba(255,0,0,0.07); color:black; white-space:pre;\">\\1</span>"));
-    message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:rgba(255,0,0,0.07); color:black; white-space:pre;\"> \\2 </span>\\3"));
+    message.replace(m_codeBlockPattern, QStringLiteral("<blockquote><table style=\"background-color:%1; color:%2; white-space:pre;\"><tr><td>\\1</td></tr></table></blockquote>").arg(blockStyleBg).arg(blockStyleFg));
+    message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:%1; color:%2; white-space:pre;\"> \\2 </span>\\3").arg(blockStyleBg).arg(blockStyleFg));
     message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
 }
 
