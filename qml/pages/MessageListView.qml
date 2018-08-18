@@ -76,7 +76,6 @@ ListView {
     }
 
     onMovementEnded: {
-        console.log("onMovementEnded", atBottom, appActive)
         if (atBottom) {
             readTimer.restart()
         }

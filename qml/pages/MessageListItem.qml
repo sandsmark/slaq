@@ -228,7 +228,7 @@ MouseArea {
                         }
                         event.accepted = false
                     }
-                    wrapMode: Text.Wrap
+                    wrapMode: Text.WordWrap
 
                     // To avoid the border on some styles, we only want a textarea to be able to select things
                     background: Item {}
