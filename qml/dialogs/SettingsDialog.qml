@@ -84,6 +84,14 @@ Dialog {
                         settings.loadOnlyLastTeam = checked
                     }
                 }
+
+                CheckBox {
+                    text: qsTr("Cache images from Slack")
+                    checked: settings.cacheSlackImages
+                    onCheckedChanged: {
+                        settings.cacheSlackImages = checked
+                    }
+                }
             }
         }
     }

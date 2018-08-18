@@ -297,17 +297,18 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
     if (_chatsModel == nullptr) {
         return;
     }
-    MessageListModel *_messagesModel = _chatsModel->messages(channel_id);
-    if (_messagesModel == nullptr) {
-        return;
-    }
+
     //fill up users for replys
     UsersModel* _usersModel = m_teamInfo.users();
     for(QObject* rplyObj : message_->replies) {
         ReplyField* rply = static_cast<ReplyField*>(rplyObj);
         rply->m_user = _usersModel->user(rply->m_userId);
     }
-    _messagesModel->preprocessFormatting(_chatsModel, message_);
+
+    MessageListModel *_messagesModel = _chatsModel->messages(channel_id);
+    if (_messagesModel != nullptr) {
+        _messagesModel->preprocessFormatting(_chatsModel, message_);
+    }
 
     if (subtype == "message_changed" || subtype == "message_replied") {
        qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
