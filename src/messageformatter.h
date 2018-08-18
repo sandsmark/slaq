@@ -19,16 +19,10 @@ public:
     void replaceLinks(QString &message);
     void replaceMarkdown(QString &message);
     void replaceEmoji(QString &message);
-
     void replaceAll(ChatsModel* chat,  QString &message);
-
     void doReplaceChannelInfo(Chat *chat, QString &message);
-signals:
 
-public slots:
 private:
-    void loadEmojis();
-
     QRegularExpression m_labelPattern;
     QRegularExpression m_plainPattern;
     QRegularExpression m_mailtoPattern;

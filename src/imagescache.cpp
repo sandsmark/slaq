@@ -148,7 +148,17 @@ QImage ImagesCache::image(const QString &id)
                 + QDir::separator() + iconUrl.fileName();
         cached_ = m_iconsCached.contains(path_);
     } else {
-        einfo = m_emojiList.value(id);
+        int skinTone = id.indexOf("::skin-tone");
+        QString noSkinToneId = id;
+        if (skinTone != -1) {
+            int skinToneEnds = id.indexOf(":", skinTone + 2); //skip "::"
+            if (skinToneEnds != -1) {
+                noSkinToneId = noSkinToneId.remove(skinTone, skinToneEnds - skinTone);
+            } else {
+                noSkinToneId = noSkinToneId.remove(skinTone, 13);
+            }
+        }
+        einfo = m_emojiList.value(noSkinToneId);
         if (einfo != nullptr) {
             //qDebug() << "image is" << id << m_emojiList.contains(id) << m_emojiList.value(id)->cached();
             if (einfo->imagesExist() & EmojiInfo::ImageSlackTeam) {
@@ -158,10 +168,10 @@ QImage ImagesCache::image(const QString &id)
             } else {
                 path_ = m_cache + QDir::separator() +
                         m_imagesSetsFolders.at(m_currentImagesSetIndex) + QDir::separator() +
-                        m_emojiList.value(id)->image();
+                        einfo->image();
             }
 
-            cached_ = m_emojiList.value(id)->cached();
+            cached_ = einfo->cached();
         } else {
             qWarning() << "invalid id" << id;
             return image_;

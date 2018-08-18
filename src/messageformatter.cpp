@@ -24,7 +24,7 @@ MessageFormatter::MessageFormatter() :
     m_codeBlockPattern(QRegularExpression(QStringLiteral("```([^`]+)```"))),
     m_variableLabelPattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)\\|([^>]+)>"))),
     m_variablePattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)>"))),
-    m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):(:[\\w\\+\\-]+:)?[\\?\\.!]?"))),
+    m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"))),
     m_channelPattern(QRegularExpression(QStringLiteral("<#([A-Z0-9]+)|([^>]+)>")))
 {
     m_labelPattern.optimize();
@@ -110,10 +110,14 @@ void MessageFormatter::replaceEmoji(QString &message)
     ImagesCache* imageCache = ImagesCache::instance();
 
     QRegularExpressionMatchIterator i = m_emojiPattern.globalMatch(message);
+    if (!i.isValid()) {
+        qWarning() << "error parsing" << message << m_emojiPattern.errorString();
+        return;
+    }
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         QString captured = match.captured();
-        captured.replace(QStringLiteral(":"), QStringLiteral(""));
+        //captured.replace(QStringLiteral(":"), QStringLiteral(""));
         //qDebug() << "captured" << captured;
         EmojiInfo* einfo = imageCache->getEmojiInfo(captured);
         if (einfo != nullptr) {
