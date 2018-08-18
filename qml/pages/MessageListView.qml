@@ -69,7 +69,14 @@ ListView {
         readTimer.restart()
     }
 
+    onCountChanged: {
+        if (atBottom && count > 0) {
+            readTimer.restart()
+        }
+    }
+
     onMovementEnded: {
+        console.log("onMovementEnded", atBottom, appActive)
         if (atBottom) {
             readTimer.restart()
         }

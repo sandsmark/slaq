@@ -53,9 +53,7 @@ MouseArea {
                 y: Theme.paddingMedium/2
                 visible: !sameuser || (isReplies && model.ThreadIsParentMessage)
                 sourceSize: visible ? Qt.size(Theme.avatarSize, Theme.avatarSize) : Qt.size(0, 0)
-                cache: true
-                asynchronous: true
-                source: visible && model.User != null ? model.User.avatarUrl : "http://www.gravatar.com/avatar/default?d=identicon"
+                source: visible && model.User != null ? "image://emoji/slack/" + model.User.avatarUrl : "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
             Column {
@@ -264,7 +262,7 @@ MouseArea {
                             id: repliesRepeater
                             model: ThreadReplies
                             Image {
-                                source: ThreadReplies[index].user.avatarUrl
+                                source: "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl
                                 sourceSize: Qt.size(16, 16)
                             }
                         }

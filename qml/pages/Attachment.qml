@@ -50,7 +50,7 @@ Column {
                 Image {
                     width: 16
                     height: 16
-                    source: attachment.author_icon
+                    source: "image://emoji/slack/" + attachment.author_icon
                     sourceSize: Qt.size(16, 16)
                 }
                 Label {
@@ -69,6 +69,7 @@ Column {
                 height: visible ? implicitHeight : 0
 
                 ColumnLayout {
+                    id: colLayout
                     Layout.fillWidth: true
                     Label {
                         id: titleId
@@ -87,10 +88,8 @@ Column {
                     }
                 }
                 Image {
-                    width: 75
-                    height: 75
-                    source: attachment.thumb_url
-                    sourceSize: Qt.size(75, 75)
+                    source: "image://emoji/slack/" + attachment.thumb_url
+                    sourceSize: Qt.size(colLayout.height, colLayout.height)
                 }
             }
 
@@ -101,7 +100,7 @@ Column {
             Image {
                 anchors.left: parent.left
                 fillMode: Image.PreserveAspectFit
-                source: attachment.imageUrl
+                source: "image://emoji/slack/" + attachment.imageUrl
                 //source: "team://" + teamId + "/" + attachment.imageUrl
                 sourceSize:  attachment.imageSize
             }
@@ -116,7 +115,7 @@ Column {
 
         Image {
             fillMode: Image.PreserveAspectFit
-            source: attachment.footer_icon
+            source: "image://emoji/slack/" + attachment.footer_icon
             sourceSize: Qt.size(16, 16)
         }
         Label {

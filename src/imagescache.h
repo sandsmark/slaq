@@ -71,6 +71,7 @@ private:
     QStringList m_imagesSetsNames;
     int m_currentImagesSetIndex {-1}; //represents current images set. Might be several in images cache folder
     QString m_cache;
+    QHash<QString, QImage> m_requestedImages;
     QHash<QString, EmojiInfo *> m_emojiList;
     QMultiMap<EmojiInfo::EmojiCategories, EmojiInfo *> m_emojiCategories;
     QSet<QString> m_iconsCached;
@@ -79,6 +80,7 @@ private:
     QMutex m_requestsListMutex;
 
     QQmlObjectListModel<EmojiCategoryHolder> m_EmojiCategoriesModel;
+    bool m_cacheSlackImages { true };
 };
 
 #endif // IMAGESCACHE_H

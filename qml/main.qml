@@ -73,6 +73,7 @@ ApplicationWindow {
         property int theme: Material.System
         property bool loadOnlyLastTeam: true
         property bool unloadViewOnTeamSwitch: false
+        property bool cacheSlackImages: true
     }
 
     SettingsDialog {
@@ -151,7 +152,7 @@ ApplicationWindow {
                                     anchors.centerIn: parent
                                     width: Theme.headerSize - 2
                                     height: Theme.headerSize - 2
-                                    source: model.icons.length > 1 ? "image://emoji/icon/" + model.icons[1] : ""
+                                    source: model.icons.length > 1 ? "image://emoji/slack/" + model.icons[1] : ""
                                     smooth: true
                                 }
                                 Rectangle {
