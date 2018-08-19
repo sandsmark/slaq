@@ -12,6 +12,10 @@
 # App config
 TARGET = slaq
 
+SRCMOC = .moc
+MOC_DIR = .moc
+OBJECTS_DIR = .obj
+
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
