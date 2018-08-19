@@ -40,27 +40,15 @@ void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
             }
         }
 #endif
-    if (m_users == nullptr) {
-        m_users = new UsersModel;
-        QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
-    }
     m_users->addUsers(users);
 }
 
 void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
 {
-
     if (m_chats == nullptr) {
-        m_chats = new ChatsModel(m_selfId, nullptr, m_users);
-        QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+        return;
     }
-
     m_chats->addChats(chats);
-
-    if (m_searchMessages == nullptr) {
-        m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
-        QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
-    }
 }
 
 bool TeamInfo::teamsEmojisUpdated() const
@@ -71,6 +59,16 @@ bool TeamInfo::teamsEmojisUpdated() const
 void TeamInfo::setTeamsEmojisUpdated(bool teamsEmojisUpdated)
 {
     m_teamsEmojisUpdated = teamsEmojisUpdated;
+}
+
+void TeamInfo::createModels()
+{
+    m_users = new UsersModel;
+    QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
+    m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
+    QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
+    m_chats = new ChatsModel(m_selfId, nullptr, m_users);
+    QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
 }
 
 QString TeamInfo::selfId() const

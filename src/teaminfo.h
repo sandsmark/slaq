@@ -59,6 +59,7 @@ public:
     bool teamsEmojisUpdated() const;
     void setTeamsEmojisUpdated(bool teamsEmojisUpdated);
 
+    void createModels();
 public slots:
     void setTeamId(const QString& teamId);
     void setName(const QString& name);

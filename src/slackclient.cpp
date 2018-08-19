@@ -20,8 +20,8 @@
 
 #include "MessagesModel.h"
 
-SlackTeamClient::SlackTeamClient(const QString &teamId, const QString &accessToken, QObject *parent) :
-    QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible)
+SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
+    QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible), m_spawner(spawner)
 {
     DEBUG_BLOCK;
     QQmlEngine::setObjectOwnership(&m_teamInfo, QQmlEngine::CppOwnership);
@@ -755,10 +755,6 @@ void SlackTeamClient::handleSearchMessagesReply()
 void SlackTeamClient::startClient()
 {
     DEBUG_BLOCK
-    if (thread() != QThread::currentThread()) {
-        QMetaObject::invokeMethod(this, "startClient", Qt::QueuedConnection);
-        return;
-    }
 
     qDebug() << "Start init";
     QMap<QString, QString> params;
@@ -792,10 +788,13 @@ void SlackTeamClient::handleStartReply()
     }
     m_teamInfo.parseSelfData(data.value("self").toObject());
 
+    // invoke on the main thread
+    QMetaObject::invokeMethod(qApp, [this]{ m_teamInfo.createModels(); });
+
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
     m_status = STARTED;
-    qDebug() << "connect success";
+    qDebug() << "connect success" << QThread::currentThreadId();
 }
 
 QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, const int cursorPosition)
@@ -1150,10 +1149,10 @@ void SlackTeamClient::handleTeamInfoReply()
             m_teamInfo.parseTeamInfoData(data.value("team").toObject());
             config->saveTeamInfo(m_teamInfo);
             emit teamInfoChanged(m_teamInfo.teamId());
-            requestUsersList("");
         }
         //qDebug() << "teaminfo:" << data;
     }
+    requestUsersList("");
 }
 
 void SlackTeamClient::handleTeamEmojisReply()

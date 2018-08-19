@@ -26,7 +26,7 @@ class SlackTeamClient : public QObject
 
 
 public:
-    explicit SlackTeamClient(const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
+    explicit SlackTeamClient(QObject *spawner, const QString& teamId, const QString &accessToken = QString(""), QObject *parent = nullptr);
     virtual ~SlackTeamClient();
 
     Q_INVOKABLE void setAppActive(bool active);
@@ -213,6 +213,7 @@ private:
     TeamInfo m_teamInfo;
     ClientStates m_state { ClientStates::UNINITIALIZED };
     ClientStatus m_status { ClientStatus::UNDEFINED };
+    QObject *m_spawner { nullptr };
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)
