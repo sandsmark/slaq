@@ -78,7 +78,7 @@ DISTFILES += \
     qml/*.qml \
     qml/components/*.qml
 
-target.path = /usr/bin/
+target.path = deploy
 
 RESOURCES += \
     qml.qrc \
@@ -86,3 +86,8 @@ RESOURCES += \
     fonts.qrc
 
 include (src/modelshelper/QtQmlModels.pri)
+
+other.files = $${OTHER_FILES}
+other.path = deploy
+
+INSTALLS += target other
