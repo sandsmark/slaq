@@ -142,6 +142,10 @@ QImage ImagesCache::image(const QString &id)
         }
         QString iconPath = id;
         iconPath.remove(0, slackImagesPrefix.size());
+        if (iconPath.isEmpty()) {
+            qWarning() << "Empty id" << id;
+            return image_;
+        }
         QUrl iconUrl(iconPath);
 
         path_ = m_cache + QDir::separator() + slackImagesSubdir
@@ -190,7 +194,7 @@ QImage ImagesCache::image(const QString &id)
         //qDebug() << "loading image" << path_ << imgFormat;
         image_ = imgReader.read();
         if (image_.isNull()) {
-            qWarning() << "Error loading image" << path_ << imgReader.errorString();
+            qWarning() << "Error loading image" << path_ << imgReader.errorString() << id;
         }
     } else {
         emit requestImageViaHttp(id);

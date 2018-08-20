@@ -116,7 +116,7 @@ void MessageFormatter::replaceEmoji(QString &message)
     }
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
-        QString captured = match.captured();
+        QString captured = match.captured(1);
         //captured.replace(QStringLiteral(":"), QStringLiteral(""));
         //qDebug() << "captured" << captured;
         EmojiInfo* einfo = imageCache->getEmojiInfo(captured);
@@ -133,6 +133,8 @@ void MessageFormatter::replaceEmoji(QString &message)
                 message.replace(match.captured(), replacement);
                 //qDebug() << "emoji image" << captured << message;
             }
+        } else {
+            qWarning() << "Emoji not found for" << captured << "message:" << message;
         }
     }
 }

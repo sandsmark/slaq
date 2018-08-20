@@ -202,7 +202,9 @@ private:
 
     QString historyMethod(const ChatsModel::ChatType type);
     QString markMethod(ChatsModel::ChatType type);
+    void addTeamEmoji(const QString &name, const QString &url);
 
+private:
     QPointer<QNetworkAccessManager> networkAccessManager;
     QPointer<SlackConfig> config;
     QPointer<SlackStream> stream;
@@ -214,6 +216,7 @@ private:
     ClientStates m_state { ClientStates::UNINITIALIZED };
     ClientStatus m_status { ClientStatus::UNDEFINED };
     QObject *m_spawner { nullptr };
+
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)

@@ -139,11 +139,13 @@ Message *MessageListModel::message(const QDateTime &ts)
         }
         // 1st message in the message thread is parent message
         // so to avoid recursive search - check if the message thread its not current thread
-        if (!message->messageThread.isNull() && message->messageThread != this) {
+        if (!message->messageThread.isNull() && message->messageThread.data() != this) {
+            locker.unlock();
             Message* threadedMsg = message->messageThread->message(ts);
             if (threadedMsg != nullptr) {
                 return threadedMsg;
             }
+            locker.relock();
         }
     }
     return nullptr;

@@ -239,6 +239,15 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
     } else if (type == QStringLiteral("pong")) {
     } else if (type == QStringLiteral("hello")) {
+    } else if (type == QStringLiteral("emoji_changed")) {
+        const QString& subtype = message.value(QStringLiteral("subtype")).toString();
+        if (subtype == "add") {
+            const QString& name = message.value(QStringLiteral("name")).toString();
+            const QString& url = message.value(QStringLiteral("value")).toString();
+            addTeamEmoji(name, url);
+            ImagesCache::instance()->sendEmojisUpdated();
+            m_teamInfo.setTeamsEmojisUpdated(true);
+        }
     } else if (type == QStringLiteral("dnd_updated") || type == QStringLiteral("dnd_updated_user")) {
         parseUserDndChange(message);
     } else {
@@ -1155,6 +1164,19 @@ void SlackTeamClient::handleTeamInfoReply()
     requestUsersList("");
 }
 
+void SlackTeamClient::addTeamEmoji(const QString& name, const QString& url) {
+    ImagesCache* imagesCache = ImagesCache::instance();
+    EmojiInfo *einfo = new EmojiInfo;
+    einfo->m_name = name;
+    einfo->m_shortNames << name;
+    einfo->m_image = url;
+    einfo->m_imagesExist |= EmojiInfo::ImageSlackTeam;
+    einfo->m_category = EmojiInfo::EmojiCategoryCustom;
+    einfo->m_teamId = m_teamInfo.teamId();
+    //qDebug() << "edding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
+    imagesCache->addEmoji(einfo);
+}
+
 void SlackTeamClient::handleTeamEmojisReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -1173,15 +1195,7 @@ void SlackTeamClient::handleTeamEmojisReply()
         if (emoji_url.startsWith("alias:")) {
             imagesCache->addEmojiAlias(name, emoji_url.remove(0, 6));
         } else {
-            EmojiInfo *einfo = new EmojiInfo;
-            einfo->m_name = name;
-            einfo->m_shortNames << name;
-            einfo->m_image = emoji_url;
-            einfo->m_imagesExist |= EmojiInfo::ImageSlackTeam;
-            einfo->m_category = EmojiInfo::EmojiCategoryCustom;
-            einfo->m_teamId = m_teamInfo.teamId();
-            //qDebug() << "edding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
-            imagesCache->addEmoji(einfo);
+            addTeamEmoji(name, emoji_url);
         }
     }
     imagesCache->sendEmojisUpdated();
