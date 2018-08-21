@@ -225,15 +225,20 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
                         userName(message.value(QStringLiteral("user")).toString()));
     } else if (type == QStringLiteral("user_change")) {
         qDebug() << "user changed" << message;
-        QMetaObject::invokeMethod(teamInfo()->users(), "updateUser",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(QJsonObject, message.value(QStringLiteral("user")).toObject()));
+        // invoke on the main thread
+        QMetaObject::invokeMethod(qApp, [this, message] {
+            if (m_teamInfo.users() != nullptr) {
+                m_teamInfo.users()->updateUser(message.value(QStringLiteral("user")).toObject());
+            }
+        });
     } else if (type == QStringLiteral("team_join")) {
         qDebug() << "user joined" << message;
-        //invoke add user for run in GUI thread
-        QMetaObject::invokeMethod(teamInfo()->users(), "addUser",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(QJsonObject, message.value(QStringLiteral("user")).toObject()));
+        // invoke on the main thread
+        QMetaObject::invokeMethod(qApp, [this, message] {
+            if (m_teamInfo.users() != nullptr) {
+                m_teamInfo.users()->addUser(message.value(QStringLiteral("user")).toObject());
+            }
+        });
         //parseUser(message.value(QStringLiteral("user")).toObject());
     } else if (type == QStringLiteral("member_joined_channel")) {
         qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
@@ -268,7 +273,7 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
     }
     Chat* chat = _chatsModel->chat(channelId);
     if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << channelId << "not found";
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
     int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
@@ -569,6 +574,10 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
         QJsonParseError error;
         QByteArray baData = reply->readAll();
         //qDebug() << "received" << baData.size() << "bytes" << gUncompress(baData);
+        if (baData.isEmpty()) {
+            qWarning() << "No data returned";
+            return QJsonObject();
+        }
         QJsonDocument document = QJsonDocument::fromJson(gUncompress(baData), &error);
 
         if (error.error == QJsonParseError::NoError) {
@@ -1005,7 +1014,7 @@ void SlackTeamClient::openChat(const QString& chatId)
     }
     Chat* chat = _chatsModel->chat(chatId);
     if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << chatId << "not found";
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << chatId << "not found";
         return;
     }
     if (chat->membersModel->users().first().isNull()) {
@@ -1217,7 +1226,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
     }
     Chat* chat = _chatsModel->chat(channelId);
     if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << channelId << "not found";
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
     QMap<QString, QString> params;

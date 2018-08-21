@@ -234,8 +234,10 @@ void UsersModel::addUser(const QJsonObject &userData)
     addUser(user);
 }
 
-void UsersModel::addUsers(const QList<QPointer<User>>& users)
+void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
 {
+    qDebug() << "Adding users" << users.count() << last;
+    m_addingUsers = true;
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + users.count() - 1);
     for (QPointer<User> user : users) {
         if (m_users.contains(user->userId())) {
@@ -260,10 +262,16 @@ void UsersModel::addUsers(const QList<QPointer<User>>& users)
     }
 
     endInsertRows();
+    if (last) {
+        m_addingUsers = false;
+    }
 }
 
 QPointer<User> UsersModel::user(const QString &id)
 {
+    if (m_addingUsers) {
+        qWarning() << "NOT ALL USERS ADDED!";
+    }
     return m_users.value(id);
 }
 

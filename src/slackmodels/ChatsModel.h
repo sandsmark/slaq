@@ -54,7 +54,7 @@ public:
     QString addChat(Chat *chat);
     void removeChat(const QString &channelId);
     QString doAddChat(Chat *chat);
-    void addChats(const QList<Chat *> &chats);
+    void addChats(const QList<Chat *> &chats, bool last);
     void addMembers(const QString &channelId, const QStringList &members);
 
     bool hasChannel(const QString &id);

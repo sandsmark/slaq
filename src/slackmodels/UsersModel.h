@@ -92,11 +92,12 @@ public slots:
     void addUser(User *user);
     void updateUser(const QJsonObject &userData);
     void addUser(const QJsonObject &userData);
-    void addUsers(const QList<QPointer<User>> &users);
+    void addUsers(const QList<QPointer<User>> &users, bool last);
     QPointer<User> user(const QString &id);
 
 private:
     QMap<QString, QPointer<User>> m_users;
     QStringList m_userIds;
+    bool m_addingUsers { false };
 };
 

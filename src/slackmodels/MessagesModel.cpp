@@ -253,7 +253,7 @@ void MessageListModel::preprocessMessage(Message *message)
             || (!message->user.isNull() && (message->user_id != message->user->userId()))) {
         message->user = m_usersModel->user(message->user_id);
         if (message->user.isNull()) {
-            qWarning() << "user is null for " << message->user_id;
+            qWarning() << "user is null for " << message->user_id << m_usersModel->users().count();
             //try to construct user from message
             if (!message->user_id.isEmpty() && !message->userName.isEmpty()) {
                 QPointer<::User> _user = new ::User(message->user_id, message->userName, nullptr);

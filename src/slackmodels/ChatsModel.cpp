@@ -35,7 +35,7 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     }
     Chat* chat = m_chats.value(m_chatIds.at(row));
     if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << m_chatIds[row] << "not found";
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << m_chatIds[row] << "not found";
         return QVariant();
     }
     switch (role) {
@@ -163,9 +163,9 @@ QString ChatsModel::doAddChat(Chat *chat)
     return chat->id;
 }
 
-void ChatsModel::addChats(const QList<Chat*>& chats)
+void ChatsModel::addChats(const QList<Chat*>& chats, bool last)
 {
-    qDebug() << "addChats" << chats.count();
+    qDebug() << "addChats" << chats.count() << last;
 
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count() - 1);
     for (Chat *chat : chats) {
