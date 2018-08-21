@@ -393,7 +393,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     }
     Chat* chat = _chatsModel->chat(message->channel_id);
     if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << message->channel_id << "not found";
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << message->channel_id << "not found";
         emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), message->channel_id, -1);
         return;
     }
@@ -494,7 +494,7 @@ void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
     }
     Chat* chat = _chatsModel->chat(channelId);
     if (chat == nullptr) {
-        qWarning() << "Chat for channel ID" << channelId << "not found";
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
     disconnect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,

@@ -40,7 +40,7 @@ void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
             }
         }
 #endif
-    m_users->addUsers(users);
+    m_users->addUsers(users, last);
 }
 
 void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
@@ -48,7 +48,7 @@ void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
     if (m_chats == nullptr) {
         return;
     }
-    m_chats->addChats(chats);
+    m_chats->addChats(chats, last);
 }
 
 bool TeamInfo::teamsEmojisUpdated() const
