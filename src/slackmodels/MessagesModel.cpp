@@ -542,6 +542,7 @@ void Message::setData(const QJsonObject &data)
     if (!thread_.isUndefined()) {
         thread_ts = slackToDateTime(thread_.toString());
     }
+    isChanged = !data.value(QStringLiteral("edited")).isUndefined();
 //    qDebug() << ts << time;
 //    Q_ASSERT(time.isValid());
 
