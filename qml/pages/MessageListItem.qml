@@ -72,10 +72,15 @@ MouseArea {
                         font.bold: true
                     }
 
-                    Item {
+                    Control {
                         width: 16
                         height: 16
                         visible: User != null && User.statusEmoji.length > 0
+                        hoverEnabled: true
+                        ToolTip.delay: 100
+                        ToolTip.visible: hovered && User.status !== ""
+                        ToolTip.text: User.status
+
                         Image {
                             sourceSize: Qt.size(parent.width, parent.height)
                             visible: !ImagesCache.isUnicode
