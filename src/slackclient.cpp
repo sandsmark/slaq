@@ -881,22 +881,24 @@ void SlackTeamClient::onFetchMoreSearchData(const QString &query, int page)
 QString SlackTeamClient::lastChannel()
 {
     DEBUG_BLOCK
-    QString _lastChannel;
-
-    if (!m_teamInfo.lastChannel().isEmpty()) {
-        _lastChannel = m_teamInfo.lastChannel();
-    }
-    ChatsModel* _chatsModel = m_teamInfo.chats();
-    if (_lastChannel.isEmpty() && _chatsModel != nullptr) {
-        Chat* _generalChat = _chatsModel->generalChat();
-        if (_generalChat != nullptr) {
-            _lastChannel = _generalChat->id;
-        } else if (_chatsModel->rowCount() > 0){
-            _lastChannel = _chatsModel->chat(0)->id;
+    QString _lastChannel = m_teamInfo.lastChannel();
+    if (_lastChannel.isEmpty()) {
+        ChatsModel* _chatsModel = m_teamInfo.chats();
+        if (_chatsModel != nullptr) {
+            Chat* _generalChat = _chatsModel->generalChat();
+            if (_generalChat != nullptr) {
+                qDebug() << "taken general chat";
+                _lastChannel = _generalChat->id;
+            } else if (_chatsModel->rowCount() > 0){
+                qDebug() << "taken 1st chat";
+                _lastChannel = _chatsModel->chat(0)->id;
+            }
         }
+    } else {
+        qDebug() << "taken last chat for team" << m_teamInfo.name();
     }
 
-    //qDebug() << "last channel" << _lastChannel;
+    qDebug() << "last channel" << _lastChannel;
     return _lastChannel;
 }
 
@@ -1111,6 +1113,7 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
+    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count();
     if (m_teamInfo.users() == nullptr || m_teamInfo.users()->users().isEmpty() || !cursor.isEmpty()) {
         QMap<QString, QString> params;
         params.insert(QStringLiteral("limit"), "1000");
@@ -1169,8 +1172,8 @@ void SlackTeamClient::handleTeamInfoReply()
             config->saveTeamInfo(m_teamInfo);
             emit teamInfoChanged(m_teamInfo.teamId());
         }
-        //qDebug() << "teaminfo:" << data;
     }
+    qDebug() << __PRETTY_FUNCTION__ << "teaminfo:" << m_teamInfo.name() << m_teamInfo.teamId();
     requestUsersList("");
 }
 

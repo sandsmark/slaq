@@ -23,6 +23,7 @@ ApplicationWindow {
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
+    property bool completed: false
 
     function recalcUnread() {
         var total = 0
@@ -186,8 +187,8 @@ ApplicationWindow {
                             }
                             onClicked: {
                                 SlackClient.lastTeam = model.teamId
-                                tabBar.currentIndex = index
                                 console.log("set last team", SlackClient.lastTeam)
+                                tabBar.currentIndex = index
                             }
                             Connections {
                                 target: SlackClient
@@ -325,23 +326,38 @@ ApplicationWindow {
         }
     }
 
+    function switchTeam() {
+        //make sure we will not switch before settings are readed out
+        if (teamsSwipe.currentIndex < 0 ||  completed == false) {
+            return;
+        }
+
+        var ciItem = repeater.itemAt(teamsSwipe.currentIndex)
+        if (settings.unloadViewOnTeamSwitch === false) {
+            ciItem.active = true
+        } else {
+            for (var i = 0; i < repeater.count; i++) {
+                if (i == teamsSwipe.currentIndex) {
+                    ciItem.active = true
+                } else {
+                    repeater.itemAt(i).active = false
+                }
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        completed = true
+        switchTeam()
+    }
+
     SwipeView {
         id: teamsSwipe
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
 
         onCurrentIndexChanged: {
-            if (settings.unloadViewOnTeamSwitch === false) {
-                repeater.itemAt(currentIndex).active = true
-            } else {
-                for (var i = 0; i < repeater.count; i++) {
-                    if (i == currentIndex) {
-                        repeater.itemAt(currentIndex).active = true
-                    } else {
-                        repeater.itemAt(i).active = false
-                    }
-                }
-            }
+            switchTeam()
         }
 
         Repeater {
@@ -357,6 +373,7 @@ ApplicationWindow {
                 id: teamloader
                 active: false
                 asynchronous: false
+                property string teamId: model.teamId
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId

@@ -14,13 +14,14 @@ Page {
 
     property var slackClient: null
     property alias pageStack: pageStack
-    property string teamId
-    property string teamName
+    property string teamId: ""
+    property string teamName: ""
     property string currentChannelId: pageStack.currentItem.channelId != undefined ? pageStack.currentItem.channelId : ""
     property string previousChannelId
 
     onSlackClientChanged: {
         if (slackClient !== null) {
+            console.log("starting test login for team", teamRoot.teamId, teamRoot.teamName)
             SlackClient.testLogin(teamRoot.teamId)
         }
     }
