@@ -50,7 +50,6 @@ Item {
             MouseArea {
                 id: mouArea
                 anchors.fill: parent
-                enabled: fileshare.mimetype.indexOf("video") === -1
                 hoverEnabled: true
                 z: loader.item.z + 100 //workaround since for Text item
                 onContainsMouseChanged: {

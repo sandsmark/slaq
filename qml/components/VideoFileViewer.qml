@@ -11,7 +11,7 @@ Item {
         anchors.fill: parent
         asynchronous: true
         fillMode: Image.PreserveAspectFit
-        source: "team://" + teamId + "/" + fileshare.thumb_video
+        source: fileshare.thumb_video != "" ? "team://" + teamId + "/" + fileshare.thumb_video : "qrc:/icons/video-thumbnail.png"
         visible: video.playbackState === MediaPlayer.StoppedState
         onStatusChanged: {
             if (status === Image.Ready) {
@@ -19,7 +19,7 @@ Item {
                 videoItem.height = width / (sourceSize.width / sourceSize.height)
             }
         }
-        onSourceChanged: console.log("thumb video source", fileshare.thumb_video)
+        onSourceChanged: console.log("thumb video source:" + fileshare.thumb_video + ":")
     }
 
     MediaPlayer {
@@ -67,6 +67,12 @@ Item {
             }
         }
     }
-    function clicked() {}
+    function clicked() {
+        if (video.playbackState !== MediaPlayer.PlayingState) {
+            video.play()
+        } else {
+            video.pause()
+        }
+    }
     function hovered(isHovered) {}
 }

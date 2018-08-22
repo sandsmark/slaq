@@ -356,6 +356,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
     const QString& channelid = item.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
+        qWarning() << __PRETTY_FUNCTION__ << "no chats model";
         return;
     }
     MessageListModel* _messagesModel = _chatsModel->messages(channelid);
