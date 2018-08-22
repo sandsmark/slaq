@@ -424,6 +424,7 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QLis
         qWarning() << "No messages in chat" << channelId;
         return;
     }
+    qDebug() << "Adding messages for chat" << _chatsModel->chat(channelId)->name;
 
     messagesModel->addMessages(messages, hasMore, threadMsgsCount);
 }
@@ -556,7 +557,7 @@ void SlackClientThreadSpawner::closeChat(const QString& teamId, const QString &c
 
 void SlackClientThreadSpawner::onTeamInfoChanged(const QString &teamId)
 {
-    qDebug() << "updated team info for id" << teamId << QThread::currentThreadId();;
+    qDebug() << "updated team info for id" << teamId << QThread::currentThreadId();
 }
 
 SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString &teamId, const QString &accessToken) {

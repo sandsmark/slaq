@@ -98,7 +98,7 @@ Page {
         if (SlackConfig.hasUserInfo()) {
             loadMessage = qsTr("Loading")
         } else {
-            SlackClient.testLogin()
+            //SlackClient.testLogin()
         }
     }
 
