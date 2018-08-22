@@ -48,5 +48,6 @@
         <file>icons/talking-icon.png</file>
         <file>icons/active-icon.png</file>
         <file>qml/components/UnknownFileViewer.qml</file>
+        <file>icons/video-thumbnail.png</file>
     </qresource>
 </RCC>
