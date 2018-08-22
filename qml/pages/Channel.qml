@@ -27,7 +27,9 @@ Page {
                  channel.type === ChatsModel.MultiUserConversation ||
                  channel.type === ChatsModel.Group)
                 && channel.readableName != "" ? channel.readableName : channel.name
-        console.log("channel", channel.id, channel.name, channel.readableName, channel.isPrivate)
+        channelType = channel.type
+        channelName = title
+        console.log("channel", channel.id, channel.name, channel.readableName, channel.isPrivate, channel.type)
     }
 
     function setChannelActive() {
