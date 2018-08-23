@@ -279,6 +279,7 @@ struct Message {
     bool isSameUser { false }; //indicates that previuos message has same user
     qint64 timeDiffMs { 0 }; // time difference with previous message
     QSharedPointer<MessageListModel> messageThread;
+    Message* parentMessage { nullptr };
 
     static bool compare(const Message* a, const Message* b) { return a->time > b->time; }
 
