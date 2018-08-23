@@ -131,6 +131,10 @@ ApplicationWindow {
                     id: tabBar
                     spacing: 2
                     currentIndex: teamsSwipe.currentIndex
+                    background: Rectangle {
+                        color: "transparent"
+                    }
+
                     Repeater {
                         model: teamsModel
                         TabButton {
