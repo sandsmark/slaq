@@ -129,8 +129,15 @@ MessageListModel *MessageListModel::createThread(Message *parentMessage)
     return nullptr;
 }
 
+Message *MessageListModel::message(int row)
+{
+    QMutexLocker locker(&m_modelMutex);
+    return m_messages.at(row);
+}
+
 Message *MessageListModel::message(const QDateTime &ts)
 {
+    qDebug() << "searching for" << ts << "at" << this;
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
@@ -172,12 +179,6 @@ bool MessageListModel::deleteMessage(const QDateTime &ts)
         }
     }
     return false;
-}
-
-Message *MessageListModel::message(int row)
-{
-    QMutexLocker locker(&m_modelMutex);
-    return m_messages.at(row);
 }
 
 void MessageListModel::clear()
@@ -327,6 +328,7 @@ void MessageListModel::processChildMessage(Message* message) {
             thrdModel->sortMessages();
         }
     }
+    message->parentMessage = parent_msg;
     thrdModel->prependMessageToModel(message);
     thrdModel->sortMessages();
     if (!m_MessageThreads.contains(message->thread_ts)) {
@@ -378,10 +380,10 @@ void MessageListModel::updateMessage(Message *message)
             if (oldmessage->time == message->time) {
                 message->messageThread = oldmessage->messageThread;
                 if (message->user.isNull()) {
-                    message->user = oldmessage->user;
+                    message->user = m_usersModel->user(message->user_id);
                     if (message->user.isNull()) {
                         qWarning() << __PRETTY_FUNCTION__ << "user is null for " << message->user_id;
-                        Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+                        //Q_ASSERT_X(!message->user.isNull(), "user is null", "");
                     }
                 }
                 _index_to_replace = i;
