@@ -3,6 +3,7 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.3
 import QtQuick.Controls.Material 2.4
+import QtQuick.Controls.Universal 2.4
 
 import Qt.labs.settings 1.0
 import Qt.labs.platform 1.0 as Platform
@@ -47,6 +48,7 @@ ApplicationWindow {
            }
        }
     Material.theme: settings.theme
+    Universal.theme: settings.theme
 
     Platform.SystemTrayIcon {
         id: trayIcon
@@ -69,6 +71,7 @@ ApplicationWindow {
     Settings {
         id: settings
         property string emojisSet
+        property string style
         property alias width: window.width
         property alias height: window.height
         property int theme: Material.System
@@ -240,7 +243,6 @@ ApplicationWindow {
             }
             ToolSeparator {}
             RowLayout {
-
                 spacing: 2
                 EmojiToolButton {
                     text: "🔍"
@@ -252,9 +254,9 @@ ApplicationWindow {
                 TextField {
                     id: searchInput
                     placeholderText: qsTr("Search...")
-                    padding: 0
                     Layout.fillWidth: true
                     rightPadding: closeButton.width + Theme.paddingSmall
+                    leftPadding: Theme.paddingMedium
                     onAccepted: {
                         SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
                     }
@@ -376,7 +378,7 @@ ApplicationWindow {
             Loader {
                 id: teamloader
                 active: false
-                asynchronous: false
+                asynchronous: true
                 property string teamId: model.teamId
                 sourceComponent: Team {
                     slackClient: SlackClient.slackClient(model.teamId)

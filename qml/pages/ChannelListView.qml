@@ -34,7 +34,7 @@ ListView {
 
             background: Rectangle {
                 width: listView.width
-                color: Material.primary
+                color: palette.base
             }
         }
     }

@@ -33,13 +33,16 @@ int main(int argc, char *argv[])
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QNetworkProxyFactory::setUseSystemConfiguration(true);
-    QQuickStyle::setStyle(QStringLiteral("Material"));
+
+    QSettings settings;
+    QQuickStyle::setStyle(settings.value("style", QStringLiteral("Material")).toString());
+    settings.setValue("style", QQuickStyle::name());
+
     int emojiFontId = QFontDatabase::addApplicationFont(QStringLiteral(":/fonts/TwitterColorEmoji.ttf"));
     qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
-
 
     qDebug() << "GUI thread" << QThread::currentThreadId();
     qRegisterMetaType<SlackTeamClient*>("SlackClient*");
@@ -67,13 +70,15 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
     qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));
-    SlackConfig::clearWebViewCache();
+    //SlackConfig::clearWebViewCache();
+    engine.rootContext()->setContextProperty("availableStyles", QQuickStyle::availableStyles());
     //instantiate ImageCache
     engine.rootContext()->setContextProperty(QStringLiteral("ImagesCache"), ImagesCache::instance());
     engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
     engine.rootContext()->setContextProperty(QStringLiteral("emojiCategoriesModel"),
                                              ImagesCache::instance()->emojiCategoriesModel());
     SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
+
     engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), _slackThread);
     engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), _slackThread->teamsModel());
     engine.rootContext()->setContextProperty(QStringLiteral("SlackConfig"), SlackConfig::instance());

@@ -242,9 +242,11 @@ MouseArea {
                     //trigger redraw changing width
                     onTextChanged: {
                         Qt.callLater(function() {
-                            var tmp = contentItem.width
-                            contentItem.width = 0
-                            contentItem.width = tmp
+                            if (contentItem != undefined) {
+                                var tmp = contentItem.width
+                                contentItem.width = 0
+                                contentItem.width = tmp
+                            }
                         })
                     }
 
