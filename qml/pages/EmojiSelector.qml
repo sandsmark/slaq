@@ -12,6 +12,19 @@ Popup {
     property string state: ""
 
     signal emojiSelected(string emoji)
+    property bool dbLoaded: false
+
+    onDbLoadedChanged: {
+        if (dbLoaded && popup.opened) {
+            ldr.active = true
+        }
+    }
+
+    onAboutToShow: {
+        if (dbLoaded) {
+            ldr.active = true
+        }
+    }
 
     onAboutToHide: {
         emojiSelected("")
@@ -20,7 +33,7 @@ Popup {
     Connections {
         target: ImagesCache
         onEmojisDatabaseReaded: {
-            ldr.active = true
+            popup.dbLoaded = true
         }
 
         onEmojisUpdated: {
