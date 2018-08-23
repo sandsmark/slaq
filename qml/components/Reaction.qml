@@ -46,7 +46,7 @@ Button {
     }
 
     background: Rectangle {
-        color: palette.alternateBase
+        color: palette.base
         implicitWidth: 100
         implicitHeight: parent.height
         opacity: enabled ? 1 : 0.3

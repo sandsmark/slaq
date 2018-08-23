@@ -15,6 +15,7 @@ Dialog {
     standardButtons: Dialog.Ok | Dialog.Cancel
     onAccepted: {
         ImagesCache.setEmojiImagesSet(setsBox.displayText)
+        settings.style = styleBox.displayText
         settingsDialog.close()
     }
 
@@ -45,6 +46,36 @@ Dialog {
                 }
                 Layout.fillWidth: true
             }
+        }
+
+        RowLayout {
+            spacing: 10
+
+            Label {
+                text: "Style:"
+            }
+
+            ComboBox {
+                id: styleBox
+                property int styleIndex: -1
+                model: availableStyles
+                Component.onCompleted: {
+                    styleIndex = find(settings.style, Qt.MatchFixedString)
+                    if (styleIndex !== -1)
+                        currentIndex = styleIndex
+                }
+                Layout.fillWidth: true
+            }
+            Label {
+                text: "Restart required"
+                color: "#e41e25"
+                opacity: styleBox.currentIndex !== styleBox.styleIndex ? 1.0 : 0.0
+                horizontalAlignment: Label.AlignHCenter
+                verticalAlignment: Label.AlignVCenter
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+
         }
 
         RowLayout {
