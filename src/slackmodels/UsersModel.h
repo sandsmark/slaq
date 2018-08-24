@@ -82,11 +82,15 @@ public:
     };
 
     UsersModel(QObject *parent = nullptr);
+    ~UsersModel() override;
 
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_users.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
     QMap<QString, QPointer<User> > users() const;
+
+    bool usersFetched() const;
+    void setUsersFetched(bool usersFetched);
 
 public slots:
     void addUser(User *user);
@@ -99,5 +103,6 @@ private:
     QMap<QString, QPointer<User>> m_users;
     QStringList m_userIds;
     bool m_addingUsers { false };
+    bool m_usersFetched { false };
 };
 

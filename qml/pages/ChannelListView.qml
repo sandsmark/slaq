@@ -8,6 +8,7 @@ import com.iskrembilen 1.0
 ListView {
     id: listView
 
+    property bool channelAddMode: false
     ScrollBar.vertical: ScrollBar { }
 
     function setIndex(ind) {
@@ -39,15 +40,28 @@ ListView {
         }
     }
 
+    Timer {
+        id: chatChangeTimer
+        interval: 32
+        repeat: false
+        property string channelId: ""
+        onTriggered: {
+            var channel = SlackClient.getChannel(teamRoot.teamId, channelId);
+            if (channel != null) {
+                pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channel": channel})
+            } else {
+                console.warn("No chat found for id", channelId)
+            }
+        }
+    }
 
     delegate: ItemDelegate {
         id: delegate
         text: model.Name
-        property color textColor: delegate.highlighted ? palette.highlightedText : palette.text
         highlighted: teamRoot.currentChannelId === model.Id
-        visible: model.IsOpen
+        visible: listView.channelAddMode ? (model.IsOpen ? false : true ) : (model.IsOpen ? true : false )
         enabled: visible
-        height: model.IsOpen ? delegate.implicitHeight : 0
+        height: visible ? delegate.implicitHeight : 0
         spacing: Theme.paddingSmall
         icon.color: "transparent"
         icon.source: model.PresenceIcon
@@ -61,7 +75,7 @@ ListView {
             implicitHeight: parent.height/2
             radius: height/2
             color: model.Type === ChatsModel.Channel ? "green" : "red"
-            visible: model.UnreadCountDisplay > 0
+            visible: model.UnreadCountDisplay > 0 && !channelAddMode
             Text {
                 anchors.centerIn: parent
                 color: "white"
@@ -73,26 +87,30 @@ ListView {
         width: listView.width
 
         onClicked: {
-            if (model.Id === SlackClient.lastChannel(teamRoot.teamId)) {
-                return
+            if (channelAddMode) {
+                if (model.Type === ChatsModel.Channel) {
+                    SlackClient.joinChannel(teamRoot.teamId, model.Id)
+                } else if (model.Type === ChatsModel.Conversation) {
+                    SlackClient.openChat(teamRoot.teamId, model.Id)
+                }
+                teamRoot.chatSelect.close()
+            } else {
+                if (model.Id === SlackClient.lastChannel(teamRoot.teamId)) {
+                    console.warn("Clicked on same channel")
+                    return
+                }
+                SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
+                chatChangeTimer.channelId = model.Id
+                chatChangeTimer.start()
             }
-
-            SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
-
-            //            var channel = List
-            //            console.log(Object.keys(channel))
-            //            console.log(channel.Name)
-            //            console.log(channel.Type)
-            //            console.log(channel.Id)
-
-            pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channelId": model.Id, "channelName": model.Name, "channelType": model.Type})
         }
 
         property bool hasActions: model.Type === ChatsModel.Channel || model.Type === ChatsModel.Conversation
-        onPressAndHold: if (hasActions) { actionsMenu.popup() }
+        onPressAndHold: if (hasActions && !channelAddMode) { actionsMenu.popup() }
 
         MouseArea {
             anchors.fill: parent
+            enabled: !channelAddMode
             acceptedButtons: "RightButton"
             onClicked: if (hasActions) { actionsMenu.popup() }
         }

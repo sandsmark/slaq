@@ -201,7 +201,7 @@ ColumnLayout {
         Button {
             id: uploadButton
             icon.name: "upload-media"
-            onClicked: pageStack.push(Qt.resolvedUrl("FileSend.qml"), {"channelId": channelRoot.channelId})
+            onClicked: pageStack.push(Qt.resolvedUrl("FileSend.qml"), {"channelId": channelRoot.channel.id})
         }
     }
 

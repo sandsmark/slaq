@@ -173,6 +173,10 @@ UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
 
 }
 
+UsersModel::~UsersModel() {
+    qWarning() << "Deleting User Model";
+}
+
 QVariant UsersModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
@@ -273,6 +277,16 @@ QPointer<User> UsersModel::user(const QString &id)
         qWarning() << "NOT ALL USERS ADDED!";
     }
     return m_users.value(id);
+}
+
+bool UsersModel::usersFetched() const
+{
+    return m_usersFetched;
+}
+
+void UsersModel::setUsersFetched(bool usersFetched)
+{
+    m_usersFetched = usersFetched;
 }
 
 QMap<QString, QPointer<User> > UsersModel::users() const

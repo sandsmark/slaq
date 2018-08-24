@@ -101,6 +101,8 @@ public:
     Chat(const QJsonObject &data, const ChatsModel::ChatType type = ChatsModel::Channel, QObject* parent = nullptr);
     Chat() = default;
 
+    Q_INVOKABLE bool isChatEmpty() const;
+
     QString id;
     QString presence;
     ChatsModel::ChatType type;

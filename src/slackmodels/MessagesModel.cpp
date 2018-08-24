@@ -99,6 +99,16 @@ void MessageListModel::updateReactionUsers(Message* message) {
     }
 }
 
+bool MessageListModel::historyLoaded() const
+{
+    return m_historyLoaded;
+}
+
+void MessageListModel::setHistoryLoaded(bool historyLoaded)
+{
+    m_historyLoaded = historyLoaded;
+}
+
 bool MessageListModel::isThreadModel() const
 {
     return m_isThreadModel;
@@ -394,7 +404,7 @@ void MessageListModel::updateMessage(Message *message)
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
         preprocessMessage(message);
-        qDebug() << "updating message:" << message->text << message->user->userId() << message << oldmessage << _index_to_replace;
+        qDebug() << "updating message:" << message->text << message->user_id << message << oldmessage << _index_to_replace;
 
         if (message->messageThread != nullptr) {
             //replace old parent message with new one in the thread

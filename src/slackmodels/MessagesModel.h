@@ -334,6 +334,9 @@ public:
     inline bool isMessageThreadParent(const Message* msg) const { return !isMessageThreadChild(msg); }
     inline bool isMessageThreadChild(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts != msg->time); }
 
+    bool historyLoaded() const;
+    void setHistoryLoaded(bool historyLoaded);
+
 public slots:
     void addMessage(Message *message);
     void updateMessage(Message *message);
@@ -383,5 +386,6 @@ private:
     QRegularExpression m_existingUserPattern;
     bool m_hasMore { false }; //indicator if there is more data in the channel's history
     bool m_isThreadModel { false };
+    bool m_historyLoaded { false };
 };
 

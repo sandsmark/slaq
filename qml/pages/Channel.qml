@@ -10,10 +10,7 @@ Page {
     id: channelRoot
 
     objectName: "channelPage"
-    property string channelId
-    property string channelName
-    property int channelType
-    property bool initialized: false
+
     property url textToShowUrl: ""
     property string textToShowUserName: ""
     property string textToShowName: ""
@@ -21,20 +18,17 @@ Page {
     property alias nickPopup: nickPopup
 
     property var usersTyping: []
-    onChannelIdChanged: {
-        channel = SlackClient.getChannel(teamRoot.teamId, channelRoot.channelId);
+    onChannelChanged: {
         title = (channel.type === ChatsModel.Conversation ||
                  channel.type === ChatsModel.MultiUserConversation ||
                  channel.type === ChatsModel.Group)
                 && channel.readableName != "" ? channel.readableName : channel.name
-        channelType = channel.type
-        channelName = title
         console.log("channel", channel.id, channel.name, channel.readableName, channel.isPrivate, channel.type)
     }
 
     function setChannelActive() {
         console.log("channel active", channelRoot.title);
-        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channelId);
+        SlackClient.setActiveWindow(teamRoot.teamId, channelRoot.channel.id);
         input.forceActiveFocus()
         messagesListView.markLatest()
     }
@@ -203,9 +197,9 @@ Page {
         anchors.right: parent.right; anchors.rightMargin: Theme.paddingLarge/2
 
         visible: messagesListView.inputEnabled
-        placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
+        placeholder: qsTr("Message %1%2").arg("#").arg(channel.name)
         onSendMessage: {
-            SlackClient.postMessage(teamRoot.teamId, channelId, content)
+            SlackClient.postMessage(teamRoot.teamId, channel.id, content)
         }
 
         nickPopupVisible: nickPopup.visible
@@ -221,7 +215,7 @@ Page {
     Connections {
         target: SlackClient
         onUserTyping: {
-            if (teamRoot.teamId === teamId && channelId === channelRoot.channelId) {
+            if (teamRoot.teamId === teamId && channelId === channelRoot.channel.id) {
                 if (usersTyping.indexOf(userName) === -1) {
                     usersTyping.push(userName)
                 }
@@ -286,17 +280,12 @@ Page {
     StackView.onStatusChanged: {
         if (StackView.status === StackView.Active) {
             setChannelActive()
-            if (!initialized) {
-                initialized = true
-                messagesListView.loadMessages()
-            }
-
+            messagesListView.loadMessages()
         } else {
             SlackClient.setActiveWindow(teamRoot.teamId, "")
         }
     }
     StackView.onRemoved: {
         console.log("channels destroying")
-        initialized = false
     }
 }
