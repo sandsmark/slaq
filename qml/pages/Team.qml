@@ -14,9 +14,10 @@ Page {
 
     property var slackClient: null
     property alias pageStack: pageStack
+     property alias chatSelect: chatSelect
     property string teamId: ""
     property string teamName: ""
-    property string currentChannelId: pageStack.currentItem.channelId != undefined ? pageStack.currentItem.channelId : ""
+    property string currentChannelId: pageStack.currentItem.channel != undefined ? pageStack.currentItem.channel.id : ""
     property string previousChannelId
 
     onSlackClientChanged: {
@@ -37,6 +38,9 @@ Page {
         deleteMessageDialog.ts = ts
         deleteMessageDialog.open()
     }
+    ChatSelect {
+        id: chatSelect
+    }
 
     MessageDialog {
         id: deleteMessageDialog
@@ -54,10 +58,15 @@ Page {
         target: SlackClient
         onInitSuccess: {
             if (teamRoot.teamId == teamId) {
-                var _lastChannel = SlackClient.lastChannel(teamRoot.teamId);
-                console.log("loading page. adding channel component:", _lastChannel, teamRoot.teamId)
-                previousChannelId = _lastChannel
-                pageStack.replace(channelComponent, {"channelId" : _lastChannel })
+                var _lastChannelId = SlackClient.lastChannel(teamRoot.teamId);
+                console.log("loading page. adding channel component:", _lastChannelId, teamRoot.teamId)
+                var channel = SlackClient.getChannel(teamRoot.teamId, _lastChannelId);
+                if (channel != null) {
+                    pageStack.replace(channelComponent, {"channel" : channel })
+                } else {
+                    console.warn("No chat found for id", _lastChannelId)
+                }
+
             }
         }
 
@@ -67,13 +76,18 @@ Page {
         }
         onChannelJoined: {
             if (teamRoot.teamId == teamId) {
-                previousChannelId = pageStack.currentItem.channelId
-                pageStack.replace(channelComponent, {"channelId" : channelId })
+                var _chat = SlackClient.getChannel(teamRoot.teamId, channelId);
+                if (_chat != null) {
+                    pageStack.replace(channelComponent, {"channel" : _chat })
+                }
             }
         }
         onChannelLeft: {
             if (teamRoot.teamId == teamId) {
-                pageStack.replace(channelComponent, {"channelId" : previousChannelId })
+                var _chat = SlackClient.getGeneralChannel(teamRoot.teamId);
+                if (_chat != null) {
+                    pageStack.replace(channelComponent, {"channel" : _chat })
+                }
             }
         }
     }

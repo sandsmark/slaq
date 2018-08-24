@@ -41,6 +41,9 @@ void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
         }
 #endif
     m_users->addUsers(users, last);
+    if (last) {
+        m_users->setUsersFetched(true);
+    }
 }
 
 void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)

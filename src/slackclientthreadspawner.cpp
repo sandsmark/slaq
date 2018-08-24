@@ -500,7 +500,8 @@ void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
     }
     disconnect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
             _slackClient, &SlackTeamClient::loadMessages);
-    _chatsModel->removeChat(channelId);
+    chat->isOpen = false;
+    _chatsModel->chatChanged(chat);
     emit channelLeft(_slackClient->teamInfo()->teamId(), channelId);
 }
 
@@ -735,31 +736,26 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
-    _slackClient->teamInfo()->addConversationsData(chats, last);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    TeamInfo* _teamInfo = _slackClient->teamInfo();
+    _teamInfo->addConversationsData(chats, last);
     // request extra info about IM chats
     for (Chat* chat : chats) {
         if (chat->type == ChatsModel::Conversation) {
             QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, chat->id));
         }
-    }
-    if (last) {
-        ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
-        if (_chatsModel == nullptr) {
-            return;
-        }
-        emit chatsModelChanged(_slackClient->teamInfo()->teamId(), _chatsModel);
-
-        for(int i = 0; i < _chatsModel->rowCount(); i++) {
-            Chat* chat = _chatsModel->chat(i);
-            if (chat == nullptr) {
-                qWarning() << "Chat for not found";
-                return;
-            }
-            emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
+        if (chat->isOpen || chat->type != ChatsModel::Channel) {
+            //connect only to opened chats and conversations
+            emit channelCountersUpdated(_teamInfo->teamId(), chat->id, chat->unreadCountDisplay);
             connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
                     _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
         }
-        connect(_slackClient->teamInfo()->searches(), &SearchMessagesModel::fetchMoreData,
+    }
+    if (last) {
+        emit chatsModelChanged(_teamInfo->teamId(), _teamInfo->chats());
+        connect(_teamInfo->searches(), &SearchMessagesModel::fetchMoreData,
                 _slackClient, &SlackTeamClient::onFetchMoreSearchData, Qt::QueuedConnection);
     }
 }

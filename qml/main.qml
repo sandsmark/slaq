@@ -318,7 +318,7 @@ ApplicationWindow {
                     MenuItem {
                         text: qsTr("Open/Join chat")
                         onClicked: {
-                            teamsSwipe.currentItem.item.pageStack.push(Qt.resolvedUrl("pages/ChatSelect.qml"))
+                            teamsSwipe.currentItem.item.chatSelect.open()
                         }
                     }
                     MenuItem {

@@ -115,9 +115,24 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
 
 QString ChatsModel::addChat(Chat* chat)
 {
-    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count());
-    QString channelId = doAddChat(chat);
-    endInsertRows();
+    QString channelId = chat->id;
+    if (m_chatIds.contains(chat->id)) {
+        //replace chat
+        if (chat->membersModel.isNull()) {
+            chat->membersModel = new UsersModel(this);
+            QQmlEngine::setObjectOwnership(chat->membersModel, QQmlEngine::CppOwnership);
+        }
+        if (chat->messagesModel.isNull()) {
+            chat->messagesModel = new MessageListModel(this, m_networkUsers, chat->id);
+            QQmlEngine::setObjectOwnership(chat->messagesModel, QQmlEngine::CppOwnership);
+        }
+
+        chatChanged(chat);
+    } else {
+        beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count());
+        channelId = doAddChat(chat);
+        endInsertRows();
+    }
     return channelId;
 }
 
@@ -137,11 +152,10 @@ void ChatsModel::removeChat(const QString &channelId)
 QString ChatsModel::doAddChat(Chat *chat)
 {
 //    qDebug() << type;
-    //qDebug() << __PRETTY_FUNCTION__ << chat->id << chat->type;
+    qDebug() << __PRETTY_FUNCTION__ << chat->id << chat->type << chat->name;
 
     chat->membersModel = new UsersModel(this);
     chat->messagesModel = new MessageListModel(this, m_networkUsers, chat->id);
-    QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(chat->membersModel, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(chat->messagesModel, QQmlEngine::CppOwnership);
 
@@ -158,6 +172,7 @@ QString ChatsModel::doAddChat(Chat *chat)
     if (chat->name.startsWith("mpdm")) {
         chat->setReadableName(m_selfId);
     }
+
     m_chatIds.append(chat->id);
     m_chats.insert(chat->id, chat);
     return chat->id;
@@ -169,7 +184,11 @@ void ChatsModel::addChats(const QList<Chat*>& chats, bool last)
 
     beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count() - 1);
     for (Chat *chat : chats) {
-        doAddChat(chat);
+        if (!m_chatIds.contains(chat->id)) {
+            doAddChat(chat);
+        } else {
+            qFatal("Chat already exists!!");
+        }
     }
     endInsertRows();
 }
@@ -262,6 +281,15 @@ void ChatsModel::setPresence(const QList<QPointer<User> > &users, const QString 
             }
         }
     }
+}
+
+bool Chat::isChatEmpty() const
+{
+    if (messagesModel.isNull()) {
+        qWarning() << "messages model is null";
+        return true;
+    }
+    return (messagesModel->rowCount(QModelIndex()) <= 0);
 }
 
 Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *parent) : QObject (parent)

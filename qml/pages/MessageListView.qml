@@ -35,16 +35,17 @@ ListView {
     Connections {
         target: SlackClient
         onLoadMessagesSuccess: {
-            console.log("load messages success", channelName, teamId, teamRoot.teamId)
+            console.log("load messages success", channel.name, teamId, teamRoot.teamId)
             if (teamId === teamRoot.teamId) {
                 listView.model = teamRoot.slackClient.currentChatsModel().messages(channelId)
-                SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
+                SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
                 inputEnabled = true
                 loadCompleted()
             }
         }
         onLoadMessagesFail: {
             if (teamId === teamRoot.teamId) {
+                console.warn("Load messages fail")
                 loadCompleted()
             }
         }
@@ -84,13 +85,13 @@ ListView {
     function markLatest() {
         if (appActive && atBottom
                 && teamId === SlackClient.lastTeam
-                && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channelId) {
-            SlackClient.markChannel(teamRoot.teamId, channelRoot.channelType, channelRoot.channelId)
+                && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channel.id) {
+            SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
         }
     }
 
     function loadMessages() {
-        console.log("load messages start", channelName, teamRoot.teamId, channelRoot.channelType)
-        SlackClient.loadMessages(teamRoot.teamId, channelRoot.channelId)
+        console.log("load messages start", channel.name, teamRoot.teamId, channelRoot.channel.type)
+        SlackClient.loadMessages(teamRoot.teamId, channelRoot.channel.id)
     }
 }

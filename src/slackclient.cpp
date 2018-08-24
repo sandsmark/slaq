@@ -1115,7 +1115,7 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
     qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count();
-    if (m_teamInfo.users() == nullptr || m_teamInfo.users()->users().isEmpty() || !cursor.isEmpty()) {
+    if (m_teamInfo.users() == nullptr || !m_teamInfo.users()->usersFetched() || !cursor.isEmpty()) {
         QMap<QString, QString> params;
         params.insert(QStringLiteral("limit"), "1000");
         if (!cursor.isEmpty()) {
@@ -1219,7 +1219,7 @@ void SlackTeamClient::handleTeamEmojisReply()
 void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& latest)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << channelId << latest;
+    qDebug() << "Loading messages" << channelId << latest << sender();
     if (channelId.isEmpty()) {
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
@@ -1234,14 +1234,22 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
         qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
-    QMap<QString, QString> params;
-    params.insert(QStringLiteral("channel"), channelId);
     if (!_latest.isValid()) {
         MessageListModel* mesgs = _chatsModel->messages(channelId);
+        //check if send from QML (sender == null)
+        if (sender() == nullptr && mesgs->historyLoaded()) {
+            // requested from QML with no timestamp and there is messages in the model
+            // so emit that we already have messages
+            // reduced number of requests when switching models
+            emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
+            return;
+        }
         if (mesgs != nullptr) {
             _latest = mesgs->firstMessageTs();
         }
     }
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("channel"), channelId);
     params.insert(QStringLiteral("count"), "50");
     if (_latest.isValid()) {
         params.insert(QStringLiteral("latest"), dateTimeToSlack(_latest));
@@ -1333,6 +1341,7 @@ void SlackTeamClient::handleLoadMessagesReply()
         _mlist.append(message);
     }
     emit messagesReceived(channelId, _mlist, _hasMore, threadMsgsCount);
+    messageModel->setHistoryLoaded(true);
 
     qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
@@ -1392,8 +1401,10 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
     }
     if (dt.isNull() || !dt.isValid()) {
         auto messagesModel = _chatsModel->messages(channelId);
-        if (messagesModel != nullptr && messagesModel->rowCount(QModelIndex()) > 0) {
-            dt = messagesModel->message(0)->time;
+        if (messagesModel != nullptr) {
+            if (messagesModel->rowCount(QModelIndex()) > 0) {
+                dt = messagesModel->message(0)->time;
+            }
         } else {
             qDebug() << "message model not ready for the channel" << channelId;
         }
