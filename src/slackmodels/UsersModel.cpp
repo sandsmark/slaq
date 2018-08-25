@@ -6,6 +6,8 @@
 #include <QQmlEngine>
 #include <QDateTime>
 #include <QJsonArray>
+#include <QApplication>
+#include <QThread>
 //user parse {
 //    "color": "3c8c69",
 //    "deleted": false,
@@ -169,9 +171,7 @@ QString User::botId() const
 
 
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
-{
-
-}
+{}
 
 UsersModel::~UsersModel() {
     qWarning() << "Deleting User Model";
@@ -187,7 +187,7 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 
     switch (role) {
     case UserObject:
-        return QVariant::fromValue(m_users[m_userIds[row]]);
+        return QVariant::fromValue(m_users.value(m_userIds.at(row)).data());
     default:
         qWarning() << "Invalid role" << role;
         return QVariant();
@@ -210,8 +210,11 @@ void UsersModel::updateUser(const QJsonObject &userData)
         qWarning() << "no user found for" << userId;
         return;
     }
-    User *user = new User(olduser, nullptr);
+    User *user = new User(olduser);
     user->setData(userData);
+    if (QThread::currentThread() != qApp->thread()) {
+        user->moveToThread(qApp->thread());
+    }
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
     if (m_users[user->userId()]) {
         m_users[user->userId()]->deleteLater();
@@ -224,6 +227,9 @@ void UsersModel::updateUser(const QJsonObject &userData)
 
 void UsersModel::addUser(User *user)
 {
+    if (QThread::currentThread() != qApp->thread()) {
+        user->moveToThread(qApp->thread());
+    }
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
     m_userIds.append(user->userId());
     m_users.insert(user->userId(), user);
@@ -237,7 +243,7 @@ void UsersModel::addUser(User *user)
 
 void UsersModel::addUser(const QJsonObject &userData)
 {
-    User *user = new User(nullptr);
+    User *user = new User;
     user->setData(userData);
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
     addUser(user);
@@ -249,6 +255,7 @@ void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
     m_addingUsers = true;
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + users.count() - 1);
     for (QPointer<User> user : users) {
+        //user.data()->moveToThread(QApplication::instance()->thread());
         if (m_users.contains(user->userId())) {
             m_users.value(user->userId())->deleteLater();
             m_userIds.removeAll(user->userId());

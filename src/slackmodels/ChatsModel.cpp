@@ -68,15 +68,14 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
                 return "qrc:/icons/offline-icon.png";
             } else {
                 User::Presence presence = chat->membersModel->users().first()->presence();
-                if (presence == User::Unknown) {
-                    return "qrc:/icons/offline-icon.png";
-                } else if (presence == User::Away) {
-                    return "qrc:/icons/offline-icon.png";
+                if (presence == User::Away) {
+                    return "qrc:/icons/away-icon.png";
                 } else if (presence == User::Dnd) {
                     return "qrc:/icons/dnd-icon.png";
                 } else if (presence == User::Active) {
                     return "qrc:/icons/active-icon.png";
                 }
+                return "qrc:/icons/offline-icon.png";
             }
         }
         break;

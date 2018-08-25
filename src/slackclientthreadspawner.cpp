@@ -19,6 +19,24 @@ SlackTeamClient *SlackClientThreadSpawner::slackClient(const QString &teamId) {
     return m_knownTeams.value(teamId, nullptr);
 }
 
+UsersModel *SlackClientThreadSpawner::usersModel(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return nullptr;
+    }
+    return _slackClient->teamInfo()->users();
+}
+
+ChatsModel *SlackClientThreadSpawner::chatsModel(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return nullptr;
+    }
+    return _slackClient->teamInfo()->chats();
+}
+
 SlackTeamClient::ClientStatus SlackClientThreadSpawner::slackClientStatus(const QString &teamId)
 {
     SlackTeamClient::ClientStatus retVal;
@@ -727,6 +745,7 @@ void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<User>>& u
     _slackClient->teamInfo()->addUsersData(users, last);
     //query conversations only when last batch of users gets loaded
     if (last) {
+        emit usersModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->users());
         QMetaObject::invokeMethod(_slackClient, "requestConversationsList", Qt::QueuedConnection, Q_ARG(QString, ""));
     }
 }

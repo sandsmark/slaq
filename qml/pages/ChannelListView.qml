@@ -8,7 +8,6 @@ import com.iskrembilen 1.0
 ListView {
     id: listView
 
-    property bool channelAddMode: false
     ScrollBar.vertical: ScrollBar { }
 
     function setIndex(ind) {
@@ -16,15 +15,7 @@ ListView {
     }
     interactive: true
     clip: true
-
-    Connections {
-        target: SlackClient
-        onChatsModelChanged: {
-            if (teamId === teamRoot.teamId) {
-                listView.model = chatsModel
-            }
-        }
-    }
+    model: SlackClient.chatsModel(teamRoot.teamId)
 
     section {
         property: "Section"
@@ -36,6 +27,20 @@ ListView {
             background: Rectangle {
                 width: listView.width
                 color: palette.base
+                RoundButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    text: "➕"
+                    font.family: "Twitter Color Emoji"
+                    onClicked: {
+                        if (section == qsTr("Channels")) {
+                            teamRoot.chatSelect.state = "channels"
+                        } else {
+                            teamRoot.chatSelect.state = "users"
+                        }
+                        teamRoot.chatSelect.open()
+                    }
+                }
             }
         }
     }
@@ -59,7 +64,7 @@ ListView {
         id: delegate
         text: model.Name
         highlighted: teamRoot.currentChannelId === model.Id
-        visible: listView.channelAddMode ? (model.IsOpen ? false : true ) : (model.IsOpen ? true : false )
+        visible: model.IsOpen
         enabled: visible
         height: visible ? delegate.implicitHeight : 0
         spacing: Theme.paddingSmall
@@ -75,7 +80,7 @@ ListView {
             implicitHeight: parent.height/2
             radius: height/2
             color: model.Type === ChatsModel.Channel ? "green" : "red"
-            visible: model.UnreadCountDisplay > 0 && !channelAddMode
+            visible: model.UnreadCountDisplay > 0
             Text {
                 anchors.centerIn: parent
                 color: "white"
@@ -87,30 +92,20 @@ ListView {
         width: listView.width
 
         onClicked: {
-            if (channelAddMode) {
-                if (model.Type === ChatsModel.Channel) {
-                    SlackClient.joinChannel(teamRoot.teamId, model.Id)
-                } else if (model.Type === ChatsModel.Conversation) {
-                    SlackClient.openChat(teamRoot.teamId, model.Id)
-                }
-                teamRoot.chatSelect.close()
-            } else {
-                if (model.Id === SlackClient.lastChannel(teamRoot.teamId)) {
-                    console.warn("Clicked on same channel")
-                    return
-                }
-                SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
-                chatChangeTimer.channelId = model.Id
-                chatChangeTimer.start()
+            if (model.Id === SlackClient.lastChannel(teamRoot.teamId)) {
+                console.warn("Clicked on same channel")
+                return
             }
+            SlackClient.setActiveWindow(teamRoot.teamId, model.Id)
+            chatChangeTimer.channelId = model.Id
+            chatChangeTimer.start()
         }
 
         property bool hasActions: model.Type === ChatsModel.Channel || model.Type === ChatsModel.Conversation
-        onPressAndHold: if (hasActions && !channelAddMode) { actionsMenu.popup() }
+        onPressAndHold: if (hasActions) { actionsMenu.popup() }
 
         MouseArea {
             anchors.fill: parent
-            enabled: !channelAddMode
             acceptedButtons: "RightButton"
             onClicked: if (hasActions) { actionsMenu.popup() }
         }

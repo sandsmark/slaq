@@ -49,5 +49,7 @@
         <file>icons/active-icon.png</file>
         <file>qml/components/UnknownFileViewer.qml</file>
         <file>icons/video-thumbnail.png</file>
+        <file>qml/components/ChannelsSelectView.qml</file>
+        <file>qml/components/UsersSelectView.qml</file>
     </qresource>
 </RCC>

@@ -269,6 +269,9 @@ void MessageListModel::preprocessMessage(Message *message)
             if (!message->user_id.isEmpty()) {
                 QPointer<::User> _user = new ::User(message->user_id, message->userName, nullptr);
                 QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);
+                if (QThread::currentThread() != qApp->thread()) {
+                    _user->moveToThread(qApp->thread());
+                }
                 message->user = _user;
                 m_usersModel->addUser(_user);
             }
@@ -437,6 +440,9 @@ void MessageListModel::findNewUsers(QString& message)
             QString name = match.captured(2);
             user = new ::User(id, name, nullptr);
             QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+            if (QThread::currentThread() != qApp->thread()) {
+                user->moveToThread(qApp->thread());
+            }
             m_usersModel->addUser(user);
             m_formatter.replaceUserInfo(user.data(), message);
         }
