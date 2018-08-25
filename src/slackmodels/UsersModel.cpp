@@ -202,14 +202,6 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 
 }
 
-void UsersModel::addUser(User *user)
-{
-    beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
-    m_userIds.append(user->userId());
-    m_users.insert(user->userId(), user);
-    endInsertRows();
-}
-
 void UsersModel::updateUser(const QJsonObject &userData)
 {
     const QString& userId = userData.value(QStringLiteral("id")).toString();
@@ -230,15 +222,24 @@ void UsersModel::updateUser(const QJsonObject &userData)
     emit dataChanged(index, index);
 }
 
+void UsersModel::addUser(User *user)
+{
+    beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
+    m_userIds.append(user->userId());
+    m_users.insert(user->userId(), user);
+    endInsertRows();
+    if (user->username().isEmpty()) {
+        //user data is empty. request user's info
+        qDebug() << "requesting users info";
+        emit requestUserInfo(user);
+    }
+}
+
 void UsersModel::addUser(const QJsonObject &userData)
 {
     User *user = new User(nullptr);
     user->setData(userData);
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
-    if (user->username().isEmpty()) {
-        //user data is empty. request user's info
-        emit requestUserInfo(user);
-    }
     addUser(user);
 }
 
