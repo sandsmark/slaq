@@ -1655,13 +1655,15 @@ void SlackTeamClient::handleUsersInfoReply()
     qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
     // invoke on the main thread
-    QMetaObject::invokeMethod(qApp, [this, data] {
-        if (m_teamInfo.users() != nullptr) {
-            m_teamInfo.users()->updateUser(data.value(QStringLiteral("user")).toObject());
-        }
-    });
-
+    if (!isError(data)) {
+        QMetaObject::invokeMethod(qApp, [this, data] {
+            if (m_teamInfo.users() != nullptr) {
+                m_teamInfo.users()->updateUser(data.value(QStringLiteral("user")).toObject());
+            }
+        });
+    }
 }
+
 void SlackTeamClient::handleDeleteReactionReply()
 {
     DEBUG_BLOCK;
