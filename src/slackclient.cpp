@@ -1594,7 +1594,8 @@ void SlackTeamClient::handleUsersListReply()
         //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
         reply->deleteLater();
         for (const QJsonValue& userValue : data.value("members").toArray()) {
-            QPointer<User> user = new User(nullptr);
+            QPointer<User> user = new User;
+            user->moveToThread(qApp->thread());
             QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
             user->setData(userValue.toObject());
             _users.append(user);

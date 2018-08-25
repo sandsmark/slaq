@@ -22,6 +22,8 @@ public:
     bool isOnline();
 
     Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
+    Q_INVOKABLE UsersModel *usersModel(const QString& teamId);
+    Q_INVOKABLE ChatsModel *chatsModel(const QString& teamId);
     Q_INVOKABLE SlackTeamClient::ClientStatus slackClientStatus(const QString& teamId);
     Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
     Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
@@ -71,6 +73,7 @@ signals:
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
 
     void chatsModelChanged(const QString& teamId, ChatsModel* chatsModel);
+    void usersModelChanged(const QString& teamId, UsersModel* usersModel);
     void searchStarted();
 
 public slots:

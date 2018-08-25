@@ -37,9 +37,9 @@ public:
     };
     Q_ENUM(Presence)
 
-    User(QObject *parent);
-    User(const User& copy, QObject *parent);
-    User(const QString& id, const QString& name, QObject *parent);
+    User(QObject *parent = nullptr);
+    User(const User& copy, QObject *parent = nullptr);
+    User(const QString& id, const QString& name, QObject *parent = nullptr);
 
     void setData(const QJsonObject &data);
 
