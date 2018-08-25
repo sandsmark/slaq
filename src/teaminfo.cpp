@@ -64,7 +64,7 @@ void TeamInfo::setTeamsEmojisUpdated(bool teamsEmojisUpdated)
     m_teamsEmojisUpdated = teamsEmojisUpdated;
 }
 
-void TeamInfo::createModels()
+void TeamInfo::createModels(SlackTeamClient *slackClient)
 {
     m_users = new UsersModel;
     QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
@@ -72,6 +72,7 @@ void TeamInfo::createModels()
     QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
     m_chats = new ChatsModel(m_selfId, nullptr, m_users);
     QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+    connect(m_users, &UsersModel::requestUserInfo, slackClient, &SlackTeamClient::requestUserInfo, Qt::QueuedConnection);
 }
 
 QString TeamInfo::selfId() const

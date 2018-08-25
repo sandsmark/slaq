@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.3
 import ".."
 
 Column {
-    property variant attachment
+    property variant attachment: null
 
     signal linkClicked(string link)
 
@@ -50,7 +50,7 @@ Column {
                 Image {
                     width: 16
                     height: 16
-                    source: "image://emoji/slack/" + attachment.author_icon
+                    source: attachment !== null && attachment.author_icon.length > 0 ? "image://emoji/slack/" + attachment.author_icon : ""
                     sourceSize: Qt.size(16, 16)
                 }
                 Label {
@@ -88,7 +88,7 @@ Column {
                     }
                 }
                 Image {
-                    source: "image://emoji/slack/" + attachment.thumb_url
+                    source: attachment !== null && attachment.thumb_url.length > 0 ? "image://emoji/slack/" + attachment.thumb_url : ""
                     sourceSize: Qt.size(colLayout.height, colLayout.height)
                 }
             }
@@ -100,7 +100,7 @@ Column {
             Image {
                 anchors.left: parent.left
                 fillMode: Image.PreserveAspectFit
-                source: "image://emoji/slack/" + attachment.imageUrl
+                source: attachment !== null && attachment.imageUrl.length > 0 ? "image://emoji/slack/" + attachment.imageUrl : ""
                 //source: "team://" + teamId + "/" + attachment.imageUrl
                 sourceSize:  attachment.imageSize
             }
@@ -115,7 +115,7 @@ Column {
 
         Image {
             fillMode: Image.PreserveAspectFit
-            source: "image://emoji/slack/" + attachment.footer_icon
+            source: attachment !== null && attachment.footer_icon.length > 0 ? "image://emoji/slack/" + attachment.footer_icon : ""
             sourceSize: Qt.size(16, 16)
         }
         Label {

@@ -88,8 +88,6 @@ signals:
     void chatJoined(const QString& channelId);
     void chatLeft(const QString& channelId);
 
-    void userUpdated(const QString& teamId, QVariantMap user);
-
     void postImageSuccess(const QString& teamId);
     void postImageFail(const QString& teamId);
 
@@ -138,6 +136,7 @@ public slots:
     void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
     void requestConversationInfo(const QString& channelId);
+    void requestUserInfo(User* user);
 
     QString getChannelName(const QString& channelId);
     Chat *getChannel(const QString& channelId);
@@ -177,6 +176,7 @@ private slots:
     void handleUsersListReply();
     void handleConversationMembersReply();
     void handleConversationInfoReply();
+    void handleUsersInfoReply();
 
 private:
     bool appActive;

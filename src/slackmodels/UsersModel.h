@@ -91,7 +91,8 @@ public:
 
     bool usersFetched() const;
     void setUsersFetched(bool usersFetched);
-
+signals:
+    void requestUserInfo(User* user);
 public slots:
     void addUser(User *user);
     void updateUser(const QJsonObject &userData);

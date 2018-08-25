@@ -67,7 +67,7 @@ MouseArea {
 
                     Label {
                         id: nickLabel
-                        text: User != null ? User.fullName !== "" ? User.fullName : (User.username !== "" ? User.username : "Private") : "Bot"
+                        text: User != null ? User.fullName.length > 0 ? User.fullName : (User.username !== "" ? User.username : "Private") : "Bot"
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                     }
@@ -269,7 +269,7 @@ MouseArea {
                             id: repliesRepeater
                             model: ThreadReplies
                             Image {
-                                source: "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl
+                                source: ThreadReplies[index].user.avatarUrl.length > 0 ? "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl : ""
                                 sourceSize: Qt.size(16, 16)
                             }
                         }

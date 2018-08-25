@@ -54,7 +54,6 @@ signals:
     void channelCountersUpdated(const QString& teamId, const QString& channelId, int unreadMessages);
     void channelJoined(const QString& teamId, const QString& channelId);
     void channelLeft(const QString& teamId, const QString& channelId);
-    void userUpdated(const QString& teamId, QVariantMap user);
 
     void postImageSuccess(const QString& teamId);
     void postImageFail(const QString& teamId);

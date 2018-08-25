@@ -152,7 +152,7 @@ void ChatsModel::removeChat(const QString &channelId)
 QString ChatsModel::doAddChat(Chat *chat)
 {
 //    qDebug() << type;
-    qDebug() << __PRETTY_FUNCTION__ << chat->id << chat->type << chat->name;
+    //qDebug() << __PRETTY_FUNCTION__ << chat->id << chat->type << chat->name;
 
     chat->membersModel = new UsersModel(this);
     chat->messagesModel = new MessageListModel(this, m_networkUsers, chat->id);
