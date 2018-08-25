@@ -8,6 +8,7 @@
 #include "ChatsModel.h"
 
 class SearchMessagesModel;
+class SlackTeamClient;
 
 class TeamInfo: public QObject {
     Q_OBJECT
@@ -59,7 +60,7 @@ public:
     bool teamsEmojisUpdated() const;
     void setTeamsEmojisUpdated(bool teamsEmojisUpdated);
 
-    void createModels();
+    void createModels(SlackTeamClient *slackClient);
 public slots:
     void setTeamId(const QString& teamId);
     void setName(const QString& name);

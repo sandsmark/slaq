@@ -588,7 +588,6 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::channelUpdated, this, &SlackClientThreadSpawner::onChannelUpdated, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelJoined, this, &SlackClientThreadSpawner::onChannelJoined, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelLeft, this, &SlackClientThreadSpawner::onChannelLeft, Qt::QueuedConnection);
-    connect(_slackClient, &SlackTeamClient::userUpdated, this, &SlackClientThreadSpawner::userUpdated, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::searchMessagesReceived, this, &SlackClientThreadSpawner::onSearchMessagesReceived, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::postImageSuccess, this, &SlackClientThreadSpawner::postImageSuccess, Qt::QueuedConnection);

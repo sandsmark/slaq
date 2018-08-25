@@ -74,6 +74,8 @@ void SlackTeamClient::startConnections()
     connect(this, &SlackTeamClient::connected, this, &SlackTeamClient::isOnlineChanged);
     connect(this, &SlackTeamClient::initSuccess, this, &SlackTeamClient::isOnlineChanged);
     connect(this, &SlackTeamClient::disconnected, this, &SlackTeamClient::isOnlineChanged);
+    // invoke on the main thread
+    QMetaObject::invokeMethod(qApp, [this]{ m_teamInfo.createModels(this); });
 }
 
 void SlackTeamClient::setAppActive(bool active)
@@ -808,9 +810,6 @@ void SlackTeamClient::handleStartReply()
     }
     m_teamInfo.parseSelfData(data.value("self").toObject());
 
-    // invoke on the main thread
-    QMetaObject::invokeMethod(qApp, [this]{ m_teamInfo.createModels(); });
-
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
     m_status = STARTED;
@@ -1143,6 +1142,15 @@ void SlackTeamClient::requestConversationInfo(const QString &channelId)
     QNetworkReply *reply = executeGet(QStringLiteral("conversations.info"), params, channelId);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
+}
+
+void SlackTeamClient::requestUserInfo(User *user)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("user"), user->userId());
+    QNetworkReply *reply = executeGet(QStringLiteral("users.info"), params);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersInfoReply);
 }
 
 QString SlackTeamClient::userName(const QString &userId) {
@@ -1640,6 +1648,20 @@ void SlackTeamClient::handleConversationInfoReply()
     }
 }
 
+void SlackTeamClient::handleUsersInfoReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    const QJsonObject& data = getResult(reply);
+    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    reply->deleteLater();
+    // invoke on the main thread
+    QMetaObject::invokeMethod(qApp, [this, data] {
+        if (m_teamInfo.users() != nullptr) {
+            m_teamInfo.users()->updateUser(data.value(QStringLiteral("user")).toObject());
+        }
+    });
+
+}
 void SlackTeamClient::handleDeleteReactionReply()
 {
     DEBUG_BLOCK;

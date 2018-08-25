@@ -235,6 +235,10 @@ void UsersModel::addUser(const QJsonObject &userData)
     User *user = new User(nullptr);
     user->setData(userData);
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
+    if (user->username().isEmpty()) {
+        //user data is empty. request user's info
+        emit requestUserInfo(user);
+    }
     addUser(user);
 }
 
