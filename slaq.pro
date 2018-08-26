@@ -76,9 +76,7 @@ DISTFILES += \
     qml/pages/*.js \
     qml/pages/*.qml \
     qml/*.qml \
-    qml/components/*.qml \
-    qml/components/ChannelsSelectView.qml \
-    qml/components/UsersSelectView.qml
+    qml/components/*.qml
 
 target.path = deploy
 

@@ -11,6 +11,7 @@ import com.iskrembilen 1.0
 import "."
 import "pages"
 import "dialogs"
+import "components"
 
 ApplicationWindow {
     id: window
@@ -313,12 +314,6 @@ ApplicationWindow {
                         text: qsTr("About")
                         onClicked: {
                             aboutDialog.open()
-                        }
-                    }
-                    MenuItem {
-                        text: qsTr("Open/Join chat")
-                        onClicked: {
-                            teamsSwipe.currentItem.item.chatSelect.open()
                         }
                     }
                     MenuItem {

@@ -169,6 +169,16 @@ QString User::botId() const
     return m_botId;
 }
 
+bool User::selected() const
+{
+    return m_selected;
+}
+
+void User::setSelected(bool selected)
+{
+    m_selected = selected;
+    emit selectedChanged(selected);
+}
 
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
 {}
@@ -291,6 +301,35 @@ QPointer<User> UsersModel::user(const QString &id)
     return m_users.value(id);
 }
 
+QStringList UsersModel::selectedUserIds()
+{
+    QStringList _list;
+    for (QPointer<User> user : m_users){
+        if (user->selected()) {
+            _list.append(user->userId());
+        }
+    }
+    return _list;
+}
+
+bool UsersModel::isSelected() const
+{
+    for (QPointer<User> user : m_users){
+        if (user->selected()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void UsersModel::setSelected(int index)
+{
+    QString _id = m_userIds.at(index);
+    m_users.value(_id)->setSelected(!m_users.value(_id)->selected());
+    m_selected = isSelected();
+    emit selectedChanged(m_selected);
+}
+
 bool UsersModel::usersFetched() const
 {
     return m_usersFetched;
@@ -299,6 +338,11 @@ bool UsersModel::usersFetched() const
 void UsersModel::setUsersFetched(bool usersFetched)
 {
     m_usersFetched = usersFetched;
+}
+
+bool UsersModel::selected() const
+{
+    return m_selected;
 }
 
 QMap<QString, QPointer<User> > UsersModel::users() const

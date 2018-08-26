@@ -127,7 +127,7 @@ public slots:
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
     void leaveGroup(const QString& groupId);
-    void openChat(const QString& chatId);
+    void openChat(const QStringList &userIds, const QString &channelId = QString());
     void closeChat(const QString& chatId);
 
     void requestTeamInfo();

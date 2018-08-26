@@ -554,14 +554,15 @@ void SlackClientThreadSpawner::onSearchMessagesReceived(const QJsonArray& messag
     emit searchResultsReady(query, page, pages);
 }
 
-void SlackClientThreadSpawner::openChat(const QString& teamId, const QString &chatId)
+void SlackClientThreadSpawner::openChat(const QString& teamId, const QStringList &userIds, const QString &channelId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
         return;
     }
     QMetaObject::invokeMethod(_slackClient, "openChat", Qt::QueuedConnection,
-                              Q_ARG(QString, chatId));
+                              Q_ARG(QStringList, userIds),
+                              Q_ARG(QString, channelId));
 }
 
 void SlackClientThreadSpawner::closeChat(const QString& teamId, const QString &chatId)

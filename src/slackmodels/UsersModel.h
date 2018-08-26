@@ -26,6 +26,7 @@ class User : public QObject
     Q_PROPERTY(QUrl avatarUrl MEMBER m_avatarUrl CONSTANT)
     Q_PROPERTY(bool isBot MEMBER m_isBot CONSTANT)
     Q_PROPERTY(Presence presence READ presence NOTIFY presenceChanged)
+    Q_PROPERTY(bool selected READ selected NOTIFY selectedChanged)
 
 public:
     enum Presence {
@@ -52,9 +53,12 @@ public:
     QUrl avatarUrl() const;
     bool isBot() const;
     QString botId() const;
+    bool selected() const;
+    void setSelected(bool selected);
 
 signals:
     void presenceChanged();
+    void selectedChanged(bool selected);
 
 private:
     QString m_userId;
@@ -69,12 +73,14 @@ private:
     QString m_email;
     QColor m_color;
     Presence m_presence = Unknown;
+    bool m_selected { false };
 };
 
 class UsersModel : public QAbstractListModel
 {
     Q_OBJECT
 
+    Q_PROPERTY(bool selected READ selected NOTIFY selectedChanged)
 public:
     enum Fields {
         UserObject,
@@ -91,19 +97,27 @@ public:
 
     bool usersFetched() const;
     void setUsersFetched(bool usersFetched);
+    bool selected() const;
+
 signals:
     void requestUserInfo(User* user);
+    void selectedChanged(bool selected);
+
 public slots:
     void addUser(User *user);
     void updateUser(const QJsonObject &userData);
     void addUser(const QJsonObject &userData);
     void addUsers(const QList<QPointer<User>> &users, bool last);
     QPointer<User> user(const QString &id);
+    QStringList selectedUserIds();
+    bool isSelected() const;
+    void setSelected(int index);
 
 private:
     QMap<QString, QPointer<User>> m_users;
     QStringList m_userIds;
     bool m_addingUsers { false };
     bool m_usersFetched { false };
+    bool m_selected;
 };
 

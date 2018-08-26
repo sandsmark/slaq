@@ -74,8 +74,7 @@ void SlackTeamClient::startConnections()
     connect(this, &SlackTeamClient::connected, this, &SlackTeamClient::isOnlineChanged);
     connect(this, &SlackTeamClient::initSuccess, this, &SlackTeamClient::isOnlineChanged);
     connect(this, &SlackTeamClient::disconnected, this, &SlackTeamClient::isOnlineChanged);
-    // invoke on the main thread
-    QMetaObject::invokeMethod(qApp, [this]{ m_teamInfo.createModels(this); });
+    m_teamInfo.createModels(this);
 }
 
 void SlackTeamClient::setAppActive(bool active)
@@ -976,7 +975,7 @@ void SlackTeamClient::handleLeaveChannelReply()
     QJsonObject data = getResult(reply);
 
     if (isError(data)) {
-        qDebug() << "Channel leave failed";
+        qDebug() << "Channel leave failed" << data;
     }
 
     reply->deleteLater();
@@ -1007,27 +1006,20 @@ void SlackTeamClient::handleLeaveGroupReply()
     reply->deleteLater();
 }
 
-void SlackTeamClient::openChat(const QString& chatId)
+void SlackTeamClient::openChat(const QStringList& userIds, const QString& channelId)
 {
     DEBUG_BLOCK;
 
-    ChatsModel* _chatsModel = teamInfo()->chats();
-    if (_chatsModel == nullptr) {
-        return;
-    }
-    Chat* chat = _chatsModel->chat(chatId);
-    if (chat == nullptr) {
-        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << chatId << "not found";
-        return;
-    }
-    if (chat->membersModel->users().first().isNull()) {
-        qWarning() << "No user for chat" << chatId;
-        return;
-    }
     QMap<QString, QString> params;
-    params.insert(QStringLiteral("user"), chat->membersModel->users().first()->userId());
+    if (!channelId.isEmpty()) {
+        //resume chat
+        params.insert(QStringLiteral("channel"), channelId);
+    } else {
+        params.insert(QStringLiteral("users"), userIds.join(","));
+    }
+    params.insert(QStringLiteral("return_im"), "true");
 
-    QNetworkReply *reply = executeGet(QStringLiteral("im.open"), params);
+    QNetworkReply *reply = executePost(QStringLiteral("conversations.open"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleOpenChatReply);
 }
 

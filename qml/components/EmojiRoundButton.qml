@@ -1,7 +1,7 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
 
-Button {
+RoundButton {
     id: emojiButton
     contentItem: Label {
         text: emojiButton.text
