@@ -126,7 +126,6 @@ public slots:
     void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
-    void leaveGroup(const QString& groupId);
     void openChat(const QStringList &userIds, const QString &channelId = QString());
     void closeChat(const QString& chatId);
 
@@ -160,7 +159,6 @@ private slots:
     void handleMarkChannelReply();
     void handleJoinChannelReply();
     void handleLeaveChannelReply();
-    void handleLeaveGroupReply();
     void handleOpenChatReply();
     void handleCloseChatReply();
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
@@ -189,7 +187,7 @@ private:
 
     bool isOk(const QNetworkReply *reply);
     bool isError(const QJsonObject &data);
-    QJsonObject getResult(QNetworkReply *reply);
+    QJsonObject getResult(QNetworkReply *reply, bool compressed = true);
 
     void parseMessageUpdate(const QJsonObject& message);
     void parseReactionUpdate(const QJsonObject& message);

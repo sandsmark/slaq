@@ -112,6 +112,7 @@ public slots:
     QStringList selectedUserIds();
     bool isSelected() const;
     void setSelected(int index);
+    void clearSelections();
 
 private:
     QMap<QString, QPointer<User>> m_users;

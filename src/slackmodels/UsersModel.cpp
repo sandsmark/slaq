@@ -330,6 +330,15 @@ void UsersModel::setSelected(int index)
     emit selectedChanged(m_selected);
 }
 
+void UsersModel::clearSelections()
+{
+    for (QPointer<User> user : m_users){
+        user->setSelected(false);
+    }
+    m_selected = false;
+    emit selectedChanged(m_selected);
+}
+
 bool UsersModel::usersFetched() const
 {
     return m_usersFetched;

@@ -10,6 +10,7 @@ QtObject {
     readonly property int avatarSize: 64
 
     readonly property int headerSize: 32
+    readonly property int itemSize: 40
 
     readonly property int fontSizeHuge: 20
     readonly property int fontSizeLarge: 17
