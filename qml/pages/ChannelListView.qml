@@ -3,6 +3,8 @@ import QtQuick.Controls 2.4
 import QtQuick.Controls.Material 2.4
 
 import ".."
+import "../components"
+
 import com.iskrembilen 1.0
 
 ListView {
@@ -17,6 +19,25 @@ ListView {
     clip: true
     model: SlackClient.chatsModel(teamRoot.teamId)
 
+    function leave(chatType, channelId, channelName) {
+        switch (chatType) {
+        case ChatsModel.Channel:
+            SlackClient.leaveChannel(teamRoot.teamId, channelId)
+            break
+
+        case ChatsModel.Group:
+        case ChatsModel.MultiUserConversation:
+            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": channelName })
+            dialog.accepted.connect(function() {
+                SlackClient.leaveGroup(teamRoot.teamId, channelId)
+            })
+            break
+
+        case ChatsModel.Conversation:
+            SlackClient.closeChat(teamRoot.teamId,  channelId)
+        }
+    }
+
     section {
         property: "Section"
         criteria: ViewSection.FullString
@@ -27,11 +48,10 @@ ListView {
             background: Rectangle {
                 width: listView.width
                 color: palette.base
-                RoundButton {
+                EmojiRoundButton {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     text: "➕"
-                    font.family: "Twitter Color Emoji"
                     onClicked: {
                         if (section == qsTr("Channels")) {
                             teamRoot.chatSelect.state = "channels"
@@ -63,6 +83,7 @@ ListView {
     delegate: ItemDelegate {
         id: delegate
         text: model.Name
+        hoverEnabled: true
         highlighted: teamRoot.currentChannelId === model.Id
         visible: model.IsOpen
         enabled: visible
@@ -70,6 +91,18 @@ ListView {
         spacing: Theme.paddingSmall
         icon.color: "transparent"
         icon.source: model.PresenceIcon
+
+        EmojiRoundButton {
+            visible: delegate.hovered
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right: parent.right
+            anchors.rightMargin: listView.ScrollBar.vertical.width + Theme.paddingSmall
+            text: "\uD83D\uDDD1"
+            onClicked: {
+                leave(model.Type, model.Id, model.Name)
+            }
+        }
+
         Rectangle {
             anchors.right: parent.right
             anchors.rightMargin: listView.ScrollBar.vertical.visible ?
@@ -116,22 +149,7 @@ ListView {
             MenuItem {
                 text: model.Type === ChatsModel.Channel ? qsTr("Leave") : qsTr("Close")
                 onClicked: {
-                    switch (model.Type) {
-                    case ChatsModel.Channel:
-                        SlackClient.leaveChannel(teamRoot.teamId, model.Id)
-                        break
-
-                    case ChatsModel.Group:
-                    case ChatsModel.MultiUserConversation:
-                        var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": model.Name })
-                        dialog.accepted.connect(function() {
-                            SlackClient.leaveGroup(teamRoot.teamId, model.Id)
-                        })
-                        break
-
-                    case ChatsModel.Conversation:
-                        SlackClient.closeChat(teamRoot.teamId,  model.Id)
-                    }
+                    leave(model.Type, model.Id, model.Name)
                 }
             }
         }

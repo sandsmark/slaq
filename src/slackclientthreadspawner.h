@@ -120,7 +120,7 @@ public slots:
     void onSearchMessagesReceived(const QJsonArray &messages, int total, const QString &query, int page, int pages);
 
     //chats
-    void openChat(const QString& teamId, const QString& chatId);
+    void openChat(const QString& teamId, const QStringList &userIds, const QString &channelId = QString());
     void closeChat(const QString& teamId, const QString& chatId);
 
     //teams

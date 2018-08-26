@@ -144,7 +144,6 @@ MouseArea {
                             font.bold: false
                             font.pixelSize: parent.height/2
                             onClicked: {
-                                console.log("index", index)
                                 channelRoot.openReplies(itemDelegate.ListView.view.model, index, model)
                             }
                         }

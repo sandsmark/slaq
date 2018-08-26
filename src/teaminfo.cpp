@@ -72,6 +72,11 @@ void TeamInfo::createModels(SlackTeamClient *slackClient)
     QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
     m_chats = new ChatsModel(m_selfId, nullptr, m_users);
     QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+    if (QThread::currentThread() != qApp->thread()) {
+        m_users->moveToThread(qApp->thread());
+        m_searchMessages->moveToThread(qApp->thread());
+        m_chats->moveToThread(qApp->thread());
+    }
     connect(m_users, &UsersModel::requestUserInfo, slackClient, &SlackTeamClient::requestUserInfo, Qt::QueuedConnection);
 }
 

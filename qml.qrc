@@ -24,8 +24,6 @@
         <file>qml/pages/LoadingPage.qml</file>
         <file>icons/smile.gif</file>
         <file>qml/pages/EmojiSelector.qml</file>
-        <file>qml/EmojiButton.qml</file>
-        <file>qml/EmojiToolButton.qml</file>
         <file>qml/pages/Team.qml</file>
         <file>qml/dialogs/LoginDialog.qml</file>
         <file>qml/dialogs/SettingsDialog.qml</file>
@@ -51,5 +49,8 @@
         <file>icons/video-thumbnail.png</file>
         <file>qml/components/ChannelsSelectView.qml</file>
         <file>qml/components/UsersSelectView.qml</file>
+        <file>qml/components/EmojiButton.qml</file>
+        <file>qml/components/EmojiToolButton.qml</file>
+        <file>qml/components/EmojiRoundButton.qml</file>
     </qresource>
 </RCC>
