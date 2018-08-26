@@ -1,29 +1,25 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+
+
+import ".."
 
 Dialog {
     id: dialog
 
     property string name
+    standardButtons: Dialog.Ok | Dialog.Cancel
 
-    property double padding: Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 2 : 1)
-
-    Column {
-        width: parent.width
-
-        DialogHeader {
-            title: qsTr("Leave %1").arg(dialog.name)
-        }
-
+    x: (window.width - dialog.width)/2
+    y: (window.height - dialog.height)/2
+    title: "Group leave"
+    modal: true
+    contentItem: Rectangle {
+        color: palette.base
         Label {
-            x: dialog.padding
-            width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
-            wrapMode: Text.Wrap
-            font.pointSize: Theme.fontSizeSmall
-            text: qsTr("If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.
-
-Are you sure you wish to leave?")
-            color: Theme.primaryColor
+            text: qsTr("Are you sure you wish to leave ") + name + "?"
         }
     }
+
+    //informativeText: qsTr("If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.")
 }

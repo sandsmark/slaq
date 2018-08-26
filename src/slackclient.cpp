@@ -204,15 +204,17 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
                type == QStringLiteral("im_marked") ||
                type == QStringLiteral("mpim_marked")) {
         parseChannelUpdate(message);
-    } else if (type == QStringLiteral("channel_joined") || type == QStringLiteral("group_joined")) {
+    } else if (type == QStringLiteral("channel_joined")
+               || type == QStringLiteral("group_joined")
+               || (type == QStringLiteral("im_created"))) {
         Chat* _chat = new Chat(message.value(QStringLiteral("channel")).toObject());
         QQmlEngine::setObjectOwnership(_chat, QQmlEngine::CppOwnership);
         emit channelJoined(_chat);
     } else if (type == QStringLiteral("im_open")) {
         emit chatJoined(message.value(QStringLiteral("channel")).toString());
-    } else if (type == QStringLiteral("im_close")) {
-        emit channelLeft(message.value(QStringLiteral("channel")).toString());
-    } else if (type == QStringLiteral("channel_left") || type == QStringLiteral("group_left")) {
+    } else if (type == QStringLiteral("im_close")  || type == QStringLiteral("mpim_close")
+               || type == QStringLiteral("channel_left") || type == QStringLiteral("group_left") ||
+               type == QStringLiteral("group_close")) {
         emit channelLeft(message.value(QStringLiteral("channel")).toString());
     } else if (type == QStringLiteral("presence_change") || type == QStringLiteral("manual_presence_change")) {
         parsePresenceChange(message);
@@ -569,7 +571,7 @@ bool SlackTeamClient::isError(const QJsonObject &data)
     }
 }
 
-QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
+QJsonObject SlackTeamClient::getResult(QNetworkReply *reply, bool compressed)
 {
     DEBUG_BLOCK
 
@@ -581,7 +583,12 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
             qWarning() << "No data returned";
             return QJsonObject();
         }
-        QJsonDocument document = QJsonDocument::fromJson(gUncompress(baData), &error);
+        QJsonDocument document;
+        if (compressed) {
+            document = QJsonDocument::fromJson(gUncompress(baData), &error);
+        } else {
+            document = QJsonDocument::fromJson(baData, &error);
+        }
 
         if (error.error == QJsonParseError::NoError) {
             return document.object();
@@ -641,6 +648,7 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QS
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
+    //request.setRawHeader("Accept-Encoding", "gzip, deflate");
 
     qDebug() << "POST" << url.toString() << body << query.toString();
     return networkAccessManager->post(request, body);
@@ -922,22 +930,10 @@ void SlackTeamClient::joinChannel(const QString& channelId)
 {
     DEBUG_BLOCK;
 
-    ChatsModel* _chatsModel = teamInfo()->chats();
-    if (_chatsModel == nullptr) {
-        return;
-    }
-
-    Chat* chat = _chatsModel->chat(channelId);
-
-    if(chat == nullptr || chat->id.isEmpty()) {
-        qWarning() << "Invalid channel ID provided" << channelId;
-        return;
-    }
-
     QMap<QString, QString> params;
-    params.insert(QStringLiteral("name"), "#"+chat->name);
+    params.insert(QStringLiteral("channel"), channelId);
 
-    QNetworkReply *reply = executeGet(QStringLiteral("channels.join"), params);
+    QNetworkReply *reply = executePost(QStringLiteral("conversations.join"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleJoinChannelReply);
 }
 
@@ -947,7 +943,7 @@ void SlackTeamClient::handleJoinChannelReply()
 
     qDebug() << "join reply";
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
+    QJsonObject data = getResult(reply, false);
 
     if (isError(data)) {
         qDebug() << "Channel join failed";
@@ -972,35 +968,10 @@ void SlackTeamClient::handleLeaveChannelReply()
     DEBUG_BLOCK
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
+    QJsonObject data = getResult(reply, false);
 
     if (isError(data)) {
         qDebug() << "Channel leave failed" << data;
-    }
-
-    reply->deleteLater();
-}
-
-void SlackTeamClient::leaveGroup(const QString& groupId)
-{
-    DEBUG_BLOCK
-
-    QMap<QString, QString> params;
-    params.insert(QStringLiteral("channel"), groupId);
-
-    QNetworkReply *reply = executeGet(QStringLiteral("groups.leave"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLeaveGroupReply);
-}
-
-void SlackTeamClient::handleLeaveGroupReply()
-{
-    DEBUG_BLOCK
-
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-
-    if (isError(data)) {
-        qDebug() << "Group leave failed";
     }
 
     reply->deleteLater();
@@ -1029,10 +1000,10 @@ void SlackTeamClient::handleOpenChatReply()
 
     qDebug() << "open chat reply";
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
+    QJsonObject data = getResult(reply, false);
 
     if (isError(data)) {
-        qDebug() << "Chat open failed";
+        qDebug() << "Chat open failed" << data;
     }
 
     reply->deleteLater();
@@ -1055,7 +1026,7 @@ void SlackTeamClient::handleCloseChatReply()
     DEBUG_BLOCK
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
+    QJsonObject data = getResult(reply, false);
 
     if (isError(data)) {
         qDebug() << "Chat close failed";

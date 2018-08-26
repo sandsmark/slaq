@@ -356,7 +356,7 @@ ApplicationWindow {
         id: teamsSwipe
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
-
+        interactive: false
         onCurrentIndexChanged: {
             switchTeam()
         }

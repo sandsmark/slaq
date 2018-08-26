@@ -7,11 +7,26 @@ import ".."
 import com.iskrembilen 1.0
 
 ColumnLayout {
-
-    Button {
-        Layout.fillWidth: true
-        text: qsTr("Join selected")
-        enabled: usersListView.model.selected
+    anchors.margins: 5
+    RowLayout {
+        Button {
+            Layout.fillWidth: true
+            text: qsTr("Join selected")
+            enabled: usersListView.model.selected
+            onClicked: {
+                SlackClient.openChat(teamRoot.teamId, usersListView.model.selectedUserIds())
+                usersListView.model.clearSelections()
+                teamRoot.chatSelect.close()
+            }
+        }
+        Button {
+            Layout.fillWidth: true
+            text: qsTr("Clear")
+            enabled: usersListView.model.selected
+            onClicked: {
+                usersListView.model.clearSelections()
+            }
+        }
     }
 
     ListView {
@@ -27,16 +42,32 @@ ColumnLayout {
 
         model: SlackClient.usersModel(teamRoot.teamId)
 
-        delegate: ItemDelegate {
+        delegate: CheckDelegate {
             id: delegate
+            implicitHeight: Theme.itemSize
             text: UserObject.username + " ( "+ UserObject.fullName +" )"
-            highlighted: UserObject.selected
+            checkState: UserObject.selected ? Qt.Checked : Qt.Unchecked
+            indicator: Item {
+                implicitWidth: Theme.itemSize
+                implicitHeight: Theme.itemSize
+                x: delegate.width - width - delegate.rightPadding
+                visible: delegate.checked
+                y: delegate.topPadding + delegate.availableHeight / 2 - height / 2
+                EmojiButton {
+                    background: Item {}
+                    anchors.centerIn: parent
+                    font.pixelSize: Theme.itemSize/2
+                    text: "🗸"
+                }
+            }
+
             spacing: Theme.paddingMedium
             padding: delegate.height/2 + Theme.paddingMedium
             icon.color: "transparent"
             icon.source: "image://emoji/slack/" + UserObject.avatarUrl
             width: usersListView.width
             Image {
+                id: image
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 sourceSize: Qt.size(delegate.height/2, delegate.height/2)
@@ -55,8 +86,6 @@ ColumnLayout {
 
             onClicked: {
                 usersListView.model.setSelected(index)
-                //            SlackClient.openChat(teamRoot.teamId, UserObject.userId)
-                //            teamRoot.chatSelect.close()
             }
         }
     }

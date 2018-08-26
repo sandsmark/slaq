@@ -11,6 +11,13 @@ ListView {
     id: listView
 
     ScrollBar.vertical: ScrollBar { }
+    GroupLeaveDialog {
+        id: leaveDialog
+        property string channelId
+        onAccepted: {
+            SlackClient.closeChat(teamRoot.teamId, channelId)
+        }
+    }
 
     function setIndex(ind) {
         currentIndex = ind
@@ -27,14 +34,11 @@ ListView {
 
         case ChatsModel.Group:
         case ChatsModel.MultiUserConversation:
-            var dialog = pageStack.push(Qt.resolvedUrl("GroupLeaveDialog.qml"), {"name": channelName })
-            dialog.accepted.connect(function() {
-                SlackClient.leaveGroup(teamRoot.teamId, channelId)
-            })
-            break
-
         case ChatsModel.Conversation:
-            SlackClient.closeChat(teamRoot.teamId,  channelId)
+            leaveDialog.name = channelName
+            leaveDialog.channelId = channelId
+            leaveDialog.open()
+            break
         }
     }
 
@@ -51,6 +55,7 @@ ListView {
                 EmojiRoundButton {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
+                    anchors.rightMargin: listView.ScrollBar.vertical.width + Theme.paddingSmall
                     text: "➕"
                     onClicked: {
                         if (section == qsTr("Channels")) {
@@ -80,7 +85,7 @@ ListView {
         }
     }
 
-    delegate: ItemDelegate {
+    delegate: SwipeDelegate {
         id: delegate
         text: model.Name
         hoverEnabled: true
@@ -91,15 +96,18 @@ ListView {
         spacing: Theme.paddingSmall
         icon.color: "transparent"
         icon.source: model.PresenceIcon
-
-        EmojiRoundButton {
-            visible: delegate.hovered
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.right: parent.right
-            anchors.rightMargin: listView.ScrollBar.vertical.width + Theme.paddingSmall
+        swipe.enabled: true
+        swipe.right: EmojiRoundButton {
+            id: deleteLabel
             text: "\uD83D\uDDD1"
-            onClicked: {
-                leave(model.Type, model.Id, model.Name)
+            padding: 12
+            height: parent.height
+            anchors.right: parent.right
+
+            SwipeDelegate.onClicked: leave(model.Type, model.Id, model.Name)
+
+            background: Rectangle {
+                color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"
             }
         }
 
