@@ -56,8 +56,11 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case UnreadCount:
         return chat->unreadCount;
     case Presence:
-        qWarning() << chat->membersModel->users().first()->fullName() << chat->membersModel->users().first()->presence();
-        return chat->membersModel->users().first()->presence();
+        if (chat->membersModel->users().size() > 0) {
+            return chat->membersModel->users().first()->presence();
+        } else {
+            return User::Unknown;
+        }
     case PresenceIcon: {
         if (chat->type == ChatsModel::Channel
                 || chat->type == ChatsModel::Group

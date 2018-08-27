@@ -2,29 +2,109 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Controls.Material 2.4
 import QtQuick.Layouts 1.3
+import com.iskrembilen 1.0
+import SortFilterProxyModel 0.2
 
 import ".."
-import com.iskrembilen 1.0
+
 
 ColumnLayout {
     anchors.margins: 5
+    Component.onCompleted: {
+        proxyModel.sourceModel = SlackClient.usersModel(teamRoot.teamId)
+        usersListView.model = proxyModel
+        proxyModel.sourceModel.clearSelections()
+        proxyModel.sorters = userSorter
+        proxyModel.filters = filter
+    }
+
+    // invalidate filetr
+    Connections {
+        target: chatSelect.searchInput
+        onTextChanged: {
+            filter.enabled = false
+            filter.enabled = true
+        }
+    }
+
+    SortFilterProxyModel {
+        id: proxyModel
+    }
+
+    property var userSorter: ExpressionSorter {
+        expression: { return modelLeft.UserObject.username < modelRight.UserObject.username; }
+        ascendingOrder: true
+    }
+    property var fullNameSorter: ExpressionSorter {
+        expression: { return modelLeft.UserObject.fullName < modelRight.UserObject.fullName; }
+        ascendingOrder: true
+    }
+
+    property var filter: AllOf {
+        ExpressionFilter {
+            expression: {
+                if (chatSelect.searchInput.text.length <= 0) {
+                    return true
+                } else {
+                    return (model.UserObject.fullName.indexOf(chatSelect.searchInput.text) >=0 ||
+                            model.UserObject.username.indexOf(chatSelect.searchInput.text) >=0)
+                }
+            }
+        }
+    }
+
+    ButtonGroup {
+        id: tabPositionGroup
+    }
+
+    GroupBox {
+        id: sortGroup
+        title: qsTr("Sort by")
+        padding: 2
+        Layout.margins: 5
+        Layout.fillWidth: true
+        RowLayout {
+            Layout.fillWidth: true
+            RadioButton {
+                id: userSortButton
+                text: qsTr("User")
+                Layout.fillWidth: true
+                checked: true
+                ButtonGroup.group: tabPositionGroup
+                onClicked: proxyModel.sorters = userSorter
+            }
+            RadioButton {
+                id: fullNameSortButton
+                text: qsTr("Full name")
+                Layout.fillWidth: true
+                ButtonGroup.group: tabPositionGroup
+                onClicked: proxyModel.sorters = fullNameSorter
+            }
+        }
+    }
+
+
     RowLayout {
+        Layout.fillWidth: true
+        Layout.margins: 5
         Button {
+            id: joinButton
             Layout.fillWidth: true
             text: qsTr("Join selected")
-            enabled: usersListView.model.selected
+            enabled: proxyModel.sourceModel.selected
             onClicked: {
-                SlackClient.openChat(teamRoot.teamId, usersListView.model.selectedUserIds())
-                usersListView.model.clearSelections()
+                SlackClient.openChat(teamRoot.teamId, proxyModel.sourceModel.selectedUserIds())
+                proxyModel.sourceModel.clearSelections()
                 teamRoot.chatSelect.close()
             }
         }
         Button {
+            id: clearButton
             Layout.fillWidth: true
             text: qsTr("Clear")
-            enabled: usersListView.model.selected
+            enabled: proxyModel.sourceModel.selected
             onClicked: {
-                usersListView.model.clearSelections()
+                proxyModel.sourceModel.clearSelections()
             }
         }
     }
@@ -39,8 +119,6 @@ ColumnLayout {
 
         interactive: true
         clip: true
-
-        model: SlackClient.usersModel(teamRoot.teamId)
 
         delegate: CheckDelegate {
             id: delegate
@@ -85,7 +163,7 @@ ColumnLayout {
             }
 
             onClicked: {
-                usersListView.model.setSelected(index)
+                proxyModel.sourceModel.setSelected(index)
             }
         }
     }

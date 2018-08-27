@@ -86,6 +86,7 @@ RESOURCES += \
     fonts.qrc
 
 include (src/modelshelper/QtQmlModels.pri)
+include (src/qmlsorter/SortFilterProxyModel.pri)
 
 other.files = $${OTHER_FILES}
 other.path = deploy
