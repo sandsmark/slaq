@@ -53,6 +53,8 @@ ListView {
                 width: listView.width
                 color: palette.base
                 EmojiRoundButton {
+                    width: parent.height / 1.2
+                    height: parent.height / 1.2
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: listView.ScrollBar.vertical.width + Theme.paddingSmall

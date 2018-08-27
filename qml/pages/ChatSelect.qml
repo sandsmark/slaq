@@ -8,6 +8,8 @@ import "../components"
 
 Drawer {
     id: chatSelect
+
+    property alias searchInput: searchInput
     y: Theme.paddingMedium
     bottomMargin: Theme.paddingMedium
 
@@ -31,7 +33,9 @@ Drawer {
     ColumnLayout {
         anchors.fill: parent
         TextField {
+            id: searchInput
             Layout.fillWidth: true
+            Layout.margins: 5
             placeholderText: qsTr("Search...")
         }
         Loader {
