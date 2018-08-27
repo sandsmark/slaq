@@ -20,7 +20,7 @@ OBJECTS_DIR = .obj
 TRANSLATIONS += translations/slaq-fi.ts
 
 QT += quick webview xml quickcontrols2 multimedia widgets
-CONFIG += c++1x
+CONFIG += c++11
 QT += websockets
 include($$PWD/src/zlib.pri)
 INCLUDEPATH += src src/slackmodels

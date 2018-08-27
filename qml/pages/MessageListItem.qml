@@ -268,7 +268,7 @@ MouseArea {
                             id: repliesRepeater
                             model: ThreadReplies
                             Image {
-                                source: ThreadReplies[index].user.avatarUrl.length > 0 ? "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl : ""
+                                source: "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl
                                 sourceSize: Qt.size(16, 16)
                             }
                         }
