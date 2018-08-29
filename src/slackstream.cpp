@@ -40,14 +40,10 @@ void SlackStream::checkConnection()
     //qDebug() << "check connection" << m_isConnected;
     if (m_isConnected) {
         QJsonObject values;
-        values.insert(QStringLiteral("id"), QJsonValue(++m_lastMessageId));
         values.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("ping")));
 
         //qDebug() << "Check connection" << m_lastMessageId;
-
-        QJsonDocument document(values);
-        QByteArray data = document.toJson(QJsonDocument::Compact);
-        webSocket->sendBinaryMessage(data);
+        sendMessage(values);
     }
 }
 
@@ -109,4 +105,15 @@ void SlackStream::sendBinaryMessage(const QByteArray &message)
     if (webSocket->isValid()) {
         webSocket->sendBinaryMessage(message);
     }
+}
+
+void SlackStream::sendMessage(QJsonObject &message)
+{
+    if (!message.contains(QStringLiteral("id"))) {
+        message.insert(QStringLiteral("id"), QJsonValue(++m_lastMessageId));
+    }
+    QJsonDocument document(message);
+    const QByteArray& data = document.toJson(QJsonDocument::Compact);
+    //qDebug() << "sending" << data;
+    webSocket->sendBinaryMessage(data);
 }

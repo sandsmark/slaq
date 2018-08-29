@@ -24,6 +24,14 @@ ColumnLayout {
     Layout.rightMargin: Theme.paddingLarge/2
     onFocusChanged: if (focus) { messageInput.focus = true; }
 
+    Timer {
+        id: userTypingTimer
+        interval: 3000
+        onTriggered: {
+            SlackClient.sendUserTyping(teamRoot.teamId, channelRoot.channel.id);
+        }
+    }
+
     function insertSuggestion() {
         var lastSpace = messageInput.text.indexOf(' ', messageInput.cursorPosition)
         var after = " "
@@ -165,6 +173,7 @@ ColumnLayout {
             }
 
             onTextChanged: {
+                userTypingTimer.start()
                 if (nickPopupVisible) {
                     updateSuggestions()
                 } else {

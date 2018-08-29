@@ -147,6 +147,7 @@ public slots:
     void onFetchMoreSearchData(const QString& query, int page);
     void parseUserDndChange(const QJsonObject &message);
     SlackTeamClient::ClientStatus getStatus() const;
+    void sendUserTyping(const QString& channelId);
 
 private slots:
     void handleStartReply();

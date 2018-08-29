@@ -447,6 +447,16 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QLis
     messagesModel->addMessages(messages, hasMore, threadMsgsCount);
 }
 
+void SlackClientThreadSpawner::sendUserTyping(const QString &teamId, const QString &channelId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "sendUserTyping", Qt::QueuedConnection,
+                              Q_ARG(QString, channelId));
+}
+
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
 {
     DEBUG_BLOCK;

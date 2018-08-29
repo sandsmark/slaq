@@ -1341,6 +1341,14 @@ SlackTeamClient::ClientStatus SlackTeamClient::getStatus() const
     return m_status;
 }
 
+void SlackTeamClient::sendUserTyping(const QString &channelId)
+{
+    QJsonObject typingRequest;
+    typingRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("typing")));
+    typingRequest.insert(QStringLiteral("channel"), QJsonValue(channelId));
+    stream->sendMessage(typingRequest);
+}
+
 SlackTeamClient::ClientStates SlackTeamClient::getState() const
 {
     return m_state;
@@ -1529,8 +1537,7 @@ void SlackTeamClient::handleConversationsListReply()
         QJsonObject presenceRequest;
         presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
         presenceRequest.insert(QStringLiteral("ids"), QJsonValue(presenceIds));
-        QJsonDocument document(presenceRequest);
-        stream->sendBinaryMessage(document.toJson(QJsonDocument::Compact));
+        stream->sendMessage(presenceRequest);
     }
 
     if (!cursor.isEmpty()) {

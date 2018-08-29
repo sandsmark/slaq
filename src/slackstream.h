@@ -38,6 +38,7 @@ public slots:
     void stopStream();
 
     void sendBinaryMessage(const QByteArray& message);
+    void sendMessage(QJsonObject &message);
 
 private:
     QPointer<QWebSocket> webSocket;

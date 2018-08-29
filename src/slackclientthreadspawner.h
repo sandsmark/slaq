@@ -140,6 +140,8 @@ public slots:
     void onUsersPresenceChanged(const QList<QPointer<User> > &users, const QString &presence);    
     void onMessagesReceived(const QString &channelId, QList<Message *> messages, bool hasMore, int threadMsgsCount);
 
+    void sendUserTyping(const QString& teamId, const QString& channelId);
+
 protected:
     void run();
 
