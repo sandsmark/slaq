@@ -88,8 +88,8 @@ signals:
     void chatJoined(const QString& channelId);
     void chatLeft(const QString& channelId);
 
-    void postImageSuccess(const QString& teamId);
-    void postImageFail(const QString& teamId);
+    void postFileSuccess(const QString& teamId);
+    void postFileFail(const QString& teamId);
 
     void networkOff(const QString& teamId);
     void networkOn(const QString& teamId);
@@ -122,7 +122,7 @@ public slots:
     void postMessage(const QString& channelId, QString content, const QDateTime &thread_ts);
     void updateMessage(const QString& channelId, QString content, const QDateTime &ts);
     void deleteMessage(const QString& channelId, const QDateTime& ts);
-    void postImage(const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
+    void postFile(const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
     void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
@@ -155,7 +155,7 @@ private slots:
     void handleDeleteReactionReply();
     void handleAddReactionReply();
     void handlePostMessageReply();
-    void handlePostImage();
+    void handlePostFile();
     void handleMarkChannelReply();
     void handleJoinChannelReply();
     void handleLeaveChannelReply();

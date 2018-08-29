@@ -91,7 +91,7 @@ void MessageFormatter::replaceLinks(QString &message)
 void MessageFormatter::replaceMarkdown(QString &message)
 {
     const QPalette& palette = QGuiApplication::palette();
-    const QString& blockStyleBg = palette.color(QPalette::Highlight).name(QColor::HexRgb);
+    const QString& blockStyleBg = palette.color(QPalette::AlternateBase).name(QColor::HexRgb);
     const QString& blockStyleFg = palette.color(QPalette::HighlightedText).name(QColor::HexRgb);
 
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));

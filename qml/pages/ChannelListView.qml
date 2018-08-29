@@ -78,12 +78,10 @@ ListView {
         repeat: false
         property string channelId: ""
         onTriggered: {
+            console.time("start_switching")
             var channel = SlackClient.getChannel(teamRoot.teamId, channelId);
-            if (channel != null) {
-                pageStack.replace(Qt.resolvedUrl("Channel.qml"), {"channel": channel})
-            } else {
-                console.warn("No chat found for id", channelId)
-            }
+            console.warn("got channel", channel.name)
+            pageStack.loadChannel(channel)
         }
     }
 

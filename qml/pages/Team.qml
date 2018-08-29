@@ -1,6 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.3
 import com.iskrembilen 1.0
 
 import "."
@@ -14,22 +15,25 @@ Page {
 
     property var slackClient: null
     property alias pageStack: pageStack
-     property alias chatSelect: chatSelect
+    property alias chatSelect: chatSelect
+    property alias loaderIndicator: loaderIndicator
     property string teamId: ""
     property string teamName: ""
-    property string currentChannelId: pageStack.currentItem.channel != undefined ? pageStack.currentItem.channel.id : ""
+    property string currentChannelId: pageStack.item != null && pageStack.item.channel != undefined ? pageStack.item.channel.id : ""
     property string previousChannelId
+    property bool loadingData: false
 
     onSlackClientChanged: {
         if (slackClient !== null) {
             console.log("starting test login for team", teamRoot.teamId, teamRoot.teamName)
+            loadingData = true
             SlackClient.testLogin(teamRoot.teamId)
         }
     }
 
     function setCurrentTeam() {
-        if (pageStack.currentItem.setChannelActive) {
-            pageStack.currentItem.setChannelActive()
+        if (pageStack.item != null && pageStack.item.setChannelActive) {
+            pageStack.item.setChannelActive()
         }
     }
 
@@ -61,12 +65,8 @@ Page {
                 var _lastChannelId = SlackClient.lastChannel(teamRoot.teamId);
                 console.log("loading page. adding channel component:", _lastChannelId, teamRoot.teamId)
                 var channel = SlackClient.getChannel(teamRoot.teamId, _lastChannelId);
-                if (channel != null) {
-                    pageStack.replace(channelComponent, {"channel" : channel })
-                } else {
-                    console.warn("No chat found for id", _lastChannelId)
-                }
-
+                pageStack.loadChannel(channel)
+                loadingData = false
             }
         }
 
@@ -77,43 +77,59 @@ Page {
         onChannelJoined: {
             if (teamRoot.teamId == teamId) {
                 var _chat = SlackClient.getChannel(teamRoot.teamId, channelId);
-                if (_chat != null) {
-                    pageStack.replace(channelComponent, {"channel" : _chat })
-                }
+                pageStack.loadChannel(_chat)
             }
         }
         onChannelLeft: {
             if (teamRoot.teamId == teamId) {
                 var _chat = SlackClient.getGeneralChannel(teamRoot.teamId);
-                if (_chat != null) {
-                    pageStack.replace(channelComponent, {"channel" : _chat })
-                }
+                pageStack.loadChannel(_chat)
             }
         }
     }
 
-    Component {
-        id: channelComponent
-        Channel {}
-    }
-
-    Row {
+    RowLayout {
         anchors.fill: parent
         spacing: Theme.paddingMedium
         ChannelList {
             id: channelsList
-            height: parent.height
-            width: 200
+            Layout.fillHeight: true
+            Layout.minimumWidth: 200
         }
 
-        StackView {
+        Loader {
             id: pageStack
-            height: parent.height
-            width: parent.width - channelsList.width - Theme.paddingMedium
-            transform: Translate {
-                x: SlackClient.isDevice ? channelList.item.position * width * 0.33 : 0
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            active: false
+            asynchronous: true
+            sourceComponent: Channel {}
+            property Chat _channel: null
+
+            function loadChannel(channel) {
+                if (channel == null) {
+                    console.warn("Passed NULL channel")
+                    return
+                }
+
+                console.warn("channel loader start for", channel.name)
+                pageStack.active = false
+                _channel = channel
+                pageStack.active = true
             }
-            initialItem: Item { BusyIndicator { anchors.centerIn: parent } }
+
+            BusyIndicator {
+                id: loaderIndicator
+                visible: pageStack.status !== Loader.Ready || teamRoot.loadingData
+                running: visible
+                anchors.centerIn: parent
+            }
+            onLoaded: {
+                console.log("loaded", item.objectName)
+                item.channel = _channel
+                console.timeEnd("start_switching")
+                console.warn("Loaded", item.channel.name)
+            }
         }
     }
 }

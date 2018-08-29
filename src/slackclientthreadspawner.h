@@ -57,8 +57,8 @@ signals:
     void channelJoined(const QString& teamId, const QString& channelId);
     void channelLeft(const QString& teamId, const QString& channelId);
 
-    void postImageSuccess(const QString& teamId);
-    void postImageFail(const QString& teamId);
+    void postFileSuccess(const QString& teamId);
+    void postFileFail(const QString& teamId);
 
     void networkOff(const QString& teamId);
     void networkOn(const QString& teamId);
@@ -106,7 +106,7 @@ public slots:
     void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QDateTime &thread_ts = QDateTime());
     void updateMessage(const QString& teamId, const QString& channelId, const QString& content, const QDateTime &ts);
     void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts);
-    void postImage(const QString& teamId, const QString& channelId, const QString& imagePath, const QString& title, const QString& comment);
+    void postFile(const QString& teamId, const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
     void addReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
 

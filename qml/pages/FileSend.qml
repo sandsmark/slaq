@@ -1,72 +1,87 @@
-import QtQuick 2.8
-import QtQuick.Controls 2.3
-import QtQuick.Dialogs 1.3
-
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQuick.Dialogs 1.3 as QQDialogs
 import ".."
 
-Page {
+Dialog {
     id: page
 
-    property variant channelId
-    padding: Theme.paddingLarge
-    property string selectedImage: ""
+    title: qsTr("Sending file...")
+    property string channelId
+    property string selectedFile: ""
     property bool uploading: false
+    width: window.isMobile ? window.width : window.width / 2
+    height: window.isMobile ? window.height : window.height / 2
+    x: (window.width - width)/2
+    y: (window.height - height)/2
 
-    title: qsTr("Upload image")
+    footer: DialogButtonBox {
+        Button {
+            text: qsTr("Select file")
+            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            onClicked: {
+                fileDialog.open()
+            }
+        }
+        Button {
+            text: qsTr("Send")
+            enabled: !page.uploading && selectedFile !== ""
+            //DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: {
+                page.uploading = true
+                SlackClient.postFile(teamRoot.teamId, channelId, page.selectedFile, titleInput.text, commentInput.text)
+            }
+        }
+        Button {
+            text: qsTr("Cancel")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+        }
 
-    Flickable {
-        anchors.fill: parent
+        onRejected: {
+            close()
+        }
+    }
+
+    modal: true
+
+    contentItem: Flickable {
+        width: page.availableWidth
+        height: page.availableHeight
+        anchors.margins: 5
         contentWidth: column.width
         contentHeight: column.height
-
+        clip: true
         Column {
             id: column
             width: page.width
             spacing: Theme.paddingMedium
 
-            Image {
-                id: image
-                x: page.padding
-                width: parent.width - Theme.paddingLarge * 2
-                fillMode: Image.PreserveAspectFit
-                source: page.selectedImage
-                visible: page.selectedImage.length > 0
+            Label {
+                width: parent.width
+                text: qsTr("Cant preview file: ") + page.selectedFile
+                visible: image.status == Image.Error
             }
 
-            Button {
-                text: qsTr("Select image")
-                visible: !image.visible
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: {
-                    fileDialog.open()
-                }
+            Image {
+                id: image
+                width: parent.width
+                fillMode: Image.PreserveAspectFit
+                source: page.selectedFile
+                visible: page.selectedFile !== ""
             }
 
             TextField {
                 id: titleInput
-                x: page.padding
-                width: parent.width - Theme.paddingLarge * 2
+                width: parent.width
                 placeholderText: "Title (optional)"
                 onAccepted: commentInput.focus = true
             }
 
             TextField {
                 id: commentInput
-                x: page.padding
-                width: parent.width - Theme.paddingLarge * 2
+                width: parent.width
                 placeholderText: "Comment (optional)"
                 onAccepted: focus = false
-            }
-
-            Button {
-                text: qsTr("Send")
-                anchors.horizontalCenter: parent.horizontalCenter
-                enabled: image.visible
-                visible: !page.uploading
-                onClicked: {
-                    page.uploading = true
-                    SlackClient.postImage(channelId, page.selectedImage, titleInput.text, commentInput.text)
-                }
             }
 
             ProgressBar {
@@ -81,37 +96,33 @@ Page {
         }
     }
 
-    FileDialog {
+    QQDialogs.FileDialog {
         id: fileDialog
         title: "Please choose an image file"
         folder: shortcuts.home
         visible: false
         onAccepted: {
-            page.selectedImage = fileUrl
+            page.selectedFile = fileUrl
         }
         onRejected: {
-            page.selectedImage = fileUrl
+            page.selectedFile = fileUrl
         }
-        Component.onCompleted: visible = true
     }
 
-
     Component.onCompleted: {
-        SlackClient.onPostImageFail.connect(handleImagePostFail)
-        SlackClient.onPostImageSuccess.connect(handleImagePostSuccess)
+        SlackClient.onPostFileFail.connect(handleFilePostFail)
+        SlackClient.onPostFileSuccess.connect(handleFilePostSuccess)
     }
 
     Component.onDestruction: {
-        SlackClient.onPostImageFail.disconnect(handleImagePostFail)
-        SlackClient.onPostImageSuccess.disconnect(handleImagePostSuccess)
     }
 
-    function handleImagePostFail() {
-        console.log("post image fail")
+    function handleFilePostFail() {
+        console.warn("post image fail")
     }
 
-    function handleImagePostSuccess() {
-        console.log("post image success")
-        pageStack.pop()
+    function handleFilePostSuccess() {
+        close()
     }
 }
+

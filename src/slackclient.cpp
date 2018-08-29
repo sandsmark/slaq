@@ -192,7 +192,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 
     const QString& type = message.value(QStringLiteral("type")).toString();
 
-    if (type != "pong") {
+    if (type != "pong" && type != "user_typing") {
         qDebug() << "stream message type" << type;
     }
 //    qDebug().noquote() << QJsonDocument(message).toJson();
@@ -1657,7 +1657,7 @@ void SlackTeamClient::handlePostMessageReply()
     reply->deleteLater();
 }
 
-void SlackTeamClient::postImage(const QString& channelId, const QString& imagePath,
+void SlackTeamClient::postFile(const QString& channelId, const QString& filePath,
                             const QString& title, const QString& comment)
 {
     DEBUG_BLOCK;
@@ -1673,32 +1673,33 @@ void SlackTeamClient::postImage(const QString& channelId, const QString& imagePa
         data.insert(QStringLiteral("initial_comment"), comment);
     }
 
-    QFile *imageFile = new QFile(imagePath);
-    if (!imageFile->open(QFile::ReadOnly)) {
-        qWarning() << "image file not readable" << imagePath;
+    QFile *file = new QFile(QUrl(filePath).toString(QUrl::RemoveScheme));
+    if (!file->open(QFile::ReadOnly)) {
+        qWarning() << "image file not readable" << file->fileName();
+        emit postFileFail(m_teamInfo.teamId());
         return;
     }
 
-    qDebug() << "sending image" << imagePath;
-    QNetworkReply *reply = executePostWithFile(QStringLiteral("files.upload"), data, imageFile);
+    qDebug() << "sending image" << filePath;
+    QNetworkReply *reply = executePostWithFile(QStringLiteral("files.upload"), data, file);
 
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostImage);
-    connect(reply, &QNetworkReply::finished, imageFile, &QObject::deleteLater);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostFile);
+    connect(reply, &QNetworkReply::finished, file, &QObject::deleteLater);
 }
 
-void SlackTeamClient::handlePostImage()
+void SlackTeamClient::handlePostFile()
 {
     DEBUG_BLOCK
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
-    QJsonObject data = getResult(reply);
-    qDebug() << "Post image result" << data;
+    QJsonObject data = getResult(reply, false);
+    qDebug() << "Post file result" << data;
 
     if (isError(data)) {
-        emit postImageFail(m_teamInfo.teamId());
+        emit postFileFail(m_teamInfo.teamId());
     } else {
-        emit postImageSuccess(m_teamInfo.teamId());
+        emit postFileSuccess(m_teamInfo.teamId());
     }
 
     reply->deleteLater();
