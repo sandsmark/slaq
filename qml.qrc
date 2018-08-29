@@ -52,5 +52,6 @@
         <file>qml/components/EmojiButton.qml</file>
         <file>qml/components/EmojiToolButton.qml</file>
         <file>qml/components/EmojiRoundButton.qml</file>
+        <file>qml/components/TextViewer.qml</file>
     </qresource>
 </RCC>

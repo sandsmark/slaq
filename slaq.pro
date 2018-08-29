@@ -76,7 +76,8 @@ DISTFILES += \
     qml/pages/*.js \
     qml/pages/*.qml \
     qml/*.qml \
-    qml/components/*.qml
+    qml/components/*.qml \
+    qml/components/TextViewer.qml
 
 target.path = deploy
 

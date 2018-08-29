@@ -158,7 +158,7 @@ MouseArea {
                             font.bold: false
                             font.pixelSize: parent.height/2
                             onClicked: {
-                                teamRoot.deleteMessage(channelId, model.Time)
+                                teamRoot.deleteMessage(channel.id, model.Time)
                             }
                         }
                         EmojiButton {
@@ -239,15 +239,15 @@ MouseArea {
 
                     //Due to bug in images not rendered until app resize
                     //trigger redraw changing width
-                    onTextChanged: {
-                        Qt.callLater(function() {
-                            if (contentItem != undefined) {
-                                var tmp = contentItem.width
-                                contentItem.width = 0
-                                contentItem.width = tmp
-                            }
-                        })
-                    }
+//                    onTextChanged: {
+//                        Qt.callLater(function() {
+//                            if (contentItem != undefined) {
+//                                var tmp = contentItem.width
+//                                contentItem.width = 0
+//                                contentItem.width = tmp
+//                            }
+//                        })
+//                    }
 
                     MouseArea {
                         id: mouseArea

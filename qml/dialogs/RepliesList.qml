@@ -43,12 +43,12 @@ Drawer {
             id: repliesListView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            ScrollIndicator.vertical: ScrollIndicator { }
+            ScrollBar.vertical: ScrollBar { }
             verticalLayoutDirection: ListView.BottomToTop
             clip: true
             spacing: Theme.paddingMedium
             delegate: MessageListItem {
-                width: repliesListView.width - repliesListView.ScrollIndicator.vertical.width
+                width: repliesListView.width - repliesListView.ScrollBar.vertical.width
                 isReplies: true
             }
 
@@ -58,7 +58,7 @@ Drawer {
             placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
             onSendMessage: {
                 if (parentMessage != undefined) {
-                    SlackClient.postMessage(teamRoot.teamId, channelId, content, modelMsg.ThreadTs)
+                    SlackClient.postMessage(teamRoot.teamId, channel.id, content, modelMsg.ThreadTs)
                 }
             }
 

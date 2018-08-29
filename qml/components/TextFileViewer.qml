@@ -7,7 +7,7 @@ Item {
 
     function hovered(mouseArea) {}
     function clicked() {
-        channelRoot.showText(fileshare.url_private_download, fileshare.name, fileshare.username)
+        textViewer.showText(fileshare.url_private_download, fileshare.name, fileshare.username, teamRoot.teamId)
     }
 
     Label {

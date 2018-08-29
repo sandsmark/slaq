@@ -22,10 +22,16 @@ ApplicationWindow {
     property alias teamsSwipe: teamsSwipe
     property alias emojiSelector: emojiSelector
     property alias settings: settings
+    property alias textViewer: textViewer
+    property alias fileSend: fileSend
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
     property bool completed: false
+
+    readonly property bool isMobile: Qt.platform.os === "android" ||
+                                     Qt.platform.os === "ios" ||
+                                     Qt.platform.os === "winrt"
 
     function recalcUnread() {
         var total = 0
@@ -101,6 +107,14 @@ ApplicationWindow {
 
     SearchResultsList {
         id: searchResultsList
+    }
+
+    TextViewer {
+        id: textViewer
+    }
+
+    FileSend {
+        id: fileSend
     }
 
 //    Connections {

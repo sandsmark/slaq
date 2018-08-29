@@ -32,6 +32,10 @@ Item {
 
     Column {
         anchors.margins: Theme.paddingMedium/2
+        Label {
+            text: fileshare.title
+        }
+
         Loader {
             id: loader
             Component.onCompleted: {

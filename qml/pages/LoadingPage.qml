@@ -20,7 +20,7 @@ Page {
 
             MenuItem {
                 text: qsTr("Login")
-                onClicked: pageStack.push(Qt.resolvedUrl("LoginPage.qml"))
+                onClicked: pageStack.setSource(Qt.resolvedUrl("LoginPage.qml"))
             }
         }
 
@@ -109,7 +109,7 @@ Page {
 
     function handleLoginTestFail() {
         console.log("login test fail")
-        pageStack.push(Qt.resolvedUrl("LoginPage.qml"))
+        pageStack.setSource(Qt.resolvedUrl("LoginPage.qml"))
     }
 
     function handleInitSuccess() {

@@ -6,7 +6,7 @@ import ".."
 Item {
     id: imageItem
     property bool expanded: false
-    width: expanded ? listView.width - Theme.paddingLarge * 4 : fileshare.thumb_360_size.width
+    width: expanded ? msgListView.width - Theme.paddingLarge * 4 : fileshare.thumb_360_size.width
     height: expanded ? width / (fileshare.original_size.width / fileshare.original_size.height) : fileshare.thumb_360_size.height
 
     Image {
@@ -49,7 +49,7 @@ Item {
 
     function clicked() {
         if (SlackClient.isDevice) {
-            pageStack.push(Qt.resolvedUrl("SlackImage.qml"), {"model": fileshare, "teamId": teamId})
+            pageStack.setSource(Qt.resolvedUrl("SlackImage.qml"), {"model": fileshare, "teamId": teamId})
         } else {
             imageItem.expanded = !imageItem.expanded
         }
