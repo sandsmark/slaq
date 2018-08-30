@@ -369,20 +369,6 @@ void MessageListModel::addMessage(Message* message)
         }
         m_modelMutex.unlock();
         prependMessageToModel(message);
-        ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-        Chat* chat = nullptr;
-        if (_chatsModel != nullptr) {
-            chat = _chatsModel->chat(m_channelId);
-        }
-
-        if (chat != nullptr && !chat->id.isEmpty()
-                && message->time > chat->lastRead
-                && message->subtype != "message_changed"
-                && message->subtype != "message_deleted"
-                && message->subtype != "message_replied") {
-            chat->unreadCountDisplay++;
-            _chatsModel->chatChanged(chat);
-        }
     }
 }
 

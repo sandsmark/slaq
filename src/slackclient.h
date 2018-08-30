@@ -165,6 +165,13 @@ private slots:
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
     void handleStreamStart();
     void handleStreamEnd();
+
+    /**
+     * @brief handleStreamMessage
+     * @param message Json object with message body
+     *
+     * Handles all RTM messages for Slack Team
+     */
     void handleStreamMessage(const QJsonObject& message);
     void reconnectClient();
     void handleTeamInfoReply();

@@ -409,13 +409,6 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
         delete message;
         return;
     }
-    Chat* chat = _chatsModel->chat(message->channel_id);
-    if (chat == nullptr) {
-        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << message->channel_id << "not found";
-        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), message->channel_id, -1);
-        return;
-    }
-    emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
 
     MessageListModel *messages = _chatsModel->messages(message->channel_id);
     if (messages == nullptr) {
@@ -425,6 +418,21 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     }
 
     messages->addMessage(message);
+
+    Chat* chat = _chatsModel->chat(message->channel_id);
+
+    if (chat != nullptr && !chat->id.isEmpty()
+            && message->time > chat->lastRead
+            && message->subtype != "message_changed"
+            && message->subtype != "message_deleted"
+            && message->subtype != "message_replied") {
+        chat->unreadCountDisplay++;
+        _chatsModel->chatChanged(chat);
+        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
+    } else {
+        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << message->channel_id << "not found";
+        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), message->channel_id, -1);
+    }
 }
 
 void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QList<Message*> messages, bool hasMore, int threadMsgsCount)
