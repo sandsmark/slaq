@@ -66,10 +66,16 @@ MouseArea {
                     spacing: Theme.paddingMedium/2
 
                     Label {
-                        id: nickLabel
-                        text: User != null ? User.fullName.length > 0 ? User.fullName : (User.username !== "" ? User.username : "Private") : "Bot"
+                        id: nameLabel
+                        text: User != null ? User.fullName.length > 0 ? User.fullName : (User.username !== "" ? User.username : "Private") : "Undefined"
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
+                    }
+
+                    Label {
+                        id: nickLabel
+                        text: "(" + (User != null ? (User.username !== "" ? User.username : "Private") : "Undefined" ) + ")"
+                        font.pointSize: Theme.fontSizeSmall
                     }
 
                     Control {
