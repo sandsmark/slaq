@@ -56,7 +56,7 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case UnreadCount:
         return chat->unreadCount;
     case Presence:
-        if (chat->membersModel->users().size() > 0) {
+        if (!chat->membersModel->users().isEmpty()) {
             return chat->membersModel->users().first()->presence();
         } else {
             return User::Unknown;

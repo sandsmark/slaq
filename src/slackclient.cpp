@@ -242,9 +242,11 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
                 m_teamInfo.users()->addUser(message.value(QStringLiteral("user")).toObject());
             }
         });
-        //parseUser(message.value(QStringLiteral("user")).toObject());
     } else if (type == QStringLiteral("member_joined_channel")) {
-        qDebug() << "user joined to channel" << message.value(QStringLiteral("user")).toString();
+        QStringList _members(message.value(QStringLiteral("user")).toString());
+        qDebug() << "user joined to channel" << _members;
+        emit conversationMembersChanged(message.value(QStringLiteral("channel")).toString(),
+                                        _members, true);
     } else if (type == QStringLiteral("pong")) {
     } else if (type == QStringLiteral("hello")) {
     } else if (type == QStringLiteral("emoji_changed")) {
