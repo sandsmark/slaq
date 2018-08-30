@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QDateTime>
 #include <QColor>
+#include <QMutexLocker>
 
 class User : public QObject
 {
@@ -120,5 +121,6 @@ private:
     bool m_addingUsers { false };
     bool m_usersFetched { false };
     bool m_selected;
+    mutable QMutex m_modelMutex;
 };
 

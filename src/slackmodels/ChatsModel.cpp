@@ -271,13 +271,14 @@ void ChatsModel::chatChanged(Chat *chat)
     emit dataChanged(index, index);
 }
 
-void ChatsModel::setPresence(const QList<QPointer<User> > &users, const QString &presence)
+void ChatsModel::setPresence(const QStringList &users, const QString &presence)
 {
     User::Presence _presence = (presence == "away" ? User::Away : (presence == "dnd_on" ? User::Dnd : User::Active));
     for (Chat* chat : m_chats.values()) {
-        if (chat->type == ChatsModel::Conversation && chat->membersModel != nullptr && !chat->membersModel->users().isEmpty()) {
+        if (chat->type == ChatsModel::Conversation && chat->membersModel != nullptr
+                && !chat->membersModel->users().isEmpty()) {
             QPointer<User> _user = chat->membersModel->users().first();
-            if (users.contains(_user)) {
+            if (!_user.isNull() && (users.contains(_user->userId()) || users.contains(_user->botId()))) {
                 _user->setPresence(_presence);
                 chatChanged(chat);
             }

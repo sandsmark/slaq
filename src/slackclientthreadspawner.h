@@ -137,7 +137,7 @@ public slots:
     void onUsersDataChanged(const QList<QPointer<User> > &users, bool last);
     void onConversationsDataChanged(const QList<Chat *> &chats, bool last);
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
-    void onUsersPresenceChanged(const QList<QPointer<User> > &users, const QString &presence);    
+    void onUsersPresenceChanged(const QStringList &users, const QString &presence);
     void onMessagesReceived(const QString &channelId, QList<Message *> messages, bool hasMore, int threadMsgsCount);
 
     void sendUserTyping(const QString& teamId, const QString& channelId);

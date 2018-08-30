@@ -21,9 +21,13 @@ ListView {
     property var latestRead
 
     onAppActiveChanged: {
-        readTimer.restart()
+        markLatest()
     }
     function markLatest() {
+        readTimer.restart()
+    }
+
+    function doMarkLatest() {
         if (channelRoot.channel == null)
             return
         if (appActive && atBottom
@@ -41,12 +45,12 @@ ListView {
 
     Timer {
         id: readTimer
-        interval: 500
+        interval: 3000
         triggeredOnStart: false
         running: false
         repeat: false
         onTriggered: {
-            markLatest()
+            doMarkLatest()
         }
     }
 
@@ -56,9 +60,9 @@ ListView {
             console.log("load messages success", channel.name, teamId, teamRoot.teamId)
             if (teamId === teamRoot.teamId) {
                 msgListView.model = teamRoot.slackClient.currentChatsModel().messages(channelId)
-                SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
                 inputEnabled = true
                 loadCompleted()
+                markLatest()
             }
         }
         onLoadMessagesFail: {
@@ -86,13 +90,13 @@ ListView {
 
     onCountChanged: {
         if (atBottom && count > 0) {
-            readTimer.restart()
+            markLatest()
         }
     }
 
     onMovementEnded: {
         if (atBottom) {
-            readTimer.restart()
+            markLatest()
         }
     }
 }

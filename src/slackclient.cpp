@@ -280,7 +280,7 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
         return;
     }
     int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
-    QDateTime lastRead = slackToDateTime(message.value(QStringLiteral("ts")).toString());
+    const QDateTime& lastRead = slackToDateTime(message.value(QStringLiteral("ts")).toString());
     if (unreadCountDisplay != chat->unreadCountDisplay
             || lastRead != chat->lastRead) {
         chat->unreadCountDisplay = unreadCountDisplay;
@@ -415,13 +415,9 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
 }
 
 void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
-    QList<QPointer<User>> _users;
-    if (m_teamInfo.users() == nullptr) {
-        qWarning() << "NO USERS IN TEAMINFO YET!!";
-        return;
-    }
-    const QString& _userId = message.value(QStringLiteral("user")).toString();
-    _users.append(m_teamInfo.users()->user(_userId));
+    QStringList _userIds;
+
+    _userIds << message.value(QStringLiteral("user")).toString();
 
     const QJsonObject& dndStatus = message.value(QStringLiteral("dnd_status")).toObject();
     bool _dnd = dndStatus.value("dnd_enabled").toBool(false);
@@ -431,34 +427,29 @@ void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
     }
 
     QString presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
-    emit usersPresenceChanged(_users, presence);
+    emit usersPresenceChanged(_userIds, presence);
 }
 
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
 {
     DEBUG_BLOCK;
 
-    QList<QPointer<User>> _users;
-    if (m_teamInfo.users() == nullptr) {
-        qWarning() << "NO USERS IN TEAMINFO YET!!";
-        return;
-    }
+    QStringList _userIds;
     const QJsonValue& _userValue = message.value(QStringLiteral("user"));
     if (!_userValue.isUndefined()) {
-        const QString& userId = _userValue.toString();
-        _users.append(m_teamInfo.users()->user(userId));
-    }
-    const QJsonValue& _usersValue = message.value(QStringLiteral("users"));
-    if (!_usersValue.isUndefined()) {
-        for (const QJsonValue& jsonUser : _usersValue.toArray()) {
-            const QString& userId = jsonUser.toString();
-            _users.append(m_teamInfo.users()->user(userId));
+        _userIds << _userValue.toString();
+    } else {
+        const QJsonValue& _usersValue = message.value(QStringLiteral("users"));
+        if (!_usersValue.isUndefined()) {
+            for (const QJsonValue& jsonUser : _usersValue.toArray()) {
+                _userIds << jsonUser.toString();
+            }
         }
     }
 
     const QString& presence = message.value(QStringLiteral("presence")).toString();
     //qWarning() << "presence" << presence;
-    emit usersPresenceChanged(_users, presence);
+    emit usersPresenceChanged(_userIds, presence);
 }
 
 void SlackTeamClient::parseNotification(const QJsonObject& message)
@@ -571,20 +562,24 @@ bool SlackTeamClient::isError(const QJsonObject &data)
     }
 }
 
-QJsonObject SlackTeamClient::getResult(QNetworkReply *reply, bool compressed)
+QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
 {
     DEBUG_BLOCK
 
     if (isOk(reply)) {
         QJsonParseError error;
-        QByteArray baData = reply->readAll();
-        //qDebug() << "received" << baData.size() << "bytes" << gUncompress(baData);
+        const QByteArray& baData = reply->readAll();
+        //Content-Encoding: gzip
+        bool compressed = reply->rawHeader("Content-Encoding").contains("gzip");
+
+        //qDebug() << "received" << baData.size() << "bytes" << compressed << "content encoding" << reply->rawHeader("Content-Encoding");
         if (baData.isEmpty()) {
             qWarning() << "No data returned";
             return QJsonObject();
         }
         QJsonDocument document;
         if (compressed) {
+            //qDebug() << "uncompressed" << gUncompress(baData);
             document = QJsonDocument::fromJson(gUncompress(baData), &error);
         } else {
             document = QJsonDocument::fromJson(baData, &error);
@@ -616,6 +611,8 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
     url.setQuery(query);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
+                         QVariant(int(QNetworkRequest::AlwaysNetwork)));
     request.setRawHeader("Accept-Encoding", "gzip, deflate");
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     if (attribute.isValid()) {
@@ -943,7 +940,7 @@ void SlackTeamClient::handleJoinChannelReply()
 
     qDebug() << "join reply";
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply, false);
+    QJsonObject data = getResult(reply);
 
     if (isError(data)) {
         qDebug() << "Channel join failed";
@@ -968,7 +965,7 @@ void SlackTeamClient::handleLeaveChannelReply()
     DEBUG_BLOCK
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply, false);
+    QJsonObject data = getResult(reply);
 
     if (isError(data)) {
         qDebug() << "Channel leave failed" << data;
@@ -1000,7 +997,7 @@ void SlackTeamClient::handleOpenChatReply()
 
     qDebug() << "open chat reply";
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply, false);
+    QJsonObject data = getResult(reply);
 
     if (isError(data)) {
         qDebug() << "Chat open failed" << data;
@@ -1026,7 +1023,7 @@ void SlackTeamClient::handleCloseChatReply()
     DEBUG_BLOCK
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply, false);
+    QJsonObject data = getResult(reply);
 
     if (isError(data)) {
         qDebug() << "Chat close failed";
@@ -1076,10 +1073,10 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
-    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count();
+    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
     if (m_teamInfo.users() == nullptr || !m_teamInfo.users()->usersFetched() || !cursor.isEmpty()) {
         QMap<QString, QString> params;
-        params.insert(QStringLiteral("limit"), "1000");
+        params.insert(QStringLiteral("limit"), "10000");
         if (!cursor.isEmpty()) {
             params.insert(QStringLiteral("cursor"), cursor);
         }
@@ -1509,9 +1506,6 @@ void SlackTeamClient::handleConversationsListReply()
             }
             _chats.append(chat);
         }
-    }
-    emit conversationsDataChanged(_chats, cursor.isEmpty());
-
 #if 0
         {
             QFile f("chatslist_dumps_" + m_teamInfo.name() + ".json");
@@ -1521,6 +1515,8 @@ void SlackTeamClient::handleConversationsListReply()
             }
         }
 #endif
+    }
+    emit conversationsDataChanged(_chats, cursor.isEmpty());
 
     QJsonArray presenceIds;
 
@@ -1570,6 +1566,7 @@ void SlackTeamClient::handleUsersListReply()
             user->setData(userValue.toObject());
             _users.append(user);
         }
+        qDebug() << "got" << _users.count() << "users";
         if (!cursor.isEmpty()) {
             requestUsersList(cursor);
         }
@@ -1700,7 +1697,7 @@ void SlackTeamClient::handlePostFile()
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
-    QJsonObject data = getResult(reply, false);
+    QJsonObject data = getResult(reply);
     qDebug() << "Post file result" << data;
 
     if (isError(data)) {

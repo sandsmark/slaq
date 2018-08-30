@@ -442,9 +442,15 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, QLis
         qWarning() << "No messages in chat" << channelId;
         return;
     }
-    qDebug() << "Adding messages for chat" << _chatsModel->chat(channelId)->name;
+    Chat* _chat = _chatsModel->chat(channelId);
+    QDateTime _lastRead;
+    if (_chat != nullptr) {
+        qDebug() << "Adding messages for chat" << _chat->name;
+        _lastRead = _chat->lastRead;
+    }
 
     messagesModel->addMessages(messages, hasMore, threadMsgsCount);
+    qDebug() << "unread messages" << messagesModel->countUnread(_lastRead);
 }
 
 void SlackClientThreadSpawner::sendUserTyping(const QString &teamId, const QString &channelId)
@@ -800,7 +806,7 @@ void SlackClientThreadSpawner::onConversationMembersChanged(const QString& chann
     _chatsModel->addMembers(channelId, members);
 }
 
-void SlackClientThreadSpawner::onUsersPresenceChanged(const QList<QPointer<User> > &users, const QString& presence)
+void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, const QString& presence)
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());

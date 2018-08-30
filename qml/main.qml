@@ -216,6 +216,7 @@ ApplicationWindow {
                                 target: SlackClient
                                 onChannelCountersUpdated: {
                                     if (teamId === model.teamId) {
+                                        console.log("onChannelCountersUpdated. unread messages", unreadMessages)
                                         //unread_messages
                                         if (unreadMessages >= 0) {
                                             var total = SlackClient.getTotalUnread(teamId, ChatsModel.Channel)
@@ -228,7 +229,6 @@ ApplicationWindow {
                                             // the chat is not yet initialized, so we only know that there is new message
                                             tabButton.unreadChannelMessages++
                                         }
-
                                         window.recalcUnread()
                                     }
                                 }

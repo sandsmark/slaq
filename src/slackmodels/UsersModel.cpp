@@ -215,22 +215,28 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 void UsersModel::updateUser(const QJsonObject &userData)
 {
     const QString& userId = userData.value(QStringLiteral("id")).toString();
-    User *olduser = m_users[userId];
-    if (olduser == nullptr) {
+    QPointer<User> olduser = m_users.value(userId);
+    if (olduser.isNull()) {
         qWarning() << "no user found for" << userId;
         return;
     }
-    User *user = new User(olduser);
+    QPointer<User> user = new User(olduser);
     user->setData(userData);
     if (QThread::currentThread() != qApp->thread()) {
         user->moveToThread(qApp->thread());
     }
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
-    if (m_users[user->userId()]) {
-        m_users[user->userId()]->deleteLater();
+    QString _id = user->userId();
+    if (user->isBot()) {
+        _id = user->botId();
     }
-    m_users[user->userId()] = user;
-    int row  = m_userIds.indexOf(user->userId());
+    if (m_users.contains(_id)) {
+        m_users.value(_id)->deleteLater();
+    }
+    m_users.insert(_id, user);
+
+
+    int row  = m_userIds.indexOf(_id);
     QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
     emit dataChanged(index, index);
 }
@@ -240,9 +246,15 @@ void UsersModel::addUser(User *user)
     if (QThread::currentThread() != qApp->thread()) {
         user->moveToThread(qApp->thread());
     }
+    QMutexLocker locker(&m_modelMutex);
     beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
-    m_userIds.append(user->userId());
-    m_users.insert(user->userId(), user);
+    if (user->isBot() && !user->botId().isEmpty()) {
+        m_userIds.append(user->botId());
+        m_users.insert(user->botId(), user);
+    } else {
+        m_userIds.append(user->userId());
+        m_users.insert(user->userId(), user);
+    }
     endInsertRows();
     if (user->username().isEmpty()) {
         //user data is empty. request user's info
@@ -262,35 +274,33 @@ void UsersModel::addUser(const QJsonObject &userData)
 void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
 {
     qDebug() << "Adding users" << users.count() << last;
+
     m_addingUsers = true;
-    beginInsertRows(QModelIndex(), m_users.count(), m_users.count() + users.count() - 1);
-    for (QPointer<User> user : users) {
-        //user.data()->moveToThread(QApplication::instance()->thread());
-        if (m_users.contains(user->userId())) {
-            m_users.value(user->userId())->deleteLater();
-            m_userIds.removeAll(user->userId());
-        }
-
-        m_userIds.append(user->userId());
-        m_users[user->userId()] = user;
-
-        //if user is a bot as well
-        if (user->isBot() || !user->botId().isEmpty()) {
-            if (m_users.contains(user->botId())) {
-                m_users.value(user->botId())->deleteLater();
-                m_userIds.removeAll(user->botId());
+    beginInsertRows(QModelIndex(), m_userIds.count(), m_userIds.count() + users.count() - 1);
+    {
+        QMutexLocker locker(&m_modelMutex);
+        for (QPointer<User> user : users) {
+            //if user is a bot as well
+            if (user->userId() == "U4YVA4TRV") {
+                qWarning() << "weird user" << user->username() << user->isBot() << user->botId() << user->userId();
             }
 
-            m_userIds.append(user->botId());
-            m_users[user->botId()] = user;
+            if (user->isBot() && !user->botId().isEmpty()) {
+                m_userIds.append(user->botId());
+                m_users.insert(user->botId(), user);
+            } else {
+                m_userIds.append(user->userId());
+                m_users.insert(user->userId(), user);
+            }
+            //qDebug() << "Added user" << user->userId() << this;
         }
-        //qDebug() << "Added user" << user->userId() << this;
     }
 
     endInsertRows();
     if (last) {
         m_addingUsers = false;
     }
+    qDebug() << "added users" << m_userIds.count() << m_users.count();
 }
 
 QPointer<User> UsersModel::user(const QString &id)
@@ -332,8 +342,13 @@ void UsersModel::setSelected(int index)
 
 void UsersModel::clearSelections()
 {
-    for (QPointer<User> user : m_users){
-        user->setSelected(false);
+    for (const QString& userId : m_userIds) {
+        QPointer<User> user = m_users.value(userId);
+        if (!user.isNull()) {
+            user->setSelected(false);
+        } else {
+            qWarning() << "NULL USER. WTF!?!?" << userId;
+        }
     }
     m_selected = false;
     emit selectedChanged(m_selected);

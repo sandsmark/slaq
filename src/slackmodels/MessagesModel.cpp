@@ -278,24 +278,7 @@ void MessageListModel::preprocessMessage(Message *message)
         }
     }
 
-    //Q_ASSERT_X(!message->user.isNull(), "user is null", "");
-    ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
-    Chat* chat = nullptr;
-    if (_chatsModel != nullptr) {
-        chat = _chatsModel->chat(m_channelId);
-    }
-
     findNewUsers(message->text);
-
-    if (chat != nullptr && !chat->id.isEmpty()
-            && message->time > chat->lastRead
-            && message->subtype != "message_changed"
-            && message->subtype != "message_deleted"
-            && message->subtype != "message_replied") {
-        chat->lastRead = message->time;
-        chat->unreadCountDisplay++;
-        _chatsModel->chatChanged(chat);
-    }
 }
 
 QDateTime MessageListModel::firstMessageTs()
@@ -324,6 +307,21 @@ void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
             m_formatter.replaceAll(chat, attachmentField->m_value);
         }
     }
+}
+
+int MessageListModel::countUnread(const QDateTime &lastRead)
+{
+    if (!lastRead.isValid()) {
+        return 0;
+    }
+    QMutexLocker locker(&m_modelMutex);
+    for (int i = 0; i < m_messages.count(); i++) {
+        //qDebug() << "comparing" << i << m_messages.at(i)->time << lastRead;
+        if (m_messages.at(i)->time == lastRead) {
+            return i;
+        }
+    }
+    return 0;
 }
 
 void MessageListModel::processChildMessage(Message* message) {
@@ -371,6 +369,20 @@ void MessageListModel::addMessage(Message* message)
         }
         m_modelMutex.unlock();
         prependMessageToModel(message);
+        ChatsModel* _chatsModel = static_cast<ChatsModel*>(parent());
+        Chat* chat = nullptr;
+        if (_chatsModel != nullptr) {
+            chat = _chatsModel->chat(m_channelId);
+        }
+
+        if (chat != nullptr && !chat->id.isEmpty()
+                && message->time > chat->lastRead
+                && message->subtype != "message_changed"
+                && message->subtype != "message_deleted"
+                && message->subtype != "message_replied") {
+            chat->unreadCountDisplay++;
+            _chatsModel->chatChanged(chat);
+        }
     }
 }
 

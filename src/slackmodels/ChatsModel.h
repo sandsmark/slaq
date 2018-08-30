@@ -66,7 +66,7 @@ public:
     Chat* generalChat();
     void chatChanged(Chat* chat);
     //only for IM aka Conversations chats
-    void setPresence(const QList<QPointer<User> > &users, const QString& presence);
+    void setPresence(const QStringList &users, const QString& presence);
 
 private:
     QString getSectionName(Chat *chat) const;

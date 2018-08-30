@@ -360,6 +360,7 @@ public slots:
     MessageListModel* createThread(Message* parentMessage);
     void processChildMessage(Message *message);
     void preprocessFormatting(ChatsModel *chat, Message *message);
+    int countUnread(const QDateTime& lastRead);
 
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;

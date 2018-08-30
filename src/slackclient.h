@@ -105,7 +105,7 @@ signals:
     void stateChanged(const QString& teamId);
 
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
-    void usersPresenceChanged(const QList<QPointer<User>>& users, const QString& presence);
+    void usersPresenceChanged(const QStringList& users, const QString& presence);
 
     void usersDataChanged(const QList<QPointer<User>>& users, bool last);
     void conversationsDataChanged(const QList<Chat*>& chats, bool last);
@@ -188,7 +188,7 @@ private:
 
     bool isOk(const QNetworkReply *reply);
     bool isError(const QJsonObject &data);
-    QJsonObject getResult(QNetworkReply *reply, bool compressed = true);
+    QJsonObject getResult(QNetworkReply *reply);
 
     void parseMessageUpdate(const QJsonObject& message);
     void parseReactionUpdate(const QJsonObject& message);
