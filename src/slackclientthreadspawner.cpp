@@ -300,15 +300,19 @@ int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::
     if (_chatsModel == nullptr) {
         return 0;
     }
-    for (int i = 0; i < _chatsModel->rowCount(); i++) {
-        Chat* chat = _chatsModel->chat(i);
-        if (chat == nullptr) {
-            qWarning() << "Chat for not found";
-            continue;
+    if (_chatsModel->rowCount() > 0) {
+        for (int i = 0; i < _chatsModel->rowCount(); i++) {
+            Chat* chat = _chatsModel->chat(i);
+            if (chat == nullptr) {
+                qWarning() << "Chat for not found";
+                continue;
+            }
+            if (chat->type == type) {
+                total += chat->unreadCountDisplay;
+            }
         }
-        if (chat->type == type) {
-            total += chat->unreadCountDisplay;
-        }
+    } else {
+        total = _chatsModel->unreadsInNull(type);
     }
     return total;
 }
@@ -410,15 +414,6 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
         return;
     }
 
-    MessageListModel *messages = _chatsModel->messages(message->channel_id);
-    if (messages == nullptr) {
-        qWarning() << "No messages in chat" << message->channel_id;
-        delete message;
-        return;
-    }
-
-    messages->addMessage(message);
-
     Chat* chat = _chatsModel->chat(message->channel_id);
 
     if (chat != nullptr && !chat->id.isEmpty()
@@ -430,8 +425,20 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
         _chatsModel->chatChanged(chat);
         emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id, chat->unreadCountDisplay);
     } else {
-        qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << message->channel_id << "not found";
-        emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), message->channel_id, -1);
+        if (!message->channel_id.isEmpty()) {
+            qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << message->channel_id << "not found";
+            _chatsModel->increaseUnreadsInNull(message->channel_id);
+            emit channelCountersUpdated(_slackClient->teamInfo()->teamId(),
+                                        message->channel_id,
+                                        _chatsModel->unreadsInNullChannel(message->channel_id));
+        }
+    }
+    MessageListModel *messages = _chatsModel->messages(message->channel_id);
+    if (messages != nullptr) {
+        messages->addMessage(message);
+    } else {
+        qWarning() << "No messages in chat" << message->channel_id;
+        delete message;
     }
 }
 

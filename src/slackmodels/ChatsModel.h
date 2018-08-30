@@ -67,6 +67,9 @@ public:
     void chatChanged(Chat* chat);
     //only for IM aka Conversations chats
     void setPresence(const QStringList &users, const QString& presence);
+    void increaseUnreadsInNull(const QString &channelId);
+    int unreadsInNull(ChatsModel::ChatType type);
+    int unreadsInNullChannel(const QString &channelId);
 
 private:
     QString getSectionName(Chat *chat) const;
@@ -76,7 +79,7 @@ private:
     QStringList m_chatIds;
     UsersModel *m_networkUsers;
     QString m_selfId; // its you
-
+    QMap<QString, int> m_unreadNullChats; //keep unreads for still not created chats
 };
 
 class Chat: public QObject

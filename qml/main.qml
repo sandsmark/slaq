@@ -46,14 +46,15 @@ ApplicationWindow {
     }
 
     Action {
-           id: openAction
-           text: "&Open"
-           shortcut: "Ctrl+D"
-           onTriggered: {
-               console.log("ctrl-d")
-               SlackClient.dumpChannel(teamsSwipe.currentItem.item.teamId, teamsSwipe.currentItem.item.currentChannelId);
-           }
-       }
+        id: openAction
+        text: "&Open"
+        shortcut: "Ctrl+D"
+        onTriggered: {
+            console.log("ctrl-d")
+            SlackClient.dumpChannel(teamsSwipe.currentItem.item.teamId, teamsSwipe.currentItem.item.currentChannelId);
+        }
+    }
+
     Material.theme: settings.theme
     Universal.theme: settings.theme
 
@@ -65,7 +66,7 @@ ApplicationWindow {
                         (window.totalUnreadChannelMessages > 0 ?
                              "qrc:/icons/128x128/harbour-slackfish_channel.png" :
                              (window.totalUnreadIMMessages > 0 ?
-                                  "qrc:/icons/128x128/harbour-slackfish_channel_im.png" :
+                                  "qrc:/icons/128x128/harbour-slackfish_im.png" :
                                   "qrc:/icons/128x128/harbour-slackfish.png"))
 
         onActivated: {
@@ -216,7 +217,6 @@ ApplicationWindow {
                                 target: SlackClient
                                 onChannelCountersUpdated: {
                                     if (teamId === model.teamId) {
-                                        console.log("onChannelCountersUpdated. unread messages", unreadMessages)
                                         //unread_messages
                                         if (unreadMessages >= 0) {
                                             var total = SlackClient.getTotalUnread(teamId, ChatsModel.Channel)
@@ -225,6 +225,7 @@ ApplicationWindow {
                                             totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.MultiUserConversation)
                                             tabButton.unreadChannelMessages = total
                                             tabButton.unreadIMMessages = totalIm
+
                                         } else {
                                             // the chat is not yet initialized, so we only know that there is new message
                                             tabButton.unreadChannelMessages++

@@ -174,7 +174,11 @@ QString ChatsModel::doAddChat(Chat *chat)
     if (chat->name.startsWith("mpdm")) {
         chat->setReadableName(m_selfId);
     }
-
+    //check if there is unreads arrived before chat appears
+    if (m_unreadNullChats.contains(chat->id)) {
+        chat->unreadCountDisplay += m_unreadNullChats.value(chat->id);
+        m_unreadNullChats.remove(chat->id);
+    }
     m_chatIds.append(chat->id);
     m_chats.insert(chat->id, chat);
     return chat->id;
@@ -284,6 +288,31 @@ void ChatsModel::setPresence(const QStringList &users, const QString &presence)
             }
         }
     }
+}
+
+void ChatsModel::increaseUnreadsInNull(const QString &channelId)
+{
+    m_unreadNullChats[channelId] = m_unreadNullChats.value(channelId, 0) + 1;
+}
+
+int ChatsModel::unreadsInNull(ChatsModel::ChatType type)
+{
+    int _total = 0;
+    for (const QString& id : m_unreadNullChats.keys()) {
+        if (type == Channel && id.startsWith("C")) {
+            _total += m_unreadNullChats.value(id);
+        } else if ((type == Group || type == MultiUserConversation) && id.startsWith("G")) {
+            _total += m_unreadNullChats.value(id);
+        } else if (type == Conversation && id.startsWith("D")) {
+            _total += m_unreadNullChats.value(id);
+        }
+    }
+    return _total;
+}
+
+int ChatsModel::unreadsInNullChannel(const QString &channelId)
+{
+    return m_unreadNullChats.value(channelId, 0);
 }
 
 bool Chat::isChatEmpty() const
