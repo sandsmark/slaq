@@ -117,6 +117,7 @@ class Attachment: public QObject {
 
 public:
     Attachment(QObject* parent = nullptr);
+    ~Attachment() override;
     void setData(const QJsonObject &data);
     QString titleLink;
     QString title;
@@ -326,6 +327,7 @@ public:
     };
 
     MessageListModel(QObject *parent, UsersModel *usersModel, const QString& channelId, bool isThreadModel = false);
+    ~MessageListModel() override = default;
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -361,6 +363,7 @@ public slots:
     void processChildMessage(Message *message);
     void preprocessFormatting(ChatsModel *chat, Message *message);
     int countUnread(const QDateTime& lastRead);
+    void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
 
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;

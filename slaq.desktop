@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Slaq
-Exec=slaq
+Exec=slaq %f
 Icon=slaq
 Comment=Alternative Slack client
 Terminal=false

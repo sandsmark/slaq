@@ -179,7 +179,11 @@ QString ChatsModel::doAddChat(Chat *chat)
         chat->unreadCountDisplay += m_unreadNullChats.value(chat->id);
         m_unreadNullChats.remove(chat->id);
     }
-    m_chatIds.append(chat->id);
+    if (m_chats.contains(chat->id)) {
+        m_chats.value(chat->id)->deleteLater();
+    } else {
+        m_chatIds.append(chat->id);
+    }
     m_chats.insert(chat->id, chat);
     return chat->id;
 }

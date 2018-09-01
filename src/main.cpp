@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     QtWebView::initialize();
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
+    app.setApplicationVersion(QString(SLAQ_VERSION));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QNetworkProxyFactory::setUseSystemConfiguration(true);

@@ -11,11 +11,11 @@
 
 # App config
 TARGET = slaq
-
+VERSION = 0.0.1.0
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
-
+DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
@@ -24,6 +24,11 @@ CONFIG += c++11
 QT += websockets
 include($$PWD/src/zlib.pri)
 INCLUDEPATH += src src/slackmodels
+
+# enable for address sanitizer
+#QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
+#QMAKE_LIBS += -lasan
+#dont forget to add to env: ASAN_OPTIONS=new_delete_type_mismatch=0
 
 SOURCES += src/main.cpp \
     src/slackclient.cpp \
@@ -46,8 +51,9 @@ SOURCES += src/main.cpp \
     src/slackmodels/searchmessagesmodel.cpp
 
 OTHER_FILES += translations/*.ts \
-    slaq.desktop \
-    slaq.png
+    icons/slaq.svg \
+    icons/slaq.png \
+    slaq.desktop
 
 HEADERS += \
     src/slackclient.h \
@@ -91,5 +97,15 @@ include (src/qmlsorter/SortFilterProxyModel.pri)
 
 other.files = $${OTHER_FILES}
 other.path = deploy
+
+#linux install files
+linux: {
+desktop.files   = slaq.desktop
+desktop.path    = /usr/share/applications
+
+icons.files     = icons/slaq.svg
+icons.path      = /usr/share/icons/hicolor/scalable/apps
+INSTALLS += desktop icons
+}
 
 INSTALLS += target other

@@ -15,6 +15,7 @@ MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, cons
     m_usersModel(usersModel), m_channelId(channelId), m_isThreadModel(isThreadModel) {
     m_newUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)\\|([^>]+)>"));
     m_existingUserPattern = QRegularExpression(QStringLiteral("<@([A-Z0-9]+)>"));
+    connect(m_usersModel, &UsersModel::dataChanged, this, &MessageListModel::usersModelChanged);
 }
 
 int MessageListModel::rowCount(const QModelIndex &parent) const
@@ -324,6 +325,19 @@ int MessageListModel::countUnread(const QDateTime &lastRead)
     return 0;
 }
 
+void MessageListModel::usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+{
+    Q_UNUSED(bottomRight) //TODO: ??
+    if (roles.isEmpty()) {
+        qWarning() << __PRETTY_FUNCTION__ << "roles are empty";
+        return;
+    }
+    ::User* _user = qvariant_cast<::User*>(m_usersModel->data(topLeft, roles.at(0)));
+    if (_user != nullptr) {
+        qWarning() << "USER CHANGED" << _user->userId() << _user->username();
+    }
+}
+
 void MessageListModel::processChildMessage(Message* message) {
     Message* parent_msg = this->message(message->thread_ts);
     QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
@@ -628,6 +642,11 @@ void Message::setData(const QJsonObject &data)
 }
 
 Attachment::Attachment(QObject *parent): QObject(parent) {}
+
+Attachment::~Attachment()
+{
+    qDeleteAll(fields);
+}
 
 void Attachment::setData(const QJsonObject &data)
 {

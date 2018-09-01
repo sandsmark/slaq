@@ -76,7 +76,7 @@ Dialog {
     }
 
     function handleAccessTokenFail() {
-        console.log('access token failed')
+        console.warn('access token failed')
         webView.visible = true
     }
 }

@@ -29,10 +29,6 @@
         <file>qml/dialogs/SettingsDialog.qml</file>
         <file>qml/dialogs/AboutDialog.qml</file>
         <file>qml/dialogs/SearchResultsList.qml</file>
-        <file>icons/128x128/harbour-slackfish.png</file>
-        <file>icons/128x128/harbour-slackfish_channel_im.png</file>
-        <file>icons/128x128/harbour-slackfish_channel.png</file>
-        <file>icons/128x128/harbour-slackfish_im.png</file>
         <file>qml/pages/FileViewer.qml</file>
         <file>qml/components/ImageFileViewer.qml</file>
         <file>qml/components/TextFileViewer.qml</file>
@@ -53,5 +49,10 @@
         <file>qml/components/EmojiToolButton.qml</file>
         <file>qml/components/EmojiRoundButton.qml</file>
         <file>qml/components/TextViewer.qml</file>
+        <file>icons/slaq_ch_im.png</file>
+        <file>icons/slaq_ch.png</file>
+        <file>icons/slaq_im.png</file>
+        <file>icons/slaq.png</file>
+        <file>icons/slaq.svg</file>
     </qresource>
 </RCC>

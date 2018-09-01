@@ -10,6 +10,9 @@ SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
 {
     QSettings settings;
     m_lastTeam = settings.value(QStringLiteral("LastTeam")).toString();
+    m_buildTime.setDate(QDate::fromString(QString(__DATE__).simplified(), "MMM d yyyy"));
+    m_buildTime.setTime(QTime::fromString(QString(__TIME__), "hh:mm:ss"));
+    qDebug() << "build time" << m_buildTime;
 }
 
 SlackClientThreadSpawner::~SlackClientThreadSpawner() {}
@@ -203,6 +206,7 @@ bool SlackClientThreadSpawner::handleAccessTokenReply(const QJsonObject &bootDat
 
     qDebug() << "Access token success" << _accessToken << _userId << _teamId << _teamName;
 
+    setLastTeam(_teamId);
     QMetaObject::invokeMethod(this, "connectToTeam", Qt::QueuedConnection,
                               Q_ARG(QString, _teamId),
                               Q_ARG(QString, _accessToken));
@@ -287,6 +291,11 @@ void SlackClientThreadSpawner::dumpChannel(const QString &teamId, const QString 
     if (msgs != nullptr) {
         msgs->modelDump();
     }
+}
+
+QString SlackClientThreadSpawner::version() const
+{
+    return qApp->applicationVersion();
 }
 
 int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::ChatType type)

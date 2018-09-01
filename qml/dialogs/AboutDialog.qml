@@ -31,8 +31,14 @@ Dialog {
 
             Label {
                 x: aboutDialog.padding
-                text: "Slaq 1.3"
+                text: "Slaq " + SlackClient.version
                 font.pointSize: Theme.fontSizeHuge
+            }
+
+            Label {
+                x: aboutDialog.padding
+                text: "built at " + SlackClient.buildTime
+                font.pointSize: Theme.fontSizeSmall
             }
 
             Label {
@@ -51,11 +57,11 @@ Dialog {
                 text: qsTr("Browse channel and post new messages. Channels are updated real-time when new messages are posted.")
             }
 
-            RichTextLabel {
+            Label {
                 x: aboutDialog.padding
                 width: parent.width - Theme.paddingLarge * (Screen.sizeCategory >= Screen.Large ? 4 : 2)
                 font.pointSize: Theme.fontSizeSmall
-                value: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/sandsmark/slaq")
+                text: qsTr("Source code and issues in <a href='%1'>Github</a>.").arg("https://github.com/sandsmark/slaq")
                 onLinkActivated: Qt.openUrlExternally(link)
             }
         }

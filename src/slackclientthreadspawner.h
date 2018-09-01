@@ -13,6 +13,8 @@ class SlackClientThreadSpawner : public QThread
     Q_PROPERTY(bool isDevice READ isDevice CONSTANT)
     Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
     Q_PROPERTY(QString lastTeam READ lastTeam WRITE setLastTeam NOTIFY lastTeamChanged)
+    Q_PROPERTY(QDateTime buildTime MEMBER m_buildTime CONSTANT)
+    Q_PROPERTY(QString version READ version CONSTANT)
 
 public:
     explicit SlackClientThreadSpawner(QObject *parent = nullptr);
@@ -30,6 +32,8 @@ public:
     Q_INVOKABLE void reconnectClient();
     Q_INVOKABLE Chat *getChannel(const QString& teamId, const QString& channelId);
     Q_INVOKABLE void dumpChannel(const QString& teamId, const QString& channelId);
+
+    QString version() const;
 
 signals:
     void threadStarted();
@@ -153,6 +157,7 @@ private:
     QMap<QString, SlackTeamClient*> m_knownTeams;
     QString m_lastTeam;
     bool m_isOnline { false };
+    QDateTime m_buildTime;
 };
 
 #endif

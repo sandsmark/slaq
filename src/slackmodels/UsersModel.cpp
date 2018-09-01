@@ -235,10 +235,9 @@ void UsersModel::updateUser(const QJsonObject &userData)
     }
     m_users.insert(_id, user);
 
-
     int row  = m_userIds.indexOf(_id);
     QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
-    emit dataChanged(index, index);
+    emit dataChanged(index, index, roleNames().keys().toVector());
 }
 
 void UsersModel::addUser(User *user)
@@ -247,19 +246,26 @@ void UsersModel::addUser(User *user)
         user->moveToThread(qApp->thread());
     }
     QMutexLocker locker(&m_modelMutex);
-    beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
-    if (user->isBot() && !user->botId().isEmpty()) {
-        m_userIds.append(user->botId());
-        m_users.insert(user->botId(), user);
-    } else {
-        m_userIds.append(user->userId());
+    int row  = m_userIds.indexOf(user->userId());
+    if (row >= 0) {
         m_users.insert(user->userId(), user);
-    }
-    endInsertRows();
-    if (user->username().isEmpty()) {
-        //user data is empty. request user's info
-        qDebug() << "requesting users info";
-        emit requestUserInfo(user);
+        QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
+        emit dataChanged(index, index, roleNames().keys().toVector());
+    } else {
+        beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
+        if (user->isBot() && !user->botId().isEmpty()) {
+            m_userIds.append(user->botId());
+            m_users.insert(user->botId(), user);
+        } else {
+            m_userIds.append(user->userId());
+            m_users.insert(user->userId(), user);
+        }
+        endInsertRows();
+        if (user->username().isEmpty()) {
+            //user data is empty. request user's info
+            qDebug() << "requesting users info";
+            emit requestUserInfo(user);
+        }
     }
 }
 

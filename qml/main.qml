@@ -16,8 +16,8 @@ import "components"
 ApplicationWindow {
     id: window
     visible: true
-    width: 800
-    height: 600
+    width: Screen.desktopAvailableWidth
+    height: Screen.desktopAvailableHeight
 
     property alias teamsSwipe: teamsSwipe
     property alias emojiSelector: emojiSelector
@@ -62,12 +62,12 @@ ApplicationWindow {
         id: trayIcon
         visible: available
         iconSource: window.totalUnreadChannelMessages > 0 && window.totalUnreadIMMessages > 0 ?
-                        "qrc:/icons/128x128/harbour-slackfish_channel_im.png" :
+                        "qrc:/icons/slaq_ch_im.png" :
                         (window.totalUnreadChannelMessages > 0 ?
-                             "qrc:/icons/128x128/harbour-slackfish_channel.png" :
+                             "qrc:/icons/slaq_ch.png" :
                              (window.totalUnreadIMMessages > 0 ?
-                                  "qrc:/icons/128x128/harbour-slackfish_im.png" :
-                                  "qrc:/icons/128x128/harbour-slackfish.png"))
+                                  "qrc:/icons/slaq_im.png" :
+                                  "qrc:/icons/slaq.png"))
 
         onActivated: {
             window.showNormal()
