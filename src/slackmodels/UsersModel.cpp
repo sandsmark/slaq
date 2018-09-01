@@ -353,7 +353,7 @@ void UsersModel::clearSelections()
         if (!user.isNull()) {
             user->setSelected(false);
         } else {
-            qWarning() << "NULL USER. WTF!?!?" << userId;
+            qWarning() << "null user in the model" << userId;
         }
     }
     m_selected = false;

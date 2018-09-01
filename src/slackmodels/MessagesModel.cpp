@@ -9,6 +9,7 @@
 #include "ChatsModel.h"
 #include "MessagesModel.h"
 #include "messageformatter.h"
+#include "imagescache.h"
 #include "debugblock.h"
 
 MessageListModel::MessageListModel(QObject *parent, UsersModel *usersModel, const QString &channelId, bool isThreadModel) : QAbstractListModel(parent),
@@ -334,7 +335,15 @@ void MessageListModel::usersModelChanged(const QModelIndex &topLeft, const QMode
     }
     ::User* _user = qvariant_cast<::User*>(m_usersModel->data(topLeft, roles.at(0)));
     if (_user != nullptr) {
-        qWarning() << "USER CHANGED" << _user->userId() << _user->username();
+        //qWarning() << "USER CHANGED" << _user->userId() << _user->username();
+        //got thru messages and inform about user gets changed
+        for (int i = 0; i < m_messages.count(); i++) {
+            if (m_messages.at(i)->user->userId() == _user->userId() ||
+                    m_messages.at(i)->user->botId() == _user->botId()) {
+                QModelIndex modelIndex = index(i);
+                emit dataChanged(modelIndex, modelIndex, QVector<int>() << User);
+            }
+        }
     }
 }
 
@@ -694,8 +703,8 @@ Reaction::Reaction(QObject *parent) : QObject(parent) {}
 void Reaction::setData(const QJsonObject &data)
 {
     //qDebug().noquote() << "reaction" << QJsonDocument(data).toJson();
-    name = data[QStringLiteral("name")].toString();
-    emoji = data[QStringLiteral("emoji")].toString();
+    name = data.value(QStringLiteral("name")).toString();
+    m_emojiInfo = ImagesCache::instance()->getEmojiInfo(name);
 
     const QJsonArray usersList = data[QStringLiteral("users")].toArray();
     for (const QJsonValue &usersValue : usersList) {

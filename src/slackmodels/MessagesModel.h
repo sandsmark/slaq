@@ -17,6 +17,7 @@
 
 class ChatsModel;
 class MessageListModel;
+class EmojiInfo;
 
 namespace {
 QDateTime slackToDateTime(const QString& slackts) {
@@ -43,9 +44,9 @@ class Reaction : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QStringList users MEMBER users CONSTANT/*NOTIFY usersChanged*/)
-    Q_PROPERTY(QString emoji MEMBER emoji CONSTANT)
     Q_PROPERTY(QString name MEMBER name CONSTANT)
     Q_PROPERTY(int usersCount READ usersCount CONSTANT/*NOTIFY usersChanged*/)
+    Q_PROPERTY(EmojiInfo* emojiInfo MEMBER m_emojiInfo CONSTANT)
 
 public:
     Reaction(QObject *parent = nullptr);
@@ -59,7 +60,7 @@ public:
     QStringList users;
     QStringList userIds;
     QString name;
-    QString emoji;
+    EmojiInfo* m_emojiInfo;
 };
 
 class AttachmentField: public QObject  {

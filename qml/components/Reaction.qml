@@ -1,5 +1,6 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
+import SlaqQmlModels 1.0
 import ".."
 
 Button {
@@ -9,18 +10,19 @@ Button {
     property variant reaction
 
     hoverEnabled: true
-    ToolTip.text: reaction.users.join(", ")
+    ToolTip.text: reaction.name + " " + reaction.emojiInfo.unified + "\n" + reaction.users.join(", ")
     ToolTip.delay: 500
     ToolTip.timeout: 5000
     ToolTip.visible: hovered
-    text: reaction.emoji
+    text: reaction.emojiInfo.unified
     height: Theme.headerSize
-    width: (ImagesCache.isUnicode ? contentItem.contentWidth : Theme.headerSize - 4)
+    width: (ImagesCache.isUnicode  && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam) ?
+                contentItem.contentWidth : Theme.headerSize - 4)
            + Theme.paddingMedium*2
            + countLabel.contentWidth
 
     onClicked: {
-        SlackClient.deleteReaction(teamId, channelId, Time, reaction.name)
+        SlackClient.deleteReaction(teamId, channel.id, Time, reaction.name)
     }
 
     contentItem: Item {
@@ -29,12 +31,12 @@ Button {
             width: Theme.headerSize - 4
             height: Theme.headerSize - 4
             smooth: true
-            visible: !ImagesCache.isUnicode
+            visible: !ImagesCache.isUnicode || (reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)
             source: "image://emoji/" + reaction.name
         }
 
         Label {
-            visible: ImagesCache.isUnicode
+            visible: ImagesCache.isUnicode && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)
             anchors.centerIn: parent
             text: control.text
             font.family: "Twitter Color Emoji"
