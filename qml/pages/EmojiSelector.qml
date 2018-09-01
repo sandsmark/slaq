@@ -62,6 +62,12 @@ Popup {
                 listView.model = emojiCategoriesModel
             }
 
+            ToolTip {
+                id: toolTip
+                delay: 100
+                timeout: 2000
+            }
+
             interactive: true
             clip: true
             spacing: 10
@@ -113,17 +119,18 @@ Popup {
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignHCenter
                             }
-                            ToolTip {
-                                delay: 300
-                                text: model.modelData.shortNames[0]
-                                timeout: 2000
-                                visible: mouseArea.containsMouse
-                            }
 
                             MouseArea {
                                 id: mouseArea
                                 anchors.fill: parent
                                 hoverEnabled: true
+                                onHoveredChanged: {
+                                    toolTip.text = model.modelData.shortNames[0]
+                                    toolTip.x = mapToItem(listView, mouseX, mouseY).x - toolTip.width/2
+                                    toolTip.y = mapToItem(listView, mouseX, mouseY).y - toolTip.height*2
+                                    toolTip.visible = containsMouse
+                                }
+
                                 onClicked: {
                                     emojiSelected(model.modelData.unified !== "" ?
                                                       model.modelData.unified : model.modelData.shortNames[0])
