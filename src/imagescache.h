@@ -81,6 +81,8 @@ private:
 
     QQmlObjectListModel<EmojiCategoryHolder> m_EmojiCategoriesModel;
     bool m_cacheSlackImages { true };
+
+    QMutex m_mutex;
 };
 
 #endif // IMAGESCACHE_H

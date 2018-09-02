@@ -150,6 +150,8 @@ QImage ImagesCache::image(const QString &id)
 
         path_ = m_cache + QDir::separator() + slackImagesSubdir
                 + QDir::separator() + iconUrl.fileName();
+
+        QMutexLocker locker(&m_mutex);
         cached_ = m_iconsCached.contains(path_);
     } else {
         int skinTone = id.indexOf("::skin-tone");
@@ -202,6 +204,7 @@ QImage ImagesCache::image(const QString &id)
 
     if (id.startsWith(slackImagesPrefix)) {
         if (cached_) {
+            QMutexLocker locker(&m_mutex);
             m_iconsCached.insert(path_);
         }
     } else {
@@ -386,6 +389,8 @@ void ImagesCache::onImageRequestFinished()
                     f.setFileName(m_cache + QDir::separator() +
                                   slackImagesSubdir + QDir::separator() +
                                   filename);
+
+                    QMutexLocker locker(&m_mutex);
                     if (!m_iconsCached.contains(filename)) {
                         m_iconsCached << filename;
                     }
@@ -434,6 +439,7 @@ void ImagesCache::checkImagesPresence()
         //readout icons
         foreach (const QFileInfo& fi, iconsCacheDir.entryInfoList()) {
             if (fi.isFile() && fi.size() > 0) {
+                QMutexLocker locker(&m_mutex);
                 m_iconsCached << fi.fileName();
             }
         }
