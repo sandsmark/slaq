@@ -70,9 +70,13 @@ ApplicationWindow {
                                   "qrc:/icons/slaq.png"))
 
         onActivated: {
-            window.showNormal()
-            window.raise()
-            window.requestActivate()
+            if (window.visible) {
+                window.hide()
+            } else {
+                window.showNormal()
+                window.raise()
+                window.requestActivate()
+            }
         }
     }
 
@@ -335,6 +339,12 @@ ApplicationWindow {
                         text: qsTr("Settings")
                         onClicked: {
                             settingsDialog.open()
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Quit")
+                        onClicked: {
+                            Qt.quit()
                         }
                     }
                 }
