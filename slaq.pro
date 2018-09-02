@@ -25,13 +25,6 @@ QT += websockets
 
 INCLUDEPATH += src src/slackmodels
 
-exists("$$[QT_INSTALL_PREFIX]/include/zlib.h") {
-    LIBS += -lz
-} else {
-    message("Did not find system installation of zlib, using bundled version")
-    include($$PWD/src/zlib.pri)
-}
-
 # enable for address sanitizer
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
 #QMAKE_LIBS += -lasan
