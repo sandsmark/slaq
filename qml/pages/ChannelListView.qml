@@ -112,19 +112,18 @@ ListView {
         }
 
         Rectangle {
-            anchors.right: parent.right
-            anchors.rightMargin: listView.ScrollBar.vertical.visible ?
-                                     listView.ScrollBar.vertical.width + Theme.paddingMedium :
-                                     Theme.paddingMedium
-            anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: parent.height/2
-            implicitHeight: parent.height/2
+            y: parent.height / 3
+            x: height / 3
+
+            implicitWidth: parent.height/3
+            implicitHeight: parent.height/3
+
             radius: height/2
             color: model.Type === ChatsModel.Channel ? "green" : "red"
             visible: model.UnreadCountDisplay > 0
             Text {
                 anchors.centerIn: parent
-                color: "white"
+                color: palette.base
                 font.pixelSize: parent.height/1.5
                 text: model.UnreadCountDisplay
             }
