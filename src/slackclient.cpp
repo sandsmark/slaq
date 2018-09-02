@@ -512,6 +512,7 @@ bool SlackTeamClient::isError(const QJsonObject &data)
         return false;
     }
 
+    qDebug() << "error" << data;
     if (data.value("error") == "invalid_auth") {
         emit accessTokenFail(m_teamInfo.teamId());
     }
