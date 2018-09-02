@@ -630,6 +630,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
 
     connect(_slackClient, &SlackTeamClient::accessTokenSuccess, this, &SlackClientThreadSpawner::accessTokenSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::accessTokenFail, this, &SlackClientThreadSpawner::accessTokenFail, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::accessTokenFail, this, &SlackClientThreadSpawner::leaveTeam, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::loadMessagesSuccess, this, &SlackClientThreadSpawner::loadMessagesSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::loadMessagesFail, this, &SlackClientThreadSpawner::loadMessagesFail, Qt::QueuedConnection);
@@ -712,6 +713,7 @@ void SlackClientThreadSpawner::leaveTeam(const QString &teamId)
         return;
     }
 
+    qDebug() << "Leaving team" << teamId;
     if (teamId.isEmpty()) {
         return;
     }
@@ -721,8 +723,13 @@ void SlackClientThreadSpawner::leaveTeam(const QString &teamId)
         return;
     }
 
+    if (m_lastTeam == teamId) {
+        setLastTeam(QString());
+    }
+
     m_knownTeams.remove(teamId);
     m_teamsModel.remove(_slackClient->teamInfo());
+
     _slackClient->deleteLater();
     SlackConfig::instance()->setTeams(m_knownTeams.keys());
 }
@@ -846,6 +853,11 @@ void SlackClientThreadSpawner::run()
     for (const QString& teamId : SlackConfig::instance()->teams()) {
         connectToTeam(teamId);
     }
+
+    if (SlackConfig::instance()->teams().isEmpty()) {
+        setLastTeam(QString());
+    }
+
     //make sure signal will be delivered to QML
     QMetaObject::invokeMethod(this, "threadStarted", Qt::QueuedConnection);
     // Start QT event loop for this thread

@@ -380,6 +380,7 @@ ApplicationWindow {
             id: repeater
             model: teamsModel
             onCountChanged: {
+                console.log("count: " + count)
                 if (count === 0 && SlackClient.lastTeam === "") {
                     loginDialog.open()
                 }

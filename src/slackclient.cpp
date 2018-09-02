@@ -504,9 +504,19 @@ bool SlackTeamClient::isError(const QJsonObject &data)
     if (data.isEmpty()) {
         qWarning() << "No data received";
         return true;
-    } else {
-        return !data.value(QStringLiteral("ok")).toBool(false);
     }
+
+    bool ok = data.value(QStringLiteral("ok")).toBool(false);
+
+    if (ok) {
+        return false;
+    }
+
+    if (data.value("error") == "invalid_auth") {
+        emit accessTokenFail(m_teamInfo.teamId());
+    }
+
+    return true;
 }
 
 QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
@@ -527,11 +537,11 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
     }
     QJsonDocument document = QJsonDocument::fromJson(baData, &error);
 
-    if (error.error == QJsonParseError::NoError) {
-        return document.object();
-    } else {
+    if (error.error != QJsonParseError::NoError) {
         return QJsonObject();
     }
+
+    return document.object();
 }
 
 QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QString, QString>& params, const QVariant& attribute)
@@ -657,6 +667,8 @@ void SlackTeamClient::handleTestLoginReply()
         reply->deleteLater();
 
         if (isError(data)) {
+            qWarning() << "Test login failed";
+            m_status = LOGINFAILED;
             emit testLoginFail(m_teamInfo.teamId());
             return;
         }
@@ -703,6 +715,7 @@ void SlackTeamClient::handleSearchMessagesReply()
         emit testLoginFail(m_teamInfo.teamId());
         return;
     }
+
     QString query = data.value(QStringLiteral("query")).toString();
     const QJsonObject& messages = data.value(QStringLiteral("messages")).toObject();
     const QJsonObject& paging = messages.value(QStringLiteral("paging")).toObject();
