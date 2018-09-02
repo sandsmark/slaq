@@ -48,10 +48,11 @@ ListView {
         delegate: Label {
             text: section
             padding: Theme.paddingMedium
+            color: palette.brightText
 
-            background: Rectangle {
+            background: Item {
                 width: listView.width
-                color: palette.base
+
                 EmojiRoundButton {
                     width: parent.height / 1.2
                     height: parent.height / 1.2
