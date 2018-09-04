@@ -392,7 +392,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
                 qDebug() << "added new reaction" << emojiPrepare;
                 MessageFormatter _formatter;
                 _formatter.replaceEmoji(emojiPrepare);
-                r->m_emojiInfo = ImagesCache::instance()->getEmojiInfo(emojiPrepare);
+                r->m_emojiInfo = ImagesCache::instance()->getEmojiInfo(reaction);
                 r->name = reaction;
                 m->reactions.append(r);
                 qDebug() << "added new reaction" << emojiPrepare << m->reactions.count();
