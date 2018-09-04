@@ -11,10 +11,12 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.0
+VERSION = 0.0.1.1
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
+RCC_DIR = .rcc
+
 DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
