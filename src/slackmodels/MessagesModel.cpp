@@ -271,9 +271,6 @@ void MessageListModel::preprocessMessage(Message *message)
             if (!message->user_id.isEmpty()) {
                 QPointer<::User> _user = new ::User(message->user_id, message->userName, nullptr);
                 QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);
-                if (QThread::currentThread() != qApp->thread()) {
-                    _user->moveToThread(qApp->thread());
-                }
                 message->user = _user;
                 m_usersModel->addUser(_user);
             }
@@ -338,8 +335,15 @@ void MessageListModel::usersModelChanged(const QModelIndex &topLeft, const QMode
         //qWarning() << "USER CHANGED" << _user->userId() << _user->username();
         //got thru messages and inform about user gets changed
         for (int i = 0; i < m_messages.count(); i++) {
-            if (m_messages.at(i)->user->userId() == _user->userId() ||
-                    m_messages.at(i)->user->botId() == _user->botId()) {
+            QPointer<::User> user = m_messages.at(i)->user;
+            QString _userId = m_messages.at(i)->user_id;
+            if (_userId.isEmpty() && !user.isNull()) {
+                _userId = user->isBot() ? user->botId() : user->userId();
+            }
+            if (_userId.isEmpty()) {
+                continue;
+            }
+            if (_userId == _user->userId() || (_userId == _user->botId())) {
                 QModelIndex modelIndex = index(i);
                 emit dataChanged(modelIndex, modelIndex, QVector<int>() << User);
             }
