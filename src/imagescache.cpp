@@ -181,7 +181,6 @@ QImage ImagesCache::image(const QString &id)
             return image_;
         }
     }
-
     if (!cached_) {
         cached_ = QFile::exists(path_);
     }
@@ -235,7 +234,7 @@ void ImagesCache::onImageRequestedViaHttp(const QString &id)
     }
     QNetworkRequest req_ = QNetworkRequest(url);
 
-    //qDebug() << "reqesting image" << req_.url();
+    //qDebug() << "requesting image" << req_.url();
     req_.setAttribute(QNetworkRequest::User, QVariant(id));
     req_.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     QNetworkReply* reply = m_qnam.get(req_);
@@ -391,7 +390,6 @@ void ImagesCache::onImageRequestFinished()
                     }
                 }
             } else {
-                QFile f;
                 EmojiInfo* einfo = m_emojiList.value(id);
                 if (einfo == nullptr) {
                     qWarning() << "id is not found" << id;
