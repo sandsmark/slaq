@@ -12,8 +12,6 @@
 #include <QHttpMultiPart>
 #include <QtNetwork/QNetworkConfigurationManager>
 
-#include "zlib.h"
-
 #include "slackclient.h"
 #include "imagescache.h"
 #include "debugblock.h"
@@ -476,56 +474,6 @@ void SlackTeamClient::parseNotification(const QJsonObject& message)
     }
 }
 
-QByteArray gUncompress(const QByteArray &data)
-{
-    if (data.size() <= 4) {
-        qWarning("gUncompress: Input data is truncated");
-        return QByteArray();
-    }
-
-    QByteArray result;
-
-    int ret;
-    z_stream strm;
-    static const int CHUNK_SIZE = 1024;
-    char out[CHUNK_SIZE];
-
-    /* allocate inflate state */
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    strm.avail_in = data.size();
-    strm.next_in = (Bytef*)(data.data());
-
-    ret = inflateInit2(&strm, 15 +  32); // gzip decoding
-    if (ret != Z_OK)
-        return QByteArray();
-
-    // run inflate()
-    do {
-        strm.avail_out = CHUNK_SIZE;
-        strm.next_out = (Bytef*)(out);
-
-        ret = inflate(&strm, Z_NO_FLUSH);
-        Q_ASSERT(ret != Z_STREAM_ERROR);  // state not clobbered
-
-        switch (ret) {
-        case Z_NEED_DICT:
-            ret = Z_DATA_ERROR;     // and fall through
-        case Z_DATA_ERROR:
-        case Z_MEM_ERROR:
-            (void)inflateEnd(&strm);
-            return QByteArray();
-        }
-
-        result.append(out, CHUNK_SIZE - strm.avail_out);
-    } while (strm.avail_out == 0);
-
-    // clean up and return
-    inflateEnd(&strm);
-    return result;
-}
-
 bool SlackTeamClient::isOk(const QNetworkReply *reply)
 {
     DEBUG_BLOCK
@@ -556,43 +504,45 @@ bool SlackTeamClient::isError(const QJsonObject &data)
     if (data.isEmpty()) {
         qWarning() << "No data received";
         return true;
-    } else {
-        return !data.value(QStringLiteral("ok")).toBool(false);
     }
+
+    bool ok = data.value(QStringLiteral("ok")).toBool(false);
+
+    if (ok) {
+        return false;
+    }
+
+    qDebug() << "error" << data;
+    if (data.value("error") == "invalid_auth") {
+        emit accessTokenFail(m_teamInfo.teamId());
+    }
+
+    return true;
 }
 
 QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
 {
     DEBUG_BLOCK
 
-    if (isOk(reply)) {
-        QJsonParseError error;
-        const QByteArray& baData = reply->readAll();
-        //Content-Encoding: gzip
-        bool compressed = reply->rawHeader("Content-Encoding").contains("gzip");
-
-        //qDebug() << "received" << baData.size() << "bytes" << compressed << "content encoding" << reply->rawHeader("Content-Encoding");
-        if (baData.isEmpty()) {
-            qWarning() << "No data returned";
-            return QJsonObject();
-        }
-        QJsonDocument document;
-        if (compressed) {
-            //qDebug() << "uncompressed" << gUncompress(baData);
-            document = QJsonDocument::fromJson(gUncompress(baData), &error);
-        } else {
-            document = QJsonDocument::fromJson(baData, &error);
-        }
-
-        if (error.error == QJsonParseError::NoError) {
-            return document.object();
-        } else {
-            return QJsonObject();
-        }
-    } else {
+    if (!isOk(reply)) {
         qWarning() << "bad";
         return QJsonObject();
     }
+
+    QJsonParseError error;
+    const QByteArray& baData = reply->readAll();
+
+    if (baData.isEmpty()) {
+        qWarning() << "No data returned";
+        return QJsonObject();
+    }
+    QJsonDocument document = QJsonDocument::fromJson(baData, &error);
+
+    if (error.error != QJsonParseError::NoError) {
+        return QJsonObject();
+    }
+
+    return document.object();
 }
 
 QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QString, QString>& params, const QVariant& attribute)
@@ -612,7 +562,6 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                          QVariant(int(QNetworkRequest::AlwaysNetwork)));
-    request.setRawHeader("Accept-Encoding", "gzip, deflate");
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     if (attribute.isValid()) {
         request.setAttribute(QNetworkRequest::User, attribute);
@@ -644,7 +593,6 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QS
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
-    //request.setRawHeader("Accept-Encoding", "gzip, deflate");
 
     qDebug() << "POST" << url.toString() << body << query.toString();
     return networkAccessManager->post(request, body);
@@ -720,6 +668,8 @@ void SlackTeamClient::handleTestLoginReply()
         reply->deleteLater();
 
         if (isError(data)) {
+            qWarning() << "Test login failed";
+            m_status = LOGINFAILED;
             emit testLoginFail(m_teamInfo.teamId());
             return;
         }
@@ -766,6 +716,7 @@ void SlackTeamClient::handleSearchMessagesReply()
         emit testLoginFail(m_teamInfo.teamId());
         return;
     }
+
     QString query = data.value(QStringLiteral("query")).toString();
     const QJsonObject& messages = data.value(QStringLiteral("messages")).toObject();
     const QJsonObject& paging = messages.value(QStringLiteral("paging")).toObject();

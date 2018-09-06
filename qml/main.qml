@@ -70,9 +70,13 @@ ApplicationWindow {
                                   "qrc:/icons/slaq.png"))
 
         onActivated: {
-            window.showNormal()
-            window.raise()
-            window.requestActivate()
+            if (window.visible) {
+                window.hide()
+            } else {
+                window.showNormal()
+                window.raise()
+                window.requestActivate()
+            }
         }
     }
 
@@ -348,6 +352,12 @@ ApplicationWindow {
                             settingsDialog.open()
                         }
                     }
+                    MenuItem {
+                        text: qsTr("Quit")
+                        onClicked: {
+                            Qt.quit()
+                        }
+                    }
                 }
             }
         }
@@ -391,6 +401,7 @@ ApplicationWindow {
             id: repeater
             model: teamsModel
             onCountChanged: {
+                console.log("count: " + count)
                 if (count === 0 && SlackClient.lastTeam === "") {
                     loginDialog.open()
                 }

@@ -630,6 +630,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
 
     connect(_slackClient, &SlackTeamClient::accessTokenSuccess, this, &SlackClientThreadSpawner::accessTokenSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::accessTokenFail, this, &SlackClientThreadSpawner::accessTokenFail, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::accessTokenFail, this, &SlackClientThreadSpawner::leaveTeam, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::loadMessagesSuccess, this, &SlackClientThreadSpawner::loadMessagesSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::loadMessagesFail, this, &SlackClientThreadSpawner::loadMessagesFail, Qt::QueuedConnection);
@@ -700,6 +701,7 @@ void SlackClientThreadSpawner::connectToTeam(const QString &teamId, const QStrin
         _slackClient->moveToThread(this);
         _slackClient->startConnections();
         m_knownTeams[teamId] = _slackClient;
+        SlackConfig::instance()->setTeams(m_knownTeams.keys());
         //make sure it runs in GUI thread
         QMetaObject::invokeMethod(qApp, [this, _slackClient] {
             m_teamsModel.append(_slackClient->teamInfo());
@@ -715,6 +717,7 @@ void SlackClientThreadSpawner::leaveTeam(const QString &teamId)
         return;
     }
 
+    qDebug() << "Leaving team" << teamId;
     if (teamId.isEmpty()) {
         return;
     }
@@ -724,8 +727,13 @@ void SlackClientThreadSpawner::leaveTeam(const QString &teamId)
         return;
     }
 
+    if (m_lastTeam == teamId) {
+        setLastTeam(QString());
+    }
+
     m_knownTeams.remove(teamId);
     m_teamsModel.remove(_slackClient->teamInfo());
+
     _slackClient->deleteLater();
     SlackConfig::instance()->setTeams(m_knownTeams.keys());
 }
@@ -737,6 +745,10 @@ void SlackClientThreadSpawner::setLastTeam(const QString &lastTeam)
 
     m_lastTeam = lastTeam;
     emit lastTeamChanged(m_lastTeam);
+    qDebug() << "Setting last team" << lastTeam;
+
+    QSettings settings;
+    settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
 }
 
 void SlackClientThreadSpawner::onOnlineChanged(const QString &teamId)
@@ -849,14 +861,16 @@ void SlackClientThreadSpawner::run()
     for (const QString& teamId : SlackConfig::instance()->teams()) {
         connectToTeam(teamId);
     }
+
+    if (SlackConfig::instance()->teams().isEmpty()) {
+        qDebug() << "teams empty";
+        setLastTeam(QString());
+    }
+
     //make sure signal will be delivered to QML
     QMetaObject::invokeMethod(this, "threadStarted", Qt::QueuedConnection);
     // Start QT event loop for this thread
     this->exec();
-    SlackConfig::instance()->setTeams(m_knownTeams.keys());
     qDeleteAll(m_knownTeams.values());
-    QSettings settings;
-    settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
-    settings.sync();
     qDebug() << "closed thread" << m_lastTeam;
 }

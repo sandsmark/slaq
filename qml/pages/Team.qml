@@ -107,7 +107,7 @@ Page {
             property Chat _channel: null
 
             function loadChannel(channel) {
-                if (channel == null) {
+                if (!channel) {
                     console.warn("Passed NULL channel")
                     return
                 }
