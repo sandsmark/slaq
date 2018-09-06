@@ -702,7 +702,10 @@ void SlackClientThreadSpawner::connectToTeam(const QString &teamId, const QStrin
         _slackClient->startConnections();
         m_knownTeams[teamId] = _slackClient;
         SlackConfig::instance()->setTeams(m_knownTeams.keys());
-        m_teamsModel.append(_slackClient->teamInfo());
+        //make sure it runs in GUI thread
+        QMetaObject::invokeMethod(qApp, [this, _slackClient] {
+            m_teamsModel.append(_slackClient->teamInfo());
+        });
     }
     _slackClient->startClient();
 }

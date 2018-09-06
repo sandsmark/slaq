@@ -21,7 +21,7 @@ MessageFormatter::MessageFormatter() :
     m_boldPattern(QRegularExpression(QStringLiteral("(^|\\s)\\*([^\\*]+)\\*(\\s|\\.|\\?|!|,|$)"))),
     m_strikePattern(QRegularExpression(QStringLiteral("(^|\\s)~([^~]+)~(\\s|\\.|\\?|!|,|$)"))),
     m_codePattern(QRegularExpression(QStringLiteral("(^|\\s)`([^`]+)`(\\s|\\.|\\?|!|,|$)"))),
-    m_codeBlockPattern(QRegularExpression(QStringLiteral("```([^`]+)```"))),
+    m_codeBlockPattern(QRegularExpression(QStringLiteral("```(.*)```"))),
     m_variableLabelPattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)\\|([^>]+)>"))),
     m_variablePattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)>"))),
     m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"))),
@@ -39,6 +39,7 @@ MessageFormatter::MessageFormatter() :
     m_variablePattern.optimize();
     m_emojiPattern.optimize();
     m_channelPattern.optimize();
+    m_codeBlockPattern.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 }
 
 void MessageFormatter::replaceUserInfo(User* user, QString &message)

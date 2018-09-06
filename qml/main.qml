@@ -92,6 +92,17 @@ ApplicationWindow {
         property bool cacheSlackImages: true
     }
 
+    property alias leaveDialog: leaveDialog
+
+    GroupLeaveDialog {
+        id: leaveDialog
+        property string channelId
+        property string teamId
+        onAccepted: {
+            SlackClient.closeChat(teamId, channelId)
+        }
+    }
+
     SettingsDialog {
         id: settingsDialog
     }

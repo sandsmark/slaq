@@ -11,13 +11,6 @@ ListView {
     id: listView
 
     ScrollBar.vertical: ScrollBar { }
-    GroupLeaveDialog {
-        id: leaveDialog
-        property string channelId
-        onAccepted: {
-            SlackClient.closeChat(teamRoot.teamId, channelId)
-        }
-    }
 
     function setIndex(ind) {
         currentIndex = ind
@@ -37,6 +30,7 @@ ListView {
         case ChatsModel.Conversation:
             leaveDialog.name = channelName
             leaveDialog.channelId = channelId
+            leaveDialog.teamId = teamRoot.teamId
             leaveDialog.open()
             break
         }

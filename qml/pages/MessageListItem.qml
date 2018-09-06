@@ -19,7 +19,7 @@ MouseArea {
 
     function updateText() {
         var editedText = contentLabel.getText(0, contentLabel.text.length);
-        SlackClient.updateMessage(teamRoot.teamId, channelId, editedText, model.Time)
+        SlackClient.updateMessage(teamRoot.teamId, channel.id, editedText, model.Time)
         contentLabel.focus = false
         contentLabel.readOnly = true
         input.forceActiveFocus()
@@ -31,7 +31,7 @@ MouseArea {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamId, channelId, model.Time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamId, channel.id, model.Time, ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
