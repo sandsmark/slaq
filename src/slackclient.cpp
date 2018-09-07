@@ -52,10 +52,6 @@ SlackTeamClient::~SlackTeamClient() {
 
 void SlackTeamClient::startConnections()
 {
-    if (thread() != QThread::currentThread()) {
-        QMetaObject::invokeMethod(this, "startConnections", Qt::QueuedConnection);
-        return;
-    }
     networkAccessManager = new QNetworkAccessManager;
 
     stream = new SlackStream;

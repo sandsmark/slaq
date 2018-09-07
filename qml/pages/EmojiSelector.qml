@@ -206,7 +206,7 @@ Popup {
                 asynchronous: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                sourceComponent: lvComponent
+                //sourceComponent: lvComponent
                 onStatusChanged: {
                     if (reloading && status === Loader.Null) {
                         ldr.sourceComponent = lvComponent

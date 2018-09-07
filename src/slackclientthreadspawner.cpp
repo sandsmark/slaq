@@ -702,10 +702,6 @@ void SlackClientThreadSpawner::connectToTeam(const QString &teamId, const QStrin
         _slackClient->startConnections();
         m_knownTeams[teamId] = _slackClient;
         SlackConfig::instance()->setTeams(m_knownTeams.keys());
-        //make sure it runs in GUI thread
-        QMetaObject::invokeMethod(qApp, [this, _slackClient] {
-            m_teamsModel.append(_slackClient->teamInfo());
-        });
     }
     _slackClient->startClient();
 }
@@ -869,6 +865,14 @@ void SlackClientThreadSpawner::run()
 
     //make sure signal will be delivered to QML
     QMetaObject::invokeMethod(this, "threadStarted", Qt::QueuedConnection);
+
+    //updating teams model
+    //make sure it runs in GUI thread
+    QMetaObject::invokeMethod(qApp, [this] {
+        for (SlackTeamClient* _slackClient : m_knownTeams.values()) {
+            m_teamsModel.append(_slackClient->teamInfo());
+        }
+    });
     // Start QT event loop for this thread
     this->exec();
     qDeleteAll(m_knownTeams.values());
