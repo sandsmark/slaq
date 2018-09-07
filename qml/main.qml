@@ -164,12 +164,22 @@ ApplicationWindow {
                 TabBar {
                     id: tabBar
                     spacing: 2
-                    currentIndex: teamsSwipe.currentIndex
+
+                    onCurrentIndexChanged: {
+                        console.warn("tab bar current index", tabBar.currentIndex, tbRepeater.count)
+                        if (currentIndex >= tbRepeater.count &&
+                                (teamsSwipe.indexToLoad >= 0 &&
+                                 teamsSwipe.indexToLoad < tbRepeater.count)) { //workaround for weird bug in TabBar
+                            tabBar.setCurrentIndex(teamsSwipe.indexToLoad)
+                        }
+                    }
+
                     background: Rectangle {
                         color: "transparent"
                     }
 
                     Repeater {
+                        id: tbRepeater
                         model: teamsModel
                         TabButton {
                             id: tabButton
@@ -226,7 +236,7 @@ ApplicationWindow {
                             onClicked: {
                                 SlackClient.lastTeam = model.teamId
                                 console.log("set last team", SlackClient.lastTeam)
-                                tabBar.currentIndex = index
+                                teamsSwipe.indexToLoad = index
                             }
                             Connections {
                                 target: SlackClient
@@ -312,25 +322,6 @@ ApplicationWindow {
 
             ToolSeparator {}
 
-            EmojiToolButton {
-                text: teamsSwipe.currentItem != null && teamsSwipe.currentItem.item != null ?
-                          teamsSwipe.currentItem.item.pageStack.depth > 1 ?
-                              "🡸" : "🡺" : ""
-                onClicked: {
-                    if (teamsSwipe.currentItem.item.pageStack.depth > 1) {
-                        teamsSwipe.currentItem.item.pageStack.pop()
-                        return;
-                    }
-
-                    if (channelList.active) {
-                        channelList.item.open()
-                    }
-                }
-
-                visible: SlackClient.isDevice || (teamsSwipe.currentItem != null &&  teamsSwipe.currentItem.item != null) ?
-                             teamsSwipe.currentItem.item.pageStack.depth > 1 : false
-                enabled: visible
-            }
             ToolButton {
                 text: qsTr("⋮")
                 onClicked: menu.open()
@@ -365,7 +356,9 @@ ApplicationWindow {
 
     function switchTeam() {
         //make sure we will not switch before settings are readed out
-        if (teamsSwipe.currentIndex < 0 ||  completed == false) {
+        if (teamsSwipe.currentIndex < 0 ||  completed == false || teamsSwipe.currentIndex >= repeater.count) {
+            console.warn("Invalid current index", teamsSwipe.currentIndex)
+
             return;
         }
 
@@ -385,15 +378,24 @@ ApplicationWindow {
 
     Component.onCompleted: {
         completed = true
-        switchTeam()
+        tabBar.setCurrentIndex(teamsSwipe.indexToLoad)
     }
 
     SwipeView {
         id: teamsSwipe
         anchors.fill: parent
-        currentIndex: tabBar.currentIndex
         interactive: false
+        currentIndex: -1
+        property int indexToLoad: -1
+        onIndexToLoadChanged: {
+            console.warn("index to load", indexToLoad)
+            teamsSwipe.setCurrentIndex(indexToLoad)
+            tabBar.setCurrentIndex(indexToLoad)
+
+        }
+
         onCurrentIndexChanged: {
+            console.warn("teamsSwipe current index", teamsSwipe.currentIndex)
             switchTeam()
         }
 
@@ -424,7 +426,7 @@ ApplicationWindow {
                 }
                 Component.onCompleted: {
                     if (model.teamId === SlackClient.lastTeam) {
-                        tabBar.currentIndex = index
+                        teamsSwipe.indexToLoad = index
                         teamloader.active = true
                     }
                     if (settings.loadOnlyLastTeam === false && settings.unloadViewOnTeamSwitch === false) {

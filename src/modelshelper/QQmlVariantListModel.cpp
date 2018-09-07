@@ -289,9 +289,16 @@ void QQmlVariantListModel::insertList (int idx, const QVariantList & itemList)
 */
 void QQmlVariantListModel::move (int idx, int pos)
 {
-    beginMoveRows (NO_PARENT, idx, idx, NO_PARENT, pos);
-    m_items.move (idx, pos);
-    endMoveRows ();
+    if (idx != pos) {
+        // FIXME : use begin/end MoveRows when supported by Repeater, since then use remove/insert pair
+        //beginMoveRows (NO_PARENT, idx, idx, NO_PARENT, (idx < pos ? pos +1 : pos));
+        beginRemoveRows (NO_PARENT, idx, idx);
+        beginInsertRows (NO_PARENT, pos, pos);
+        m_items.move (idx, pos);
+        endRemoveRows ();
+        endInsertRows ();
+        //endMoveRows ();
+    }
 }
 
 /*!
