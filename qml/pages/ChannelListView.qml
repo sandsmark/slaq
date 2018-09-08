@@ -108,8 +108,7 @@ ListView {
 
         Rectangle {
             y: parent.height / 3
-            x: height / 3
-
+            x: Theme.paddingSmall
             implicitWidth: parent.height/3
             implicitHeight: parent.height/3
 
