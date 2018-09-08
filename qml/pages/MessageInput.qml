@@ -62,11 +62,6 @@ ColumnLayout {
         }
     }
 
-    Item {
-        height: Theme.paddingLarge
-        width: height
-    }
-
     RowLayout {
         width: parent.width
         spacing: Theme.paddingMedium
@@ -216,10 +211,6 @@ ColumnLayout {
                 fileSend.open()
             }
         }
-    }
-
-    Spacer {
-        height: Theme.paddingMedium
     }
 
     function handleSendMessage() {
