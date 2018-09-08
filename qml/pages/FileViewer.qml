@@ -7,8 +7,8 @@ import "../components"
 
 Item {
     property variant fileshare
-    width: loader.item.width + Theme.paddingMedium
-    height: loader.item.height + Theme.paddingMedium
+    width: fvColumn.implicitWidth
+    height: fvColumn.implicitHeight
 
     Platform.FileDialog {
         id: fileSaveDialog
@@ -31,7 +31,10 @@ Item {
     }
 
     Column {
+        id: fvColumn
         anchors.margins: Theme.paddingMedium/2
+        spacing: Theme.paddingMedium/2
+
         Label {
             text: fileshare.title
         }
@@ -82,8 +85,8 @@ Item {
         height: 20
         hoverEnabled: true
         anchors {
-            top: parent.top
-            left: parent.left
+            top: fvColumn.top
+            left: fvColumn.left
             topMargin: Theme.paddingMedium/2
             leftMargin: Theme.paddingMedium/2
         }
