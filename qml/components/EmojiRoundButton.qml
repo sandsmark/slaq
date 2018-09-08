@@ -3,6 +3,7 @@ import QtQuick.Controls 2.4
 
 RoundButton {
     id: emojiButton
+    font.bold: true
     contentItem: Label {
         text: emojiButton.text
         font.family: "Twitter Color Emoji"
