@@ -48,8 +48,6 @@ Column {
                 visible: attachment.author_name !== ""
                 spacing: Theme.paddingMedium
                 Image {
-                    width: 16
-                    height: 16
                     source: attachment !== null && attachment.author_icon.length > 0 ? "image://emoji/slack/" + attachment.author_icon : ""
                     sourceSize: Qt.size(16, 16)
                 }

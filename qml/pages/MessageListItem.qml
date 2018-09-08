@@ -46,7 +46,7 @@ MouseArea {
             width: parent.width
             height: childrenRect.height
             spacing: Theme.paddingMedium
-            leftPadding: sameuser && !(isReplies && model.ThreadIsParentMessage) ? Theme.avatarSize + spacing : 0
+            leftPadding: sameuser && !(isReplies && model.ThreadIsParentMessage) ? Theme.avatarSize + Theme.paddingMedium : 0
 
             Image {
                 id: avatarImage
@@ -315,32 +315,31 @@ MouseArea {
         }
 
         Column {
+            leftPadding: Theme.avatarSize + Theme.paddingMedium
+
             Repeater {
                 id: fileSharesRepeater
                 model: FileShares
 
                 delegate: FileViewer {
-                    width: column.width - x
-                    x: Theme.avatarSize + column.spacing
                     fileshare: FileShares[index]
                 }
             }
         }
 
         Column {
+            leftPadding: Theme.avatarSize + Theme.paddingMedium
+
             Repeater {
                 id: attachmentRepeater
                 model: Attachments
 
                 Attachment {
-                    width: column.width - x
-                    x: Theme.avatarSize + column.spacing
                     attachment: Attachments[index]
                     onLinkClicked: handleLink(link)
                 }
             }
         }
-
     }
 
     onClicked: {

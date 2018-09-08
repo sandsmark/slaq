@@ -3,12 +3,11 @@ import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.3
 import ".."
 
-GridLayout {
+Row {
     property alias fieldList: repeater.model
 
     id: grid
-    columns: 2
-    width: parent.width
+    spacing: Theme.paddingLarge
 
     Repeater {
         id: repeater
