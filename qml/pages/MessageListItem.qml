@@ -38,8 +38,8 @@ MouseArea {
 
     Column {
         id: column
+        height: implicitHeight
         width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 4 : 2) - 20
-        anchors.verticalCenter: parent.verticalCenter
         x: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
 
         Row {
@@ -50,148 +50,145 @@ MouseArea {
 
             Image {
                 id: avatarImage
-                y: Theme.paddingMedium/2
                 visible: !sameuser || (isReplies && model.ThreadIsParentMessage)
                 sourceSize: visible ? Qt.size(Theme.avatarSize, Theme.avatarSize) : Qt.size(0, 0)
-                source: visible && model.User != null ? "image://emoji/slack/" + model.User.avatarUrl : "http://www.gravatar.com/avatar/default?d=identicon"
+                source: visible && model.User != null ? "image://emoji/slack/" + model.User.avatarUrl :
+                                                        "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
             Column {
+                id: columnText
                 height: implicitHeight
                 width: parent.width
                 spacing: 1
-
-                RowLayout {
-                    spacing: Theme.paddingMedium/2
-                    //visible: !sameuser || itemDelegate.containsMouse
-                    height: visible ? emojiButton.implicitHeight : 0
-
-                    Label {
-                        id: nameLabel
-                        text: User != null ? User.fullName.length > 0 ? User.fullName : (User.username !== "" ? User.username : "Private") : "Undefined"
-                        font.pointSize: Theme.fontSizeSmall
-                        font.bold: true
-                    }
-
-                    Label {
-                        id: nickLabel
-                        text: "(" + (User != null ? (User.username !== "" ? User.username : "Private") : "Undefined" ) + ")"
-                        font.pointSize: Theme.fontSizeSmall
-                    }
-
-                    Control {
-                        width: 16
-                        height: 16
-                        visible: User != null && User.statusEmoji.length > 0
-                        hoverEnabled: true
-                        ToolTip.delay: 100
-                        ToolTip.visible: hovered && User.status !== ""
-                        ToolTip.text: User.status
-
-                        Image {
-                            sourceSize: Qt.size(parent.width, parent.height)
-                            visible: !ImagesCache.isUnicode
-                            smooth: true
-                            cache: false
-                            source: visible ? "image://emoji/" + User.statusEmoji.slice(1, -1) : ""
-                        }
-                        Label {
-                            visible: ImagesCache.isUnicode
-                            text: User != null ? ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1)) : ""
-                            font.family: "Twitter Color Emoji"
-                            font.pixelSize: parent.height - 2
-                            renderType: Text.QtRendering
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-                    }
-
-                    Label {
-                        text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
-                        font.pointSize: Theme.fontSizeTiny
-                        height: nickLabel.height
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    Label {
-                        id: channelLabel
-                        enabled: isSearchResult
-                        visible: isSearchResult
-                        text: model.ChannelName
-                        font.pointSize: Theme.fontSizeSmall
-                        font.bold: true
-                    }
-                    Row {
-                        visible: itemDelegate.containsMouse
-                        spacing: Theme.paddingSmall
-                        EmojiButton {
-                            id: emojiButton
-                            padding: 0
-                            visible: !isSearchResult
-                            implicitHeight: nickLabel.paintedHeight * 2
-                            implicitWidth: nickLabel.paintedHeight * 2
-                            text: "😎"
-                            font.bold: true
-                            font.pixelSize: parent.height/2
-                            onClicked: {
-                                emojiSelector.x = emojiButton.x
-                                emojiSelector.y = emojiButton.y
-                                emojiSelector.state = "reaction"
-                                itemDelegate.emojiSelectorCalled = true
-                                emojiSelector.open()
-                            }
-                        }
-                        EmojiButton {
-                            id: startThreadButton
-                            padding: 0
-                            visible: !isSearchResult && !itemDelegate.ListView.view.model.isThreadModel()
-                            implicitHeight: nickLabel.paintedHeight * 2
-                            implicitWidth: nickLabel.paintedHeight * 2
-                            text: "\uD83D\uDCAC"
-                            font.bold: false
-                            font.pixelSize: parent.height/2
-                            onClicked: {
-                                channelRoot.openReplies(itemDelegate.ListView.view.model, index, model)
-                            }
-                        }
-                        EmojiButton {
-                            id: trashButton
-                            padding: 0
-                            visible: !isSearchResult &&
-                                     (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId)
-                            implicitHeight: nickLabel.paintedHeight * 2
-                            implicitWidth: nickLabel.paintedHeight * 2
-                            text: "\uD83D\uDDD1"
-                            font.bold: false
-                            font.pixelSize: parent.height/2
-                            onClicked: {
-                                teamRoot.deleteMessage(channel.id, model.Time)
-                            }
-                        }
-                        EmojiButton {
-                            id: editButton
-                            padding: 0
-                            visible: !isSearchResult && (model.User != null &&
-                                                         model.User.userId === teamRoot.slackClient.teamInfo().selfId)
-                            implicitHeight: nickLabel.paintedHeight * 2
-                            implicitWidth: nickLabel.paintedHeight * 2
-                            text: contentLabel.readOnly ? "✎" : "💾"
-                            font.bold: false
-                            font.pixelSize: parent.height/2
-                            onClicked: {
-                                if (contentLabel.readOnly == true) {
-                                    contentLabel.readOnly = false
-                                    contentLabel.forceActiveFocus();
-                                } else {
-                                    updateText()
-                                }
-                            }
-                        }
-                    }
-                }
-
                 TextArea {
                     id: contentLabel
+                    topPadding: Theme.paddingLarge
+                    RowLayout {
+                        spacing: Theme.paddingMedium/2
+                        visible: !sameuser || itemDelegate.containsMouse
+                        height: visible ? Theme.paddingLarge : 0
+                        anchors.top: parent.top
+                        anchors.topMargin: 2
+
+                        Label {
+                            id: nameLabel
+                            visible: !sameuser
+                            text: User != null ? User.fullName.length > 0 ? User.fullName : (User.username !== "" ? User.username : "Private") : "Undefined"
+                            font.pixelSize: Theme.fontSizeMedium
+                            font.bold: true
+                        }
+
+                        Label {
+                            id: nickLabel
+                            visible: !sameuser
+                            text: "(" + (User != null ? (User.username !== "" ? User.username : "Private") : "Undefined" ) + ")"
+                            font.pixelSize: Theme.fontSizeMedium
+                        }
+
+                        Control {
+                            width: 16
+                            height: 16
+                            visible: User != null && User.statusEmoji.length > 0 && !sameuser
+                            hoverEnabled: true
+                            ToolTip.delay: 100
+                            ToolTip.visible: hovered && User.status !== ""
+                            ToolTip.text: User.status
+
+                            Image {
+                                sourceSize: Qt.size(parent.width, parent.height)
+                                visible: !ImagesCache.isUnicode
+                                smooth: true
+                                cache: false
+                                source: visible ? "image://emoji/" + User.statusEmoji.slice(1, -1) : ""
+                            }
+                            Label {
+                                visible: ImagesCache.isUnicode
+                                text: User != null ? ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1)) : ""
+                                font.family: "Twitter Color Emoji"
+                                font.pixelSize: parent.height - 2
+                                renderType: Text.QtRendering
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+
+                        Label {
+                            text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
+                            font.pixelSize: Theme.fontSizeMedium
+                            height: nickLabel.height
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        Label {
+                            id: channelLabel
+                            enabled: isSearchResult
+                            visible: isSearchResult
+                            text: model.ChannelName
+                            font.pixelSize: Theme.fontSizeMedium
+                            font.bold: true
+                        }
+                        Row {
+                            visible: itemDelegate.containsMouse
+                            spacing: Theme.paddingMedium/2
+                            EmojiRoundButton {
+                                id: emojiButton
+                                padding: 0
+                                visible: !isSearchResult
+                                text: "😎"
+                                font.pixelSize: Theme.fontSizeLarge
+                                onClicked: {
+                                    emojiSelector.x = emojiButton.x
+                                    emojiSelector.y = emojiButton.y
+                                    emojiSelector.state = "reaction"
+                                    itemDelegate.emojiSelectorCalled = true
+                                    emojiSelector.open()
+                                }
+                                background: Item {}
+                            }
+                            EmojiRoundButton {
+                                id: startThreadButton
+                                padding: 0
+                                visible: !isSearchResult && !itemDelegate.ListView.view.model.isThreadModel()
+                                text: "\uD83D\uDCAC"
+                                font.pixelSize: Theme.fontSizeLarge
+                                onClicked: {
+                                    channelRoot.openReplies(itemDelegate.ListView.view.model, index, model)
+                                }
+                                background: Item {}
+                            }
+                            EmojiRoundButton {
+                                id: trashButton
+                                padding: 0
+                                visible: !isSearchResult &&
+                                         (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId)
+                                text: "\uD83D\uDDD1"
+                                font.pixelSize: Theme.fontSizeLarge
+                                onClicked: {
+                                    teamRoot.deleteMessage(channel.id, model.Time)
+                                }
+                                background: Item {}
+                            }
+                            EmojiRoundButton {
+                                padding: 0
+                                id: editButton
+                                visible: !isSearchResult && (model.User != null &&
+                                                             model.User.userId === teamRoot.slackClient.teamInfo().selfId)
+                                text: contentLabel.readOnly ? "✎" : "💾"
+                                font.pixelSize: Theme.fontSizeLarge
+                                onClicked: {
+                                    if (contentLabel.readOnly == true) {
+                                        contentLabel.readOnly = false
+                                        contentLabel.forceActiveFocus();
+                                    } else {
+                                        updateText()
+                                    }
+                                }
+                                background: Item {}
+                            }
+                        }
+                    }
+
                     width: parent.width - avatarImage.width - parent.spacing
                     height: text === "" ? 0 : implicitHeight
                     readOnly: true
@@ -246,15 +243,15 @@ MouseArea {
 
                     //Due to bug in images not rendered until app resize
                     //trigger redraw changing width
-//                    onTextChanged: {
-//                        Qt.callLater(function() {
-//                            if (contentItem != undefined) {
-//                                var tmp = contentItem.width
-//                                contentItem.width = 0
-//                                contentItem.width = tmp
-//                            }
-//                        })
-//                    }
+                    //                    onTextChanged: {
+                    //                        Qt.callLater(function() {
+                    //                            if (contentItem != undefined) {
+                    //                                var tmp = contentItem.width
+                    //                                contentItem.width = 0
+                    //                                contentItem.width = tmp
+                    //                            }
+                    //                        })
+                    //                    }
 
                     MouseArea {
                         id: mouseArea
@@ -316,8 +313,9 @@ MouseArea {
         }
 
         Column {
+            width: parent.width
             leftPadding: Theme.avatarSize + Theme.paddingMedium
-
+            height: implicitHeight
             Repeater {
                 id: fileSharesRepeater
                 model: FileShares
@@ -330,6 +328,7 @@ MouseArea {
 
         Column {
             width: parent.width
+            height: implicitHeight
             leftPadding: Theme.avatarSize + Theme.paddingMedium
 
             Repeater {
