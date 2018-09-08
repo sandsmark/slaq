@@ -131,6 +131,7 @@ Page {
     ColumnLayout {
         anchors.fill: parent
         spacing: Theme.paddingSmall
+
         MessageListView {
             id: messagesListView
             Layout.fillHeight: true
@@ -171,10 +172,6 @@ Page {
         MessageInput {
             id: input
 
-            Layout.fillWidth: true
-            Layout.leftMargin: Theme.paddingLarge/2
-            Layout.rightMargin: Theme.paddingLarge/2
-
             enabled: messagesListView.inputEnabled
             placeholder: qsTr("Message %1%2").arg("#").arg(channel.name)
             onSendMessage: {
@@ -195,8 +192,7 @@ Page {
             id: userTypingLabel
             Layout.fillWidth: true
             Layout.bottomMargin: Theme.paddingSmall
-            font.pixelSize: Theme.fontSizeMedium
-
+            font.pixelSize: Theme.fontSizeSmall
             Timer {
                 id: removeDelayTimer
                 interval: 2000
@@ -208,8 +204,6 @@ Page {
         }
     }
 
-    Component.onCompleted: {
-    }
     Component.onDestruction: {
         //SlackClient.setActiveWindow(teamRoot.teamId, "")
         if (channel == null)

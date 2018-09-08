@@ -8,7 +8,7 @@ import "../components"
 
 MouseArea {
     id: itemDelegate
-    height: column.height
+    height: column.implicitHeight
     hoverEnabled: true
     property bool isSearchResult: false
     property bool isReplies: false
@@ -44,7 +44,7 @@ MouseArea {
 
         Row {
             width: parent.width
-            height: childrenRect.height
+            height: implicitHeight
             spacing: Theme.paddingMedium
             leftPadding: sameuser && !(isReplies && model.ThreadIsParentMessage) ? Theme.avatarSize + Theme.paddingMedium : 0
 
@@ -57,13 +57,14 @@ MouseArea {
             }
 
             Column {
-                height: childrenRect.height
+                height: implicitHeight
                 width: parent.width
                 spacing: 1
 
                 RowLayout {
-                    height: emojiButton.implicitHeight
                     spacing: Theme.paddingMedium/2
+                    //visible: !sameuser || itemDelegate.containsMouse
+                    height: visible ? emojiButton.implicitHeight : 0
 
                     Label {
                         id: nameLabel
