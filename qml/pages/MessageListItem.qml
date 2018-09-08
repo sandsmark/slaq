@@ -328,13 +328,16 @@ MouseArea {
         }
 
         Column {
+            width: parent.width
             leftPadding: Theme.avatarSize + Theme.paddingMedium
 
             Repeater {
                 id: attachmentRepeater
                 model: Attachments
 
-                Attachment {
+                delegate: Attachment {
+                    height: implicitHeight
+                    width: parent.width
                     attachment: Attachments[index]
                     onLinkClicked: handleLink(link)
                 }
