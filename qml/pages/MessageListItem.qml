@@ -77,6 +77,7 @@ MouseArea {
                             text: User != null ? User.fullName.length > 0 ? User.fullName : (User.username !== "" ? User.username : "Private") : "Undefined"
                             font.pixelSize: Theme.fontSizeMedium
                             font.bold: true
+                            font.italic: false
                         }
 
                         Label {
@@ -84,6 +85,7 @@ MouseArea {
                             visible: !sameuser
                             text: "(" + (User != null ? (User.username !== "" ? User.username : "Private") : "Undefined" ) + ")"
                             font.pixelSize: Theme.fontSizeMedium
+                            font.italic: false
                         }
 
                         Control {
@@ -107,6 +109,7 @@ MouseArea {
                                 text: User != null ? ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1)) : ""
                                 font.family: "Twitter Color Emoji"
                                 font.pixelSize: parent.height - 2
+                                font.italic: false
                                 renderType: Text.QtRendering
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignHCenter
@@ -115,6 +118,7 @@ MouseArea {
 
                         Label {
                             text: Qt.formatDateTime(model.Time, "yyyy/MM/dd H:mm:ss")
+                            font.italic: false
                             font.pixelSize: Theme.fontSizeMedium
                             height: nickLabel.height
                             verticalAlignment: Text.AlignVCenter
@@ -127,6 +131,7 @@ MouseArea {
                             text: model.ChannelName
                             font.pixelSize: Theme.fontSizeMedium
                             font.bold: true
+                            font.italic: false
                         }
                         Row {
                             visible: itemDelegate.containsMouse
