@@ -128,8 +128,8 @@ MouseArea {
                             id: channelLabel
                             enabled: isSearchResult
                             visible: isSearchResult
-                            text: model.ChannelName
-                            font.pixelSize: Theme.fontSizeMedium
+                            text: "#"+model.ChannelName
+                            font.pixelSize: Theme.fontSizeLarge
                             font.bold: true
                             font.italic: false
                         }
