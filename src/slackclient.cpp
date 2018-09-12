@@ -728,7 +728,7 @@ void SlackTeamClient::startClient()
 {
     DEBUG_BLOCK
 
-    qDebug() << "Start init";
+    qDebug() << "Start init" << QThread::currentThread();
     QMap<QString, QString> params;
     params.insert(QStringLiteral("batch_presence_aware"), QStringLiteral("1"));
     params.insert(QStringLiteral("presence_sub"), QStringLiteral("true"));
@@ -763,7 +763,7 @@ void SlackTeamClient::handleStartReply()
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
     m_status = STARTED;
-    qDebug() << "connect success" << QThread::currentThreadId();
+    qDebug() << "connect success" << QThread::currentThread();
 }
 
 QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, const int cursorPosition)
@@ -980,7 +980,7 @@ void SlackTeamClient::handleCloseChatReply()
 
 void SlackTeamClient::requestTeamInfo()
 {
-    if (m_teamInfo.domain().isEmpty()) {
+    if (m_teamInfo.domain().isEmpty() || m_teamInfo.name().isEmpty() || m_teamInfo.icons().isEmpty()) {
         QNetworkReply *reply = executeGet(QStringLiteral("team.info"));
         connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamInfoReply);
     } else {
@@ -1084,10 +1084,10 @@ void SlackTeamClient::handleTeamInfoReply()
             qDebug() << "Team info failed" << data;
         } else {
             m_teamInfo.parseTeamInfoData(data.value("team").toObject());
-            config->saveTeamInfo(m_teamInfo);
-            emit teamInfoChanged(m_teamInfo.teamId());
         }
     }
+    config->saveTeamInfo(m_teamInfo);
+    emit teamInfoChanged(m_teamInfo.teamId());
     qDebug() << __PRETTY_FUNCTION__ << "teaminfo:" << m_teamInfo.name() << m_teamInfo.teamId();
     requestUsersList("");
 }

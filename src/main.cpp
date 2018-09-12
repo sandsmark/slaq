@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
-    qDebug() << "GUI thread" << QThread::currentThreadId();
+    qDebug() << "GUI thread" << QThread::currentThread();
     qRegisterMetaType<SlackTeamClient*>("SlackClient*");
     qRegisterMetaType<EmojiInfo*>("EmojiInfo*");
     qRegisterMetaType<TeamInfo*>("TeamInfo*");

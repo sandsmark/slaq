@@ -1,5 +1,5 @@
 #include "slackstream.h"
-
+#include <QThread>
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -31,7 +31,7 @@ SlackStream::~SlackStream()
 
 void SlackStream::listen(const QUrl& url)
 {
-    qDebug() << "Connect socket" << url;
+    qDebug() << "Connect socket" << url << QThread::currentThread();
     webSocket->open(url);
 }
 
@@ -49,7 +49,7 @@ void SlackStream::checkConnection()
 
 void SlackStream::handleListerStart()
 {
-    qDebug() << "Socket connected";
+    qWarning() << "Socket connected";
     m_isConnected = true;
     emit connected();
     checkTimer->start(15000);

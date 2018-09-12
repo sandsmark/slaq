@@ -133,12 +133,12 @@ ApplicationWindow {
         id: fileSend
     }
 
-//    Connections {
-//        target: SlackClient
-//        onThreadStarted: {
-//            console.log("qml: thread started", SlackClient.lastTeam)
-//        }
-//    }
+    Connections {
+        target: SlackClient
+        onTeamLeft: {
+            teamsSwipe.indexToLoad = 0
+        }
+    }
 
     header: ToolBar {
         id: toolbar

@@ -180,6 +180,7 @@ QString SlackClientThreadSpawner::userName(const QString& teamId, const QString 
 
 bool SlackClientThreadSpawner::handleAccessTokenReply(const QJsonObject &bootData)
 {
+    //qDebug().noquote() << "boot data:" <<QJsonDocument(bootData).toJson() << QThread::currentThread();
     QString _accessToken = bootData[QStringLiteral("api_token")].toString();
     if (_accessToken.isEmpty()) {
         qWarning() << "Missing access token";
@@ -207,7 +208,7 @@ bool SlackClientThreadSpawner::handleAccessTokenReply(const QJsonObject &bootDat
     qDebug() << "Access token success" << _accessToken << _userId << _teamId << _teamName;
 
     setLastTeam(_teamId);
-    QMetaObject::invokeMethod(this, "connectToTeam", Qt::QueuedConnection,
+    QMetaObject::invokeMethod(m_threadExecutor, "connectToTeam", Qt::QueuedConnection,
                               Q_ARG(QString, _teamId),
                               Q_ARG(QString, _accessToken));
     return true;
@@ -723,15 +724,21 @@ void SlackClientThreadSpawner::leaveTeam(const QString &teamId)
         return;
     }
 
+    m_knownTeams.remove(teamId);
+
     if (m_lastTeam == teamId) {
-        setLastTeam(QString());
+        if (!m_knownTeams.isEmpty()) {
+            setLastTeam(m_knownTeams.firstKey());
+        } else {
+            setLastTeam(QString());
+        }
     }
 
-    m_knownTeams.remove(teamId);
     m_teamsModel.remove(_slackClient->teamInfo());
 
     _slackClient->deleteLater();
     SlackConfig::instance()->setTeams(m_knownTeams.keys());
+    emit teamLeft(teamId);
 }
 
 void SlackClientThreadSpawner::setLastTeam(const QString &lastTeam)
@@ -747,9 +754,18 @@ void SlackClientThreadSpawner::setLastTeam(const QString &lastTeam)
     settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
 }
 
+void SlackClientThreadSpawner::appendTeam(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    m_teamsModel.append(_slackClient->teamInfo());
+}
+
 void SlackClientThreadSpawner::onOnlineChanged(const QString &teamId)
 {
-    if (teamId == m_lastTeam && slackClient(teamId) != nullptr) {
+    if (slackClient(teamId) != nullptr) {
         emit onlineChanged(slackClient(teamId)->isOnline());
     }
 }
@@ -854,6 +870,7 @@ void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, 
 
 void SlackClientThreadSpawner::run()
 {
+    m_threadExecutor = new ThreadExecutor(this);
     for (const QString& teamId : SlackConfig::instance()->teams()) {
         connectToTeam(teamId);
     }
@@ -877,4 +894,13 @@ void SlackClientThreadSpawner::run()
     this->exec();
     qDeleteAll(m_knownTeams.values());
     qDebug() << "closed thread" << m_lastTeam;
+}
+
+void ThreadExecutor::connectToTeam(const QString &teamId, const QString &accessToken)
+{
+    if (m_threadSpawner) {
+        m_threadSpawner->connectToTeam(teamId, accessToken);
+        m_threadSpawner->testLogin(teamId);
+        QMetaObject::invokeMethod(m_threadSpawner, "appendTeam", Qt::QueuedConnection, Q_ARG(QString, teamId));
+    }
 }
