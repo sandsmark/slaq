@@ -163,8 +163,6 @@ private:
     bool m_isOnline { false };
     QDateTime m_buildTime;
     ThreadExecutor* m_threadExecutor {nullptr};
-
-    friend ThreadExecutor;
 };
 
 class ThreadExecutor: public QObject {
