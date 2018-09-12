@@ -83,9 +83,20 @@ MouseArea {
                         Label {
                             id: nickLabel
                             visible: !sameuser
-                            text: "(" + (User != null ? (User.username !== "" ? User.username : "Private") : "Undefined" ) + ")"
+                            text: "(@" + (User != null ? (User.username !== "" ? User.username : "Private") : "Undefined" ) + ")"
                             font.pixelSize: Theme.fontSizeMedium
                             font.italic: false
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    var cursorpos = input.messageInput.cursorPosition
+                                    input.messageInput.insert(input.messageInput.cursorPosition, "@" + User.username + " ")
+                                    input.messageInput.forceActiveFocus()
+                                    input.messageInput.cursorPosition = cursorpos + User.username.length + 2
+                                }
+                            }
                         }
 
                         Control {
