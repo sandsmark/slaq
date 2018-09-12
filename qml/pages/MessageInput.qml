@@ -9,6 +9,7 @@ import "../components"
 ColumnLayout {
     id: messageInputColumn
     property alias placeholder: messageInput.placeholderText
+    property alias messageInput: messageInput
     property int cursorX: mapFromItem(messageInput, messageInput.cursorRectangle.x, messageInput.cursorRectangle.y).x
 
     property bool nickPopupVisible: false

@@ -15,9 +15,11 @@ import "components"
 
 ApplicationWindow {
     id: window
-    visible: true
+    property bool appSuspended: Qt.application.state === Qt.ApplicationSuspended
+    visible: !appSuspended
     width: Screen.desktopAvailableWidth
     height: Screen.desktopAvailableHeight
+
 
     property alias teamsSwipe: teamsSwipe
     property alias emojiSelector: emojiSelector
