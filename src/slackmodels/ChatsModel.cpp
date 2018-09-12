@@ -190,15 +190,21 @@ QString ChatsModel::doAddChat(Chat *chat)
 
 void ChatsModel::addChats(const QList<Chat*>& chats, bool last)
 {
-    qDebug() << "addChats" << chats.count() << last;
-
-    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + chats.count() - 1);
+    qDebug() << __PRETTY_FUNCTION__ << chats.count() << last;
+    QList<Chat*> _chats;
     for (Chat *chat : chats) {
         if (!m_chatIds.contains(chat->id)) {
-            doAddChat(chat);
-        } else {
-            qFatal("Chat already exists!!");
+            _chats.append(chat);
         }
+    }
+    if (_chats.isEmpty()) {
+        qWarning() << "no new chats";
+        return;
+    }
+    qDebug() << __PRETTY_FUNCTION__ << "adding new chats:" << _chats.count();
+    beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count() + _chats.count() - 1);
+    for (Chat *chat : _chats) {
+        doAddChat(chat);
     }
     endInsertRows();
 }

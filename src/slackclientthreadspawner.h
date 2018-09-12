@@ -6,6 +6,8 @@
 #include "slackclient.h"
 #include "QQmlObjectListModel.h"
 
+class ThreadExecutor;
+
 class SlackClientThreadSpawner : public QThread
 {
     Q_OBJECT
@@ -72,6 +74,7 @@ signals:
     void connected(const QString& teamId);
     void lastChannelChanged(const QString& teamId);
     void lastTeamChanged(QString lastTeam);
+    void teamLeft(const QString& teamId);
     void onlineChanged(bool isOnline);
     void searchResultsReady(const QString& query, int page, int pages);
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
@@ -131,8 +134,9 @@ public slots:
     void onTeamInfoChanged(const QString& teamId);
     void connectToTeam(const QString& teamId, const QString &accessToken = QString(""));
     void leaveTeam(const QString& teamId);
-
     void setLastTeam(const QString& lastTeam);
+    void appendTeam(const QString& teamId);
+
     void onOnlineChanged(const QString& teamId);
 
     void setMediaSource(QObject *mediaPlayer, const QString& teamId, const QString& url);
@@ -158,6 +162,23 @@ private:
     QString m_lastTeam;
     bool m_isOnline { false };
     QDateTime m_buildTime;
+    ThreadExecutor* m_threadExecutor {nullptr};
+
+    friend ThreadExecutor;
+};
+
+class ThreadExecutor: public QObject {
+    Q_OBJECT
+
+public:
+    explicit ThreadExecutor(SlackClientThreadSpawner* threadSpawner, QObject *parent = nullptr) :
+        QObject(parent), m_threadSpawner(threadSpawner) {}
+    virtual ~ThreadExecutor() = default;
+
+public slots:
+    void connectToTeam(const QString& teamId, const QString &accessToken = QString(""));
+private:
+    SlackClientThreadSpawner* m_threadSpawner {nullptr};
 };
 
 #endif

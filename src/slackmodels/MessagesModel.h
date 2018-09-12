@@ -249,8 +249,8 @@ public:
 };
 
 struct Message {
-    Message();
-    ~Message();
+    Message() = default;
+    ~Message() = default;
     void setData(const QJsonObject &data);
 
     QString text;

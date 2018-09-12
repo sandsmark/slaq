@@ -154,19 +154,23 @@ Message *MessageListModel::message(const QDateTime &ts)
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
         if (message->time == ts) {
+            qDebug() << "found message";
             return message;
         }
         // 1st message in the message thread is parent message
         // so to avoid recursive search - check if the message thread its not current thread
         if (!message->messageThread.isNull() && message->messageThread.data() != this) {
+            qDebug() << "search in subthread";
             locker.unlock();
             Message* threadedMsg = message->messageThread->message(ts);
             if (threadedMsg != nullptr) {
+                qDebug() << "found message in subthread";
                 return threadedMsg;
             }
             locker.relock();
         }
     }
+    qDebug() << "nothing found";
     return nullptr;
 }
 
@@ -416,7 +420,21 @@ void MessageListModel::updateMessage(Message *message)
             }
         } else {
             if (oldmessage->time == message->time) {
+                //copy message data, which might not exists in update
                 message->messageThread = oldmessage->messageThread;
+                if (message->attachments.isEmpty() && !oldmessage->attachments.isEmpty()) {
+                    message->attachments = oldmessage->attachments;
+                }
+                if (message->reactions.isEmpty() && !oldmessage->reactions.isEmpty()) {
+                    message->reactions = oldmessage->reactions;
+                }
+                if (message->fileshares.isEmpty() && !oldmessage->fileshares.isEmpty()) {
+                    message->fileshares = oldmessage->fileshares;
+                }
+                if (message->replies.isEmpty() && !oldmessage->replies.isEmpty()) {
+                    message->replies = oldmessage->replies;
+                }
+
                 if (message->user.isNull()) {
                     message->user = m_usersModel->user(message->user_id);
                     if (message->user.isNull()) {
@@ -557,16 +575,6 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[ThreadIsParentMessage] = "ThreadIsParentMessage";
     names[ThreadTs] = "ThreadTs";
     return names;
-}
-
-Message::Message() {}
-
-Message::~Message()
-{
-    qDeleteAll(attachments);
-    qDeleteAll(reactions);
-    qDeleteAll(fileshares);
-    qDeleteAll(replies);
 }
 
 //    if (!channel.value(QStringLiteral("isOpen")).toBool()) {
