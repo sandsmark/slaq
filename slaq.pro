@@ -18,6 +18,7 @@ OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 
 DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
+windows: DEFINES += __PRETTY_FUNCTION__=__FUNCSIG__
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
