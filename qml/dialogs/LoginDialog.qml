@@ -1,5 +1,5 @@
 import QtQuick 2.8
-import QtWebView 1.1
+import QtWebEngine 1.7
 import QtQuick.Controls 2.3
 
 Dialog {
@@ -53,7 +53,7 @@ Dialog {
 
     Component {
         id: webViewComponent
-        WebView {
+        WebEngineView {
             id: webView
             url: loginDialog.startUrl
 

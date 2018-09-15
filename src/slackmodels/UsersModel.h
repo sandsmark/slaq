@@ -56,6 +56,7 @@ public:
     QString botId() const;
     bool selected() const;
     void setSelected(bool selected);
+    void setUserId(const QString &userId);
 
 signals:
     void presenceChanged();
@@ -114,6 +115,7 @@ public slots:
     bool isSelected() const;
     void setSelected(int index);
     void clearSelections();
+    void createAndRequestInfo(const QString &id);
 
 private:
     QMap<QString, QPointer<User>> m_users;

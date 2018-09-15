@@ -22,9 +22,11 @@ windows: DEFINES += __PRETTY_FUNCTION__=__FUNCSIG__
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
-QT += quick webview xml quickcontrols2 multimedia widgets
 CONFIG += c++11
+
+QT += quick  xml quickcontrols2 multimedia widgets
 QT += websockets
+QT += webengine
 
 INCLUDEPATH += src src/slackmodels
 
