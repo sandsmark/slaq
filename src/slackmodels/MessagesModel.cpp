@@ -36,7 +36,7 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Message* message = m_messages.at(row);
+    Message* message = m_messages.at(row);
     if (message == nullptr) {
         qWarning() << "No message for row" << row;
         return QVariant();
@@ -46,6 +46,13 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     case Text:
         return message->text;
     case User:
+        if (message->user.isNull()) {
+            message->user = m_usersModel->user(message->user_id);
+        }
+        if (message->user.isNull()) {
+            qWarning() << "no user for id:" << message->user_id;
+            m_usersModel->createAndRequestInfo(message->user_id);
+        }
         return QVariant::fromValue(message->user.data());
     case Time:
         return message->time;

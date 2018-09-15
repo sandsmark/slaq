@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
-#include <QtWebView>
+#include <QtWebEngine>
 #include <QNetworkProxyFactory>
 #include <QThread>
 #include <QTextCodec>
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
     QApplication app(argc, argv);
 
-    QtWebView::initialize();
+    QtWebEngine::initialize();
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
     app.setApplicationVersion(QString(SLAQ_VERSION));

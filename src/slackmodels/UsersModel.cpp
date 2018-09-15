@@ -180,6 +180,11 @@ void User::setSelected(bool selected)
     emit selectedChanged(selected);
 }
 
+void User::setUserId(const QString &userId)
+{
+    m_userId = userId;
+}
+
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
 {}
 
@@ -238,6 +243,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
     int row  = m_userIds.indexOf(_id);
     QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
     emit dataChanged(index, index, roleNames().keys().toVector());
+    qDebug() << "updated user" << user->userId() << user->username();
 }
 
 void UsersModel::addUser(User *user)
@@ -315,6 +321,19 @@ QPointer<User> UsersModel::user(const QString &id)
         qWarning() << "NOT ALL USERS ADDED!";
     }
     return m_users.value(id);
+}
+
+void UsersModel::createAndRequestInfo(const QString &id)
+{
+    if (m_addingUsers) {
+        qWarning() << "NOT ALL USERS ADDED!";
+    }
+    if (!m_users.contains(id)) {
+        QPointer<User> _user = new User;
+        QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);
+        _user->setUserId(id);
+        addUser(_user);
+    }
 }
 
 QStringList UsersModel::selectedUserIds()
