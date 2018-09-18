@@ -163,7 +163,7 @@ ColumnLayout {
             }
 
             onClicked: {
-                proxyModel.sourceModel.setSelected(index)
+                proxyModel.sourceModel.setSelected(proxyModel.mapToSource(index))
             }
         }
     }

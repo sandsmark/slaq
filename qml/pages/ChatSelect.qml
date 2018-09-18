@@ -13,6 +13,7 @@ Drawer {
     y: Theme.paddingMedium
     bottomMargin: Theme.paddingMedium
 
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnReleaseOutside
     edge: Qt.RightEdge
     width: 0.3 * window.width
     height: window.height - Theme.paddingMedium

@@ -220,30 +220,20 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 void UsersModel::updateUser(const QJsonObject &userData)
 {
     const QString& userId = userData.value(QStringLiteral("id")).toString();
-    QPointer<User> olduser = m_users.value(userId);
-    if (olduser.isNull()) {
+    QPointer<User> _user = m_users.value(userId);
+    if (_user.isNull()) {
         qWarning() << "no user found for" << userId;
         return;
     }
-    QPointer<User> user = new User(olduser);
-    user->setData(userData);
-    if (QThread::currentThread() != qApp->thread()) {
-        user->moveToThread(qApp->thread());
+    _user->setData(userData);
+    QString _id = _user->userId();
+    if (_user->isBot()) {
+        _id = _user->botId();
     }
-    QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
-    QString _id = user->userId();
-    if (user->isBot()) {
-        _id = user->botId();
-    }
-    if (m_users.contains(_id)) {
-        m_users.value(_id)->deleteLater();
-    }
-    m_users.insert(_id, user);
-
     int row  = m_userIds.indexOf(_id);
     QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
     emit dataChanged(index, index, roleNames().keys().toVector());
-    qDebug() << "updated user" << user->userId() << user->username();
+    qDebug() << "updated user" << _user->userId() << _user->username();
 }
 
 void UsersModel::addUser(User *user)
