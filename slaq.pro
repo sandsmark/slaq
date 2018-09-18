@@ -24,11 +24,13 @@ TRANSLATIONS += translations/slaq-fi.ts
 
 CONFIG += c++11
 
-QT += quick  xml quickcontrols2 multimedia widgets
+QT += quick xml quickcontrols2 multimedia widgets
 QT += websockets
 QT += webengine
 
 INCLUDEPATH += src src/slackmodels
+
+TO_DEPLOY = $$PWD/to_deploy
 
 # enable for address sanitizer
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
@@ -87,10 +89,10 @@ DISTFILES += \
     qml/pages/*.js \
     qml/pages/*.qml \
     qml/*.qml \
-    qml/components/*.qml \
-    qml/components/TextViewer.qml
+    scripts/*.py \
+    qml/components/*.qml
 
-target.path = deploy
+target.path = $$TO_DEPLOY
 
 RESOURCES += \
     qml.qrc \
@@ -100,17 +102,61 @@ RESOURCES += \
 include (src/modelshelper/QtQmlModels.pri)
 include (src/qmlsorter/SortFilterProxyModel.pri)
 
+
 other.files = $${OTHER_FILES}
-other.path = deploy
+other.path = $$TO_DEPLOY
 
 #linux install files
-linux: {
-desktop.files   = slaq.desktop
-desktop.path    = /usr/share/applications
+#linux: {
+#desktop.files   = slaq.desktop
+#desktop.path    = /usr/share/applications
 
-icons.files     = icons/slaq.svg
-icons.path      = /usr/share/icons/hicolor/scalable/apps
-INSTALLS += desktop icons
+#icons.files     = icons/slaq.svg
+#icons.path      = /usr/share/icons/hicolor/scalable/apps
+#INSTALLS += desktop icons
+#}
+
+contains(QT_ARCH, i386): ARCHITECTURE = x86
+else: ARCHITECTURE = $$QT_ARCH
+
+macx: PLATFORM = "mac"
+else:win32: PLATFORM = "windows"
+else:linux-*: PLATFORM = "linux-$${ARCHITECTURE}"
+else: PLATFORM = "unknown"
+
+BASENAME = $$(INSTALL_BASENAME)
+isEmpty(BASENAME): BASENAME = slaq-$${PLATFORM}
+
+macx {
+#    APPBUNDLE = "$$OUT_PWD/bin/$${IDE_APP_TARGET}.app"
+#    BINDIST_SOURCE = "$$OUT_PWD/bin/$${IDE_APP_TARGET}.app"
+#    deploylibs.commands = $$PWD/scripts/deployqtHelper_mac.sh \"$${APPBUNDLE}\" \"$$[QT_INSTALL_BINS]\" \"$$[QT_INSTALL_TRANSLATIONS]\" \"$$[QT_INSTALL_PLUGINS]\" \"$$[QT_INSTALL_IMPORTS]\" \"$$[QT_INSTALL_QML]\"
+#    codesign.commands = codesign --deep -s \"$(SIGNING_IDENTITY)\" $(SIGNING_FLAGS) \"$${APPBUNDLE}\"
+#    dmg.commands = python -u \"$$PWD/scripts/makedmg.py\" \"$${BASENAME}.dmg\" \"Slaq\" \"$$IDE_SOURCE_TREE\" \"$$OUT_PWD/bin\"
+    #dmg.depends = deployqt
+    QMAKE_EXTRA_TARGETS += codesign dmg
+} else {
+    BINDIST_SOURCE = "$${TO_DEPLOY}"
+    BINDIST_EXCLUDE_ARG = "--exclude-toplevel"
+    deploylibs.commands = python -u $$PWD/scripts/deploylibs.py -i \"$${TO_DEPLOY}/slaq\" \"$(QMAKE)\"
+    deploylibs.depends = install
 }
+
+INSTALLER_ARCHIVE_FROM_ENV = $$(INSTALLER_ARCHIVE)
+isEmpty(INSTALLER_ARCHIVE_FROM_ENV) {
+    INSTALLER_ARCHIVE = $$TO_DEPLOY/$${BASENAME}-installer-archive.7z
+} else {
+    INSTALLER_ARCHIVE = $$TO_DEPLOY/$$(INSTALLER_ARCHIVE)
+}
+
+bindist_installer.commands = python -u $$PWD/scripts/createDistPackage.py $$BINDIST_EXCLUDE_ARG $${INSTALLER_ARCHIVE} \"$$BINDIST_SOURCE\"
+
+win32 {
+    deploylibs.commands ~= s,/,\\\\,g
+    bindist.commands ~= s,/,\\\\,g
+    bindist_installer.commands ~= s,/,\\\\,g
+}
+
+QMAKE_EXTRA_TARGETS += deploylibs bindist_installer
 
 INSTALLS += target other

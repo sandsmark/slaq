@@ -1,6 +1,6 @@
-import QtQuick 2.8
+import QtQuick 2.11
 import QtWebEngine 1.7
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 
 Dialog {
     id: loginDialog

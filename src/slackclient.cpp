@@ -200,12 +200,22 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         parseChannelUpdate(message);
     } else if (type == QStringLiteral("channel_joined")
                || type == QStringLiteral("group_joined")
-               || (type == QStringLiteral("im_created"))) {
+               || type == QStringLiteral("im_created")) {
         Chat* _chat = new Chat(message.value(QStringLiteral("channel")).toObject());
         QQmlEngine::setObjectOwnership(_chat, QQmlEngine::CppOwnership);
-        emit channelJoined(_chat);
     } else if (type == QStringLiteral("im_open")) {
-        emit chatJoined(message.value(QStringLiteral("channel")).toString());
+        const QString& channelId = message.value(QStringLiteral("channel")).toString();
+        ChatsModel* _chatsModel = m_teamInfo.chats();
+        if (_chatsModel == nullptr) {
+            qWarning() << "Chats model not yet allocated";
+            return;
+        }
+        Chat* _chat = _chatsModel->chat(channelId);
+        if (_chat == nullptr) {
+            qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
+            return;
+        }
+        emit channelJoined(_chat);
     } else if (type == QStringLiteral("im_close")  || type == QStringLiteral("mpim_close")
                || type == QStringLiteral("channel_left") || type == QStringLiteral("group_left") ||
                type == QStringLiteral("group_close")) {
@@ -334,12 +344,6 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
     } else {
         emit messageReceived(message_);
     }
-
-//    if (!channel.value(QStringLiteral("isOpen")).toBool()) {
-//        if (channel.value(QStringLiteral("type")).toString() == QStringLiteral("im")) {
-//            openChat(channelId);
-//        }
-//    }
 }
 
 void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
