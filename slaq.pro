@@ -124,7 +124,7 @@ else:linux-*: PLATFORM = "linux-$${ARCHITECTURE}"
 else: PLATFORM = "unknown"
 
 BASENAME = $$(INSTALL_BASENAME)
-isEmpty(BASENAME): BASENAME = slaq-$${PLATFORM}
+isEmpty(BASENAME): BASENAME = slaq-$${PLATFORM}-$${VERSION}
 
 macx {
 # not yet supported
