@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.2
+VERSION = 0.0.1.3
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
@@ -24,8 +24,7 @@ TRANSLATIONS += translations/slaq-fi.ts
 
 CONFIG += c++11
 
-QT += quick xml quickcontrols2 multimedia widgets
-QT += websockets
+QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += webengine
 
 INCLUDEPATH += src src/slackmodels
@@ -128,6 +127,7 @@ BASENAME = $$(INSTALL_BASENAME)
 isEmpty(BASENAME): BASENAME = slaq-$${PLATFORM}
 
 macx {
+# not yet supported
 #    APPBUNDLE = "$$OUT_PWD/bin/$${IDE_APP_TARGET}.app"
 #    BINDIST_SOURCE = "$$OUT_PWD/bin/$${IDE_APP_TARGET}.app"
 #    deploylibs.commands = $$PWD/scripts/deployqtHelper_mac.sh \"$${APPBUNDLE}\" \"$$[QT_INSTALL_BINS]\" \"$$[QT_INSTALL_TRANSLATIONS]\" \"$$[QT_INSTALL_PLUGINS]\" \"$$[QT_INSTALL_IMPORTS]\" \"$$[QT_INSTALL_QML]\"
