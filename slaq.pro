@@ -89,7 +89,9 @@ DISTFILES += \
     qml/pages/*.qml \
     qml/*.qml \
     scripts/*.py \
-    qml/components/*.qml
+    qml/components/*.qml \
+    qml/dialogs/UserDialog.qml \
+    qml/components/UserStatusEmoji.qml
 
 target.path = $$TO_DEPLOY
 

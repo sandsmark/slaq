@@ -54,5 +54,8 @@
         <file>icons/slaq_im.png</file>
         <file>icons/slaq.png</file>
         <file>icons/slaq.svg</file>
+        <file>qml/dialogs/UserDialog.qml</file>
+        <file>qml/components/UserStatusEmoji.qml</file>
+        <file>icons/no-image.png</file>
     </qresource>
 </RCC>

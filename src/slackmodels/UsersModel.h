@@ -19,12 +19,14 @@ class User : public QObject
     Q_PROPERTY(QString botId MEMBER m_botId CONSTANT)
     Q_PROPERTY(QString appId MEMBER m_appId CONSTANT)
     Q_PROPERTY(QString username MEMBER m_username CONSTANT)
-    Q_PROPERTY(QString fullName MEMBER m_fullName CONSTANT)
-    Q_PROPERTY(QString statusEmoji MEMBER m_statusEmoji CONSTANT)
-    Q_PROPERTY(QString status MEMBER m_status CONSTANT)
-    Q_PROPERTY(QString email MEMBER m_email CONSTANT)
+    Q_PROPERTY(QString fullName READ fullName NOTIFY fullNameChanged)
+    Q_PROPERTY(QString firstName READ firstName WRITE setFirstName NOTIFY firstNameChanged)
+    Q_PROPERTY(QString lastName READ lastName WRITE setLastName NOTIFY lastNameChanged)
+    Q_PROPERTY(QString statusEmoji READ statusEmoji WRITE setStatusEmoji NOTIFY statusEmojiChanged)
+    Q_PROPERTY(QString status READ status WRITE setStatus NOTIFY statusChanged)
+    Q_PROPERTY(QString email READ email WRITE setEmail NOTIFY emailChanged)
     Q_PROPERTY(QColor color MEMBER m_color CONSTANT)
-    Q_PROPERTY(QUrl avatarUrl MEMBER m_avatarUrl CONSTANT)
+    Q_PROPERTY(QUrl avatarUrl READ avatarUrl WRITE setAvatarUrl NOTIFY avatarChanged)
     Q_PROPERTY(bool isBot MEMBER m_isBot CONSTANT)
     Q_PROPERTY(Presence presence READ presence NOTIFY presenceChanged)
     Q_PROPERTY(bool selected READ selected NOTIFY selectedChanged)
@@ -58,9 +60,32 @@ public:
     void setSelected(bool selected);
     void setUserId(const QString &userId);
 
+    QString email() const;
+    void setEmail(const QString &email);
+
+    QString status() const;
+    void setStatus(const QString &status);
+
+    QString statusEmoji() const;
+    void setStatusEmoji(const QString &statusEmoji);
+    void setAvatarUrl(const QUrl &avatarUrl);
+    QString firstName() const;
+    QString lastName() const;
+
+public slots:
+    void setFirstName(QString firstName);
+    void setLastName(QString lastName);
+
 signals:
     void presenceChanged();
     void selectedChanged(bool selected);
+    void avatarChanged(QUrl avatarUrl);
+    void emailChanged(QString email);
+    void fullNameChanged(QString fullName);
+    void firstNameChanged(QString firstName);
+    void lastNameChanged(QString lastName);
+    void statusEmojiChanged(QString statusEmoji);
+    void statusChanged(QString status);
 
 private:
     QString m_userId;
@@ -68,6 +93,8 @@ private:
     QString m_appId;
     QString m_username;
     QString m_fullName;
+    QString m_firstName;
+    QString m_lastName;
     QUrl m_avatarUrl;
     bool m_isBot = false;
     QString m_statusEmoji;

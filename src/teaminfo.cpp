@@ -80,6 +80,11 @@ void TeamInfo::createModels(SlackTeamClient *slackClient)
     connect(m_users, &UsersModel::requestUserInfo, slackClient, &SlackTeamClient::requestUserInfo, Qt::QueuedConnection);
 }
 
+User *TeamInfo::selfUser() const
+{
+    return m_users->user(m_selfId);
+}
+
 QString TeamInfo::selfId() const
 {
     return m_selfId;

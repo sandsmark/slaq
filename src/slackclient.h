@@ -136,7 +136,8 @@ public slots:
     void requestTeamEmojis();
     void requestConversationInfo(const QString& channelId);
     void requestUserInfo(User* user);
-
+    void updateUserInfo(User* user);
+    void updateUserAvatar(const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
     QString getChannelName(const QString& channelId);
     Chat *getChannel(const QString& channelId);
 
@@ -153,11 +154,8 @@ private slots:
     void handleStartReply();
     void handleTestLoginReply();
     void handleLoadMessagesReply();
-    void handleDeleteReactionReply();
-    void handleAddReactionReply();
-    void handlePostMessageReply();
+    void handleCommonReply();
     void handlePostFile();
-    void handleMarkChannelReply();
     void handleJoinChannelReply();
     void handleLeaveChannelReply();
     void handleOpenChatReply();
@@ -177,7 +175,6 @@ private slots:
     void handleTeamInfoReply();
     void handleTeamEmojisReply();
     void handleSearchMessagesReply();
-    void handleDeleteMessageReply();
     void handleConversationsListReply();
     void handleUsersListReply();
     void handleConversationMembersReply();
@@ -189,9 +186,12 @@ private:
     QString activeWindow;
 
     QNetworkReply *executePost(const QString& method, const QMap<QString, QString> &data);
-    QNetworkReply *executePostWithFile(const QString& method, const QMap<QString, QString> &, QFile *file);
-
-    QNetworkReply *executeGet(const QString& method, const QMap<QString, QString>& params = QMap<QString, QString>(), const QVariant &attribute = QVariant());
+    QNetworkReply *executePostWithFile(const QString& method, const QMap<QString, QString> &,
+                                       QFile *file, const QString &fileFormData = QString());
+    QNetworkReply *executePost(const QString &method, const QByteArray &data);
+    QNetworkReply *executeGet(const QString& method, const QMap<QString,
+                              QString>& params = QMap<QString, QString>(),
+                              const QVariant &attribute = QVariant());
 
     bool isOk(const QNetworkReply *reply);
     bool isError(const QJsonObject &data);
