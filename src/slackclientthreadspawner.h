@@ -26,6 +26,7 @@ public:
     bool isOnline();
 
     Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
+    Q_INVOKABLE User *selfUser(const QString& teamId);
     Q_INVOKABLE UsersModel *usersModel(const QString& teamId);
     Q_INVOKABLE ChatsModel *chatsModel(const QString& teamId);
     Q_INVOKABLE SlackTeamClient::ClientStatus slackClientStatus(const QString& teamId);
@@ -149,6 +150,8 @@ public slots:
     void onMessagesReceived(const QString &channelId, QList<Message *> messages, bool hasMore, int threadMsgsCount);
 
     void sendUserTyping(const QString& teamId, const QString& channelId);
+    void updateUserInfo(const QString& teamId, User *user);
+    void updateUserAvatar(const QString& teamId, const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
 
 protected:
     void run();

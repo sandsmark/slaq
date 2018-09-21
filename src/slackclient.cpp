@@ -571,6 +571,25 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
     return networkAccessManager->get(request);
 }
 
+QNetworkReply *SlackTeamClient::executePost(const QString& method, const QByteArray &data)
+{
+    DEBUG_BLOCK
+
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("token"), m_teamInfo.teamToken());
+
+    QUrl url(QStringLiteral("https://slack.com/api/") + method);
+    url.setQuery(query);
+    QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json; charset=utf-8"));
+    request.setHeader(QNetworkRequest::ContentLengthHeader, data.length());
+    QByteArray _data = data;
+
+    qDebug() << "POST (2)" << url.toString() << _data.replace("\\", "");// << query.toString();
+    return networkAccessManager->post(request, _data.replace("\\", ""));
+}
+
 QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QString, QString> &data)
 {
     DEBUG_BLOCK
@@ -598,7 +617,7 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QS
     return networkAccessManager->post(request, body);
 }
 
-QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const QMap<QString, QString> &formdata, QFile *file)
+QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const QMap<QString, QString> &formdata, QFile *file, const QString& fileFormData)
 {
     DEBUG_BLOCK
 
@@ -610,7 +629,21 @@ QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const
     dataParts->append(tokenPart);
 
     QHttpPart filePart;
-    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("from-data; name=\"file\"; filename=\"") + file->fileName() + "\"");
+    if (fileFormData.isEmpty()) {
+        filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("from-data; name=\"file\"; filename=\"") + file->fileName() + "\"");
+    } else {
+        filePart.setHeader(QNetworkRequest::ContentDispositionHeader, fileFormData);
+    }
+    //set content type
+    QFileInfo _fi(*file);
+    const QString& ext = _fi.completeSuffix().toLower();
+    if (ext == "gif") {
+        filePart.setHeader(QNetworkRequest::ContentTypeHeader, "image/gif");
+    } else if (ext == "png") {
+        filePart.setHeader(QNetworkRequest::ContentTypeHeader, "image/png");
+    } else if (ext == "jpg" || ext == "jpeg") {
+        filePart.setHeader(QNetworkRequest::ContentTypeHeader, "image/jpeg");
+    }
     filePart.setBodyDevice(file);
     dataParts->append(filePart);
 
@@ -1063,6 +1096,65 @@ void SlackTeamClient::requestUserInfo(User *user)
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersInfoReply);
 }
 
+void SlackTeamClient::updateUserInfo(User *user)
+{
+    QMap<QString, QString> params;
+
+    QJsonObject profile;
+//    if (!user->firstName().isEmpty()) {
+//        profile["first_name"] = user->firstName();
+//    }
+//    if (!user->lastName().isEmpty()) {
+//        profile["last_name"] = user->lastName();
+//    }
+//    if (!user->email().isEmpty()) {
+//        profile["email"] = user->email();
+//    }
+    if (!user->status().isEmpty()) {
+        profile["status_text"] = user->status();
+    }
+    if (!user->statusEmoji().isEmpty()) {
+        profile["status_emoji"] = user->statusEmoji();
+    }
+    if (profile.isEmpty()) {
+        qWarning() << "No data provided for change user profile";
+        return;
+    }
+    params.insert(QStringLiteral("user"), user->userId());
+    params.insert(QStringLiteral("profile"), QJsonDocument(profile).toJson(QJsonDocument::Compact));
+    QNetworkReply *reply = executePost(QStringLiteral("users.profile.set"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
+}
+
+void SlackTeamClient::updateUserAvatar(const QString& filePath, int cropSide, int cropX, int cropY)
+{
+    QMap<QString, QString> data;
+
+    if (cropSide > 0) {
+        data.insert(QStringLiteral("crop_w"), QString("%1").arg(cropSide));
+    }
+    if (cropSide > 0) {
+        data.insert(QStringLiteral("crop_x"), QString("%1").arg(cropX));
+    }
+    if (cropSide > 0) {
+        data.insert(QStringLiteral("crop_y"), QString("%1").arg(cropY));
+    }
+
+    QFile *file = new QFile(QUrl(filePath).toString(QUrl::RemoveScheme));
+    if (!file->open(QFile::ReadOnly)) {
+        qWarning() << "image file not readable" << file->fileName();
+        emit postFileFail(m_teamInfo.teamId());
+        return;
+    }
+
+    QString _fileFormData = QStringLiteral("from-data; name=\"image\"");
+    qDebug() << "sending picture image image" << filePath;
+    QNetworkReply *reply = executePostWithFile(QStringLiteral("users.setPhoto"), data, file, _fileFormData);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostFile);
+    connect(reply, &QNetworkReply::finished, file, &QObject::deleteLater);
+}
+
 QString SlackTeamClient::userName(const QString &userId) {
     if (teamInfo()->users() == nullptr) {
         return "";
@@ -1343,19 +1435,7 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
     params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleMarkChannelReply);
-}
-
-void SlackTeamClient::handleMarkChannelReply()
-{
-    DEBUG_BLOCK
-
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-
-    QJsonObject data = getResult(reply);
-    //qDebug() << "Mark message result" << data;
-
-    reply->deleteLater();
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::deleteReaction(const QString& channelId, const QDateTime &ts, const QString& reaction)
@@ -1368,7 +1448,7 @@ void SlackTeamClient::deleteReaction(const QString& channelId, const QDateTime &
     data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.remove"), data);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleDeleteReactionReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction)
@@ -1381,7 +1461,7 @@ void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
     data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleAddReactionReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::postMessage(const QString& channelId, QString content, const QDateTime &thread_ts)
@@ -1397,7 +1477,7 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
     }
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.postMessage"), data);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostMessageReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::updateMessage(const QString &channelId, QString content, const QDateTime &ts)
@@ -1411,7 +1491,7 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content, c
     data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.update"), data);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostMessageReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts)
@@ -1423,17 +1503,7 @@ void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &t
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.delete"), data);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleDeleteMessageReply);
-}
-
-void SlackTeamClient::handleDeleteMessageReply()
-{
-    DEBUG_BLOCK;
-
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-    qDebug() << "Delete message result" << data;
-    reply->deleteLater();
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::handleConversationsListReply()
@@ -1582,32 +1652,12 @@ void SlackTeamClient::handleUsersInfoReply()
     }
 }
 
-void SlackTeamClient::handleDeleteReactionReply()
-{
-    DEBUG_BLOCK;
 
+void SlackTeamClient::handleCommonReply()
+{
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
-    qDebug() << "Delete reaction result" << data;
-    reply->deleteLater();
-}
-
-void SlackTeamClient::handleAddReactionReply()
-{
-    DEBUG_BLOCK;
-
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-    qDebug() << "Add reaction result" << data;
-    reply->deleteLater();
-}
-
-void SlackTeamClient::handlePostMessageReply()
-{
-    DEBUG_BLOCK;
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-    qDebug() << "Post/update message result" << data;
+    qDebug() << "Common result" << data;
     reply->deleteLater();
 }
 

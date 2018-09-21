@@ -99,32 +99,11 @@ MouseArea {
                             }
                         }
 
-                        Control {
+                        UserStatusEmoji {
                             width: 16
                             height: 16
+                            user: User
                             visible: User != null && User.statusEmoji.length > 0 && !sameuser
-                            hoverEnabled: true
-                            ToolTip.delay: 100
-                            ToolTip.visible: hovered && User.status !== ""
-                            ToolTip.text: User.status
-
-                            Image {
-                                sourceSize: Qt.size(parent.width, parent.height)
-                                visible: !ImagesCache.isUnicode
-                                smooth: true
-                                cache: false
-                                source: visible ? "image://emoji/" + User.statusEmoji.slice(1, -1) : ""
-                            }
-                            Label {
-                                visible: ImagesCache.isUnicode
-                                text: User != null ? ImagesCache.getEmojiByName(User.statusEmoji.slice(1, -1)) : ""
-                                font.family: "Twitter Color Emoji"
-                                font.pixelSize: parent.height - 2
-                                font.italic: false
-                                renderType: Text.QtRendering
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignHCenter
-                            }
                         }
 
                         Label {

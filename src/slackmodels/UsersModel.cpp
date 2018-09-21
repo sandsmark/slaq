@@ -111,13 +111,15 @@ void User::setData(const QJsonObject &data)
         //qWarning() << "No full name set";
         m_fullName = profile.value(QStringLiteral("real_name")).toString();
     }
-    m_avatarUrl = QUrl(profile.value(QStringLiteral("image_72")).toString());
+    setAvatarUrl(QUrl(profile.value(QStringLiteral("image_72")).toString()));
     if (!m_avatarUrl.isValid()) {
         //qWarning() << "No avatar URL";
     }
-    m_statusEmoji = profile.value(QStringLiteral("status_emoji")).toString();
-    m_status = profile.value(QStringLiteral("status_text")).toString();
-    m_email = profile.value(QStringLiteral("email")).toString();
+    setStatusEmoji(profile.value(QStringLiteral("status_emoji")).toString());
+    setStatus(profile.value(QStringLiteral("status_text")).toString());
+    setFirstName(profile.value(QStringLiteral("first_name")).toString());
+    setLastName(profile.value(QStringLiteral("last_name")).toString());
+    setEmail(profile.value(QStringLiteral("email")).toString());
     m_color = QColor("#" + data.value(QStringLiteral("color")).toString());
     m_presence = Unknown;
 
@@ -183,6 +185,73 @@ void User::setSelected(bool selected)
 void User::setUserId(const QString &userId)
 {
     m_userId = userId;
+}
+
+QString User::email() const
+{
+    return m_email;
+}
+
+void User::setEmail(const QString &email)
+{
+    m_email = email;
+    emit emailChanged(email);
+}
+
+QString User::status() const
+{
+    return m_status;
+}
+
+void User::setStatus(const QString &status)
+{
+    m_status = status;
+    emit statusChanged(status);
+}
+
+QString User::statusEmoji() const
+{
+    return m_statusEmoji;
+}
+
+void User::setStatusEmoji(const QString &statusEmoji)
+{
+    m_statusEmoji = statusEmoji;
+    emit statusEmojiChanged(statusEmoji);
+}
+
+void User::setAvatarUrl(const QUrl &avatarUrl)
+{
+    m_avatarUrl = avatarUrl;
+    emit avatarChanged(avatarUrl);
+}
+
+QString User::firstName() const
+{
+    return m_firstName;
+}
+
+QString User::lastName() const
+{
+    return m_lastName;
+}
+
+void User::setFirstName(QString firstName)
+{
+    if (m_firstName == firstName)
+        return;
+
+    m_firstName = firstName;
+    emit firstNameChanged(m_firstName);
+}
+
+void User::setLastName(QString lastName)
+{
+    if (m_lastName == lastName)
+        return;
+
+    m_lastName = lastName;
+    emit lastNameChanged(m_lastName);
 }
 
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)

@@ -26,6 +26,7 @@ ApplicationWindow {
     property alias settings: settings
     property alias textViewer: textViewer
     property alias fileSend: fileSend
+    property alias userDialog: userDialog
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
@@ -105,6 +106,10 @@ ApplicationWindow {
         }
     }
 
+    UserDialog {
+        id: userDialog
+    }
+
     SettingsDialog {
         id: settingsDialog
     }
@@ -159,7 +164,6 @@ ApplicationWindow {
 
                 onClicked: connectionPanel.open()
             }
-
             ToolSeparator {}
 
             RowLayout {

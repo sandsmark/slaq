@@ -22,6 +22,15 @@ SlackTeamClient *SlackClientThreadSpawner::slackClient(const QString &teamId) {
     return m_knownTeams.value(teamId, nullptr);
 }
 
+User *SlackClientThreadSpawner::selfUser(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return nullptr;
+    }
+    return _slackClient->teamInfo()->selfUser();
+}
+
 UsersModel *SlackClientThreadSpawner::usersModel(const QString &teamId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
@@ -486,6 +495,29 @@ void SlackClientThreadSpawner::sendUserTyping(const QString &teamId, const QStri
     }
     QMetaObject::invokeMethod(_slackClient, "sendUserTyping", Qt::QueuedConnection,
                               Q_ARG(QString, channelId));
+}
+
+void SlackClientThreadSpawner::updateUserInfo(const QString &teamId, User *user)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "updateUserInfo", Qt::QueuedConnection,
+                              Q_ARG(User*, user));
+}
+
+void SlackClientThreadSpawner::updateUserAvatar(const QString &teamId, const QString &filePath, int cropSide, int cropX, int cropY)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "updateUserAvatar", Qt::QueuedConnection,
+                              Q_ARG(QString, filePath),
+                              Q_ARG(int, cropSide),
+                              Q_ARG(int, cropX),
+                              Q_ARG(int, cropY));
 }
 
 void SlackClientThreadSpawner::onMessageUpdated(Message *message)
