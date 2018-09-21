@@ -240,6 +240,7 @@ ApplicationWindow {
                                 }
                             }
                             onClicked: {
+                                console.time("start_team_switching")
                                 SlackClient.lastTeam = model.teamId
                                 console.log("set last team", SlackClient.lastTeam)
                                 teamsSwipe.indexToLoad = index
@@ -428,6 +429,7 @@ ApplicationWindow {
                 SwipeView.onIsCurrentItemChanged: {
                     if (SwipeView.isCurrentItem && item !== null) {
                         item.setCurrentTeam()
+                        console.timeEnd("start_team_switching")
                     }
                 }
                 Component.onCompleted: {

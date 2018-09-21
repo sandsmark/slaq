@@ -42,8 +42,6 @@ ListView {
         delegate: Label {
             text: section
             padding: Theme.paddingMedium
-            color: palette.brightText
-
             background: Item {
                 width: listView.width
 
