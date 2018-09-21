@@ -24,6 +24,11 @@ Dialog {
     focus: true
     property User user: null
 
+    onAboutToHide: {
+        userDataChanged = false
+        selectedFile = ""
+    }
+
     Connections {
         target: emojiSelector
         onEmojiSelected: {
@@ -41,6 +46,7 @@ Dialog {
         id: fileDialog
         title: "Please choose an image file"
         visible: false
+        nameFilters: [ "Image files (*.jpg *.png *.jpeg *.gif)" ]
         onAccepted: {
             selectedFile = fileUrl
         }
@@ -59,8 +65,6 @@ Dialog {
                 if (selectedFile !== "") {
                     SlackClient.updateUserAvatar(teamId, selectedFile)
                 }
-                userDataChanged = false
-                selectedFile = ""
                 close()
             }
         }
@@ -91,7 +95,7 @@ Dialog {
             Image {
                 id: avatar
                 x: (parent.width - width)/2
-                source: "image://emoji/slack/" + user.avatarUrl
+                source: selectedFile === "" ? "image://emoji/slack/" + user.avatarUrl : selectedFile
                 width: parent.width / 2
                 height: parent.width / 2
                 Rectangle {
