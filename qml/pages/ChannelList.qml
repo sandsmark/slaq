@@ -11,6 +11,7 @@ Page {
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
 
+    spacing: 5
     property User selfUser: null
     title: teamRoot.teamName
     onAppActiveChanged: {
@@ -23,7 +24,6 @@ Page {
             if (teamId === teamRoot.teamId) {
                 selfUser = SlackClient.selfUser(teamRoot.teamId)
                 console.log("got user", selfUser)
-                //avatarImage.source = selfUser.avatarUrl
             }
         }
     }
@@ -31,6 +31,7 @@ Page {
     header: RowLayout {
         spacing: Theme.paddingMedium
         Button {
+            display: AbstractButton.IconOnly
             background: Item {
                 implicitHeight: Theme.headerSize
                 implicitWidth: Theme.headerSize
@@ -51,19 +52,19 @@ Page {
         }
         ColumnLayout {
             height: Theme.headerSize
+            Layout.fillWidth: true
             Label {
+                Layout.fillWidth: true
                 text: page.title
-                verticalAlignment: "AlignVCenter"
                 font.bold: true
-                horizontalAlignment: Text.AlignHCenter
                 height: Theme.headerSize
             }
             RowLayout {
+                Layout.fillWidth: true
                 Label {
+                    Layout.fillWidth: true
                     text: selfUser.username
-                    verticalAlignment: "AlignVCenter"
                     font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
                     height: Theme.headerSize
                 }
                 UserStatusEmoji {

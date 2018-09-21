@@ -195,7 +195,11 @@ QImage ImagesCache::image(const QString &id)
         //qDebug() << "loading image" << path_ << imgFormat;
         image_ = imgReader.read();
         if (image_.isNull()) {
-            qWarning() << "Error loading image" << path_ << imgReader.errorString() << id;
+            if (m_requestedImages.contains(id)) {
+                qWarning() << "Error loading image but its on the way" << path_ << imgReader.errorString() << id;
+            } else {
+                qWarning() << "Error loading image" << path_ << imgReader.errorString() << id;
+            }
         }
     } else {
         emit requestImageViaHttp(id);
