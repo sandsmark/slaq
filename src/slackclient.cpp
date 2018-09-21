@@ -584,10 +584,9 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QByteAr
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json; charset=utf-8"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, data.length());
-    QByteArray _data = data;
 
-    qDebug() << "POST (2)" << url.toString() << _data.replace("\\", "");// << query.toString();
-    return networkAccessManager->post(request, _data.replace("\\", ""));
+    qDebug() << "POST (2)" << url.toString() << data;// << query.toString();
+    return networkAccessManager->post(request, data);
 }
 
 QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QString, QString> &data)
@@ -625,11 +624,6 @@ QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("token"), m_teamInfo.teamToken());
     QHttpMultiPart *dataParts = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-
-//    QHttpPart tokenPart;
-//    tokenPart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("form-data; name=\"token\""));
-//    tokenPart.setBody(m_teamInfo.teamToken().toUtf8());
-//    dataParts->append(tokenPart);
 
     QHttpPart filePart;
     //set content type
@@ -1106,26 +1100,12 @@ void SlackTeamClient::updateUserInfo(User *user)
     QMap<QString, QString> params;
 
     QJsonObject profile;
-//    if (!user->firstName().isEmpty()) {
+    //TODO: to change this, app must have scope: users.profile.write
 //        profile["first_name"] = user->firstName();
-//    }
-//    if (!user->lastName().isEmpty()) {
 //        profile["last_name"] = user->lastName();
-//    }
-//    if (!user->email().isEmpty()) {
 //        profile["email"] = user->email();
-//    }
-    if (!user->status().isEmpty()) {
-        profile["status_text"] = user->status();
-    }
-    if (!user->statusEmoji().isEmpty()) {
-        profile["status_emoji"] = user->statusEmoji();
-    }
-    if (profile.isEmpty()) {
-        qWarning() << "No data provided for change user profile";
-        return;
-    }
-    params.insert(QStringLiteral("user"), user->userId());
+    profile["status_text"] = user->status();
+    profile["status_emoji"] = user->statusEmoji();
     params.insert(QStringLiteral("profile"), QJsonDocument(profile).toJson(QJsonDocument::Compact));
     QNetworkReply *reply = executePost(QStringLiteral("users.profile.set"), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
