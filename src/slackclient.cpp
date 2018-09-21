@@ -617,23 +617,21 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QS
     return networkAccessManager->post(request, body);
 }
 
-QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const QMap<QString, QString> &formdata, QFile *file, const QString& fileFormData)
+QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const QMap<QString, QString> &formdata,
+                                                    QFile *file, const QString& fileFormData)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("token"), m_teamInfo.teamToken());
     QHttpMultiPart *dataParts = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
-    QHttpPart tokenPart;
-    tokenPart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("from-data; name=\"token\""));
-    tokenPart.setBody(m_teamInfo.teamToken().toUtf8());
-    dataParts->append(tokenPart);
+//    QHttpPart tokenPart;
+//    tokenPart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("form-data; name=\"token\""));
+//    tokenPart.setBody(m_teamInfo.teamToken().toUtf8());
+//    dataParts->append(tokenPart);
 
     QHttpPart filePart;
-    if (fileFormData.isEmpty()) {
-        filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("from-data; name=\"file\"; filename=\"") + file->fileName() + "\"");
-    } else {
-        filePart.setHeader(QNetworkRequest::ContentDispositionHeader, fileFormData);
-    }
     //set content type
     QFileInfo _fi(*file);
     const QString& ext = _fi.completeSuffix().toLower();
@@ -644,6 +642,12 @@ QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const
     } else if (ext == "jpg" || ext == "jpeg") {
         filePart.setHeader(QNetworkRequest::ContentTypeHeader, "image/jpeg");
     }
+    if (fileFormData.isEmpty()) {
+        filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QStringLiteral("form-data; name=\"file\"; filename=\"") + file->fileName() + "\"");
+    } else {
+        filePart.setHeader(QNetworkRequest::ContentDispositionHeader, fileFormData);
+    }
+
     filePart.setBodyDevice(file);
     dataParts->append(filePart);
 
@@ -656,6 +660,7 @@ QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const
     }
 
     QUrl url(QStringLiteral("https://slack.com/api/") + method);
+    url.setQuery(query);
     QNetworkRequest request(url);
 
     qDebug() << "POST" << url << dataParts;
@@ -1147,7 +1152,7 @@ void SlackTeamClient::updateUserAvatar(const QString& filePath, int cropSide, in
         return;
     }
 
-    QString _fileFormData = QStringLiteral("from-data; name=\"image\"");
+    QString _fileFormData = QStringLiteral("form-data; name=\"image\"; filename=\"") + file->fileName() + "\"";
     qDebug() << "sending picture image image" << filePath;
     QNetworkReply *reply = executePostWithFile(QStringLiteral("users.setPhoto"), data, file, _fileFormData);
 
