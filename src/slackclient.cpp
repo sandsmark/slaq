@@ -522,11 +522,16 @@ bool SlackTeamClient::isError(const QJsonObject &data)
 
 QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
 {
-    DEBUG_BLOCK
+    DEBUG_BLOCK;
 
+    QJsonObject errorJson;
     if (!isOk(reply)) {
-        qWarning() << "bad";
-        return QJsonObject();
+        qWarning() << "network error";
+        errorJson["ok"] = false;
+        errorJson["domain"] = "network";
+        errorJson["error"] = reply->errorString() +
+                QString(". HTTP code: %1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+        return errorJson;
     }
 
     QJsonParseError error;
