@@ -33,9 +33,8 @@ Dialog {
 
     function calculateAvatar() {
         crop_x = x_left - avatar.start_x
-        crop_y = y_up - avatar.start_y
         crop_w = x_right - x_left
-        console.log(crop_x, crop_y, crop_w)
+        crop_y = avatar.start_y + y_up
     }
 
     onAboutToHide: {
@@ -121,11 +120,11 @@ Dialog {
                     if (avatar.status == Image.Ready) {
                         start_x = (width-paintedWidth)/2
                         start_y = (height-paintedHeight)/2
-                        y_down = start_y
-                        y_up = y_down + paintedHeight
+                        y_down = start_y + paintedHeight
+                        y_up = start_y
                         x_left = start_x
                         x_right = x_left + paintedWidth
-                        vertSlider.setValues(y_down/height, y_up/height)
+                        vertSlider.setValues((1.0 - y_down/height), (1.0 - y_up/height))
                     }
                 }
                 Rectangle { color: "gray"; width: parent.width; height: 2; y: y_down }
@@ -202,6 +201,8 @@ Dialog {
                     MouseArea {
                         id: dragMouse
                         anchors.fill: parent
+                        preventStealing: true
+                        propagateComposedEvents: true
                         drag.target: dragMe
                         drag.axis: Drag.XAndYAxis
                         drag.minimumX: avatar.start_x
