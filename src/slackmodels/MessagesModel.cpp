@@ -95,17 +95,24 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
 void MessageListModel::updateReactionUsers(Message* message) {
     foreach(QObject* r, message->reactions) {
         Reaction* reaction = static_cast<Reaction*>(r);
-        if (!reaction->users.isEmpty()) {
-            reaction->users.clear();
+        if (reaction->usersCount() > 0) {
+            reaction->m_users.clear();
         }
-        foreach (const QString& userId, reaction->userIds) {
+        foreach (const QString& userId, reaction->m_userIds) {
             ::User* user_ = m_usersModel->user(userId);
             if (user_ != nullptr) {
-                reaction->users.append(m_usersModel->user(userId)->username());
+                reaction->appendUser(m_usersModel->user(userId)->username());
+            } else {
+                qWarning() << "Cant find user" << userId << "while adding reaction";
             }
         }
-        //qDebug() << "reaction users" << reaction->users << "for" << reaction->userIds;
+        qDebug() << "reaction users" << reaction->m_users << "for" << reaction->m_userIds;
+        if (reaction->usersCount() <= 0) {
+            message->reactions.removeOne(r);
+            reaction->deleteLater();
+        }
     }
+
 }
 
 bool MessageListModel::historyLoaded() const
@@ -308,7 +315,7 @@ QDateTime MessageListModel::firstMessageTs()
 
 void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
 {
-    updateReactionUsers(message);
+    //updateReactionUsers(message);
     m_formatter.replaceAll(chat, message->text);
     for (QObject* attachmentObj : message->attachments) {
         Attachment* attachment = static_cast<Attachment*>(attachmentObj);
@@ -394,6 +401,7 @@ void MessageListModel::processChildMessage(Message* message) {
 void MessageListModel::addMessage(Message* message)
 {
     preprocessMessage(message);
+    updateReactionUsers(message);
     //check for thread
     if (isMessageThreadChild(message)) {
         processChildMessage(message);
@@ -416,7 +424,7 @@ void MessageListModel::addMessage(Message* message)
     }
 }
 
-void MessageListModel::updateMessage(Message *message)
+void MessageListModel::updateMessage(Message *message, bool replace)
 {
     int _index_to_replace = -1;
     Message* oldmessage = nullptr;
@@ -424,57 +432,75 @@ void MessageListModel::updateMessage(Message *message)
     const bool _isChild = isMessageThreadChild(message);
 
     m_modelMutex.lock();
-    for (int i = 0; i < m_messages.count(); i++) {
-        oldmessage = m_messages.at(i);
-        if (_isChild && !isThreadModel()) {
-            if (oldmessage->thread_ts == message->thread_ts) {
-                oldmessage->messageThread->updateMessage(message);
-                break;
-            }
-        } else {
-            if (oldmessage->time == message->time) {
-                //copy message data, which might not exists in update
-                message->messageThread = oldmessage->messageThread;
-                if (message->attachments.isEmpty() && !oldmessage->attachments.isEmpty()) {
-                    message->attachments = oldmessage->attachments;
+    if (replace) {
+        for (int i = 0; i < m_messages.count(); i++) {
+            oldmessage = m_messages.at(i);
+            if (_isChild && !isThreadModel()) {
+                if (oldmessage->thread_ts == message->thread_ts) {
+                    oldmessage->messageThread->updateMessage(message, replace);
+                    break;
                 }
-                if (message->reactions.isEmpty() && !oldmessage->reactions.isEmpty()) {
-                    message->reactions = oldmessage->reactions;
-                }
-                if (message->fileshares.isEmpty() && !oldmessage->fileshares.isEmpty()) {
-                    message->fileshares = oldmessage->fileshares;
-                }
-                if (message->replies.isEmpty() && !oldmessage->replies.isEmpty()) {
-                    message->replies = oldmessage->replies;
-                }
+            } else {
+                if (oldmessage->time == message->time) {
+                    //copy message data, which might not exists in update
+                    message->messageThread = oldmessage->messageThread;
+                    if (message->attachments.isEmpty() && !oldmessage->attachments.isEmpty()) {
+                        message->attachments = oldmessage->attachments;
+                    }
+                    if (message->reactions.isEmpty() && !oldmessage->reactions.isEmpty()) {
+                        message->reactions = oldmessage->reactions;
+                    }
+                    if (message->fileshares.isEmpty() && !oldmessage->fileshares.isEmpty()) {
+                        message->fileshares = oldmessage->fileshares;
+                    }
+                    if (message->replies.isEmpty() && !oldmessage->replies.isEmpty()) {
+                        message->replies = oldmessage->replies;
+                    }
 
-                if (message->user.isNull()) {
-                    message->user = m_usersModel->user(message->user_id);
                     if (message->user.isNull()) {
-                        qWarning() << __PRETTY_FUNCTION__ << "user is null for " << message->user_id;
-                        //Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+                        message->user = m_usersModel->user(message->user_id);
+                        if (message->user.isNull()) {
+                            qWarning() << __PRETTY_FUNCTION__ << "user is null for " << message->user_id;
+                            //Q_ASSERT_X(!message->user.isNull(), "user is null", "");
+                        }
+                    }
+                    _index_to_replace = i;
+                    break;
+                }
+            }
+        }
+    } else {
+        _index_to_replace = m_messages.indexOf(message);
+        if (_index_to_replace < 0) {
+            if (_isChild && !isThreadModel()) {
+                for (Message* msg : m_messages) {
+                    if (msg->thread_ts == message->thread_ts && msg->messageThread != nullptr) {
+                        msg->messageThread->updateMessage(message, replace);
+                        break;
                     }
                 }
-                _index_to_replace = i;
-                break;
             }
+
         }
     }
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
-        preprocessMessage(message);
-        qDebug() << "updating message:" << message->text << message->user_id << message << oldmessage << _index_to_replace;
+        qDebug() << "updating message:" << message->text << message->user_id << message << oldmessage << _index_to_replace << replace;
+        updateReactionUsers(message);
+        if (replace) {
+            preprocessMessage(message);
 
-        if (message->messageThread != nullptr) {
-            //replace old parent message with new one in the thread
-            message->messageThread->replaceMessage(oldmessage, message);
-            message->messageThread->refresh();
-        }
-        if (message != oldmessage) {
-            m_modelMutex.lock();
-            m_messages.replace(_index_to_replace, message);
-            m_modelMutex.unlock();
-            delete oldmessage;
+            if (message->messageThread != nullptr) {
+                //replace old parent message with new one in the thread
+                message->messageThread->replaceMessage(oldmessage, message);
+                message->messageThread->refresh();
+            }
+            if (message != oldmessage) {
+                m_modelMutex.lock();
+                m_messages.replace(_index_to_replace, message);
+                m_modelMutex.unlock();
+                delete oldmessage;
+            }
         }
 
         QModelIndex modelIndex = index(_index_to_replace);
@@ -523,6 +549,7 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1 - threadMsgsCount);
 
     for (Message* message : messages) {
+        updateReactionUsers(message);
         preprocessMessage(message);
         //check for message thread
         if (isMessageThreadChild(message)) {
@@ -640,6 +667,7 @@ void Message::setData(const QJsonObject &data)
 
     for (const QJsonValue &reactionValue : data.value("reactions").toArray()) {
         Reaction *reaction = new Reaction;
+        reaction->moveToThread(qApp->thread());
         reaction->setData(reactionValue.toObject());
         QQmlEngine::setObjectOwnership(reaction, QQmlEngine::CppOwnership);
         reactions.append(reaction);
@@ -728,13 +756,39 @@ Reaction::Reaction(QObject *parent) : QObject(parent) {}
 void Reaction::setData(const QJsonObject &data)
 {
     //qDebug().noquote() << "reaction" << QJsonDocument(data).toJson();
-    name = data.value(QStringLiteral("name")).toString();
-    m_emojiInfo = ImagesCache::instance()->getEmojiInfo(name);
+    m_name = data.value(QStringLiteral("name")).toString();
+    m_emojiInfo = ImagesCache::instance()->getEmojiInfo(m_name);
 
     const QJsonArray usersList = data[QStringLiteral("users")].toArray();
     for (const QJsonValue &usersValue : usersList) {
-        userIds.append(usersValue.toString());
+        m_userIds.append(usersValue.toString());
     }
+}
+
+QString Reaction::name() const
+{
+    return m_name;
+}
+
+EmojiInfo *Reaction::getEmojiInfo() const
+{
+    return m_emojiInfo;
+}
+
+void Reaction::setEmojiInfo(EmojiInfo *emojiInfo)
+{
+    m_emojiInfo = emojiInfo;
+}
+
+void Reaction::setName(const QString &name)
+{
+    m_name = name;
+}
+
+void Reaction::appendUser(const QString &userName)
+{
+    m_users.append(userName);
+    emit usersChanged();
 }
 
 AttachmentField::AttachmentField(QObject *parent): QObject(parent) {}
@@ -817,6 +871,7 @@ void FileShare::setData(const QJsonObject &data)
 
     for (const QJsonValue &reactionValue : data.value("reactions").toArray()) {
         Reaction *reaction = new Reaction;
+        reaction->moveToThread(qApp->thread());
         reaction->setData(reactionValue.toObject());
         QQmlEngine::setObjectOwnership(reaction, QQmlEngine::CppOwnership);
         m_reactions.append(reaction);

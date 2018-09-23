@@ -216,7 +216,7 @@ Dialog {
                 width: parent.width
                 placeholderText: qsTr("First name...")
                 text: user.firstName
-                readOnly: true
+                //readOnly: true
                 onTextChanged: {
                     if (text != user.firstName) {
                         userDataChanged = true

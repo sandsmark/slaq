@@ -43,23 +43,29 @@ class Reaction : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QStringList users MEMBER users CONSTANT/*NOTIFY usersChanged*/)
-    Q_PROPERTY(QString name MEMBER name CONSTANT)
-    Q_PROPERTY(int usersCount READ usersCount CONSTANT/*NOTIFY usersChanged*/)
+    Q_PROPERTY(QStringList users MEMBER m_users NOTIFY usersChanged)
+    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(int usersCount READ usersCount NOTIFY usersChanged)
     Q_PROPERTY(EmojiInfo* emojiInfo MEMBER m_emojiInfo CONSTANT)
 
 public:
     Reaction(QObject *parent = nullptr);
     void setData(const QJsonObject &data);
-    int usersCount() { return users.count(); }
+    int usersCount() { return m_users.count(); }
+    QString name() const;
 
+    EmojiInfo *getEmojiInfo() const;
+    void setEmojiInfo(EmojiInfo *emojiInfo);
+    void setName(const QString &name);
+    void appendUser(const QString& userName);
+
+    QStringList m_userIds;
+    QStringList m_users;
 signals:
     void usersChanged();
 
-public:
-    QStringList users;
-    QStringList userIds;
-    QString name;
+private:
+    QString m_name;
     EmojiInfo* m_emojiInfo;
 };
 
@@ -342,7 +348,7 @@ public:
 
 public slots:
     void addMessage(Message *message);
-    void updateMessage(Message *message);
+    void updateMessage(Message *message, bool replace = true);
     void addMessages(const QList<Message *> &messages, bool hasMore, int threadMsgsCount);
     Message* message(const QDateTime& ts);
     bool deleteMessage(const QDateTime& ts);
@@ -363,6 +369,7 @@ public slots:
     MessageListModel* createThread(Message* parentMessage);
     void processChildMessage(Message *message);
     void preprocessFormatting(ChatsModel *chat, Message *message);
+    void updateReactionUsers(Message *message);
     int countUnread(const QDateTime& lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
 
@@ -374,7 +381,7 @@ signals:
     void fetchMoreMessages(const QString& channelId, const QDateTime& latest);
 private:
     void findNewUsers(QString &message);
-    void updateReactionUsers(Message *message);
+
 
 protected:
     QList<Message*> m_messages;

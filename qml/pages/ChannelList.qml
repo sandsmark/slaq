@@ -63,7 +63,7 @@ Page {
                 Layout.fillWidth: true
                 Label {
                     Layout.fillWidth: true
-                    text: selfUser.username
+                    text: selfUser != null ? selfUser.username: ""
                     font.bold: true
                     height: Theme.headerSize
                 }

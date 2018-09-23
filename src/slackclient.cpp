@@ -18,6 +18,28 @@
 
 #include "MessagesModel.h"
 
+static QMap<QString, QString> slackErrors() {
+    QMap<QString, QString>map;
+    //TODO: add more errors
+    map.insert("invalid_auth", "Some aspect of authentication cannot be validated. Either the provided token is invalid or the request originates from an IP address disallowed from making the request.");
+    map.insert("not_authed", "No authentication token provided.");
+    map.insert("not_admin", "Only admins can update the profile of another user. Some fields, like email may only be updated by an admin.");
+    map.insert("request_timeout", "The method was called via a POST request, but the POST data was either missing or truncated.");
+    map.insert("fatal_error", "The server could not complete your operation(s). It's possible some aspect of the operation succeeded before the error was raised.");
+    map.insert("name_taken", "A channel cannot be created with the given name.");
+    map.insert("no_channel", "Value passed for name was empty.");
+    map.insert("invalid_name", "Value passed for name was invalid.");
+    map.insert("account_inactive", "Authentication token is for a deleted user or workspace.");
+    map.insert("token_revoked", "Authentication token is for a deleted user or workspace or the app has been removed.");
+    map.insert("no_permission", "The workspace token used in this request does not have the permissions necessary to complete the request. Make sure your app is a member of the conversation it's attempting to post a message to.");
+    map.insert("user_is_bot", "This method cannot be called by a bot user.");
+    map.insert("org_login_required", "The workspace is undergoing an enterprise migration and will not be available until migration is complete.");
+    map.insert("channel_not_found", "Value passed for channel was invalid.");
+    map.insert("is_archived", "Channel has been archived.");
+    return map;
+}
+static const QMap<QString, QString> kSlackErrors = slackErrors();
+
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible), m_spawner(spawner)
 {
@@ -376,8 +398,8 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
         //check if the reaction already there
         for (int i = 0; i < m->reactions.size(); i++) {
             Reaction* rea = static_cast<Reaction*>(m->reactions.at(i));
-            qDebug() << "search reaction" << rea->name << reaction;
-            if (rea->name == reaction) {
+            qDebug() << "search reaction" << rea->name() << reaction;
+            if (rea->name() == reaction) {
                 r = rea;
                 break;
             }
@@ -385,27 +407,27 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
         if (type == "reaction_added") {
             if (r == nullptr) {
                 r = new Reaction;
+                r->moveToThread(qApp->thread());
                 QQmlEngine::setObjectOwnership(r, QQmlEngine::CppOwnership);
                 QString emojiPrepare = QString(":%1:").arg(reaction);
                 qDebug() << "added new reaction" << emojiPrepare;
                 MessageFormatter _formatter;
                 _formatter.replaceEmoji(emojiPrepare);
-                r->m_emojiInfo = ImagesCache::instance()->getEmojiInfo(reaction);
-                r->name = reaction;
+                r->setEmojiInfo(ImagesCache::instance()->getEmojiInfo(reaction));
+                r->setName(reaction);
                 m->reactions.append(r);
                 qDebug() << "added new reaction" << emojiPrepare << m->reactions.count();
             }
-            r->userIds << userid;
+            r->m_userIds << userid;
         } else if (type == "reaction_removed") {
             if (r == nullptr) {
                 qWarning() << "reaction" << reaction << "not found for message on channel" << channelid << "time" << ts;
                 return;
             }
-            m->reactions.removeOne(r);
-            r->deleteLater();
+            r->m_userIds.removeOne(userid);
         }
         _messagesModel->preprocessFormatting(_chatsModel, m);
-        emit messageUpdated(m);
+        emit messageUpdated(m, false);
     } else {
         qWarning() << "message not found for ts" << ts;
     }
@@ -497,7 +519,7 @@ bool SlackTeamClient::isOk(const QNetworkReply *reply)
     }
 }
 
-bool SlackTeamClient::isError(const QJsonObject &data)
+bool SlackTeamClient::isError(QJsonObject &data)
 {
     DEBUG_BLOCK
 
@@ -513,10 +535,13 @@ bool SlackTeamClient::isError(const QJsonObject &data)
     }
 
     qDebug() << "error" << data;
-    if (data.value("error") == "invalid_auth") {
-        emit accessTokenFail(m_teamInfo.teamId());
+    data["domain"] = "Slack error";
+    const QString& sl_err = data.value("error").toString();
+    data["error_str"] = kSlackErrors.value(sl_err);
+    if (data.value("error_str").toString().isEmpty()) {
+        data["error_str"] = sl_err;
     }
-
+    emit error(data);
     return true;
 }
 
@@ -528,8 +553,8 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
     if (!isOk(reply)) {
         qWarning() << "network error";
         errorJson["ok"] = false;
-        errorJson["domain"] = "network";
-        errorJson["error"] = reply->errorString() +
+        errorJson["domain"] = "Network error";
+        errorJson["error_str"] = reply->errorString() +
                 QString(". HTTP code: %1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
         return errorJson;
     }
@@ -1106,9 +1131,9 @@ void SlackTeamClient::updateUserInfo(User *user)
 
     QJsonObject profile;
     //TODO: to change this, app must have scope: users.profile.write
-//        profile["first_name"] = user->firstName();
-//        profile["last_name"] = user->lastName();
-//        profile["email"] = user->email();
+    profile["first_name"] = user->firstName();
+    profile["last_name"] = user->lastName();
+    profile["email"] = user->email();
     profile["status_text"] = user->status();
     profile["status_emoji"] = user->statusEmoji();
     params.insert(QStringLiteral("profile"), QJsonDocument(profile).toJson(QJsonDocument::Compact));
@@ -1629,7 +1654,7 @@ void SlackTeamClient::handleConversationInfoReply()
 void SlackTeamClient::handleUsersInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    const QJsonObject& data = getResult(reply);
+    QJsonObject data = getResult(reply);
     qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
     // invoke on the main thread
@@ -1647,7 +1672,8 @@ void SlackTeamClient::handleCommonReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
-    qDebug() << "Common result" << data;
+    bool error = isError(data);
+    qDebug() << "Common result" << data << error;
     reply->deleteLater();
 }
 

@@ -8,7 +8,7 @@ Control {
     hoverEnabled: true
     ToolTip.delay: 100
     ToolTip.visible: hovered && user.status !== ""
-    ToolTip.text: user.status
+    ToolTip.text: user != null ? user.status : ""
 
     Image {
         id: image
@@ -16,7 +16,7 @@ Control {
         visible: !ImagesCache.isUnicode
         smooth: true
         cache: false
-        source: visible && user.statusEmoji.length > 0 ? "image://emoji/" + user.statusEmoji.slice(1, -1) :
+        source: visible && user != null && user.statusEmoji.length > 0 ? "image://emoji/" + user.statusEmoji.slice(1, -1) :
                                                         showNoImage ? "qrc:/icons/no-image.png" : ""
     }
     Label {
