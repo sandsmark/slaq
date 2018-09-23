@@ -224,6 +224,8 @@ private:
     ClientStatus m_status { ClientStatus::UNDEFINED };
     QObject *m_spawner { nullptr };
 
+    static const QMap<QString, QString> kSlackErrors;
+
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)

@@ -18,27 +18,24 @@
 
 #include "MessagesModel.h"
 
-static QMap<QString, QString> slackErrors() {
-    QMap<QString, QString>map;
+const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     //TODO: add more errors
-    map.insert("invalid_auth", "Some aspect of authentication cannot be validated. Either the provided token is invalid or the request originates from an IP address disallowed from making the request.");
-    map.insert("not_authed", "No authentication token provided.");
-    map.insert("not_admin", "Only admins can update the profile of another user. Some fields, like email may only be updated by an admin.");
-    map.insert("request_timeout", "The method was called via a POST request, but the POST data was either missing or truncated.");
-    map.insert("fatal_error", "The server could not complete your operation(s). It's possible some aspect of the operation succeeded before the error was raised.");
-    map.insert("name_taken", "A channel cannot be created with the given name.");
-    map.insert("no_channel", "Value passed for name was empty.");
-    map.insert("invalid_name", "Value passed for name was invalid.");
-    map.insert("account_inactive", "Authentication token is for a deleted user or workspace.");
-    map.insert("token_revoked", "Authentication token is for a deleted user or workspace or the app has been removed.");
-    map.insert("no_permission", "The workspace token used in this request does not have the permissions necessary to complete the request. Make sure your app is a member of the conversation it's attempting to post a message to.");
-    map.insert("user_is_bot", "This method cannot be called by a bot user.");
-    map.insert("org_login_required", "The workspace is undergoing an enterprise migration and will not be available until migration is complete.");
-    map.insert("channel_not_found", "Value passed for channel was invalid.");
-    map.insert("is_archived", "Channel has been archived.");
-    return map;
-}
-static const QMap<QString, QString> kSlackErrors = slackErrors();
+    { "invalid_auth", "Some aspect of authentication cannot be validated. Either the provided token is invalid or the request originates from an IP address disallowed from making the request." },
+    { "not_authed", "No authentication token provided." },
+    { "not_admin", "Only admins can update the profile of another user. Some fields, like email may only be updated by an admin." },
+    { "request_timeout", "The method was called via a POST request, but the POST data was either missing or truncated." },
+    { "fatal_error", "The server could not complete your operation(s). It's possible some aspect of the operation succeeded before the error was raised." },
+    { "name_taken", "A channel cannot be created with the given name." },
+    { "no_channel", "Value passed for name was empty." },
+    { "invalid_name", "Value passed for name was invalid." },
+    { "account_inactive", "Authentication token is for a deleted user or workspace." },
+    { "token_revoked", "Authentication token is for a deleted user or workspace or the app has been removed." },
+    { "no_permission", "The workspace token used in this request does not have the permissions necessary to complete the request. Make sure your app is a member of the conversation it's attempting to post a message to." },
+    { "user_is_bot", "This method cannot be called by a bot user." },
+    { "org_login_required", "The workspace is undergoing an enterprise migration and will not be available until migration is complete." },
+    { "channel_not_found", "Value passed for channel was invalid." },
+    { "is_archived", "Channel has been archived." }
+};
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
     QObject(parent), appActive(true), activeWindow("init"), networkAccessible(QNetworkAccessManager::Accessible), m_spawner(spawner)
