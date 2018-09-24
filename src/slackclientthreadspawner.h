@@ -167,6 +167,7 @@ private:
     bool m_isOnline { false };
     QDateTime m_buildTime;
     ThreadExecutor* m_threadExecutor {nullptr};
+    QSettings m_settings;
 };
 
 class ThreadExecutor: public QObject {

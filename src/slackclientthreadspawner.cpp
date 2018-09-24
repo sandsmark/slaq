@@ -783,8 +783,7 @@ void SlackClientThreadSpawner::setLastTeam(const QString &lastTeam)
     emit lastTeamChanged(m_lastTeam);
     qDebug() << "Setting last team" << lastTeam;
 
-    QSettings settings;
-    settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
+    m_settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
 }
 
 void SlackClientThreadSpawner::appendTeam(const QString &teamId)
