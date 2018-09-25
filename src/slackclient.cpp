@@ -34,7 +34,10 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "user_is_bot", "This method cannot be called by a bot user." },
     { "org_login_required", "The workspace is undergoing an enterprise migration and will not be available until migration is complete." },
     { "channel_not_found", "Value passed for channel was invalid." },
-    { "is_archived", "Channel has been archived." }
+    { "is_archived", "Channel has been archived." },
+    { "already_reacted", "The specified item already has the user/reaction combination." },
+    { "too_many_reactions", "The limit for reactions a person may add to the item has been reached." },
+    { "no_reaction", "The specified item does not have the user/reaction combination." }
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
