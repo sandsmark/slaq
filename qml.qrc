@@ -57,5 +57,6 @@
         <file>qml/dialogs/UserDialog.qml</file>
         <file>qml/components/UserStatusEmoji.qml</file>
         <file>icons/no-image.png</file>
+        <file>qml/dialogs/ErrorMessageDialog.qml</file>
     </qresource>
 </RCC>

@@ -520,7 +520,7 @@ void SlackClientThreadSpawner::updateUserAvatar(const QString &teamId, const QSt
                               Q_ARG(int, cropY));
 }
 
-void SlackClientThreadSpawner::onMessageUpdated(Message *message)
+void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
@@ -533,7 +533,7 @@ void SlackClientThreadSpawner::onMessageUpdated(Message *message)
         qWarning() << "No messages in chat" << message->channel_id;
         return;
     }
-    messages->updateMessage(message);
+    messages->updateMessage(message, replace);
 }
 
 void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, const QDateTime &ts)
@@ -702,6 +702,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::conversationsDataChanged, this, &SlackClientThreadSpawner::onConversationsDataChanged, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::conversationMembersChanged, this, &SlackClientThreadSpawner::onConversationMembersChanged, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::usersPresenceChanged, this, &SlackClientThreadSpawner::onUsersPresenceChanged, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::error, this, &SlackClientThreadSpawner::error, Qt::QueuedConnection);
 
     return _slackClient;
 }
@@ -782,8 +783,7 @@ void SlackClientThreadSpawner::setLastTeam(const QString &lastTeam)
     emit lastTeamChanged(m_lastTeam);
     qDebug() << "Setting last team" << lastTeam;
 
-    QSettings settings;
-    settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
+    m_settings.setValue(QStringLiteral("LastTeam"), m_lastTeam);
 }
 
 void SlackClientThreadSpawner::appendTeam(const QString &teamId)

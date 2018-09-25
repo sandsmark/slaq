@@ -27,6 +27,7 @@ ApplicationWindow {
     property alias textViewer: textViewer
     property alias fileSend: fileSend
     property alias userDialog: userDialog
+    property alias errorDialog: errorDialog
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
@@ -104,6 +105,17 @@ ApplicationWindow {
         onAccepted: {
             SlackClient.closeChat(teamId, channelId)
         }
+    }
+
+    Connections {
+        target: SlackClient
+        onError: {
+            errorDialog.showError(err.domain, err.error_str, "", 0)
+        }
+    }
+
+    ErrorMessageDialog {
+        id: errorDialog
     }
 
     UserDialog {

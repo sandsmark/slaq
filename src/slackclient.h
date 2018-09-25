@@ -79,8 +79,9 @@ signals:
     void messageReceived(Message* message);
     void messagesReceived(const QString &channelId, QList<Message*> messages, bool hasMore, int threadMsgsCount);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
-    void messageUpdated(Message* message);
+    void messageUpdated(Message* message, bool replace = true);
     void messageDeleted(const QString& channelId, const QDateTime& ts);
+    void error(QJsonObject err);
 
     void channelUpdated(Chat* chat);
     void channelJoined(Chat* chat);
@@ -194,7 +195,7 @@ private:
                               const QVariant &attribute = QVariant());
 
     bool isOk(const QNetworkReply *reply);
-    bool isError(const QJsonObject &data);
+    bool isError(QJsonObject &data);
     QJsonObject getResult(QNetworkReply *reply);
 
     void parseMessageUpdate(const QJsonObject& message);
@@ -222,6 +223,8 @@ private:
     ClientStates m_state { ClientStates::UNINITIALIZED };
     ClientStatus m_status { ClientStatus::UNDEFINED };
     QObject *m_spawner { nullptr };
+
+    static const QMap<QString, QString> kSlackErrors;
 
 };
 

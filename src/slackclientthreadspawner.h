@@ -83,6 +83,7 @@ signals:
     void chatsModelChanged(const QString& teamId, ChatsModel* chatsModel);
     void usersModelChanged(const QString& teamId, UsersModel* usersModel);
     void searchStarted();
+    void error(QJsonObject err);
 
 public slots:
     void startClient(const QString& teamId);
@@ -120,7 +121,7 @@ public slots:
 
     //from slack thread to main thread
     void onMessageReceived(Message* message);
-    void onMessageUpdated(Message* message);
+    void onMessageUpdated(Message* message, bool replace = true);
     void onMessageDeleted(const QString& channelId, const QDateTime& ts);
     void onChannelUpdated(Chat *chat);
     void onChannelJoined(Chat *chat);
@@ -166,6 +167,7 @@ private:
     bool m_isOnline { false };
     QDateTime m_buildTime;
     ThreadExecutor* m_threadExecutor {nullptr};
+    QSettings m_settings;
 };
 
 class ThreadExecutor: public QObject {
