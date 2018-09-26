@@ -97,6 +97,18 @@ ApplicationWindow {
     }
 
     property alias leaveDialog: leaveDialog
+    property alias archiveDialog: archiveDialog
+
+    GroupLeaveDialog {
+        id: archiveDialog
+        property string channelId
+        property string teamId
+        question: qsTr("Are you sure you wish to archive channel ") + name + "?"
+        title: qsTr("Channel archive")
+        onAccepted: {
+            SlackClient.archiveChannel(teamId, channelId)
+        }
+    }
 
     GroupLeaveDialog {
         id: leaveDialog
@@ -252,7 +264,7 @@ ApplicationWindow {
                                 }
                             }
                             onClicked: {
-                                console.time("start_team_switching")
+                                console.time("team_switching")
                                 SlackClient.lastTeam = model.teamId
                                 console.log("set last team", SlackClient.lastTeam)
                                 teamsSwipe.indexToLoad = index
@@ -441,7 +453,7 @@ ApplicationWindow {
                 SwipeView.onIsCurrentItemChanged: {
                     if (SwipeView.isCurrentItem && item !== null) {
                         item.setCurrentTeam()
-                        console.timeEnd("start_team_switching")
+                        console.timeEnd("team_switching")
                     }
                 }
                 Component.onCompleted: {

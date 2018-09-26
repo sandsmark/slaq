@@ -117,7 +117,7 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
 
 QString ChatsModel::addChat(Chat* chat)
 {
-    QString channelId = chat->id;
+    qDebug() << "adding chat" << chat->id << m_chatIds.contains(chat->id) << m_chats.count() << QThread::currentThread();
     if (m_chatIds.contains(chat->id)) {
         //replace chat
         if (chat->membersModel.isNull()) {
@@ -132,10 +132,10 @@ QString ChatsModel::addChat(Chat* chat)
         chatChanged(chat);
     } else {
         beginInsertRows(QModelIndex(), m_chats.count(), m_chats.count());
-        channelId = doAddChat(chat);
+        doAddChat(chat);
         endInsertRows();
     }
-    return channelId;
+    return chat->id;
 }
 
 void ChatsModel::removeChat(const QString &channelId)
@@ -279,6 +279,10 @@ void ChatsModel::chatChanged(Chat *chat)
         return;
     }
     int row = m_chatIds.indexOf(chat->id);
+    //check if new chat instance to replace then delete old one
+    if (m_chats.value(chat->id) != chat) {
+        m_chats.value(chat->id)->deleteLater();
+    }
     m_chats[chat->id] = chat;
     Q_ASSERT_X(m_chats.size() == m_chatIds.size(), "ChatsModel::chatChanged", "m_chats.size() and m_chatIds.size() should be equal");
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());

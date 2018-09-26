@@ -36,6 +36,16 @@ ListView {
         }
     }
 
+    function archive(chatType, channelId, channelName) {
+        switch (chatType) {
+        case ChatsModel.Channel:
+            archiveDialog.name = channelName
+            archiveDialog.channelId = channelId
+            archiveDialog.teamId = teamRoot.teamId
+            archiveDialog.open()
+            break
+        }
+    }
     section {
         property: "Section"
         criteria: ViewSection.FullString
@@ -48,6 +58,7 @@ ListView {
                 EmojiRoundButton {
                     width: parent.height / 1.2
                     height: parent.height / 1.2
+                    flat: true
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: listView.ScrollBar.vertical.width + Theme.paddingSmall
@@ -71,7 +82,7 @@ ListView {
         repeat: false
         property string channelId: ""
         onTriggered: {
-            console.time("start_switching")
+            console.time("switching_channel")
             var channel = SlackClient.getChannel(teamRoot.teamId, channelId);
             console.warn("got channel", channel.name)
             pageStack.loadChannel(channel)
@@ -91,13 +102,32 @@ ListView {
         icon.source: model.PresenceIcon
         swipe.enabled: true
         swipe.right: EmojiRoundButton {
-            id: deleteLabel
-            text: "\uD83D\uDDD1"
+            id: leaveLabel
+            text: "⤿"
             padding: 12
             height: parent.height
             anchors.right: parent.right
 
-            SwipeDelegate.onClicked: leave(model.Type, model.Id, model.Name)
+            SwipeDelegate.onClicked: {
+                swipe.close()
+                leave(model.Type, model.Id, model.Name)
+            }
+
+            background: Rectangle {
+                color: leaveLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"
+            }
+        }
+        swipe.left: EmojiRoundButton {
+            id: deleteLabel
+            enabled: model.Type === ChatsModel.Channel
+            text: "\uD83D\uDDD1"
+            height: parent.height
+            anchors.left: parent.left
+
+            SwipeDelegate.onClicked: {
+                swipe.close()
+                archive(model.Type, model.Id, model.Name)
+            }
 
             background: Rectangle {
                 color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"

@@ -37,7 +37,8 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "is_archived", "Channel has been archived." },
     { "already_reacted", "The specified item already has the user/reaction combination." },
     { "too_many_reactions", "The limit for reactions a person may add to the item has been reached." },
-    { "no_reaction", "The specified item does not have the user/reaction combination." }
+    { "no_reaction", "The specified item does not have the user/reaction combination." },
+    { "invalid_name_specials", "Value passed for name contained unallowed special characters or upper case characters." }
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
@@ -220,13 +221,14 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
                type == QStringLiteral("im_marked") ||
                type == QStringLiteral("mpim_marked")) {
         parseChannelUpdate(message);
-    } else if (type == QStringLiteral("channel_joined")
-               || type == QStringLiteral("group_joined")
-               || type == QStringLiteral("im_created")) {
-        Chat* _chat = new Chat(message.value(QStringLiteral("channel")).toObject());
-        QQmlEngine::setObjectOwnership(_chat, QQmlEngine::CppOwnership);
-    } else if (type == QStringLiteral("im_open")) {
-        const QString& channelId = message.value(QStringLiteral("channel")).toString();
+    } else if (type == QStringLiteral("im_created")
+               || type == QStringLiteral("channel_created")) {
+        createChannelIfNeeded(message.value(QStringLiteral("channel")).toObject());
+    } else if (type == QStringLiteral("im_open") ||
+               type == QStringLiteral("channel_joined") ||
+               type == QStringLiteral("group_joined")) {
+        const QJsonValue& chan = message.value(QStringLiteral("channel"));
+        const QString& channelId = chan.isString() ? chan.toString() : chan.toObject().value("id").toString();
         ChatsModel* _chatsModel = m_teamInfo.chats();
         if (_chatsModel == nullptr) {
             qWarning() << "Chats model not yet allocated";
@@ -237,6 +239,8 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
             qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
             return;
         }
+        //consider chat is opened
+        _chat->isOpen = true;
         emit channelJoined(_chat);
     } else if (type == QStringLiteral("im_close")  || type == QStringLiteral("mpim_close")
                || type == QStringLiteral("channel_left") || type == QStringLiteral("group_left") ||
@@ -321,7 +325,6 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
 void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-//TODO: redesign
     const QString& subtype = message.value(QStringLiteral("subtype")).toString();
     const QJsonValue& submessage = message.value(QStringLiteral("message"));
     //channel id missed in sub messages
@@ -943,22 +946,7 @@ void SlackTeamClient::joinChannel(const QString& channelId)
     params.insert(QStringLiteral("channel"), channelId);
 
     QNetworkReply *reply = executePost(QStringLiteral("conversations.join"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleJoinChannelReply);
-}
-
-void SlackTeamClient::handleJoinChannelReply()
-{
-    DEBUG_BLOCK
-
-    qDebug() << "join reply";
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-
-    if (isError(data)) {
-        qDebug() << "Channel join failed";
-    }
-
-    reply->deleteLater();
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::leaveChannel(const QString& channelId)
@@ -969,21 +957,16 @@ void SlackTeamClient::leaveChannel(const QString& channelId)
     params.insert(QStringLiteral("channel"), channelId);
 
     QNetworkReply *reply = executePost(QStringLiteral("conversations.leave"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLeaveChannelReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::handleLeaveChannelReply()
+void SlackTeamClient::archiveChannel(const QString &channelId)
 {
-    DEBUG_BLOCK
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("channel"), channelId);
 
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-
-    if (isError(data)) {
-        qDebug() << "Channel leave failed" << data;
-    }
-
-    reply->deleteLater();
+    QNetworkReply *reply = executePost(QStringLiteral("conversations.archive"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::openChat(const QStringList& userIds, const QString& channelId)
@@ -1000,22 +983,36 @@ void SlackTeamClient::openChat(const QStringList& userIds, const QString& channe
     params.insert(QStringLiteral("return_im"), "true");
 
     QNetworkReply *reply = executePost(QStringLiteral("conversations.open"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleOpenChatReply);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::handleOpenChatReply()
+void SlackTeamClient::handleCreateChatReply()
 {
     DEBUG_BLOCK
 
-    qDebug() << "open chat reply";
+    qDebug() << "create chat reply";
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
     QJsonObject data = getResult(reply);
 
     if (isError(data)) {
         qDebug() << "Chat open failed" << data;
+        return;
     }
 
-    reply->deleteLater();
+    createChannelIfNeeded(data.value("channel").toObject());
+}
+
+void SlackTeamClient::createChat(const QString& channelName, bool isPrivate)
+{
+    DEBUG_BLOCK;
+
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("name"), channelName);
+    params.insert(QStringLiteral("is_private"), isPrivate ? "true" : "false");
+
+    QNetworkReply *reply = executePost(QStringLiteral("conversations.create"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCreateChatReply);
 }
 
 void SlackTeamClient::closeChat(const QString& chatId)
@@ -1026,22 +1023,7 @@ void SlackTeamClient::closeChat(const QString& chatId)
     params.insert(QStringLiteral("channel"), chatId);
 
     QNetworkReply *reply = executePost(QStringLiteral("conversations.close"), params);
-    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCloseChatReply);
-}
-
-
-void SlackTeamClient::handleCloseChatReply()
-{
-    DEBUG_BLOCK
-
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QJsonObject data = getResult(reply);
-
-    if (isError(data)) {
-        qDebug() << "Chat close failed";
-    }
-
-    reply->deleteLater();
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::requestTeamInfo()
@@ -1667,6 +1649,26 @@ void SlackTeamClient::handleUsersInfoReply()
     }
 }
 
+void SlackTeamClient::createChannelIfNeeded(const QJsonObject &channel)
+{
+    const QString& channelId = channel.value("id").toString();
+
+    ChatsModel* _chatsModel = m_teamInfo.chats();
+    if (_chatsModel == nullptr) {
+        qWarning() << "Chats model not yet allocated";
+        return;
+    }
+    Chat* _chat = _chatsModel->chat(channelId);
+    if (_chat == nullptr) {
+        _chat = new Chat(channel);
+        QQmlEngine::setObjectOwnership(_chat, QQmlEngine::CppOwnership);
+        // invoke on the main thread
+        QMetaObject::invokeMethod(qApp, [_chatsModel, _chat] {
+            _chatsModel->addChat(_chat);
+        });
+    }
+
+}
 
 void SlackTeamClient::handleCommonReply()
 {
