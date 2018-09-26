@@ -116,19 +116,27 @@ public slots:
     void startConnections();
     void startClient();
     void testLogin();
-    void searchMessages(const QString& searchString, int page =  1);
-    void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());
+
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
     void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
+
+    void searchMessages(const QString& searchString, int page =  1);
+    void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());
     void postMessage(const QString& channelId, QString content, const QDateTime &thread_ts);
     void updateMessage(const QString& channelId, QString content, const QDateTime &ts);
     void deleteMessage(const QString& channelId, const QDateTime& ts);
+
     void postFile(const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
+
+    void createChat(const QString &channelName, bool isPrivate);
     void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
+    void archiveChannel(const QString& channelId);
     void openChat(const QStringList &userIds, const QString &channelId = QString());
     void closeChat(const QString& chatId);
+    QString getChannelName(const QString& channelId);
+    Chat *getChannel(const QString& channelId);
 
     void requestTeamInfo();
     void requestConversationsList(const QString& cursor);
@@ -139,8 +147,6 @@ public slots:
     void requestUserInfo(User* user);
     void updateUserInfo(User* user);
     void updateUserAvatar(const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
-    QString getChannelName(const QString& channelId);
-    Chat *getChannel(const QString& channelId);
 
     QString userName(const QString &userId);
     QString lastChannel();
@@ -157,10 +163,7 @@ private slots:
     void handleLoadMessagesReply();
     void handleCommonReply();
     void handlePostFile();
-    void handleJoinChannelReply();
-    void handleLeaveChannelReply();
-    void handleOpenChatReply();
-    void handleCloseChatReply();
+    void handleCreateChatReply();
     void handleNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
     void handleStreamStart();
     void handleStreamEnd();
@@ -181,6 +184,8 @@ private slots:
     void handleConversationMembersReply();
     void handleConversationInfoReply();
     void handleUsersInfoReply();
+
+    void createChannelIfNeeded(const QJsonObject &channel);
 
 private:
     bool appActive;

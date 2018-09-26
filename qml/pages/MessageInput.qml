@@ -209,6 +209,7 @@ ColumnLayout {
             icon.name: "upload-media"
             onClicked: {
                 fileSend.channelId = channelRoot.channel.id
+                fileSend.teamId = teamRoot.teamId
                 fileSend.open()
             }
         }

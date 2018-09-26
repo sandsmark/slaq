@@ -101,9 +101,11 @@ public slots:
     bool handleAccessTokenReply(const QJsonObject &bootData);
 
     //channels
+    void createChat(const QString& teamId, const QString &channelName, bool isPrivate);
     void markChannel(const QString& teamId, ChatsModel::ChatType type, const QString& channelId, const QDateTime &time = QDateTime());
     void joinChannel(const QString& teamId, const QString& channelId);
     void leaveChannel(const QString& teamId, const QString& channelId);
+    void archiveChannel(const QString& teamId, const QString& channelId);
     void leaveGroup(const QString& teamId, const QString& groupId);
     QString getChannelName(const QString& teamId, const QString& channelId);
     int getTotalUnread(const QString& teamId, ChatsModel::ChatType type);

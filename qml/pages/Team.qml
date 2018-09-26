@@ -127,7 +127,7 @@ Page {
             onLoaded: {
                 console.log("loaded", item.objectName)
                 item.channel = _channel
-                console.timeEnd("start_switching")
+                console.timeEnd("switching_channel")
                 console.warn("Loaded", item.channel.name)
             }
         }

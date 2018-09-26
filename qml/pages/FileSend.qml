@@ -7,6 +7,7 @@ Dialog {
     id: page
 
     title: qsTr("Sending file...")
+    property string teamId
     property string channelId
     property string selectedFile: ""
     property bool uploading: false
@@ -29,7 +30,7 @@ Dialog {
             //DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
             onClicked: {
                 page.uploading = true
-                SlackClient.postFile(teamRoot.teamId, channelId, page.selectedFile, titleInput.text, commentInput.text)
+                SlackClient.postFile(teamId, channelId, page.selectedFile, titleInput.text, commentInput.text)
             }
         }
         Button {

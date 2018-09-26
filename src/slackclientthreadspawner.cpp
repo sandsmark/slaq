@@ -223,6 +223,17 @@ bool SlackClientThreadSpawner::handleAccessTokenReply(const QJsonObject &bootDat
     return true;
 }
 
+void SlackClientThreadSpawner::createChat(const QString &teamId, const QString &channelName, bool isPrivate)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "createChat", Qt::QueuedConnection,
+                              Q_ARG(QString, channelName),
+                              Q_ARG(bool, isPrivate));
+}
+
 void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::ChatType type, const QString &channelId, const QDateTime &time)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
@@ -252,6 +263,16 @@ void SlackClientThreadSpawner::leaveChannel(const QString& teamId, const QString
         return;
     }
     QMetaObject::invokeMethod(_slackClient, "leaveChannel", Qt::QueuedConnection,
+                              Q_ARG(QString, channelId));
+}
+
+void SlackClientThreadSpawner::archiveChannel(const QString &teamId, const QString &channelId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "archiveChannel", Qt::QueuedConnection,
                               Q_ARG(QString, channelId));
 }
 

@@ -7,16 +7,18 @@ Dialog {
     id: dialog
 
     property string name
+    property string question: qsTr("Are you sure you wish to leave ") + name + "?"
     standardButtons: Dialog.Ok | Dialog.Cancel
 
     x: (window.width - dialog.width)/2
     y: (window.height - dialog.height)/2
-    title: "Group leave"
+    title: qsTr("Group leave")
+
     modal: true
     contentItem: Rectangle {
         color: palette.base
         Label {
-            text: qsTr("Are you sure you wish to leave ") + name + "?"
+            text: question
         }
     }
 
