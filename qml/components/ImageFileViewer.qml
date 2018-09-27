@@ -6,7 +6,7 @@ import ".."
 Item {
     id: imageItem
     property bool expanded: false
-    width: expanded ? msgListView.width - Theme.paddingLarge * 4 : fileshare.thumb_360_size.width
+    width: expanded ? expandedImageWidth - Theme.paddingLarge * 4 : fileshare.thumb_360_size.width
     height: expanded ? width / (fileshare.original_size.width / fileshare.original_size.height) : fileshare.thumb_360_size.height
 
     Image {
