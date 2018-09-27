@@ -9,6 +9,7 @@ Item {
     property variant fileshare
     width: fvColumn.implicitWidth
     height: fvColumn.implicitHeight
+    property real expandedImageWidth: msgListView
 
     Platform.FileDialog {
         id: fileSaveDialog

@@ -316,6 +316,7 @@ MouseArea {
                 model: FileShares
 
                 delegate: FileViewer {
+                    expandedImageWidth: isReplies ? repliesListView.width : msgListView.width
                     fileshare: FileShares[index]
                 }
             }
