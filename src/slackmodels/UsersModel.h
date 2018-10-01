@@ -30,6 +30,7 @@ class User : public QObject
     Q_PROPERTY(bool isBot MEMBER m_isBot CONSTANT)
     Q_PROPERTY(Presence presence READ presence NOTIFY presenceChanged)
     Q_PROPERTY(bool selected READ selected NOTIFY selectedChanged)
+    Q_PROPERTY(QDateTime snoozeEnds READ snoozeEnds NOTIFY snoozeEndsChanged)
 
 public:
     enum Presence {
@@ -71,10 +72,13 @@ public:
     void setAvatarUrl(const QUrl &avatarUrl);
     QString firstName() const;
     QString lastName() const;
+    QDateTime snoozeEnds() const;
+
+    void setSnoozeEnds(const QDateTime &snoozeEnds);
 
 public slots:
-    void setFirstName(QString firstName);
-    void setLastName(QString lastName);
+    void setFirstName(const QString& firstName);
+    void setLastName(const QString& lastName);
 
 signals:
     void presenceChanged();
@@ -86,6 +90,7 @@ signals:
     void lastNameChanged(QString lastName);
     void statusEmojiChanged(QString statusEmoji);
     void statusChanged(QString status);
+    void snoozeEndsChanged(QDateTime snoozeEnds);
 
 private:
     QString m_userId;
@@ -103,6 +108,7 @@ private:
     QColor m_color;
     Presence m_presence = Unknown;
     bool m_selected { false };
+    QDateTime m_snoozeEnds;
 };
 
 class UsersModel : public QAbstractListModel

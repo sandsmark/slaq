@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QApplication>
 #include <QThread>
+#include <QTimer>
 //user parse {
 //    "color": "3c8c69",
 //    "deleted": false,
@@ -136,7 +137,11 @@ void User::setData(const QJsonObject &data)
 
 void User::setPresence(const User::Presence presence)
 {
-    //qDebug() << "presence for" << m_userId << m_fullName << presence;
+    qDebug() << "presence for" << m_userId << m_fullName << presence;
+    if (m_presence == Dnd && m_snoozeEnds.isValid() && m_snoozeEnds > QDateTime::currentDateTime()) {
+        qWarning() << "User currently in DnD mode" << m_userId << m_username;
+        return;
+    }
     m_presence = presence;
     emit presenceChanged();
 }
@@ -236,7 +241,12 @@ QString User::lastName() const
     return m_lastName;
 }
 
-void User::setFirstName(QString firstName)
+QDateTime User::snoozeEnds() const
+{
+    return m_snoozeEnds;
+}
+
+void User::setFirstName(const QString &firstName)
 {
     if (m_firstName == firstName)
         return;
@@ -245,13 +255,27 @@ void User::setFirstName(QString firstName)
     emit firstNameChanged(m_firstName);
 }
 
-void User::setLastName(QString lastName)
+void User::setLastName(const QString &lastName)
 {
     if (m_lastName == lastName)
         return;
 
     m_lastName = lastName;
     emit lastNameChanged(m_lastName);
+}
+
+void User::setSnoozeEnds(const QDateTime &snoozeEnds)
+{
+    m_snoozeEnds = snoozeEnds;
+    qint64 _msecs = QDateTime::currentDateTime().msecsTo(snoozeEnds);
+    if (_msecs > 0) {
+        QTimer::singleShot(_msecs, this, [this] {
+            qDebug() << "User DnD timer expired" << username();
+            m_snoozeEnds = QDateTime();
+            this->setPresence(User::Active);
+        });
+    }
+    emit snoozeEndsChanged(snoozeEnds);
 }
 
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
@@ -291,8 +315,9 @@ void UsersModel::updateUser(const QJsonObject &userData)
     const QString& userId = userData.value(QStringLiteral("id")).toString();
     QPointer<User> _user = m_users.value(userId);
     if (_user.isNull()) {
-        qWarning() << "no user found for" << userId;
-        return;
+        qWarning() << "no user found for" << userId << "adding new one";
+        addUser(userData);
+        _user = m_users.value(userId);
     }
     _user->setData(userData);
     QString _id = _user->userId();
@@ -344,18 +369,24 @@ void UsersModel::addUser(const QJsonObject &userData)
 
 void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
 {
-    qDebug() << "Adding users" << users.count() << last;
+    int _count = users.count();
+    qDebug() << "Adding users" << _count << last;
 
+    //check if there is existing users
+    for (QPointer<User> user : users) {
+        if (m_userIds.contains(user->userId())) {
+            _count--;
+        }
+    }
     m_addingUsers = true;
-    beginInsertRows(QModelIndex(), m_userIds.count(), m_userIds.count() + users.count() - 1);
+    beginInsertRows(QModelIndex(), m_userIds.count(), m_userIds.count() + _count - 1);
     {
         QMutexLocker locker(&m_modelMutex);
         for (QPointer<User> user : users) {
-            //if user is a bot as well
-            if (user->userId() == "U4YVA4TRV") {
-                qWarning() << "weird user" << user->username() << user->isBot() << user->botId() << user->userId();
+            if (m_userIds.contains(user->userId())) {
+                continue;
             }
-
+            //if user is a bot as well
             if (user->isBot() && !user->botId().isEmpty()) {
                 m_userIds.append(user->botId());
                 m_users.insert(user->botId(), user);

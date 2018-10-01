@@ -289,7 +289,7 @@ void ChatsModel::chatChanged(Chat *chat)
     emit dataChanged(index, index);
 }
 
-void ChatsModel::setPresence(const QStringList &users, const QString &presence)
+void ChatsModel::setPresence(const QStringList &users, const QString &presence, const QDateTime &snoozeEnds)
 {
     User::Presence _presence = (presence == "away" ? User::Away : (presence == "dnd_on" ? User::Dnd : User::Active));
     for (Chat* chat : m_chats.values()) {
@@ -297,6 +297,9 @@ void ChatsModel::setPresence(const QStringList &users, const QString &presence)
                 && !chat->membersModel->users().isEmpty()) {
             QPointer<User> _user = chat->membersModel->users().first();
             if (!_user.isNull() && (users.contains(_user->userId()) || users.contains(_user->botId()))) {
+                if (snoozeEnds.isValid()) {
+                    _user->setSnoozeEnds(snoozeEnds);
+                }
                 _user->setPresence(_presence);
                 chatChanged(chat);
             }

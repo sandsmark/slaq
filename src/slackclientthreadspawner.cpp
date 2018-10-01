@@ -541,6 +541,35 @@ void SlackClientThreadSpawner::updateUserAvatar(const QString &teamId, const QSt
                               Q_ARG(int, cropY));
 }
 
+void SlackClientThreadSpawner::setPresence(const QString &teamId, bool isAway)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "setPresence", Qt::QueuedConnection,
+                              Q_ARG(bool, isAway));
+}
+
+void SlackClientThreadSpawner::setDnD(const QString &teamId, int minutes)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "setDnD", Qt::QueuedConnection,
+                              Q_ARG(int, minutes));
+}
+
+void SlackClientThreadSpawner::cancelDnD(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "cancelDnD", Qt::QueuedConnection);
+}
+
 void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
 {
     DEBUG_BLOCK;
@@ -910,7 +939,7 @@ void SlackClientThreadSpawner::onConversationMembersChanged(const QString& chann
     _chatsModel->addMembers(channelId, members);
 }
 
-void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, const QString& presence)
+void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, const QString& presence, const QDateTime &snoozeEnds)
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
@@ -918,7 +947,7 @@ void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, 
     if (_chatsModel == nullptr) {
         return;
     }
-    _chatsModel->setPresence(users, presence);
+    _chatsModel->setPresence(users, presence, snoozeEnds);
 }
 
 void SlackClientThreadSpawner::run()

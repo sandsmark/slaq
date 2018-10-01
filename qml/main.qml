@@ -28,6 +28,7 @@ ApplicationWindow {
     property alias fileSend: fileSend
     property alias userDialog: userDialog
     property alias errorDialog: errorDialog
+    property alias dndDialog: dndDialog
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
@@ -61,6 +62,7 @@ ApplicationWindow {
 
     Material.theme: settings.theme
     Universal.theme: settings.theme
+    Material.accent: Material.Teal
 
     Platform.SystemTrayIcon {
         id: trayIcon
@@ -126,25 +128,12 @@ ApplicationWindow {
         }
     }
 
-    ErrorMessageDialog {
-        id: errorDialog
-    }
-
-    UserDialog {
-        id: userDialog
-    }
-
-    SettingsDialog {
-        id: settingsDialog
-    }
-
-    LoginDialog {
-        id: loginDialog
-    }
-
-    AboutDialog {
-        id: aboutDialog
-    }
+    ErrorMessageDialog { id: errorDialog }
+    UserDialog { id: userDialog }
+    SettingsDialog { id: settingsDialog }
+    LoginDialog { id: loginDialog }
+    AboutDialog { id: aboutDialog }
+    DndDialog { id: dndDialog }
 
     color: palette.window
 

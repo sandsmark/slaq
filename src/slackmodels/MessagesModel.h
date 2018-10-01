@@ -24,7 +24,11 @@ QDateTime slackToDateTime(const QString& slackts) {
     QDateTime dt;
     QStringList ts_ = slackts.split(".");
     if (ts_.size() >= 1) {
-        dt = QDateTime::fromSecsSinceEpoch(ts_.at(0).toLongLong());
+        if (!ts_.at(0).isEmpty()) {
+            dt = QDateTime::fromSecsSinceEpoch(ts_.at(0).toLongLong());
+        } else if (!slackts.isEmpty()) {
+            dt = QDateTime::fromSecsSinceEpoch(slackts.toLongLong());
+        }
     }
 
     if (ts_.size() == 2) {

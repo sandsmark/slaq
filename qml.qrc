@@ -58,5 +58,8 @@
         <file>qml/components/UserStatusEmoji.qml</file>
         <file>icons/no-image.png</file>
         <file>qml/dialogs/ErrorMessageDialog.qml</file>
+        <file>qml/components/ImageButton.qml</file>
+        <file>qml/dialogs/DndDialog.qml</file>
+        <file>qml/components/TumblerDelegate.qml</file>
     </qresource>
 </RCC>
