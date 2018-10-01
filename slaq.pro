@@ -31,6 +31,7 @@ INCLUDEPATH += src src/slackmodels
 
 TO_DEPLOY = $$PWD/to_deploy
 
+QML_IMPORT_PATH =
 # enable for address sanitizer
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
 #QMAKE_LIBS += -lasan
@@ -92,7 +93,10 @@ DISTFILES += \
     qml/components/*.qml \
     qml/dialogs/UserDialog.qml \
     qml/components/UserStatusEmoji.qml \
-    qml/dialogs/ErrorMessageDialog.qml
+    qml/dialogs/ErrorMessageDialog.qml \
+    qml/components/ImageButton.qml \
+    qml/dialogs/DndDialog.qml \
+    qml/components/TumblerDelegate.qml
 
 target.path = $$TO_DEPLOY
 

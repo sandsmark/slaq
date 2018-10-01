@@ -106,7 +106,7 @@ signals:
     void stateChanged(const QString& teamId);
 
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
-    void usersPresenceChanged(const QStringList& users, const QString& presence);
+    void usersPresenceChanged(const QStringList& users, const QString& presence, const QDateTime& snoozeEnds = QDateTime());
 
     void usersDataChanged(const QList<QPointer<User>>& users, bool last);
     void conversationsDataChanged(const QList<Chat*>& chats, bool last);
@@ -145,8 +145,12 @@ public slots:
     void requestTeamEmojis();
     void requestConversationInfo(const QString& channelId);
     void requestUserInfo(User* user);
+    void requestUserInfoById(const QString& userId);
     void updateUserInfo(User* user);
     void updateUserAvatar(const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
+    void setPresence(bool isAway);
+    void setDnD(int minutes);
+    void cancelDnD();
 
     QString userName(const QString &userId);
     QString lastChannel();
@@ -184,6 +188,7 @@ private slots:
     void handleConversationMembersReply();
     void handleConversationInfoReply();
     void handleUsersInfoReply();
+    void handleDnDInfoReply();
 
     void createChannelIfNeeded(const QJsonObject &channel);
 
@@ -215,6 +220,7 @@ private:
     QString historyMethod(const ChatsModel::ChatType type);
     QString markMethod(ChatsModel::ChatType type);
     void addTeamEmoji(const QString &name, const QString &url);
+    void requestDnDInfo(const QString &userId);
 
 private:
     QPointer<QNetworkAccessManager> networkAccessManager;

@@ -59,6 +59,7 @@ ListView {
                     width: parent.height / 1.2
                     height: parent.height / 1.2
                     flat: true
+                    Material.elevation: 0
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: listView.ScrollBar.vertical.width + Theme.paddingSmall
@@ -78,7 +79,7 @@ ListView {
 
     Timer {
         id: chatChangeTimer
-        interval: 32
+        interval: 1
         repeat: false
         property string channelId: ""
         onTriggered: {

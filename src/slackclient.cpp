@@ -38,7 +38,10 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "already_reacted", "The specified item already has the user/reaction combination." },
     { "too_many_reactions", "The limit for reactions a person may add to the item has been reached." },
     { "no_reaction", "The specified item does not have the user/reaction combination." },
-    { "invalid_name_specials", "Value passed for name contained unallowed special characters or upper case characters." }
+    { "invalid_name_specials", "Value passed for name contained unallowed special characters or upper case characters." },
+    { "snooze_not_active", "Snooze is not active for this user and cannot be ended" },
+    { "snooze_end_failed", "There was a problem setting the user's Do Not Disturb status" },
+    { "too_long", "Do Not Disturb interval too long" }
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
@@ -439,22 +442,26 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
 void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
     QStringList _userIds;
 
+    qDebug().noquote() << "dnd message" << QJsonDocument(message).toJson();
     _userIds << message.value(QStringLiteral("user")).toString();
 
     const QJsonObject& dndStatus = message.value(QStringLiteral("dnd_status")).toObject();
-    bool _dnd = dndStatus.value("dnd_enabled").toBool(false);
-    const QJsonValue& snoozeEnabled = message.value(QStringLiteral("snooze_enabled"));
+    const QJsonValue& snoozeEnabled = dndStatus.value(QStringLiteral("snooze_enabled"));
     if (!snoozeEnabled.isUndefined()) {
-        _dnd = snoozeEnabled.toBool();
+        bool _dnd = snoozeEnabled.toBool();
+        int snoole_endtime = dndStatus.value("snooze_endtime").toInt(0);
+        QDateTime snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
+        QString presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
+        qDebug() << "presence" << _userIds << _dnd << presence << snoozeEnabled << snoozeEnd << snoole_endtime;
+        emit usersPresenceChanged(_userIds, presence, snoozeEnd);
     }
-
-    QString presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
-    emit usersPresenceChanged(_userIds, presence);
 }
 
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
 {
     DEBUG_BLOCK;
+
+    qDebug().noquote() << QJsonDocument(message).toJson();
 
     QStringList _userIds;
     const QJsonValue& _userValue = message.value(QStringLiteral("user"));
@@ -827,7 +834,14 @@ void SlackTeamClient::handleStartReply()
         }
         return;
     }
+
     m_teamInfo.parseSelfData(data.value("self").toObject());
+    //subscribe on self presence events
+    QJsonObject presenceRequest;
+    presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
+    presenceRequest.insert(QStringLiteral("ids"), QJsonValue(m_teamInfo.selfId()));
+    stream->sendMessage(presenceRequest);
+    requestUserInfoById(m_teamInfo.selfId());
 
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
@@ -1098,6 +1112,15 @@ void SlackTeamClient::requestConversationInfo(const QString &channelId)
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
 }
 
+void SlackTeamClient::requestUserInfoById(const QString& userId)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("user"), userId);
+    QNetworkReply *reply = executeGet(QStringLiteral("users.info"), params);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersInfoReply);
+}
+
 void SlackTeamClient::requestUserInfo(User *user)
 {
     QMap<QString, QString> params;
@@ -1152,6 +1175,31 @@ void SlackTeamClient::updateUserAvatar(const QString& filePath, int cropSide, in
     connect(reply, &QNetworkReply::finished, file, &QObject::deleteLater);
 }
 
+void SlackTeamClient::setPresence(bool isAway)
+{
+    QMap<QString, QString> params;
+
+    params.insert(QStringLiteral("presence"), isAway ? "away" : "auto");
+    QNetworkReply *reply = executePost(QStringLiteral("users.setPresence"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
+}
+
+void SlackTeamClient::setDnD(int minutes)
+{
+    QMap<QString, QString> params;
+
+    params.insert(QStringLiteral("num_minutes"), QString("%1").arg(minutes));
+    QNetworkReply *reply = executePost(QStringLiteral("dnd.setSnooze"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
+}
+
+void SlackTeamClient::cancelDnD()
+{
+    QMap<QString, QString> params;
+    QNetworkReply *reply = executePost(QStringLiteral("dnd.endSnooze"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
+}
+
 QString SlackTeamClient::userName(const QString &userId) {
     if (teamInfo()->users() == nullptr) {
         return "";
@@ -1196,6 +1244,15 @@ void SlackTeamClient::addTeamEmoji(const QString& name, const QString& url) {
     einfo->m_teamId = m_teamInfo.teamId();
     //qDebug() << "edding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
     imagesCache->addEmoji(einfo);
+}
+
+void SlackTeamClient::requestDnDInfo(const QString &userId)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("user"), userId);
+    QNetworkReply *reply = executeGet(QStringLiteral("dnd.info"), params, userId);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleDnDInfoReply);
 }
 
 void SlackTeamClient::handleTeamEmojisReply()
@@ -1633,17 +1690,48 @@ void SlackTeamClient::handleConversationInfoReply()
     }
 }
 
+void SlackTeamClient::handleDnDInfoReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    const QJsonObject& data = getResult(reply);
+    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    const QString& userId = reply->request().attribute(QNetworkRequest::User).toString();
+    //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
+    reply->deleteLater();
+    if (m_teamInfo.selfUser() != nullptr && userId == m_teamInfo.selfUser()->userId()) {
+        const QJsonValue& snoozeEnabled = data.value(QStringLiteral("snooze_enabled"));
+        if (!snoozeEnabled.isUndefined()) {
+            bool _dnd = snoozeEnabled.toBool();
+            if (_dnd) {
+                int snoole_endtime = data.value("snooze_endtime").toInt(0);
+                QDateTime snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
+                //in GUI thread
+                QMetaObject::invokeMethod(qApp, [this, snoozeEnd] {
+                    m_teamInfo.selfUser()->setPresence(User::Dnd);
+                    m_teamInfo.selfUser()->setSnoozeEnds(snoozeEnd);
+                });
+            }
+        }
+    }
+}
+
 void SlackTeamClient::handleUsersInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
     qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
+    //requestDnDInfo(m_teamInfo.selfId());
     // invoke on the main thread
     if (!isError(data)) {
         QMetaObject::invokeMethod(qApp, [this, data] {
             if (m_teamInfo.users() != nullptr) {
-                m_teamInfo.users()->updateUser(data.value(QStringLiteral("user")).toObject());
+                const QJsonObject& userObj = data.value(QStringLiteral("user")).toObject();
+                m_teamInfo.users()->updateUser(userObj);
+                const QString& userId = userObj.value("id").toString();
+                if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
+                    requestDnDInfo(m_teamInfo.selfId());
+                }
             }
         });
     }

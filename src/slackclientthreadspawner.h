@@ -149,12 +149,16 @@ public slots:
     void onUsersDataChanged(const QList<QPointer<User> > &users, bool last);
     void onConversationsDataChanged(const QList<Chat *> &chats, bool last);
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
-    void onUsersPresenceChanged(const QStringList &users, const QString &presence);
+    void onUsersPresenceChanged(const QStringList &users, const QString &presence, const QDateTime& snoozeEnds = QDateTime());
     void onMessagesReceived(const QString &channelId, QList<Message *> messages, bool hasMore, int threadMsgsCount);
 
     void sendUserTyping(const QString& teamId, const QString& channelId);
     void updateUserInfo(const QString& teamId, User *user);
     void updateUserAvatar(const QString& teamId, const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
+
+    void setPresence(const QString& teamId, bool isAway);
+    void setDnD(const QString& teamId, int minutes);
+    void cancelDnD(const QString& teamId);
 
 protected:
     void run();

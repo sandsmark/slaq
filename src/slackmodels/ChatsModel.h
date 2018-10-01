@@ -66,7 +66,7 @@ public:
     Chat* generalChat();
     void chatChanged(Chat* chat);
     //only for IM aka Conversations chats
-    void setPresence(const QStringList &users, const QString& presence);
+    void setPresence(const QStringList &users, const QString& presence, const QDateTime& snoozeEnds = QDateTime());
     void increaseUnreadsInNull(const QString &channelId);
     int unreadsInNull(ChatsModel::ChatType type);
     int unreadsInNullChannel(const QString &channelId);
