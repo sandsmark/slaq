@@ -135,14 +135,17 @@ void User::setData(const QJsonObject &data)
     }
 }
 
-void User::setPresence(const User::Presence presence)
+void User::setPresence(const User::Presence presence, bool force)
 {
     qDebug() << "presence for" << m_userId << m_fullName << presence;
-    if (m_presence == Dnd && m_snoozeEnds.isValid() && m_snoozeEnds > QDateTime::currentDateTime()) {
-        qWarning() << "User currently in DnD mode" << m_userId << m_username;
+    if (!force && m_presence == Dnd && m_snoozeEnds.isValid() && m_snoozeEnds > QDateTime::currentDateTime()) {
+        qWarning() << "User currently in DnD mode" << m_userId << m_username << force;
         return;
     }
     m_presence = presence;
+    if (m_presence != Dnd && m_snoozeEnds.isValid()) {
+        setSnoozeEnds(QDateTime());
+    }
     emit presenceChanged();
 }
 
@@ -272,7 +275,7 @@ void User::setSnoozeEnds(const QDateTime &snoozeEnds)
         QTimer::singleShot(_msecs, this, [this] {
             qDebug() << "User DnD timer expired" << username();
             m_snoozeEnds = QDateTime();
-            this->setPresence(User::Active);
+            this->setPresence(User::Active, true);
         });
     }
     emit snoozeEndsChanged(snoozeEnds);

@@ -11,11 +11,18 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.3
+VERSION = 0.0.1.4
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
+
+debug {
+  DEFINES += SLAQ_DEBUG
+}
+release {
+  DEFINES += SLAQ_RELEASE
+}
 
 DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
 windows: DEFINES += __PRETTY_FUNCTION__=__FUNCSIG__

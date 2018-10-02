@@ -48,7 +48,7 @@ public:
 
     void setData(const QJsonObject &data);
 
-    void setPresence(const Presence presence);
+    void setPresence(const Presence presence, bool force = false);
     Presence presence();
 
     const QString &userId() { return m_userId; }

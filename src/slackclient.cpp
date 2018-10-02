@@ -249,8 +249,10 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
                || type == QStringLiteral("channel_left") || type == QStringLiteral("group_left") ||
                type == QStringLiteral("group_close")) {
         emit channelLeft(message.value(QStringLiteral("channel")).toString());
-    } else if (type == QStringLiteral("presence_change") || type == QStringLiteral("manual_presence_change")) {
+    } else if (type == QStringLiteral("presence_change")) {
         parsePresenceChange(message);
+    } else if (type == QStringLiteral("manual_presence_change")) {
+        parsePresenceChange(message, true);
     } else if (type == QStringLiteral("desktop_notification")) {
         parseNotification(message);
     } else if (type == QStringLiteral("reaction_added") || type == QStringLiteral("reaction_removed")) {
@@ -291,6 +293,13 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         }
     } else if (type == QStringLiteral("dnd_updated") || type == QStringLiteral("dnd_updated_user")) {
         parseUserDndChange(message);
+    } else if (type == "error") {
+        QJsonObject errorData;
+        errorData["domain"] = "Slack RTM error";
+        const QJsonObject& errObj = message.value("error").toObject();
+        errorData["error_str"] = QString("%1. code: %2").arg(errObj.value("msg").toString()).
+                arg(errObj.value("code").toInt());
+        emit error(errorData);
     } else {
         qDebug() << "Unhandled message";
         qDebug().noquote() << QJsonDocument(message).toJson();
@@ -457,11 +466,11 @@ void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
     }
 }
 
-void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
+void SlackTeamClient::parsePresenceChange(const QJsonObject& message, bool force)
 {
     DEBUG_BLOCK;
 
-    qDebug().noquote() << QJsonDocument(message).toJson();
+    qDebug().noquote() << QJsonDocument(message).toJson() << force;
 
     QStringList _userIds;
     const QJsonValue& _userValue = message.value(QStringLiteral("user"));
@@ -470,15 +479,19 @@ void SlackTeamClient::parsePresenceChange(const QJsonObject& message)
     } else {
         const QJsonValue& _usersValue = message.value(QStringLiteral("users"));
         if (!_usersValue.isUndefined()) {
-            for (const QJsonValue& jsonUser : _usersValue.toArray()) {
+            for (const auto& jsonUser : _usersValue.toArray()) {
                 _userIds << jsonUser.toString();
             }
         }
     }
+    //if no users mentioned, its for self user
+    if (_userIds.isEmpty()) {
+        _userIds << m_teamInfo.selfId();
+    }
 
     const QString& presence = message.value(QStringLiteral("presence")).toString();
-    //qWarning() << "presence" << presence;
-    emit usersPresenceChanged(_userIds, presence);
+    //qWarning() << "presence" << presence << force;
+    emit usersPresenceChanged(_userIds, presence, QDateTime(), force);
 }
 
 void SlackTeamClient::parseNotification(const QJsonObject& message)
@@ -1707,7 +1720,7 @@ void SlackTeamClient::handleDnDInfoReply()
                 QDateTime snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
                 //in GUI thread
                 QMetaObject::invokeMethod(qApp, [this, snoozeEnd] {
-                    m_teamInfo.selfUser()->setPresence(User::Dnd);
+                    m_teamInfo.selfUser()->setPresence(User::Dnd, true);
                     m_teamInfo.selfUser()->setSnoozeEnds(snoozeEnd);
                 });
             }
