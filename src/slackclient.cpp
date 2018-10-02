@@ -455,15 +455,18 @@ void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
     _userIds << message.value(QStringLiteral("user")).toString();
 
     const QJsonObject& dndStatus = message.value(QStringLiteral("dnd_status")).toObject();
+    bool _dnd = dndStatus.value(QStringLiteral("dnd_enabled")).toBool(false);
     const QJsonValue& snoozeEnabled = dndStatus.value(QStringLiteral("snooze_enabled"));
+    QString presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
+    QDateTime snoozeEnd;
     if (!snoozeEnabled.isUndefined()) {
-        bool _dnd = snoozeEnabled.toBool();
+        _dnd = snoozeEnabled.toBool();
         int snoole_endtime = dndStatus.value("snooze_endtime").toInt(0);
-        QDateTime snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
-        QString presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
-        qDebug() << "presence" << _userIds << _dnd << presence << snoozeEnabled << snoozeEnd << snoole_endtime;
-        emit usersPresenceChanged(_userIds, presence, snoozeEnd);
+        snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
+        presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
     }
+    qDebug() << "presence" << _userIds << _dnd << presence << snoozeEnabled << snoozeEnd;
+    emit usersPresenceChanged(_userIds, presence, snoozeEnd);
 }
 
 void SlackTeamClient::parsePresenceChange(const QJsonObject& message, bool force)
