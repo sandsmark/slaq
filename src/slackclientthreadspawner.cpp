@@ -939,15 +939,17 @@ void SlackClientThreadSpawner::onConversationMembersChanged(const QString& chann
     _chatsModel->addMembers(channelId, members);
 }
 
-void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, const QString& presence, const QDateTime &snoozeEnds)
+void SlackClientThreadSpawner::onUsersPresenceChanged(const QStringList &users, const QString& presence,
+                                                      const QDateTime &snoozeEnds, bool force)
 {
     DEBUG_BLOCK;
+
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
     }
-    _chatsModel->setPresence(users, presence, snoozeEnds);
+    _chatsModel->setPresence(users, presence, snoozeEnds, force);
 }
 
 void SlackClientThreadSpawner::run()

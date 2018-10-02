@@ -106,7 +106,7 @@ signals:
     void stateChanged(const QString& teamId);
 
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
-    void usersPresenceChanged(const QStringList& users, const QString& presence, const QDateTime& snoozeEnds = QDateTime());
+    void usersPresenceChanged(const QStringList& users, const QString& presence, const QDateTime& snoozeEnds = QDateTime(), bool force = false);
 
     void usersDataChanged(const QList<QPointer<User>>& users, bool last);
     void conversationsDataChanged(const QList<Chat*>& chats, bool last);
@@ -211,7 +211,7 @@ private:
     void parseMessageUpdate(const QJsonObject& message);
     void parseReactionUpdate(const QJsonObject& message);
     void parseChannelUpdate(const QJsonObject& message);
-    void parsePresenceChange(const QJsonObject& message);
+    void parsePresenceChange(const QJsonObject& message, bool force = false);
     void parseNotification(const QJsonObject& message);
 
     void sendNotification(const QString& channelId, const QString& title, const QString& content);

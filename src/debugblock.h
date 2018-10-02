@@ -25,7 +25,11 @@ struct DebugHelperClass {
     QElapsedTimer m_timer;
 };
 
+#ifdef SLAQ_DEBUG
 #define DEBUG_BLOCK DebugHelperClass debugHelper__Block(__PRETTY_FUNCTION__);
 #define DEBUG_TICK debugHelper__Block.tick(__LINE__);
-
+#else
+#define DEBUG_BLOCK
+#define DEBUG_TICK
+#endif
 #endif // DEBUG_H

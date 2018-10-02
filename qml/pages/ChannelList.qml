@@ -68,6 +68,9 @@ Page {
                         checkable = false
                     }
                     onClicked: {
+                        if (selfUser.presence == User.Dnd) {
+                            SlackClient.cancelDnD(teamRoot.teamId)
+                        }
                         SlackClient.setPresence(teamRoot.teamId, !(selfUser.presence == User.Away))
                     }
                 }
