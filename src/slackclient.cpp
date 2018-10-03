@@ -465,7 +465,7 @@ void SlackTeamClient::parseUserDndChange(const QJsonObject& message) {
         snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
         presence = _dnd ? QStringLiteral("dnd_on") : QStringLiteral("dnd_off");
     }
-    qDebug() << "presence" << _userIds << _dnd << presence << snoozeEnabled << snoozeEnd;
+    //qDebug() << "presence" << _userIds << _dnd << presence << snoozeEnabled << snoozeEnd;
     emit usersPresenceChanged(_userIds, presence, snoozeEnd);
 }
 
@@ -1735,7 +1735,7 @@ void SlackTeamClient::handleUsersInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
-    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
     //requestDnDInfo(m_teamInfo.selfId());
     // invoke on the main thread
