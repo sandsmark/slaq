@@ -41,7 +41,8 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "invalid_name_specials", "Value passed for name contained unallowed special characters or upper case characters." },
     { "snooze_not_active", "Snooze is not active for this user and cannot be ended" },
     { "snooze_end_failed", "There was a problem setting the user's Do Not Disturb status" },
-    { "too_long", "Do Not Disturb interval too long" }
+    { "too_long", "Do Not Disturb interval too long" },
+    { "user_is_restricted", "Cannot join the channel by a restricted user or single channel guest." }
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :

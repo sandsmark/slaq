@@ -29,6 +29,7 @@ public:
         LastRead,
         UnreadCount,
         UnreadCountDisplay,
+        UnreadCountPersonal,
         MembersModel,
         MessagesModel,
         Presence,
@@ -67,9 +68,9 @@ public:
     void chatChanged(Chat* chat);
     //only for IM aka Conversations chats
     void setPresence(const QStringList &users, const QString& presence, const QDateTime& snoozeEnds = QDateTime(), bool force = false);
-    void increaseUnreadsInNull(const QString &channelId);
-    int unreadsInNull(ChatsModel::ChatType type);
-    int unreadsInNullChannel(const QString &channelId);
+    void increaseUnreadsInNull(const QString &channelId, bool personal);
+    int unreadsInNull(ChatsModel::ChatType type, bool personal);
+    int unreadsInNullChannel(const QString &channelId, bool personal);
 
 private:
     QString getSectionName(Chat *chat) const;
@@ -80,6 +81,7 @@ private:
     UsersModel *m_networkUsers;
     QString m_selfId; // its you
     QMap<QString, int> m_unreadNullChats; //keep unreads for still not created chats
+    QMap<QString, int> m_unreadPersonalNullChats;
 };
 
 class Chat: public QObject
@@ -122,9 +124,10 @@ public:
     QDateTime lastRead;
     int unreadCount = 0;
     int unreadCountDisplay = 0;
+    int unreadCountPersonal = 0; //used for broadcast or personal messages on channel
     QPointer<UsersModel> membersModel;
     QPointer<MessageListModel> messagesModel;
 
     void setReadableName(const QString &selfId);
-    void setData(const QJsonObject &data, const ChatsModel::ChatType type_ = ChatsModel::Channel);
+    void setData(const QJsonObject &data,  ChatsModel::ChatType type_ = ChatsModel::Channel);
 };
