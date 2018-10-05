@@ -453,12 +453,13 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
                               Q_ARG(QString, reaction));
 }
 
-inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, const QString& selfId) {
-    return (msg.contains(selfId)
+inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, User* selfUser) {
+    return (selfUser != nullptr && (msg.contains(selfUser->userId())
+            || msg.contains(selfUser->username())
             || msg.contains("@here")
             || msg.contains("@channel")
             || msg.contains("@group")
-            || msg.contains("@everyone"));
+            || msg.contains("@everyone")));
 }
 
 void SlackClientThreadSpawner::onMessageReceived(Message *message)
@@ -475,8 +476,9 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
 
     Chat* chat = _chatsModel->chat(message->channel_id);
 
+    //qDebug() << "message" << message->text << checkForPersonal(message->text, _slackClient->teamInfo()->selfUser());
     if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
-        if (checkForPersonal(message->text, _slackClient->teamInfo()->selfId())) {
+        if (checkForPersonal(message->text, _slackClient->teamInfo()->selfUser())) {
             chat->unreadCountPersonal++;
         }
         if (message->subtype != "message_changed") {
@@ -489,7 +491,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
         if (!message->channel_id.isEmpty()) {
             qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << message->channel_id << "not found";
             _chatsModel->increaseUnreadsInNull(message->channel_id,
-                                               checkForPersonal(message->text, _slackClient->teamInfo()->selfId()));
+                                               checkForPersonal(message->text, _slackClient->teamInfo()->selfUser()));
             emit channelCountersUpdated(_slackClient->teamInfo()->teamId(),
                                         message->channel_id,
                                         _chatsModel->unreadsInNullChannel(message->channel_id, false),

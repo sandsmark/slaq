@@ -327,6 +327,7 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
     if (unreadCountDisplay != chat->unreadCountDisplay
             || lastRead != chat->lastRead) {
         chat->unreadCountDisplay = unreadCountDisplay;
+        chat->unreadCountPersonal = 0;
         chat->lastRead = lastRead;
         emit channelUpdated(chat);
     }
