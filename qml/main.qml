@@ -264,17 +264,20 @@ ApplicationWindow {
                                     if (teamId === model.teamId) {
                                         //unread_messages
                                         if (unreadMessages >= 0) {
-                                            var total = SlackClient.getTotalUnread(teamId, ChatsModel.Channel)
-                                            var totalIm = SlackClient.getTotalUnread(teamId, ChatsModel.Group)
-                                            totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.Conversation)
-                                            totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.MultiUserConversation)
+                                            var total = SlackClient.getTotalUnread(teamId, ChatsModel.Channel, false)
+                                            var totalIm = SlackClient.getTotalUnread(teamId, ChatsModel.Group, false)
+                                            totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.Conversation, false)
+                                            totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.MultiUserConversation, false)
                                             tabButton.unreadChannelMessages = total
                                             tabButton.unreadIMMessages = totalIm
-
                                         } else {
                                             // the chat is not yet initialized, so we only know that there is new message
                                             tabButton.unreadChannelMessages++
                                         }
+                                        if (unreadPersonalMessages > 0) {
+                                            totalIm += SlackClient.getTotalUnread(teamId, ChatsModel.Channel, true)
+                                        }
+
                                         window.recalcUnread()
                                     }
                                 }

@@ -19,9 +19,11 @@ RCC_DIR = .rcc
 
 debug {
   DEFINES += SLAQ_DEBUG
+  TO_DEPLOY = $$PWD/to_deploy/debug
 }
 release {
   DEFINES += SLAQ_RELEASE
+  TO_DEPLOY = $$PWD/to_deploy
 }
 
 DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
@@ -35,8 +37,6 @@ QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += webengine
 
 INCLUDEPATH += src src/slackmodels
-
-TO_DEPLOY = $$PWD/to_deploy
 
 QML_IMPORT_PATH =
 # enable for address sanitizer

@@ -37,7 +37,7 @@ public:
     Q_INVOKABLE void dumpChannel(const QString& teamId, const QString& channelId);
 
     QString version() const;
-
+    bool checkForPersonal(const QString &msg, const QString &selfId);
 signals:
     void threadStarted();
 
@@ -60,7 +60,7 @@ signals:
 
     void messageReceived(const QString& teamId, QVariantMap message);
     void messageUpdated(const QString& teamId, QVariantMap message);
-    void channelCountersUpdated(const QString& teamId, const QString& channelId, int unreadMessages);
+    void channelCountersUpdated(const QString& teamId, const QString& channelId, int unreadMessages, int unreadPersonalMessages);
     void channelJoined(const QString& teamId, const QString& channelId);
     void channelLeft(const QString& teamId, const QString& channelId);
 
@@ -108,7 +108,7 @@ public slots:
     void archiveChannel(const QString& teamId, const QString& channelId);
     void leaveGroup(const QString& teamId, const QString& groupId);
     QString getChannelName(const QString& teamId, const QString& channelId);
-    int getTotalUnread(const QString& teamId, ChatsModel::ChatType type);
+    int getTotalUnread(const QString& teamId, ChatsModel::ChatType type, bool personal);
     Chat* getGeneralChannel(const QString& teamId);
 
     //messages
@@ -151,7 +151,7 @@ public slots:
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
     void onUsersPresenceChanged(const QStringList &users, const QString &presence,
                                 const QDateTime& snoozeEnds = QDateTime(), bool force = false);
-    void onMessagesReceived(const QString &channelId, QList<Message *> messages, bool hasMore, int threadMsgsCount);
+    void onMessagesReceived(const QString &channelId, const QList<Message *> &messages, bool hasMore, int threadMsgsCount);
 
     void sendUserTyping(const QString& teamId, const QString& channelId);
     void updateUserInfo(const QString& teamId, User *user);

@@ -53,6 +53,8 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return chat->lastRead;
     case UnreadCountDisplay:
         return chat->unreadCountDisplay;
+    case UnreadCountPersonal:
+        return chat->unreadCountPersonal;
     case UnreadCount:
         return chat->unreadCount;
     case Presence:
@@ -66,20 +68,22 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
                 || chat->type == ChatsModel::Group
                 || chat->type == ChatsModel::MultiUserConversation) {
             return "qrc:/icons/group-icon.png";
-        } else if (chat->type == ChatsModel::Conversation) {
+        }
+        if (chat->type == ChatsModel::Conversation) {
             if (chat->membersModel->users().isEmpty()) {
                 return "qrc:/icons/offline-icon.png";
-            } else {
-                User::Presence presence = chat->membersModel->users().first()->presence();
-                if (presence == User::Away) {
-                    return "qrc:/icons/away-icon.png";
-                } else if (presence == User::Dnd) {
-                    return "qrc:/icons/dnd-icon.png";
-                } else if (presence == User::Active) {
-                    return "qrc:/icons/active-icon.png";
-                }
-                return "qrc:/icons/offline-icon.png";
             }
+            User::Presence presence = chat->membersModel->users().first()->presence();
+            if (presence == User::Away) {
+                return "qrc:/icons/away-icon.png";
+            }
+            if (presence == User::Dnd) {
+                return "qrc:/icons/dnd-icon.png";
+            }
+            if (presence == User::Active) {
+                return "qrc:/icons/active-icon.png";
+            }
+            return "qrc:/icons/offline-icon.png";
         }
         break;
     }
@@ -106,6 +110,7 @@ QHash<int, QByteArray> ChatsModel::roleNames() const
     names[LastRead] = "LastRead";
     names[UnreadCount] = "UnreadCount";
     names[UnreadCountDisplay] = "UnreadCountDisplay";
+    names[UnreadCountPersonal] = "UnreadCountPersonal";
     names[MembersModel] = "MembersModel";
     names[MessagesModel] = "MessagesModel";
     names[Presence] = "Presence";
@@ -309,14 +314,27 @@ void ChatsModel::setPresence(const QStringList &users, const QString &presence,
     }
 }
 
-void ChatsModel::increaseUnreadsInNull(const QString &channelId)
+void ChatsModel::increaseUnreadsInNull(const QString &channelId, bool personal)
 {
-    m_unreadNullChats[channelId] = m_unreadNullChats.value(channelId, 0) + 1;
+    if (personal) {
+        m_unreadPersonalNullChats[channelId] = m_unreadPersonalNullChats.value(channelId, 0) + 1;
+    } else {
+        m_unreadNullChats[channelId] = m_unreadNullChats.value(channelId, 0) + 1;
+    }
 }
 
-int ChatsModel::unreadsInNull(ChatsModel::ChatType type)
+int ChatsModel::unreadsInNull(ChatsModel::ChatType type, bool personal)
 {
     int _total = 0;
+    if (personal) {
+        for (const QString& id : m_unreadPersonalNullChats.keys()) {
+            if (type == Channel && id.startsWith("C")) {
+                _total += m_unreadPersonalNullChats.value(id);
+            }
+        }
+        return _total;
+    }
+
     for (const QString& id : m_unreadNullChats.keys()) {
         if (type == Channel && id.startsWith("C")) {
             _total += m_unreadNullChats.value(id);
@@ -329,8 +347,11 @@ int ChatsModel::unreadsInNull(ChatsModel::ChatType type)
     return _total;
 }
 
-int ChatsModel::unreadsInNullChannel(const QString &channelId)
+int ChatsModel::unreadsInNullChannel(const QString &channelId, bool personal)
 {
+    if (personal) {
+        return m_unreadPersonalNullChats.value(channelId, 0);
+    }
     return m_unreadNullChats.value(channelId, 0);
 }
 
