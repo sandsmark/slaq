@@ -37,7 +37,6 @@ public:
     Q_INVOKABLE void dumpChannel(const QString& teamId, const QString& channelId);
 
     QString version() const;
-    bool checkForPersonal(const QString &msg, const QString &selfId);
 signals:
     void threadStarted();
 
@@ -162,10 +161,11 @@ public slots:
     void cancelDnD(const QString& teamId);
 
 protected:
-    void run();
+    void run() override;
 
 private:
     SlackTeamClient *createNewClientInstance(const QString &teamId, const QString &accessToken = QString(""));
+    bool checkForPersonal(const QString &msg, User *selfUser);
 
 private:
     QQmlObjectListModel<TeamInfo> m_teamsModel;
@@ -183,7 +183,7 @@ class ThreadExecutor: public QObject {
 public:
     explicit ThreadExecutor(SlackClientThreadSpawner* threadSpawner, QObject *parent = nullptr) :
         QObject(parent), m_threadSpawner(threadSpawner) {}
-    virtual ~ThreadExecutor() = default;
+     ~ThreadExecutor() override = default;
 
 public slots:
     void connectToTeam(const QString& teamId, const QString &accessToken = QString(""));
