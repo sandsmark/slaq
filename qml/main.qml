@@ -149,7 +149,7 @@ ApplicationWindow {
         id: textViewer
     }
 
-    FileSend {
+    FileSendDialog {
         id: fileSend
     }
 

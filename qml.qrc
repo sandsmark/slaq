@@ -10,7 +10,6 @@
         <file>qml/pages/ChannelListView.qml</file>
         <file>qml/pages/ChatSelect.qml</file>
         <file>qml/pages/ConnectionPanel.qml</file>
-        <file>qml/pages/FileSend.qml</file>
         <file>qml/pages/GroupLeaveDialog.qml</file>
         <file>qml/pages/MessageInput.qml</file>
         <file>qml/pages/MessageListItem.qml</file>
@@ -61,5 +60,7 @@
         <file>qml/components/ImageButton.qml</file>
         <file>qml/dialogs/DndDialog.qml</file>
         <file>qml/components/TumblerDelegate.qml</file>
+        <file>qml/dialogs/LazyLoadDialog.qml</file>
+        <file>qml/dialogs/FileSendDialog.qml</file>
     </qresource>
 </RCC>
