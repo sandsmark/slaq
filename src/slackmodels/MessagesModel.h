@@ -376,7 +376,7 @@ public slots:
     void updateReactionUsers(Message *message);
     int countUnread(const QDateTime& lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
-
+    QDateTime lastMessage() const;
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;
     void fetchMore(const QModelIndex &parent) override;
