@@ -18,6 +18,7 @@ ListView {
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
+    property bool isReplies: false
     property var latestRead
 
     onAppActiveChanged: {
@@ -56,6 +57,7 @@ ListView {
 
     Connections {
         target: SlackClient
+        enabled: !isReplies
         onLoadMessagesSuccess: {
             console.log("load messages success", channel.name, teamId, teamRoot.teamId)
             if (teamId === teamRoot.teamId) {
@@ -75,6 +77,7 @@ ListView {
 
     delegate: MessageListItem {
         width: msgListView.width - msgListView.ScrollBar.vertical.width
+        isReplies: msgListView.isReplies
     }
 
     section {
