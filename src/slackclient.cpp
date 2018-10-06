@@ -1490,11 +1490,10 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
         return;
     }
     if (dt.isNull() || !dt.isValid()) {
+        //dt = _chatsModel->chat(channelId)->lastRead;
         auto messagesModel = _chatsModel->messages(channelId);
         if (messagesModel != nullptr) {
-            if (messagesModel->rowCount(QModelIndex()) > 0) {
-                dt = messagesModel->message(0)->time;
-            }
+            dt = messagesModel->lastMessage();
         } else {
             qDebug() << "message model not ready for the channel" << channelId;
         }

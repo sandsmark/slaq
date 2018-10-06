@@ -161,6 +161,39 @@ Message *MessageListModel::message(int row)
     return m_messages.at(row);
 }
 
+QDateTime MessageListModel::lastMessage() const
+{
+    qDebug() << "searching for last message at" << this;
+    // debugging
+    if (!m_modelMutex.tryLock(100)) {
+        qWarning() << "message model mutex was locked too long!" << QThread::currentThread();
+    }
+    m_modelMutex.unlock();
+    // end debugging
+    QMutexLocker locker(&m_modelMutex);
+    if (m_messages.count() <= 0) {
+        return QDateTime();
+    }
+    QDateTime _lastMsgTs = m_messages.at(0)->time;
+    for (int i = 0; i < m_messages.count(); i++) {
+        Message* message = m_messages.at(i);
+        if (message->time > _lastMsgTs) {
+            _lastMsgTs = message->time;
+        }
+        // 1st message in the message thread is parent message
+        // so to avoid recursive search - check if the message thread its not current thread
+        if (!message->messageThread.isNull() && message->messageThread.data() != this) {
+            locker.unlock();
+            QDateTime _lastMsgTsThread = message->messageThread->lastMessage();
+            if (_lastMsgTsThread > _lastMsgTs) {
+                _lastMsgTs = _lastMsgTsThread;
+            }
+            locker.relock();
+        }
+    }
+    return _lastMsgTs;
+}
+
 Message *MessageListModel::message(const QDateTime &ts)
 {
     qDebug() << "searching for" << ts << "at" << this;
