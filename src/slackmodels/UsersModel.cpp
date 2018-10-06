@@ -372,36 +372,34 @@ void UsersModel::addUser(const QJsonObject &userData)
 
 void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
 {
-    int _count = users.count();
+    int _count = m_users.count();
     qDebug() << "Adding users" << _count << last;
 
-    //check if there is existing users
-    for (QPointer<User> user : users) {
-        if (m_userIds.contains(user->userId())) {
-            _count--;
-        }
-    }
     m_addingUsers = true;
-    beginInsertRows(QModelIndex(), m_userIds.count(), m_userIds.count() + _count - 1);
     {
         QMutexLocker locker(&m_modelMutex);
         for (QPointer<User> user : users) {
-            if (m_userIds.contains(user->userId())) {
-                continue;
-            }
+            int _cnt = m_users.count();
             //if user is a bot as well
             if (user->isBot() && !user->botId().isEmpty()) {
-                m_userIds.append(user->botId());
                 m_users.insert(user->botId(), user);
+                if (_cnt < m_users.count()) { //user added
+                    m_userIds.append(user->botId());
+                }
             } else {
-                m_userIds.append(user->userId());
                 m_users.insert(user->userId(), user);
+                if (_cnt < m_users.count()) {
+                    m_userIds.append(user->userId());
+                }
             }
             //qDebug() << "Added user" << user->userId() << this;
         }
     }
-
-    endInsertRows();
+    _count = m_users.count() - _count;
+    if (_count > 0) {
+        beginInsertRows(QModelIndex(), m_userIds.count(), m_userIds.count() + _count - 1);
+        endInsertRows();
+    }
     if (last) {
         m_addingUsers = false;
     }
