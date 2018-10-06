@@ -1490,7 +1490,6 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
         return;
     }
     if (dt.isNull() || !dt.isValid()) {
-        //dt = _chatsModel->chat(channelId)->lastRead;
         auto messagesModel = _chatsModel->messages(channelId);
         if (messagesModel != nullptr) {
             dt = messagesModel->lastMessage();
@@ -1502,7 +1501,6 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
         qWarning() << "Cant find timestamp for the channel" << channelId;
         return;
     }
-    //chatsModel->chat(channelId)
     params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
