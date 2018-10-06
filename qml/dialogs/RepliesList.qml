@@ -19,6 +19,8 @@ Drawer {
     property var parentMessage
     property var modelMsg
 
+    property alias atBottom: repliesListView.atYEnd
+
     onAboutToShow: {
         if (parentMessageIndex !== -1) {
             parentMessage = parentMessagesModel.message(parentMessageIndex)
@@ -38,21 +40,13 @@ Drawer {
             font.pixelSize: Theme.fontSizeHuge
             text: qsTr("Message thread on channel: #") + repliesDialog.channelName
         }
-
-        ListView {
+        MessageListView {
             id: repliesListView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            ScrollBar.vertical: ScrollBar { }
-            verticalLayoutDirection: ListView.BottomToTop
-            clip: true
-            spacing: Theme.paddingMedium
-            delegate: MessageListItem {
-                width: repliesListView.width - repliesListView.ScrollBar.vertical.width
-                isReplies: true
-            }
-
+            isReplies: true
         }
+
         MessageInput {
             Layout.fillWidth: true
             placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
