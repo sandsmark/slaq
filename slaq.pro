@@ -103,7 +103,8 @@ DISTFILES += \
     qml/dialogs/ErrorMessageDialog.qml \
     qml/components/ImageButton.qml \
     qml/dialogs/DndDialog.qml \
-    qml/components/TumblerDelegate.qml
+    qml/components/TumblerDelegate.qml \
+    qml/dialogs/LazyLoadDialog.qml
 
 target.path = $$TO_DEPLOY
 

@@ -2,81 +2,83 @@ import QtQuick 2.11
 import QtWebEngine 1.7
 import QtQuick.Controls 2.4
 
-Dialog {
-    id: loginDialog
-    width: window.width
-    height: window.height - window.header.height
-    modal: true
-    focus: true
+LazyLoadDialog {
+    sourceComponent: Dialog {
+        id: loginDialog
+        width: window.width
+        height: window.height - window.header.height
+        modal: true
+        focus: true
 
-    standardButtons: Dialog.Ok | Dialog.Cancel
+        standardButtons: Dialog.Ok | Dialog.Cancel
 
-    property string startUrl: "https://slack.com/signin"
+        property string startUrl: "https://slack.com/signin"
 
-    title: "Sign in with Slack"
+        title: "Sign in with Slack"
 
-    onOpened: {
-        webViewLoader.sourceComponent = webViewComponent
-        webViewLoader.active = true
-    }
-    onClosed: {
-        webViewLoader.active = false
-        webViewLoader.sourceComponent = undefined
-    }
-
-    Rectangle {
-        anchors {
-            fill: parent
-            margins: loginDialog.footer.height
+        onOpened: {
+            webViewLoader.sourceComponent = webViewComponent
+            webViewLoader.active = true
         }
-        color: "transparent"
-        border.color: "black"
-        Loader {
-            id: webViewLoader
+        onClosed: {
+            webViewLoader.active = false
+            webViewLoader.sourceComponent = undefined
+        }
+
+        Rectangle {
             anchors {
                 fill: parent
-                margins: 5
+                margins: loginDialog.footer.height
             }
-            active: false
-            onStatusChanged: {
-                if (webViewLoader.status == Loader.Loading) {
-                    SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
-                    SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
+            color: "transparent"
+            border.color: "black"
+            Loader {
+                id: webViewLoader
+                anchors {
+                    fill: parent
+                    margins: 5
                 }
-                if (webViewLoader.status == Loader.Null) {
-                    SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
-                    SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
-                }
-            }
-        }
-    }
-
-    Component {
-        id: webViewComponent
-        WebEngineView {
-            id: webView
-            url: loginDialog.startUrl
-
-            onLoadingChanged: {
-                runJavaScript("JSON.stringify(boot_data)", function(result){
-                    if (result !== undefined) {
-                        if (SlackClient.handleAccessTokenReply(JSON.parse(result))) {
-                            webView.visible = false
-                            webView.stop()
-                            loginDialog.close();
-                        }
+                active: false
+                onStatusChanged: {
+                    if (webViewLoader.status == Loader.Loading) {
+                        SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
+                        SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
                     }
-                })
+                    if (webViewLoader.status == Loader.Null) {
+                        SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
+                        SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
+                    }
+                }
             }
         }
-    }
 
-    function handleAccessTokenSuccess(userId, teamId, teamName) {
-        loginDialog.close();
-    }
+        Component {
+            id: webViewComponent
+            WebEngineView {
+                id: webView
+                url: loginDialog.startUrl
 
-    function handleAccessTokenFail() {
-        console.warn('access token failed')
-        webView.visible = true
+                onLoadingChanged: {
+                    runJavaScript("JSON.stringify(boot_data)", function(result){
+                        if (result !== undefined) {
+                            if (SlackClient.handleAccessTokenReply(JSON.parse(result))) {
+                                webView.visible = false
+                                webView.stop()
+                                loginDialog.close();
+                            }
+                        }
+                    })
+                }
+            }
+        }
+
+        function handleAccessTokenSuccess(userId, teamId, teamName) {
+            loginDialog.close();
+        }
+
+        function handleAccessTokenFail() {
+            console.warn('access token failed')
+            webView.visible = true
+        }
     }
 }
