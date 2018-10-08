@@ -15,7 +15,8 @@
 
 MessageFormatter::MessageFormatter() :
     m_labelPattern(QRegularExpression (QStringLiteral("<(http[^\\|>]+)\\|([^>]+)>"))),
-    m_plainPattern(QRegularExpression(QStringLiteral("<(http[^>]+)>"))),
+    //m_plainPattern(QRegularExpression(QStringLiteral("<([^>]+)>"))),
+    m_plainPattern(QRegularExpression(QStringLiteral("<([^>][a-z0-9]+:.*)>"))),
     m_mailtoPattern(QRegularExpression(QStringLiteral("<(mailto:[^\\|>]+)\\|([^>]+)>"))),
     m_italicPattern(QRegularExpression(QStringLiteral("(^|\\s)_([^_]+)_(\\s|\\.|\\?|!|,|$)"))),
     m_boldPattern(QRegularExpression(QStringLiteral("(^|\\s)\\*([^\\*]+)\\*(\\s|\\.|\\?|!|,|$)"))),
@@ -142,11 +143,11 @@ void MessageFormatter::replaceEmoji(QString &message)
 
 void MessageFormatter::replaceAll(ChatsModel *chat, QString &message)
 {
+    replaceLinks(message); //must be 1st
     replaceChannelInfo(chat, message);
     replaceTargetInfo(message);
     replaceMarkdown(message);
     replaceEmoji(message);
-    replaceLinks(message);
 }
 
 void MessageFormatter::replaceTargetInfo(QString &message)

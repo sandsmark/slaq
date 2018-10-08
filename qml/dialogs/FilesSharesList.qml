@@ -3,6 +3,7 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import ".."
 import "../pages"
+import "../components"
 
 import com.iskrembilen 1.0
 
@@ -13,17 +14,17 @@ Drawer {
     bottomMargin: Theme.paddingMedium
 
     edge: Qt.RightEdge
-    width: 0.3 * window.width
+    width: 0.5 * window.width
     height: window.height - Theme.paddingMedium
     property int currentPage: -1
     property int totalPages: -1
     property string teamId: teamsSwipe.currentItem.item.teamId
+    property User selfUser: null
 
     function fetchData() {
         if (radioGroup.checkedButton == allFilesButton) {
             listView.model.retreiveFilesFor("", "")
         } else if (radioGroup.checkedButton == myFilesButton) {
-            var selfUser = SlackClient.selfUser(teamId)
             listView.model.retreiveFilesFor("", selfUser.userId)
         } else if (radioGroup.checkedButton == channelFilesButton) {
             listView.model.retreiveFilesFor(teamsSwipe.currentItem.item.currentChannelId, "")
@@ -31,6 +32,7 @@ Drawer {
     }
 
     onOpened: {
+        selfUser = SlackClient.selfUser(teamId)
         listView.model = SlackClient.getFilesSharesModel(teamId)
         fetchData()
     }
@@ -97,12 +99,24 @@ Drawer {
                         Label {
                             id: name
                             Layout.fillWidth: true
-                            text: fileShare.title
+                            text: fileShare.title + " [" + fileShare.name + "]"
                         }
                         RowLayout {
                             Layout.fillWidth: true
                             Label {
-                                text: qsTr("Created by ") + delegate.fileShare.user.username + " at " + Qt.formatDateTime(delegate.fileShare.created, "dd MMM yyyy hh:mm")
+                                font.pixelSize: Theme.fontSizeSmall
+                                text: qsTr("Created by @") + delegate.fileShare.user.username + " at " + Qt.formatDateTime(delegate.fileShare.created, "dd MMM yyyy hh:mm")
+                            }
+                            EmojiRoundButton {
+                                id: trashButton
+                                padding: 0
+                                visible:  (selfUser != null && selfUser.userId === delegate.fileShare.user.userId)
+                                text: "\uD83D\uDDD1"
+                                font.pixelSize: Theme.fontSizeLarge
+                                onClicked: {
+                                    SlackClient.deleteFile(teamId, delegate.fileShare.id)
+                                }
+                                background: Item {}
                             }
                             Image {
                                 source: delegate.fileShare.user.avatarUrl
