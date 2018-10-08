@@ -42,7 +42,10 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "snooze_not_active", "Snooze is not active for this user and cannot be ended" },
     { "snooze_end_failed", "There was a problem setting the user's Do Not Disturb status" },
     { "too_long", "Do Not Disturb interval too long" },
-    { "user_is_restricted", "Cannot join the channel by a restricted user or single channel guest." }
+    { "user_is_restricted", "Cannot join the channel by a restricted user or single channel guest." },
+    { "file_not_found", "The file does not exist, or is not visible to the calling user." },
+    { "file_deleted", "The file has already been deleted." },
+    { "cant_delete_file", "Authenticated user does not have permission to delete this file." }
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
@@ -475,7 +478,7 @@ void SlackTeamClient::parsePresenceChange(const QJsonObject& message, bool force
 {
     DEBUG_BLOCK;
 
-    qDebug().noquote() << QJsonDocument(message).toJson() << force;
+    //qDebug().noquote() << QJsonDocument(message).toJson() << force;
 
     QStringList _userIds;
     const QJsonValue& _userValue = message.value(QStringLiteral("user"));
@@ -1786,7 +1789,6 @@ void SlackTeamClient::handleUsersInfoReply()
     QJsonObject data = getResult(reply);
     //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
-    //requestDnDInfo(m_teamInfo.selfId());
     // invoke on the main thread
     if (!isError(data)) {
         QMetaObject::invokeMethod(qApp, [this, data] {
@@ -1860,6 +1862,14 @@ void SlackTeamClient::postFile(const QString& channelId, const QString& filePath
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostFile);
     connect(reply, &QNetworkReply::finished, file, &QObject::deleteLater);
+}
+
+void SlackTeamClient::deleteFile(const QString &fileId)
+{
+    QMap<QString, QString> data;
+    data.insert(QStringLiteral("file"), fileId);
+    QNetworkReply *reply = executePost(QStringLiteral("files.delete"), data);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
 void SlackTeamClient::handlePostFile()

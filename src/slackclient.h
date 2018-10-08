@@ -127,6 +127,7 @@ public slots:
     void deleteMessage(const QString& channelId, const QDateTime& ts);
 
     void postFile(const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
+    void deleteFile(const QString& fileId);
 
     void createChat(const QString &channelName, bool isPrivate);
     void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);

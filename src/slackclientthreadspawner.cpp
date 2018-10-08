@@ -627,6 +627,15 @@ void SlackClientThreadSpawner::onFileSharesReceived(const QList<FileShare *> &sh
     _filesShares->addFileShares(shares, total, page, pages);
 }
 
+void SlackClientThreadSpawner::deleteFile(const QString &teamId, const QString &fileId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient == nullptr) {
+        return;
+    }
+    QMetaObject::invokeMethod(_slackClient, "deleteFile", Qt::QueuedConnection, Q_ARG(QString, fileId));
+}
+
 void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
 {
     DEBUG_BLOCK;
