@@ -5,7 +5,8 @@ import QtQuick 2.8
 QtObject {
     readonly property int paddingLarge: 20
     readonly property int paddingMedium: 10
-    readonly property int paddingSmall: 2
+    readonly property int paddingSmall: 5
+    readonly property int paddingTiny: 2
 
     readonly property int avatarSize: 64
 

@@ -1,5 +1,4 @@
-#ifndef SEARCHMESSAGESMODEL_H
-#define SEARCHMESSAGESMODEL_H
+#pragma once
 
 #include <QObject>
 #include "MessagesModel.h"
@@ -31,7 +30,5 @@ private:
     int m_fetched { 0 };
     int m_lastPageFetched { -1 };
     int m_total { 0 };
-
 };
 
-#endif // SEARCHMESSAGESMODEL_H

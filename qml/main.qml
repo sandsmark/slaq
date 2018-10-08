@@ -29,6 +29,7 @@ ApplicationWindow {
     property alias userDialog: userDialog
     property alias errorDialog: errorDialog
     property alias dndDialog: dndDialog
+    property alias filesSharesList: filesSharesList
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
@@ -143,6 +144,10 @@ ApplicationWindow {
 
     SearchResultsList {
         id: searchResultsList
+    }
+
+    FilesSharesList {
+        id: filesSharesList
     }
 
     TextViewer {

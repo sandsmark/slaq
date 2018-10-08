@@ -1,5 +1,4 @@
-#ifndef THREADSPAWNER_H
-#define THREADSPAWNER_H
+#pragma once
 
 #include <QThread>
 #include <QMutex>
@@ -32,9 +31,11 @@ public:
     Q_INVOKABLE SlackTeamClient::ClientStatus slackClientStatus(const QString& teamId);
     Q_INVOKABLE QQmlObjectListModel<TeamInfo>* teamsModel();
     Q_INVOKABLE MessageListModel *getSearchMessages(const QString &teamId);
+    Q_INVOKABLE FilesSharesModel *getFilesSharesModel(const QString &teamId);
     Q_INVOKABLE void reconnectClient();
     Q_INVOKABLE Chat *getChannel(const QString& teamId, const QString& channelId);
     Q_INVOKABLE void dumpChannel(const QString& teamId, const QString& channelId);
+    Q_INVOKABLE QString resourceForFileType(const QString& fileType, const QString& fileName);
 
     QString version() const;
 signals:
@@ -159,6 +160,7 @@ public slots:
     void setPresence(const QString& teamId, bool isAway);
     void setDnD(const QString& teamId, int minutes);
     void cancelDnD(const QString& teamId);
+    void onFileSharesReceived(const QList<FileShare*>& shares, int total, int page, int pages);
 
 protected:
     void run() override;
@@ -175,6 +177,7 @@ private:
     QDateTime m_buildTime;
     ThreadExecutor* m_threadExecutor {nullptr};
     QSettings m_settings;
+    QDir m_fileTypesResDir { ":/icons/filetypes" };
 };
 
 class ThreadExecutor: public QObject {
@@ -190,6 +193,4 @@ public slots:
 private:
     SlackClientThreadSpawner* m_threadSpawner {nullptr};
 };
-
-#endif
 

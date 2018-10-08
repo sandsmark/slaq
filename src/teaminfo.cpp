@@ -1,6 +1,5 @@
 #include "teaminfo.h"
 #include "slackclientthreadspawner.h"
-#include "searchmessagesmodel.h"
 
 TeamInfo::TeamInfo(QObject *parent): QObject(parent) {}
 
@@ -54,6 +53,11 @@ void TeamInfo::addConversationsData(const QList<Chat*>& chats, bool last)
     m_chats->addChats(chats, last);
 }
 
+FilesSharesModel *TeamInfo::fileSharesModel() const
+{
+    return m_fileSharesModel;
+}
+
 bool TeamInfo::teamsEmojisUpdated() const
 {
     return m_teamsEmojisUpdated;
@@ -70,12 +74,15 @@ void TeamInfo::createModels(SlackTeamClient *slackClient)
     QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
     m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
     QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
+    m_fileSharesModel = new FilesSharesModel(nullptr, m_users, m_teamId);
+    QQmlEngine::setObjectOwnership(m_fileSharesModel, QQmlEngine::CppOwnership);
     m_chats = new ChatsModel(m_selfId, nullptr, m_users);
     QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
     if (QThread::currentThread() != qApp->thread()) {
         m_users->moveToThread(qApp->thread());
         m_searchMessages->moveToThread(qApp->thread());
         m_chats->moveToThread(qApp->thread());
+        m_fileSharesModel->moveToThread(qApp->thread());
     }
     connect(m_users, &UsersModel::requestUserInfo, slackClient, &SlackTeamClient::requestUserInfo, Qt::QueuedConnection);
 }

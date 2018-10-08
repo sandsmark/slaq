@@ -153,13 +153,12 @@ class FileShare: public QObject {
     Q_OBJECT
     Q_PROPERTY(QString id MEMBER m_id CONSTANT)
     Q_PROPERTY(QDateTime created MEMBER m_created CONSTANT)
-    Q_PROPERTY(QDateTime timestamp MEMBER m_timestamp CONSTANT)
     Q_PROPERTY(QString name MEMBER m_name CONSTANT)
     Q_PROPERTY(QString title MEMBER m_title CONSTANT)
     Q_PROPERTY(QString mimetype MEMBER m_mimetype CONSTANT)
     Q_PROPERTY(QString filetype MEMBER m_filetype CONSTANT)
     Q_PROPERTY(QString pretty_type MEMBER m_pretty_type CONSTANT)
-    Q_PROPERTY(QPointer<User> user MEMBER m_user CONSTANT)
+    Q_PROPERTY(User* user MEMBER m_user CONSTANT)
     Q_PROPERTY(FileShareModes mode MEMBER m_mode CONSTANT)
     Q_PROPERTY(bool editable MEMBER m_editable CONSTANT)
     Q_PROPERTY(bool is_external MEMBER m_is_external CONSTANT)
@@ -197,6 +196,7 @@ class FileShare: public QObject {
     Q_PROPERTY(QStringList pinned_to MEMBER m_pinned_to CONSTANT)
     Q_PROPERTY(QList<QObject*> reactions MEMBER m_reactions CONSTANT)
     Q_PROPERTY(int comments_count MEMBER m_comments_count CONSTANT)
+    Q_PROPERTY(bool preview_is_truncated MEMBER m_preview_is_truncated CONSTANT)
 
 public:
     FileShare(QObject* parent = nullptr);
@@ -212,13 +212,13 @@ public:
 
     QString m_id;
     QDateTime m_created;
-    QDateTime m_timestamp;
     QString m_name;
     QString m_title;
     QString m_mimetype;
     QString m_filetype;
     QString m_pretty_type;
     QPointer<User> m_user;
+    QString m_userId;
     FileShareModes m_mode { Hosted };
     bool m_editable { true };
     bool m_is_external {false };
@@ -247,6 +247,7 @@ public:
     bool m_is_public { true };
     bool m_public_url_shared { false };
     bool m_display_as_bot { false };
+    bool m_preview_is_truncated { false };
     QStringList m_channels;
     QStringList m_groups;
     QStringList m_ims;
@@ -404,4 +405,3 @@ private:
     bool m_isThreadModel { false };
     bool m_historyLoaded { false };
 };
-

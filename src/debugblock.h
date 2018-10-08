@@ -1,5 +1,4 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#pragma once
 
 #include <QDebug>
 #include <QElapsedTimer>
@@ -32,4 +31,3 @@ struct DebugHelperClass {
 #define DEBUG_BLOCK
 #define DEBUG_TICK
 #endif
-#endif // DEBUG_H

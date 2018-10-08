@@ -779,6 +779,57 @@ void SlackTeamClient::handleTestLoginReply()
     m_status = LOGGEDIN;
 }
 
+void SlackTeamClient::requestSharedFiles(int page, const QString& channelId, const QString& userId)
+{
+    DEBUG_BLOCK;
+
+    QMap<QString, QString> params;
+    if (!channelId.isEmpty()) {
+        params.insert(QStringLiteral("channel"), channelId);
+    }
+    if (!userId.isEmpty()) {
+        params.insert(QStringLiteral("user"), userId);
+    }
+    params.insert(QStringLiteral("count"), QStringLiteral("100"));
+    params.insert(QStringLiteral("page"), QString("%1").arg(page));
+
+    QNetworkReply *reply = executeGet(QStringLiteral("files.list"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamFilesReply);
+}
+
+void SlackTeamClient::handleTeamFilesReply()
+{
+    DEBUG_BLOCK;
+
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    QJsonObject data = getResult(reply);
+    reply->deleteLater();
+
+    if (isError(data)) {
+        return;
+    }
+    UsersModel* _users = m_teamInfo.users();
+    QList<FileShare*> _list;
+    const QJsonObject& paging = data.value(QStringLiteral("paging")).toObject();
+    //qDebug().noquote() << "paging" << QJsonDocument(paging).toJson();
+    int _total = paging.value(QStringLiteral("total")).toInt();
+    int _page = paging.value(QStringLiteral("page")).toInt();
+    int _pages = paging.value(QStringLiteral("pages")).toInt();
+    const QJsonArray& jsonfiles = data.value(QStringLiteral("files")).toArray();
+    for (const QJsonValue& jsonfile : jsonfiles) {
+        qDebug().noquote() << "file share" << QJsonDocument(jsonfile.toObject()).toJson();
+        FileShare* fileshare = new FileShare;
+        fileshare->setData(jsonfile.toObject());
+        QQmlEngine::setObjectOwnership(fileshare, QQmlEngine::CppOwnership);
+        fileshare->moveToThread(qApp->thread());
+        fileshare->m_user = _users->user(fileshare->m_userId);
+        qDebug() << "file share user" << fileshare->m_user << "for" << fileshare->m_userId;
+        _list.append(fileshare);
+    }
+    qDebug() << "file shares for team:" << _list.size() << _page << _pages << _total;
+    emit fileSharesReceived(_list, _total, _page, _pages);
+}
+
 void SlackTeamClient::searchMessages(const QString &searchString, int page)
 {
     DEBUG_BLOCK;
@@ -803,7 +854,6 @@ void SlackTeamClient::handleSearchMessagesReply()
     reply->deleteLater();
 
     if (isError(data)) {
-        emit testLoginFail(m_teamInfo.teamId());
         return;
     }
 

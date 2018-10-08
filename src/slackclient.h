@@ -1,5 +1,4 @@
-#ifndef SLACKCLIENT_H
-#define SLACKCLIENT_H
+#pragma once
 
 #include <QObject>
 #include <QPointer>
@@ -82,6 +81,7 @@ signals:
     void messageUpdated(Message* message, bool replace = true);
     void messageDeleted(const QString& channelId, const QDateTime& ts);
     void error(QJsonObject err);
+    void fileSharesReceived(const QList<FileShare*>& shares, int total, int page, int pages);
 
     void channelUpdated(Chat* chat);
     void channelJoined(Chat* chat);
@@ -160,6 +160,7 @@ public slots:
     void parseUserDndChange(const QJsonObject &message);
     SlackTeamClient::ClientStatus getStatus() const;
     void sendUserTyping(const QString& channelId);
+    void requestSharedFiles(int page, const QString &channelId = QString(), const QString &userId = QString());
 
 private slots:
     void handleStartReply();
@@ -191,6 +192,7 @@ private slots:
     void handleDnDInfoReply();
 
     void createChannelIfNeeded(const QJsonObject &channel);
+    void handleTeamFilesReply();
 
 private:
     bool appActive;
@@ -240,5 +242,3 @@ private:
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)
-
-#endif // SLACKCLIENT_H
