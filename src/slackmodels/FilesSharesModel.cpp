@@ -7,7 +7,7 @@ FilesSharesModel::FilesSharesModel(QAbstractListModel *parent,
                                          const QString &teamId) :
     QAbstractListModel(parent), m_teamId(teamId) {}
 
-void FilesSharesModel::addFileShares(const fsList &fshares, int total, int page, int pages)
+void FilesSharesModel::addFileShares(const QList<FileShare *> &fshares, int total, int page, int pages)
 {
     qDebug() << "Adding" << fshares.count() << "file shares";
     if (m_total != total) {
@@ -16,11 +16,27 @@ void FilesSharesModel::addFileShares(const fsList &fshares, int total, int page,
     if (m_totalPages != pages) {
         m_totalPages = pages;
     }
+
+    int _initialCount = m_filesIds.size();
+
     QMutexLocker locker(&m_mutex);
-    beginInsertRows(QModelIndex(), m_fileShares.count(), m_fileShares.count() + fshares.count() - 1);
-    m_fileShares << fshares;
+    for (FileShare* fs : fshares) {
+        int _row = m_filesIds.value(fs->m_id, -1);
+        if (_row != -1) {
+            m_fileShares.replace(_row, fs);
+            locker.unlock();
+            QModelIndex index = QAbstractListModel::index(_row, 0,  QModelIndex());
+            emit dataChanged(index, index);
+            locker.relock();
+        } else {
+            m_fileShares.append(fs);
+            m_filesIds.insert(fs->m_id, m_fileShares.size() - 1);
+        }
+    }
+
+    beginInsertRows(QModelIndex(), _initialCount, m_filesIds.size() - _initialCount - 1);
     endInsertRows();
-    m_fetched += fshares.count();
+    m_fetched += (m_filesIds.size() - _initialCount);
     m_lastPageFetched = page;
     m_pagesRetrieved.insert(page);
 }
@@ -31,7 +47,9 @@ void FilesSharesModel::retreiveFilesFor(const QString &channel, const QString &u
     m_userId = user;
     if (m_fetched > 0) {
         beginResetModel();
+        qDeleteAll(m_fileShares);
         m_fileShares.clear();
+        m_filesIds.clear();
         m_total = 0;
         m_pagesRetrieved.clear();
         m_fetched = 0;
@@ -40,6 +58,20 @@ void FilesSharesModel::retreiveFilesFor(const QString &channel, const QString &u
         endResetModel();
     }
     emit fetchMoreData(1, m_channelId, m_userId);
+}
+
+void FilesSharesModel::deleteFile(const QString &fileId)
+{
+    QMutexLocker locker(&m_mutex);
+    int _index = m_filesIds.value(fileId, -1);
+    if (_index >= 0 && _index < m_fileShares.size()) {
+        FileShare* _fshare = m_fileShares.at(_index);
+        beginRemoveRows(QModelIndex(), _index, _index);
+        m_fileShares.removeAt(_index);
+        m_filesIds.remove(fileId);
+        endRemoveRows();
+        delete _fshare;
+    }
 }
 
 int FilesSharesModel::rowCount(const QModelIndex &parent) const

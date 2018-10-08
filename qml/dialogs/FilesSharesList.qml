@@ -20,6 +20,7 @@ Drawer {
     property int totalPages: -1
     property string teamId: teamsSwipe.currentItem.item.teamId
     property User selfUser: null
+    onTeamIdChanged: listView.model = undefined
 
     function fetchData() {
         if (radioGroup.checkedButton == allFilesButton) {
@@ -33,9 +34,12 @@ Drawer {
 
     onOpened: {
         selfUser = SlackClient.selfUser(teamId)
-        listView.model = SlackClient.getFilesSharesModel(teamId)
-        fetchData()
+        if (listView.model == undefined) {
+            listView.model = SlackClient.getFilesSharesModel(teamId)
+            fetchData()
+        }
     }
+
     ButtonGroup {
         id: radioGroup
         onCheckedButtonChanged: {

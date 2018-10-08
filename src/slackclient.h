@@ -162,6 +162,7 @@ public slots:
     SlackTeamClient::ClientStatus getStatus() const;
     void sendUserTyping(const QString& channelId);
     void requestSharedFiles(int page, const QString &channelId = QString(), const QString &userId = QString());
+    void requestSharedFileInfo(const QString &fileId);
 
 private slots:
     void handleStartReply();
