@@ -1,5 +1,4 @@
-#ifndef IMAGESCACHE_H
-#define IMAGESCACHE_H
+#pragma once
 
 #include <QObject>
 #include <QUrl>
@@ -84,5 +83,3 @@ private:
 
     QMutex m_mutex;
 };
-
-#endif // IMAGESCACHE_H

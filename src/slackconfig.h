@@ -1,5 +1,4 @@
-#ifndef SLACKCONFIG_H
-#define SLACKCONFIG_H
+#pragma once
 
 #include <QObject>
 #include <QSettings>
@@ -45,4 +44,3 @@ private:
     QHash<QString, QString> m_teamsTokens;
 };
 
-#endif // SLACKCONFIG_H

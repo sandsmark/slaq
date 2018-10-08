@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<SlackTeamClient::ClientStatus>("SlackTeamClient::ClientStatus");
     qRegisterMetaType<Chat*>("Chat*");
     qRegisterMetaType<User*>("User*");
+    qRegisterMetaType<FileShare*>("FileShare*");
 
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
@@ -67,6 +68,8 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
     qmlRegisterUncreatableType<Chat>("com.iskrembilen", 1, 0, "Chat", "Only instantiated by c++");
     qmlRegisterUncreatableType<SlackTeamClient>("com.iskrembilen", 1, 0, "SlackTeamClient", "Only instantiated by c++");
+    qmlRegisterUncreatableType<FileShare>("com.iskrembilen", 1, 0, "FileShare", "Only instantiated by c++");
+    qmlRegisterUncreatableType<FilesSharesModel>("com.iskrembilen", 1, 0, "FilesSharesModel", "Only instantiated by c++");
 
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));

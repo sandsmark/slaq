@@ -48,7 +48,7 @@ Page {
             height: Theme.headerSize
             Layout.fillWidth: true
             RowLayout {
-                spacing: 2
+                spacing: Theme.paddingTiny
                 Label {
                     Layout.fillWidth: true
                     text: page.title
@@ -61,6 +61,7 @@ Page {
                     display: AbstractButton.IconOnly
                     checked: selfUser.presence === User.Away
                     checkable: false
+                    padding: 0
                     implicitWidth: height
                     icon.color: "transparent"
                     icon.source: "qrc:/icons/away-icon.png"
@@ -78,6 +79,7 @@ Page {
                 RoundButton {
                     id: dndButton
                     display: AbstractButton.IconOnly
+                    padding: 0
                     checkable: false
                     checked: selfUser.presence === User.Dnd
                     implicitWidth: height
@@ -91,6 +93,13 @@ Page {
                         dndDialog.teamId = teamRoot.teamId
                         dndDialog.isDnd = (selfUser.presence == User.Dnd ? true : false)
                         dndDialog.open()
+                    }
+                }
+                EmojiRoundButton {
+                    text: "📂"
+                    padding: 0
+                    onClicked: {
+                        filesSharesList.open()
                     }
                 }
             }

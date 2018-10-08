@@ -838,14 +838,14 @@ FileShare::FileShare(QObject *parent) : QObject (parent) {}
 void FileShare::setData(const QJsonObject &data)
 {
     m_id = data.value(QStringLiteral("id")).toString();
-    m_created = slackToDateTime(data.value(QStringLiteral("created")).toString());
-    m_timestamp = slackToDateTime(data.value(QStringLiteral("timestamp")).toString());
+    m_created = QDateTime::fromSecsSinceEpoch(data.value(QStringLiteral("created")).toInt());
+    qDebug() << "created" << m_created;
     m_name = data.value(QStringLiteral("name")).toString();
+    m_userId = data.value(QStringLiteral("user")).toString();
     m_title = data.value(QStringLiteral("title")).toString();
     m_mimetype = data.value(QStringLiteral("mimetype")).toString();
     m_filetype = data.value(QStringLiteral("filetype")).toString();
     m_pretty_type = data.value(QStringLiteral("pretty_type")).toString();
-    QPointer<User> m_user;//" : "U2147483697",
     const QString& _mode = data.value(QStringLiteral("mode")).toString();
     if (_mode == "hosted") {
         m_mode = Hosted;
@@ -883,9 +883,9 @@ void FileShare::setData(const QJsonObject &data)
     m_preview_highlight = data.value(QStringLiteral("preview_highlight")).toString();
     m_lines = data.value(QStringLiteral("lines")).toInt(0);
     m_lines_more = data.value(QStringLiteral("lines_more")).toInt(0);
-    m_is_public = data.value(QStringLiteral("external_type")).toBool(true);
-    m_public_url_shared = data.value(QStringLiteral("external_type")).toBool(true);
-    m_display_as_bot = data.value(QStringLiteral("external_type")).toBool(false);
+    m_is_public = data.value(QStringLiteral("is_public")).toBool(true);
+    m_public_url_shared = data.value(QStringLiteral("public_url_shared")).toBool(true);
+    m_display_as_bot = data.value(QStringLiteral("display_as_bot")).toBool(false);
     foreach (const QJsonValue &channelValue, data.value(QStringLiteral("channels")).toArray()) {
         m_channels << channelValue.toString();
     }
@@ -897,7 +897,7 @@ void FileShare::setData(const QJsonObject &data)
     }
     m_initial_comment = data.value(QStringLiteral("initial_comment")).toString();
     m_num_stars = data.value(QStringLiteral("num_stars")).toInt(0);
-    m_is_starred = data.value(QStringLiteral("external_type")).toBool(false);
+    m_is_starred = data.value(QStringLiteral("is_starred")).toBool(false);
     foreach (const QJsonValue &pinnedlValue, data.value(QStringLiteral("pinned_to")).toArray()) {
         m_pinned_to << pinnedlValue.toString();
     }

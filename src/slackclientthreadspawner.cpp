@@ -2,6 +2,7 @@
 #include <QtMultimedia/QMediaContent>
 
 #include "slackclientthreadspawner.h"
+#include "teaminfo.h"
 #include "searchmessagesmodel.h"
 #include "debugblock.h"
 
@@ -331,6 +332,21 @@ void SlackClientThreadSpawner::dumpChannel(const QString &teamId, const QString 
     }
 }
 
+QString SlackClientThreadSpawner::resourceForFileType(const QString &fileType, const QString& fileName)
+{
+    QString _lowerFt = fileType;
+    _lowerFt = _lowerFt.toLower();
+    QFileInfo fi(fileName);
+    fi.suffix();
+    for (const QString& ftFile: m_fileTypesResDir.entryList()) {
+        if (ftFile.contains(_lowerFt) || ftFile.contains(fi.suffix())) {
+            return QStringLiteral("qrc:/icons/filetypes/") + ftFile;
+        }
+    }
+    qDebug() << "not found file for type" << fileType;
+    return QStringLiteral("qrc:/icons/filetypes/blank.svg");
+}
+
 QString SlackClientThreadSpawner::version() const
 {
     return qApp->applicationVersion();
@@ -595,6 +611,22 @@ void SlackClientThreadSpawner::cancelDnD(const QString &teamId)
     QMetaObject::invokeMethod(_slackClient, "cancelDnD", Qt::QueuedConnection);
 }
 
+void SlackClientThreadSpawner::onFileSharesReceived(const QList<FileShare *> &shares, int total, int page, int pages)
+{
+    SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
+
+    TeamInfo* teamInfo = _slackClient->teamInfo();
+    ChatsModel* _chatsModel = teamInfo->chats();
+
+    if (_chatsModel == nullptr) {
+        qWarning() << "No chats";
+        return;
+    }
+    FilesSharesModel* _filesShares = teamInfo->fileSharesModel();
+
+    _filesShares->addFileShares(shares, total, page, pages);
+}
+
 void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
 {
     DEBUG_BLOCK;
@@ -758,6 +790,7 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::channelJoined, this, &SlackClientThreadSpawner::onChannelJoined, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::channelLeft, this, &SlackClientThreadSpawner::onChannelLeft, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::searchMessagesReceived, this, &SlackClientThreadSpawner::onSearchMessagesReceived, Qt::QueuedConnection);
+    connect(_slackClient, &SlackTeamClient::fileSharesReceived, this, &SlackClientThreadSpawner::onFileSharesReceived, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::postFileSuccess, this, &SlackClientThreadSpawner::postFileSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::postFileFail, this, &SlackClientThreadSpawner::postFileFail, Qt::QueuedConnection);
@@ -788,6 +821,15 @@ MessageListModel *SlackClientThreadSpawner::getSearchMessages(const QString& tea
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient != nullptr) {
         return _slackClient->teamInfo()->searches();
+    }
+    return nullptr;
+}
+
+FilesSharesModel *SlackClientThreadSpawner::getFilesSharesModel(const QString &teamId)
+{
+    SlackTeamClient* _slackClient = slackClient(teamId);
+    if (_slackClient != nullptr) {
+        return _slackClient->teamInfo()->fileSharesModel();
     }
     return nullptr;
 }
@@ -923,6 +965,8 @@ void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<User>>& u
     if (last) {
         emit usersModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->users());
         QMetaObject::invokeMethod(_slackClient, "requestConversationsList", Qt::QueuedConnection, Q_ARG(QString, ""));
+        connect(_slackClient->teamInfo()->fileSharesModel(), &FilesSharesModel::fetchMoreData,
+                _slackClient, &SlackTeamClient::requestSharedFiles, Qt::QueuedConnection);
     }
 }
 

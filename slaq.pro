@@ -62,7 +62,8 @@ SOURCES += src/main.cpp \
     src/slackmodels/ChatsModel.cpp \
     src/slackmodels/MessagesModel.cpp \
     src/slackmodels/UsersModel.cpp \
-    src/slackmodels/searchmessagesmodel.cpp
+    src/slackmodels/searchmessagesmodel.cpp \
+    src/slackmodels/FilesSharesModel.cpp
 
 OTHER_FILES += translations/*.ts \
     icons/slaq.svg \
@@ -89,7 +90,8 @@ HEADERS += \
     src/slackmodels/ChatsModel.h \
     src/slackmodels/MessagesModel.h \
     src/slackmodels/UsersModel.h \
-    src/slackmodels/searchmessagesmodel.h
+    src/slackmodels/searchmessagesmodel.h \
+    src/slackmodels/FilesSharesModel.h
 
 DISTFILES += \
     qml/dialogs/*.qml \
@@ -97,14 +99,7 @@ DISTFILES += \
     qml/pages/*.qml \
     qml/*.qml \
     scripts/*.py \
-    qml/components/*.qml \
-    qml/dialogs/UserDialog.qml \
-    qml/components/UserStatusEmoji.qml \
-    qml/dialogs/ErrorMessageDialog.qml \
-    qml/components/ImageButton.qml \
-    qml/dialogs/DndDialog.qml \
-    qml/components/TumblerDelegate.qml \
-    qml/dialogs/LazyLoadDialog.qml
+    qml/components/*.qml
 
 target.path = $$TO_DEPLOY
 

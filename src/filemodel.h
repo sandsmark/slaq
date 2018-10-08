@@ -20,8 +20,7 @@ along with Nome-Programma.  If not, see <http://www.gnu.org/licenses/>
 
 */
 
-#ifndef FILEMODEL_H
-#define FILEMODEL_H
+#pragma once
 
 #include <QDir>
 #include <QFile>
@@ -73,4 +72,3 @@ protected:
     QHash<int, QByteArray> roleNames() const;
 };
 
-#endif // FILEMODEL_H

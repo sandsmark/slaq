@@ -1,5 +1,4 @@
-#ifndef SLACKSTREAM_H
-#define SLACKSTREAM_H
+#pragma once
 
 #include <QObject>
 #include <QJsonObject>
@@ -48,4 +47,3 @@ private:
     int m_lastMessageId;
 };
 
-#endif // SLACKSTREAM_H

@@ -1,5 +1,4 @@
-#ifndef NETWORKACCESSMANAGER_H
-#define NETWORKACCESSMANAGER_H
+#pragma once
 
 #include <QPointer>
 #include <QtNetwork/QNetworkAccessManager>
@@ -19,4 +18,3 @@ private:
     QPointer<SlackConfig> config;
 };
 
-#endif // NETWORKACCESSMANAGER_H

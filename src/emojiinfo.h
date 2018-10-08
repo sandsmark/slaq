@@ -1,5 +1,4 @@
-#ifndef SLACKEMOJISMODEL_H
-#define SLACKEMOJISMODEL_H
+#pragma once
 
 #include <QObject>
 #include <QMultiMap>
@@ -202,5 +201,3 @@ Q_DECLARE_METATYPE(EmojiInfo*)
 Q_DECLARE_METATYPE(EmojiCategoryHolder*)
 Q_DECLARE_OPERATORS_FOR_FLAGS(EmojiInfo::ImagesExist)
 Q_DECLARE_OPERATORS_FOR_FLAGS(EmojiInfo::EmojiCategories)
-
-#endif // SLACKEMOJISMODEL_H

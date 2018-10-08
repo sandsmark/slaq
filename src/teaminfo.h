@@ -1,11 +1,12 @@
-#ifndef TEAMINFO_H
-#define TEAMINFO_H
+#pragma once
 
 #include <QString>
 #include <QObject>
 #include <QtQml>
 #include "UsersModel.h"
 #include "ChatsModel.h"
+#include "searchmessagesmodel.h"
+#include "FilesSharesModel.h"
 
 class SearchMessagesModel;
 class SlackTeamClient;
@@ -62,8 +63,8 @@ public:
     void setTeamsEmojisUpdated(bool teamsEmojisUpdated);
 
     void createModels(SlackTeamClient *slackClient);
-
     User* selfUser() const;
+    FilesSharesModel *fileSharesModel() const;
 
 public slots:
     void setTeamId(const QString& teamId);
@@ -110,9 +111,9 @@ private:
     ChatsModel* m_chats {nullptr};
     UsersModel* m_users {nullptr};
     SearchMessagesModel* m_searchMessages { nullptr };
+    FilesSharesModel* m_fileSharesModel { nullptr };
     bool m_teamsEmojisUpdated { false };
 };
 
 QML_DECLARE_TYPE(TeamInfo)
 
-#endif // TEAMINFO_H

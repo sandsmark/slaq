@@ -1,5 +1,4 @@
-#ifndef NOTIFICATIONLISTENER_H
-#define NOTIFICATIONLISTENER_H
+#pragma once
 
 #include <QObject>
 #include <QQmlApplicationEngine>
@@ -17,4 +16,3 @@ private:
     QQmlApplicationEngine *m_engine;
 };
 
-#endif // NOTIFICATIONLISTENER_H

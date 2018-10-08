@@ -1,5 +1,4 @@
-#ifndef DOWNLOADMANAGER_H
-#define DOWNLOADMANAGER_H
+#pragma once
 
 #include <QtNetwork>
 #include <QtCore>
@@ -49,4 +48,3 @@ private:
     int totalCount = 0;
 };
 
-#endif

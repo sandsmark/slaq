@@ -1,5 +1,4 @@
-#ifndef EMOJIPROVIDER_H
-#define EMOJIPROVIDER_H
+#pragma once
 
 #include <qqmlengine.h>
 #include <qquickimageprovider.h>
@@ -38,4 +37,3 @@ private:
     QThreadPool m_pool;
 };
 
-#endif // EMOJIPROVIDER_H
