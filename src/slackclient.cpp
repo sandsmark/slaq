@@ -304,6 +304,19 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
         errorData["error_str"] = QString("%1. code: %2").arg(errObj.value("msg").toString()).
                 arg(errObj.value("code").toInt());
         emit error(errorData);
+    } else if (type == "file_shared") {
+        const QString& fileId = message.value(QStringLiteral("file_id")).toString();
+        requestSharedFileInfo(fileId);
+    } else if (type == "file_deleted") {
+        const QString& fileId = message.value(QStringLiteral("file_id")).toString();
+        QMetaObject::invokeMethod(qApp, [this, fileId] {
+            if (m_teamInfo.fileSharesModel() != nullptr) {
+                m_teamInfo.fileSharesModel()->deleteFile(fileId);
+            }
+        });
+    } else if (type == "file_change") {
+        const QString& fileId = message.value(QStringLiteral("file_id")).toString();
+        requestSharedFileInfo(fileId);
     } else {
         qDebug() << "Unhandled message";
         qDebug().noquote() << QJsonDocument(message).toJson();
@@ -800,6 +813,17 @@ void SlackTeamClient::requestSharedFiles(int page, const QString& channelId, con
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamFilesReply);
 }
 
+void SlackTeamClient::requestSharedFileInfo(const QString &fileId)
+{
+    DEBUG_BLOCK;
+
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("file"), fileId);
+
+    QNetworkReply *reply = executeGet(QStringLiteral("files.info"), params);
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamFilesReply);
+}
+
 void SlackTeamClient::handleTeamFilesReply()
 {
     DEBUG_BLOCK;
@@ -815,19 +839,32 @@ void SlackTeamClient::handleTeamFilesReply()
     QList<FileShare*> _list;
     const QJsonObject& paging = data.value(QStringLiteral("paging")).toObject();
     //qDebug().noquote() << "paging" << QJsonDocument(paging).toJson();
-    int _total = paging.value(QStringLiteral("total")).toInt();
-    int _page = paging.value(QStringLiteral("page")).toInt();
-    int _pages = paging.value(QStringLiteral("pages")).toInt();
-    const QJsonArray& jsonfiles = data.value(QStringLiteral("files")).toArray();
-    for (const QJsonValue& jsonfile : jsonfiles) {
-        qDebug().noquote() << "file share" << QJsonDocument(jsonfile.toObject()).toJson();
-        FileShare* fileshare = new FileShare;
-        fileshare->setData(jsonfile.toObject());
-        QQmlEngine::setObjectOwnership(fileshare, QQmlEngine::CppOwnership);
-        fileshare->moveToThread(qApp->thread());
-        fileshare->m_user = _users->user(fileshare->m_userId);
-        qDebug() << "file share user" << fileshare->m_user << "for" << fileshare->m_userId;
-        _list.append(fileshare);
+    int _total = paging.value(QStringLiteral("total")).toInt(1);
+    int _page = paging.value(QStringLiteral("page")).toInt(1);
+    int _pages = paging.value(QStringLiteral("pages")).toInt(1);
+    const QJsonValue& jsonfilesVal = data.value(QStringLiteral("files"));
+    if (!jsonfilesVal.isUndefined()) {
+        const QJsonArray& jsonfiles = jsonfilesVal.toArray();
+        for (const QJsonValue& jsonfile : jsonfiles) {
+            //qDebug().noquote() << "file share" << QJsonDocument(jsonfile.toObject()).toJson();
+            FileShare* fileshare = new FileShare;
+            fileshare->setData(jsonfile.toObject());
+            QQmlEngine::setObjectOwnership(fileshare, QQmlEngine::CppOwnership);
+            fileshare->moveToThread(qApp->thread());
+            fileshare->m_user = _users->user(fileshare->m_userId);
+            _list.append(fileshare);
+        }
+    } else {
+        const QJsonValue& jsonfileVal = data.value(QStringLiteral("file"));
+        if (!jsonfileVal.isUndefined()) {
+            //qDebug().noquote() << "file share" << QJsonDocument(jsonfile.toObject()).toJson();
+            FileShare* fileshare = new FileShare;
+            fileshare->setData(jsonfileVal.toObject());
+            QQmlEngine::setObjectOwnership(fileshare, QQmlEngine::CppOwnership);
+            fileshare->moveToThread(qApp->thread());
+            fileshare->m_user = _users->user(fileshare->m_userId);
+            _list.append(fileshare);
+        }
     }
     qDebug() << "file shares for team:" << _list.size() << _page << _pages << _total;
     emit fileSharesReceived(_list, _total, _page, _pages);
@@ -1313,7 +1350,7 @@ void SlackTeamClient::addTeamEmoji(const QString& name, const QString& url) {
     einfo->m_imagesExist |= EmojiInfo::ImageSlackTeam;
     einfo->m_category = EmojiInfo::EmojiCategoryCustom;
     einfo->m_teamId = m_teamInfo.teamId();
-    //qDebug() << "edding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
+    //qDebug() << "adding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
     imagesCache->addEmoji(einfo);
 }
 
