@@ -51,6 +51,7 @@ MouseArea {
             Image {
                 id: avatarImage
                 visible: !sameuser || (isReplies && model.ThreadIsParentMessage)
+                height: visible ? Theme.avatarSize : 0
                 sourceSize: visible ? Qt.size(Theme.avatarSize, Theme.avatarSize) : Qt.size(0, 0)
                 source: visible && model.User != null ? "image://emoji/slack/" + model.User.avatarUrl :
                                                         "http://www.gravatar.com/avatar/default?d=identicon"
@@ -185,7 +186,7 @@ MouseArea {
                     }
 
                     width: parent.width - avatarImage.width - parent.spacing
-                    height: text === "" ? 0 : implicitHeight
+                    //height: text === "" ? 0 : implicitHeight
                     readOnly: true
                     font.pixelSize: Theme.fontSizeLarge
                     font.italic: model.IsChanged
@@ -236,18 +237,6 @@ MouseArea {
                     // To avoid the border on some styles, we only want a textarea to be able to select things
                     background: Item {}
 
-                    //Due to bug in images not rendered until app resize
-                    //trigger redraw changing width
-                    //                    onTextChanged: {
-                    //                        Qt.callLater(function() {
-                    //                            if (contentItem != undefined) {
-                    //                                var tmp = contentItem.width
-                    //                                contentItem.width = 0
-                    //                                contentItem.width = tmp
-                    //                            }
-                    //                        })
-                    //                    }
-
                     MouseArea {
                         id: mouseArea
                         enabled: false //we need this just for changing cursor shape
@@ -285,24 +274,11 @@ MouseArea {
                         }
                     }
                 }
-
-                Row {
-                    spacing: 5
-
-                    Repeater {
-                        id: reactionsRepeater
-                        model: Reactions
-
-                        Reaction {
-                            reaction: Reactions[index]
-                        }
-                    }
-                }
             }
         }
 
         Item {
-            height: visible ? Theme.paddingMedium : 0
+            height: visible ? Theme.paddingSmall : 0
             width: height
             visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }
@@ -336,6 +312,26 @@ MouseArea {
                     width: parent.width
                     attachment: Attachments[index]
                     onLinkClicked: handleLink(link)
+                }
+            }
+        }
+
+        Item {
+            height: visible ? Theme.paddingSmall : 0
+            width: height
+            visible: reactionsRepeater.count > 0
+        }
+
+        Row {
+            spacing: 5
+            leftPadding: Theme.avatarSize + Theme.paddingMedium
+
+            Repeater {
+                id: reactionsRepeater
+                model: Reactions
+
+                Reaction {
+                    reaction: Reactions[index]
                 }
             }
         }

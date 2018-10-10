@@ -839,7 +839,6 @@ void FileShare::setData(const QJsonObject &data)
 {
     m_id = data.value(QStringLiteral("id")).toString();
     m_created = QDateTime::fromSecsSinceEpoch(data.value(QStringLiteral("created")).toInt());
-    qDebug() << "created" << m_created;
     m_name = data.value(QStringLiteral("name")).toString();
     m_userId = data.value(QStringLiteral("user")).toString();
     m_title = data.value(QStringLiteral("title")).toString();

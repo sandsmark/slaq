@@ -1,6 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
+import Qt.labs.platform 1.0 as Platform
 import ".."
 import "../pages"
 import "../components"
@@ -37,6 +38,29 @@ Drawer {
         if (listView.model == undefined) {
             listView.model = SlackClient.getFilesSharesModel(teamId)
             fetchData()
+        }
+    }
+
+    Platform.FileDialog {
+        id: fileSaveDialog
+        title: "Please choose file name"
+        property string fileName: ""
+        property url downloadUrl: ""
+        file: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation) + "/" + fileName
+        folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation)
+        fileMode: Platform.FileDialog.SaveFile
+        onAccepted: {
+            progressBar.value = 0
+            downloadManager.append(downloadUrl, file, SlackClient.teamToken(teamId))
+        }
+    }
+    Connections {
+        target: downloadManager
+        onDownloaded: {
+            console.log("downloading", progress, url.toString(), fileSaveDialog.downloadUrl)
+            if (url === fileSaveDialog.downloadUrl) {
+                progressBar.value = progress
+            }
         }
     }
 
@@ -77,6 +101,12 @@ Drawer {
             }
         }
 
+        ProgressBar {
+            id: progressBar
+            value: 0
+            Layout.fillWidth: true
+        }
+
         ListView {
             id: listView
             Layout.fillWidth: true
@@ -103,7 +133,7 @@ Drawer {
                         Label {
                             id: name
                             Layout.fillWidth: true
-                            text: fileShare.title + " [" + fileShare.name + "]"
+                            text: fileShare.title + " [" + fileShare.name + "]. Size: " + fileShare.size + " bytes"
                         }
                         RowLayout {
                             Layout.fillWidth: true
@@ -119,14 +149,23 @@ Drawer {
 
                             EmojiRoundButton {
                                 id: trashButton
-                                padding: 0
                                 visible:  (selfUser != null && selfUser.userId === delegate.fileShare.user.userId)
                                 text: "\uD83D\uDDD1"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
                                     SlackClient.deleteFile(teamId, delegate.fileShare.id)
                                 }
-                                background: Item {}
+                            }
+                            RoundButton {
+                                id: downloadButton
+                                padding: 0
+                                font.pixelSize: Theme.fontSizeLarge
+                                text: "\u21E9"
+                                onClicked: {
+                                    fileSaveDialog.fileName = delegate.fileShare.name
+                                    fileSaveDialog.downloadUrl = delegate.fileShare.url_private_download
+                                    fileSaveDialog.open()
+                                }
                             }
                         }
                     }
