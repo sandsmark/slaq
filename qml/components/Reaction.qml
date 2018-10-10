@@ -28,8 +28,7 @@ Button {
     contentItem: Item {
         Image {
             anchors.centerIn: parent
-            width: Theme.headerSize - 4
-            height: Theme.headerSize - 4
+            sourceSize: Qt.size(Theme.headerSize - 4, Theme.headerSize - 4)
             smooth: true
             visible: !ImagesCache.isUnicode || (reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)
             source: "image://emoji/" + reaction.name
@@ -50,7 +49,7 @@ Button {
     background: Rectangle {
         color: palette.base
         implicitWidth: 100
-        implicitHeight: parent.height
+        implicitHeight: Theme.headerSize
         opacity: enabled ? 1 : 0.3
         border.color: "#bdbdbd"
         border.width: 1

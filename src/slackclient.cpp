@@ -45,7 +45,9 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "user_is_restricted", "Cannot join the channel by a restricted user or single channel guest." },
     { "file_not_found", "The file does not exist, or is not visible to the calling user." },
     { "file_deleted", "The file has already been deleted." },
-    { "cant_delete_file", "Authenticated user does not have permission to delete this file." }
+    { "cant_delete_file", "Authenticated user does not have permission to delete this file." },
+    { "user_not_found", "Value passed for user was invalid" }
+
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
@@ -271,7 +273,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
             if (m_teamInfo.users() != nullptr) {
                 m_teamInfo.users()->updateUser(message.value(QStringLiteral("user")).toObject());
             }
-        });
+        }, Qt::QueuedConnection);
     } else if (type == QStringLiteral("team_join")) {
         // invoke on the main thread
         QMetaObject::invokeMethod(qApp, [this, message] {
@@ -1826,18 +1828,21 @@ void SlackTeamClient::handleUsersInfoReply()
     QJsonObject data = getResult(reply);
     //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     reply->deleteLater();
-    // invoke on the main thread
+    // invoke on the main thread but dnd info must be requested from this thread
+    // after user gets updated
     if (!isError(data)) {
         QMetaObject::invokeMethod(qApp, [this, data] {
             if (m_teamInfo.users() != nullptr) {
                 const QJsonObject& userObj = data.value(QStringLiteral("user")).toObject();
                 m_teamInfo.users()->updateUser(userObj);
                 const QString& userId = userObj.value("id").toString();
-                if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
-                    requestDnDInfo(m_teamInfo.selfId());
-                }
+                QMetaObject::invokeMethod(this, [this, userId] {
+                    if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
+                        requestDnDInfo(m_teamInfo.selfId());
+                    }
+                }, Qt::QueuedConnection);
             }
-        });
+        }, Qt::QueuedConnection);
     }
 }
 

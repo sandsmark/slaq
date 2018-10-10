@@ -21,6 +21,4 @@ Dialog {
             text: question
         }
     }
-
-    //informativeText: qsTr("If you leave the private channel, you will no longer be able to see any of its messages. To rejoin the private channel, you will have to be re-invited.")
 }
