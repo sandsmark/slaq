@@ -18,7 +18,7 @@ Drawer {
     height: window.height - Theme.paddingMedium
     property int currentPage: -1
     property int totalPages: -1
-    property string teamId: teamsSwipe.currentItem.item.teamId
+    property string teamId: teamsSwipe.currentItem != null ? teamsSwipe.currentItem.item.teamId : ""
     property User selfUser: null
     onTeamIdChanged: listView.model = undefined
 
@@ -111,6 +111,12 @@ Drawer {
                                 font.pixelSize: Theme.fontSizeSmall
                                 text: qsTr("Created by @") + delegate.fileShare.user.username + " at " + Qt.formatDateTime(delegate.fileShare.created, "dd MMM yyyy hh:mm")
                             }
+
+                            Image {
+                                source: delegate.fileShare.user.avatarUrl
+                                sourceSize: Qt.size(Theme.avatarSize/2, Theme.avatarSize/2)
+                            }
+
                             EmojiRoundButton {
                                 id: trashButton
                                 padding: 0
@@ -121,10 +127,6 @@ Drawer {
                                     SlackClient.deleteFile(teamId, delegate.fileShare.id)
                                 }
                                 background: Item {}
-                            }
-                            Image {
-                                source: delegate.fileShare.user.avatarUrl
-                                sourceSize: Qt.size(Theme.avatarSize/2, Theme.avatarSize/2)
                             }
                         }
                     }

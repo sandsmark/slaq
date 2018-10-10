@@ -335,9 +335,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
 
 void UsersModel::addUser(User *user)
 {
-    if (QThread::currentThread() != qApp->thread()) {
-        user->moveToThread(qApp->thread());
-    }
+    user->moveToThread(qApp->thread());
     QMutexLocker locker(&m_modelMutex);
     int row  = m_userIds.indexOf(user->userId());
     if (row >= 0) {

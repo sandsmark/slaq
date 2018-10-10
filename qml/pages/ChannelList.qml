@@ -28,19 +28,56 @@ Page {
         }
     }
 
+    Menu {
+        id: userMenu
+        Action {
+            text: qsTr("Photo/Status")
+            onTriggered: {
+                userDialog.user = selfUser
+                userDialog.teamId = teamRoot.teamId
+                userDialog.open()
+            }
+        }
+        Menu {
+            title: qsTr("Presence")
+            MenuItem {
+                text: qsTr("Away")
+                checked: selfUser != null && selfUser.presence == User.Away
+                checkable: true
+                icon.source: "qrc:/icons/away-icon.png"
+                icon.color: "transparent"
+                onTriggered: {
+                    if (selfUser.presence == User.Dnd) {
+                        SlackClient.cancelDnD(teamRoot.teamId)
+                    }
+                    SlackClient.setPresence(teamRoot.teamId, !(selfUser.presence == User.Away))
+                }
+            }
+            MenuItem {
+                text: qsTr("DnD")
+                checkable: true
+                checked: selfUser.presence === User.Dnd
+                icon.source: "qrc:/icons/dnd-icon.png"
+                icon.color: "transparent"
+                onTriggered: {
+                    dndDialog.user = selfUser
+                    dndDialog.teamId = teamRoot.teamId
+                    dndDialog.isDnd = (selfUser.presence == User.Dnd ? true : false)
+                    dndDialog.open()
+                }
+            }
+        }
+    }
+
     header: RowLayout {
         spacing: Theme.paddingMedium
         ImageButton {
             id: button
             bgSizeW: Theme.headerSize + Theme.paddingMedium
             bgSizeH: Theme.headerSize + Theme.paddingMedium
-            sizeHoveredW: Theme.headerSize + Theme.paddingMedium/2
-            sizeHoveredH: Theme.headerSize + Theme.paddingMedium/2
             source: selfUser != null ? "image://emoji/slack/" + selfUser.avatarUrl : ""
             onClicked: {
-                userDialog.user = selfUser
-                userDialog.teamId = teamRoot.teamId
-                userDialog.open()
+                userMenu.open()
             }
         }
 
@@ -56,53 +93,16 @@ Page {
                     height: Theme.headerSize
                 }
 
-                RoundButton {
-                    id: awayButton
-                    display: AbstractButton.IconOnly
-                    checked: selfUser.presence === User.Away
-                    checkable: false
-                    padding: 0
-                    implicitWidth: height
-                    icon.color: "transparent"
-                    icon.source: "qrc:/icons/away-icon.png"
-                    onCheckedChanged: {
-                        checkable = false
-                    }
-                    onClicked: {
-                        if (selfUser.presence == User.Dnd) {
-                            SlackClient.cancelDnD(teamRoot.teamId)
-                        }
-                        SlackClient.setPresence(teamRoot.teamId, !(selfUser.presence == User.Away))
-                    }
-                }
-
-                RoundButton {
-                    id: dndButton
-                    display: AbstractButton.IconOnly
-                    padding: 0
-                    checkable: false
-                    checked: selfUser.presence === User.Dnd
-                    implicitWidth: height
-                    icon.color: "transparent"
-                    icon.source: "qrc:/icons/dnd-icon.png"
-                    onCheckedChanged: { //button should react only on user presence status changes
-                        checkable = false
-                    }
-                    onClicked: {
-                        dndDialog.user = selfUser
-                        dndDialog.teamId = teamRoot.teamId
-                        dndDialog.isDnd = (selfUser.presence == User.Dnd ? true : false)
-                        dndDialog.open()
-                    }
-                }
                 EmojiRoundButton {
                     text: "📂"
                     padding: 0
+                    radius: Theme.headerSize/2
                     onClicked: {
                         filesSharesList.open()
                     }
                 }
             }
+
             RowLayout {
                 Layout.fillWidth: true
                 Label {

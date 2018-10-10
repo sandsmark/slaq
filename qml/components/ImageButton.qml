@@ -7,8 +7,6 @@ Button {
     property real bgSizeH: Theme.headerSize
     property real sizeW: Theme.headerSize
     property real sizeH: Theme.headerSize
-    property real sizeHoveredW: Theme.headerSize
-    property real sizeHoveredH: Theme.headerSize
 
     property alias source: avatarImage.source
 
@@ -24,8 +22,9 @@ Button {
         x: (bgSizeW - sizeW)/2
         y: (bgSizeH - sizeH)/2
         sourceSize: Qt.size(sizeW, sizeH)
-        width: button.hovered ? sizeHoveredW : sizeW
-        height: button.hovered ? sizeHoveredH : sizeH
+        scale: hovered ? 1.1 : 1.0
+        width: sizeW
+        height: sizeH
         smooth: true
     }
 }
