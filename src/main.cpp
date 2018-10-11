@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
     QApplication app(argc, argv);
 
+    qputenv("QT_QPA_PLATFORMTHEME", "gtk3");
     QtWebEngine::initialize();
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
     qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));
+
     //SlackConfig::clearWebViewCache();
     engine.rootContext()->setContextProperty("availableStyles", QQuickStyle::availableStyles());
     //instantiate ImageCache

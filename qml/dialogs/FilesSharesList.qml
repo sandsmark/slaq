@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import Qt.labs.platform 1.0 as Platform
+
 import ".."
 import "../pages"
 import "../components"
@@ -46,14 +47,17 @@ Drawer {
         title: "Please choose file name"
         property string fileName: ""
         property url downloadUrl: ""
+
         file: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation) + "/" + fileName
-        folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation)
         fileMode: Platform.FileDialog.SaveFile
+        currentFiles: [fileName]
+        folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.DownloadLocation)
         onAccepted: {
             progressBar.value = 0
             downloadManager.append(downloadUrl, file, SlackClient.teamToken(teamId))
         }
     }
+
     Connections {
         target: downloadManager
         onDownloaded: {
