@@ -27,7 +27,6 @@ int main(int argc, char *argv[])
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
     QApplication app(argc, argv);
 
-    qputenv("QT_QPA_PLATFORMTHEME", "gtk3");
     QtWebEngine::initialize();
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
