@@ -26,7 +26,7 @@ MessageFormatter::MessageFormatter() :
     m_variableLabelPattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)\\|([^>]+)>"))),
     m_variablePattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)>"))),
     m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"))),
-    m_channelPattern(QRegularExpression(QStringLiteral("<#([A-Z0-9]+)|([^>]+)>")))
+    m_channelPattern(QRegularExpression(QStringLiteral("<#([A-Z0-9]+)\\|([^>]+)>")))
 {
     m_labelPattern.optimize();
     m_plainPattern.optimize();
