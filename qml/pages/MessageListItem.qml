@@ -186,7 +186,7 @@ MouseArea {
                     }
 
                     width: parent.width - avatarImage.width - parent.spacing
-                    //height: text === "" ? 0 : implicitHeight
+                    height: text === "" ? 0 : implicitHeight
                     readOnly: true
                     font.pixelSize: Theme.fontSizeLarge
                     font.italic: model.IsChanged
@@ -278,7 +278,7 @@ MouseArea {
         }
 
         Item {
-            height: visible ? Theme.paddingSmall : 0
+            height: visible ? Theme.paddingMedium : 0
             width: height
             visible: contentLabel.visible && (fileSharesRepeater.count > 0 || attachmentRepeater.count > 0)
         }

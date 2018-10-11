@@ -757,6 +757,7 @@ void Attachment::setData(const QJsonObject &data)
     thumb_url = QUrl(data.value(QStringLiteral("thumb_url")).toString());
     footer = data.value(QStringLiteral("footer")).toString();
     footer_icon = QUrl(data.value(QStringLiteral("footer_icon")).toString());
+    m_isAnimated = data.value(QStringLiteral("is_animated")).toBool();
 
     imageSize = QSize(data["image_width"].toInt(), data["image_height"].toInt());
     imageUrl = QUrl(data["image_url"].toString());

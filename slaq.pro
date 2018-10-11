@@ -36,6 +36,7 @@ CONFIG += c++11
 QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += webengine
 
+QMAKE_LFLAGS += -fuse-ld=gold
 INCLUDEPATH += src src/slackmodels
 
 QML_IMPORT_PATH =

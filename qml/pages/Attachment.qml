@@ -3,8 +3,10 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import ".."
 
+import com.iskrembilen 1.0
+
 Column {
-    property variant attachment: null
+    property Attachment attachment: null
 
     signal linkClicked(string link)
 
@@ -13,6 +15,7 @@ Column {
     Label {
         id: pretextLabel
         width: parent.width
+        wrapMode: Text.WordWrap
         font.pointSize: Theme.fontSizeSmall
         visible: text.length > 0
         text: attachment.pretext
@@ -26,7 +29,7 @@ Column {
     }
 
     Row {
-        width: parent.width
+        width: parent.width - Theme.paddingMedium
         spacing: Theme.paddingMedium
 
         Rectangle {
@@ -37,18 +40,18 @@ Column {
             color: attachment.color === "theme" ? palette.highlight : attachment.color
         }
 
-        Column {
+        ColumnLayout {
             width: parent.width - color.width - Theme.paddingMedium
             spacing: Theme.paddingSmall
 
             Row {
                 id: authorRow
-                width: parent.width
+                width: parent.width - Theme.paddingMedium
                 height: visible ? 16 : 0
                 visible: attachment.author_name !== ""
                 spacing: Theme.paddingMedium
                 Image {
-                    source: attachment !== null && attachment.author_icon.length > 0 ? "image://emoji/slack/" + attachment.author_icon : ""
+                    source: attachment !== null && attachment.author_icon.toString().length > 0 ? "image://emoji/slack/" + attachment.author_icon : ""
                     sourceSize: Qt.size(16, 16)
                 }
                 Label {
@@ -62,7 +65,7 @@ Column {
             }
 
             RowLayout {
-                width: parent.width
+                width: parent.width - Theme.paddingMedium
                 visible: attachment.title !== "" || attachment.text !== ""
                 height: visible ? implicitHeight : 0
 
@@ -71,6 +74,7 @@ Column {
                     Layout.fillWidth: true
                     Label {
                         id: titleId
+                        Layout.fillWidth: true
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
                         text: attachment.title
@@ -79,6 +83,7 @@ Column {
 
                     Label {
                         id: valueId
+                        Layout.fillWidth: true
                         font.pointSize: Theme.fontSizeSmall
                         text: attachment.text
                         wrapMode: Text.Wrap
@@ -86,7 +91,7 @@ Column {
                     }
                 }
                 Image {
-                    source: attachment !== null && attachment.thumb_url.length > 0 ? "image://emoji/slack/" + attachment.thumb_url : ""
+                    source: attachment !== null && attachment.thumb_url.toString().length > 0 ? "image://emoji/slack/" + attachment.thumb_url : ""
                     sourceSize: Qt.size(colLayout.height, colLayout.height)
                 }
             }
@@ -95,12 +100,21 @@ Column {
                 fieldList: attachment.fields
             }
 
-            Image {
-                anchors.left: parent.left
-                fillMode: Image.PreserveAspectFit
-                source: attachment !== null && attachment.imageUrl.length > 0 ? "image://emoji/slack/" + attachment.imageUrl : ""
-                //source: "team://" + teamId + "/" + attachment.imageUrl
-                sourceSize:  attachment.imageSize
+            Item {
+                //anchors.left: parent.left
+                width: attachment.imageSize.width
+                height: attachment.imageSize.height
+                AnimatedImage {
+                    visible: attachment.isAnimated
+                    fillMode: Image.PreserveAspectFit
+                    source: "team://" + teamId + "/" + attachment.imageUrl
+                }
+                Image {
+                    visible: !attachment.isAnimated
+                    fillMode: Image.PreserveAspectFit
+                    source: attachment !== null && attachment.imageUrl.toString().length > 0 ? "image://emoji/slack/" + attachment.imageUrl : ""
+                    sourceSize:  attachment.imageSize
+                }
             }
         }
     }

@@ -125,6 +125,7 @@ class Attachment: public QObject {
     Q_PROPERTY(QSize imageSize MEMBER imageSize CONSTANT)
     Q_PROPERTY(QList<QObject*> fields MEMBER fields CONSTANT)
     Q_PROPERTY(QDateTime ts MEMBER ts CONSTANT)
+    Q_PROPERTY(bool isAnimated MEMBER m_isAnimated CONSTANT)
 
 public:
     Attachment(QObject* parent = nullptr);
@@ -145,7 +146,7 @@ public:
     QUrl imageUrl;
     QSize imageSize;
     QDateTime ts;
-
+    bool m_isAnimated { false };
     QList<QObject*> fields;
 };
 
