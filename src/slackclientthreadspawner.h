@@ -162,6 +162,7 @@ public slots:
     void cancelDnD(const QString& teamId);
     void onFileSharesReceived(const QList<FileShare*>& shares, int total, int page, int pages);
     void deleteFile(const QString& teamId, const QString& fileId);
+    void clearSettingsAndRestartApp();
 
 protected:
     void run() override;

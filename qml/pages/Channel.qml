@@ -128,8 +128,8 @@ Page {
         }
     }
 
-    ColumnLayout {
-        anchors.fill: parent
+    contentItem: ColumnLayout {
+        width: parent.width
         spacing: Theme.paddingSmall
 
         MessageListView {

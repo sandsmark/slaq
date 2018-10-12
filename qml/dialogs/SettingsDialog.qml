@@ -13,7 +13,25 @@ LazyLoadDialog {
         focus: true
         title: qsTr("Settings")
 
-        standardButtons: Dialog.Ok | Dialog.Cancel
+        footer: DialogButtonBox {
+            Button {
+                text: qsTr("Clear settings and restart")
+                DialogButtonBox.buttonRole: DialogButtonBox.ResetRole
+            }
+            Button {
+                text: qsTr("Cancel")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            }
+            Button {
+                text: qsTr("Ok")
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            }
+        }
+
+        onReset: {
+            SlackClient.clearSettingsAndRestartApp();
+        }
+
         onAccepted: {
             ImagesCache.setEmojiImagesSet(setsBox.displayText)
             settings.style = styleBox.displayText

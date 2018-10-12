@@ -5,7 +5,7 @@ import ".."
 
 import com.iskrembilen 1.0
 
-Column {
+ColumnLayout {
     property Attachment attachment: null
 
     signal linkClicked(string link)
@@ -14,7 +14,7 @@ Column {
 
     Label {
         id: pretextLabel
-        width: parent.width
+        Layout.fillWidth: true
         wrapMode: Text.WordWrap
         font.pointSize: Theme.fontSizeSmall
         visible: text.length > 0
@@ -25,28 +25,32 @@ Column {
 
     Spacer {
         visible: !pretextLabel.visible
-        height: visible ? Theme.paddingSmall : 0
+        Layout.fillWidth: true
+        //height: visible ? Theme.paddingSmall : 0
     }
 
-    Row {
-        width: parent.width - Theme.paddingMedium
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.margins: Theme.paddingSmall
         spacing: Theme.paddingMedium
 
         Rectangle {
             id: color
             radius: 5
             width: 5
-            height: parent.height
+            Layout.fillHeight: true
             color: attachment.color === "theme" ? palette.highlight : attachment.color
         }
 
         ColumnLayout {
-            width: parent.width - color.width - Theme.paddingMedium
+            id: attachmentColumn
+            Layout.fillWidth: true
             spacing: Theme.paddingSmall
 
-            Row {
+            RowLayout {
                 id: authorRow
-                width: parent.width - Theme.paddingMedium
+                Layout.fillWidth: true
+                Layout.margins: Theme.paddingSmall
                 height: visible ? 16 : 0
                 visible: attachment.author_name !== ""
                 spacing: Theme.paddingMedium
@@ -65,9 +69,9 @@ Column {
             }
 
             RowLayout {
-                width: parent.width - Theme.paddingMedium
+                Layout.fillWidth: true
+                Layout.margins: Theme.paddingSmall
                 visible: attachment.title !== "" || attachment.text !== ""
-                height: visible ? implicitHeight : 0
 
                 ColumnLayout {
                     id: colLayout
@@ -91,8 +95,9 @@ Column {
                     }
                 }
                 Image {
-                    source: attachment !== null && attachment.thumb_url.toString().length > 0 ? "image://emoji/slack/" + attachment.thumb_url : ""
-                    sourceSize: Qt.size(colLayout.height, colLayout.height)
+                    visible: attachment !== null && attachment.thumb_url.toString().length > 0
+                    source: visible ? "image://emoji/slack/" + attachment.thumb_url : ""
+                    sourceSize: Qt.size(Theme.avatarSize, Theme.avatarSize)
                 }
             }
 
@@ -101,33 +106,37 @@ Column {
             }
 
             Item {
-                //anchors.left: parent.left
                 width: attachment.imageSize.width
                 height: attachment.imageSize.height
+
                 AnimatedImage {
-                    visible: attachment.isAnimated
+                    anchors.fill: parent
+                    asynchronous: true
+                    visible: attachment !== null && attachment.imageUrl.toString().length > 0
                     fillMode: Image.PreserveAspectFit
-                    source: "team://" + teamId + "/" + attachment.imageUrl
-                }
-                Image {
-                    visible: !attachment.isAnimated
-                    fillMode: Image.PreserveAspectFit
-                    source: attachment !== null && attachment.imageUrl.toString().length > 0 ? "image://emoji/slack/" + attachment.imageUrl : ""
-                    sourceSize:  attachment.imageSize
+                    // AnimatedImage does not support async image provider
+                    //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
+                    source: visible ? "team://" + teamId + "/" + attachment.imageUrl : ""
+                    onStatusChanged: {
+                        if (status == Image.Error) {
+                            source = "qrc:/icons/no-image.png"
+                        }
+                    }
                 }
             }
         }
     }
-    Row {
+    RowLayout {
         id: footerRow
-        anchors.left: parent.left
+        //anchors.left: parent.left
         spacing: Theme.paddingMedium
         visible: attachment.footer !== ""
-        height: visible ? implicitHeight : 0
+        //height: visible ? implicitHeight : 0
 
         Image {
             fillMode: Image.PreserveAspectFit
-            source: attachment !== null && attachment.footer_icon.length > 0 ? "image://emoji/slack/" + attachment.footer_icon : ""
+            visible: attachment !== null && attachment.footer_icon.toString().length > 0
+            source: visible ? "image://emoji/slack/" + attachment.footer_icon : ""
             sourceSize: Qt.size(16, 16)
         }
         Label {

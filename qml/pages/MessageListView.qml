@@ -76,7 +76,7 @@ ListView {
     }
 
     delegate: MessageListItem {
-        width: msgListView.width - msgListView.ScrollBar.vertical.width
+        width: msgListView.width - msgListView.ScrollBar.vertical.width - Theme.paddingSmall
         isReplies: msgListView.isReplies
     }
 

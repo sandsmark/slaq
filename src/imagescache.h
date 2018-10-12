@@ -6,11 +6,11 @@
 #include <QString>
 #include <QImage>
 #include <QDateTime>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QMutexLocker>
 
 #include "QQmlObjectListModel.h"
 #include "emojiinfo.h"
+#include "networkaccessmanager.h"
 
 class ImagesCache : public QObject
 {
@@ -64,7 +64,7 @@ private:
 
 private:
     QDateTime m_lastUpdate;
-    QNetworkAccessManager m_qnam;
+    NetworkAccessManager m_qnam;
 
     QStringList m_imagesSetsFolders;
     QStringList m_imagesSetsNames;

@@ -21,6 +21,7 @@
 
 static const QString slackImagesSubdir = "slack_images_cache";
 static const QString slackImagesPrefix = "slack/";
+static const QString slackTeamImagesPrefix = "slack_team/";
 
 ImagesCache::ImagesCache(QObject *parent) : QObject(parent)
 {
@@ -153,6 +154,30 @@ QImage ImagesCache::image(const QString &id)
 
         QMutexLocker locker(&m_mutex);
         cached_ = m_iconsCached.contains(path_);
+    } else if (id.startsWith(slackTeamImagesPrefix)) {
+        // team token-based requests
+        if (m_cacheSlackImages == false) {
+            if (m_requestedImages.contains(id)) {
+                image_ = m_requestedImages.value(id);
+                m_requestedImages.remove(id);
+            } else {
+                emit requestImageViaHttp(id);
+            }
+            return image_;
+        }
+        QString iconPath = id;
+        iconPath.remove(0, slackTeamImagesPrefix.size());
+        if (iconPath.isEmpty()) {
+            qWarning() << "Empty id" << id;
+            return image_;
+        }
+        QUrl iconUrl(iconPath);
+
+        path_ = m_cache + QDir::separator() + slackImagesSubdir
+                + QDir::separator() + iconUrl.fileName();
+
+        QMutexLocker locker(&m_mutex);
+        cached_ = m_iconsCached.contains(path_);
     } else {
         int skinTone = id.indexOf("::skin-tone");
         QString noSkinToneId = id;
@@ -222,6 +247,11 @@ void ImagesCache::onImageRequestedViaHttp(const QString &id)
     if (id.startsWith(slackImagesPrefix)) {
         QString iconPath = id;
         iconPath.remove(0, slackImagesPrefix.size());
+        url.setUrl(iconPath);
+    } else if (id.startsWith(slackTeamImagesPrefix)) {
+        QString iconPath = id;
+        iconPath.remove(0, slackImagesPrefix.size());
+        iconPath.prepend("team://");
         url.setUrl(iconPath);
     } else {
         EmojiInfo* einfo = m_emojiList.value(id);

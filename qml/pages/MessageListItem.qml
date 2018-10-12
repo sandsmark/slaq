@@ -40,7 +40,6 @@ MouseArea {
         id: column
         height: implicitHeight
         width: parent.width - Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 4 : 2) - 20
-        x: Theme.paddingLarge * (Screen.devicePixelRatio > 90 ? 2 : 1)
 
         Row {
             width: parent.width
@@ -308,8 +307,8 @@ MouseArea {
                 model: Attachments
 
                 delegate: Attachment {
-                    height: implicitHeight
-                    width: parent.width
+                    width: column.width
+                    Layout.maximumWidth: column.width
                     attachment: Attachments[index]
                     onLinkClicked: handleLink(link)
                 }

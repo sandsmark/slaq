@@ -20,7 +20,6 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
         } else {
             qWarning() << "token for team" << url.host() << "not found";
         }
-
         return QNetworkAccessManager::createRequest(op, copy, outgoingData);
     } else {
         return QNetworkAccessManager::createRequest(op, request, outgoingData);

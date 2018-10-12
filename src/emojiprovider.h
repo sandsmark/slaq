@@ -30,8 +30,7 @@ class EmojiProvider : public QQuickAsyncImageProvider
 {
 public:
     EmojiProvider();
-
-    QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize);
+    QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
 private:
     QThreadPool m_pool;

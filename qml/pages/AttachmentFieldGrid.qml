@@ -1,9 +1,9 @@
 import QtQuick 2.8
 import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.4
 import ".."
 
-Row {
+RowLayout {
     property alias fieldList: repeater.model
 
     id: grid
@@ -12,7 +12,7 @@ Row {
     Repeater {
         id: repeater
 
-        Column {
+        ColumnLayout {
             Layout.columnSpan: repeater.model[index].fieldIsShort ? 1 : 2
             Layout.preferredWidth: repeater.model[index].fieldIsShort ? grid.width / 2 : grid.width
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
