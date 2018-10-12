@@ -17,13 +17,12 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 
-debug {
+CONFIG(debug, debug|release) {
   DEFINES += SLAQ_DEBUG
-  TO_DEPLOY = $$PWD/to_deploy/debug
-}
-release {
+  TO_DEPLOY = $$PWD/build/Debug/
+} else {
   DEFINES += SLAQ_RELEASE
-  TO_DEPLOY = $$PWD/to_deploy
+  TO_DEPLOY = $$PWD/to_deploy/
 }
 
 DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
@@ -102,8 +101,6 @@ DISTFILES += \
     scripts/*.py \
     qml/components/*.qml
 
-target.path = $$TO_DEPLOY
-
 RESOURCES += \
     qml.qrc \
     data.qrc \
@@ -112,7 +109,7 @@ RESOURCES += \
 include (src/modelshelper/QtQmlModels.pri)
 include (src/qmlsorter/SortFilterProxyModel.pri)
 
-
+target.path = $$TO_DEPLOY
 other.files = $${OTHER_FILES}
 other.path = $$TO_DEPLOY
 

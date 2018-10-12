@@ -26,7 +26,7 @@ ColumnLayout {
     Spacer {
         visible: !pretextLabel.visible
         Layout.fillWidth: true
-        //height: visible ? Theme.paddingSmall : 0
+        height: visible ? Theme.paddingSmall : 0
     }
 
     RowLayout {
@@ -108,7 +108,6 @@ ColumnLayout {
             Item {
                 width: attachment.imageSize.width
                 height: attachment.imageSize.height
-
                 AnimatedImage {
                     anchors.fill: parent
                     asynchronous: true
@@ -116,7 +115,7 @@ ColumnLayout {
                     fillMode: Image.PreserveAspectFit
                     // AnimatedImage does not support async image provider
                     //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
-                    source: visible ? "team://" + teamId + "/" + attachment.imageUrl : ""
+                    source: visible ? attachment.imageUrl : ""
                     onStatusChanged: {
                         if (status == Image.Error) {
                             source = "qrc:/icons/no-image.png"
@@ -128,10 +127,8 @@ ColumnLayout {
     }
     RowLayout {
         id: footerRow
-        //anchors.left: parent.left
         spacing: Theme.paddingMedium
         visible: attachment.footer !== ""
-        //height: visible ? implicitHeight : 0
 
         Image {
             fillMode: Image.PreserveAspectFit
