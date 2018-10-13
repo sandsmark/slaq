@@ -745,7 +745,7 @@ Attachment::~Attachment()
 
 void Attachment::setData(const QJsonObject &data)
 {
-    titleLink = data.value(QStringLiteral("title_link")).toString();
+    titleLink = QUrl(data.value(QStringLiteral("title_link")).toString());
     title = data.value(QStringLiteral("title")).toString();
     pretext = data.value(QStringLiteral("pretext")).toString();
     text = data.value(QStringLiteral("text")).toString();
@@ -758,6 +758,22 @@ void Attachment::setData(const QJsonObject &data)
     footer = data.value(QStringLiteral("footer")).toString();
     footer_icon = QUrl(data.value(QStringLiteral("footer_icon")).toString());
     m_isAnimated = data.value(QStringLiteral("is_animated")).toBool(false);
+
+    if (author_name.isEmpty()) {
+        //try service name instead
+        author_name = data.value(QStringLiteral("service_name")).toString();
+    }
+    if (author_icon.isEmpty()) {
+        author_icon = QUrl(data.value(QStringLiteral("service_icon")).toString());
+    }
+    if (!author_link.isEmpty()) {
+        //"<a href=\"http://qt-project.org\">Qt Project website</a>."
+        author_name = QString("<a href=\"%1\">%2</a>").arg(author_link.toString()).arg(author_name);
+    }
+    if (!titleLink.isEmpty()) {
+        //"<a href=\"http://qt-project.org\">Qt Project website</a>."
+        title = QString("<a href=\"%1\">%2</a>").arg(titleLink.toString()).arg(title);
+    }
 
     imageSize = QSize(data["image_width"].toInt(), data["image_height"].toInt());
     imageUrl = QUrl(data["image_url"].toString());

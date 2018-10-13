@@ -99,7 +99,8 @@ DISTFILES += \
     qml/pages/*.qml \
     qml/*.qml \
     scripts/*.py \
-    qml/components/*.qml
+    qml/components/*.qml \
+    qml/components/EmojisGrid.qml
 
 RESOURCES += \
     qml.qrc \

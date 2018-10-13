@@ -108,7 +108,7 @@ public:
 class Attachment: public QObject {
 
     Q_OBJECT
-    Q_PROPERTY(QString titleLink MEMBER titleLink CONSTANT)
+    Q_PROPERTY(QUrl titleLink MEMBER titleLink CONSTANT)
     Q_PROPERTY(QString title MEMBER title CONSTANT)
     Q_PROPERTY(QString pretext MEMBER pretext CONSTANT)
     Q_PROPERTY(QString text MEMBER text CONSTANT)
@@ -131,7 +131,7 @@ public:
     Attachment(QObject* parent = nullptr);
     ~Attachment() override;
     void setData(const QJsonObject &data);
-    QString titleLink;
+    QUrl titleLink;
     QString title;
     QString pretext;
     QString text;

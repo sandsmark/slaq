@@ -7,17 +7,18 @@ import ".."
 import "../components"
 
 Popup {
-    id: popup
+    id: emojiPopup
     width: Theme.headerSize * 11
-    height: 500
+    height: 500 + lastUsed.implicitHeight
 
     property string state: ""
 
     signal emojiSelected(string emoji)
     property bool dbLoaded: false
+    property alias emojiPage: emojiPage
 
     onDbLoadedChanged: {
-        if (dbLoaded && popup.opened) {
+        if (dbLoaded && emojiPopup.opened) {
             ldr.active = true
         }
     }
@@ -26,16 +27,23 @@ Popup {
         if (dbLoaded) {
             ldr.active = true
         }
+        lastUsed.model = ImagesCache.getLastUsedEmojisModel(SlackClient.lastTeam)
     }
 
     onAboutToHide: {
         emojiSelected("")
     }
 
+    ToolTip {
+        id: toolTip
+        delay: 100
+        timeout: 2000
+    }
+
     Connections {
         target: ImagesCache
         onEmojisDatabaseReaded: {
-            popup.dbLoaded = true
+            emojiPopup.dbLoaded = true
         }
 
         onEmojisUpdated: {
@@ -62,12 +70,6 @@ Popup {
                 listView.model = emojiCategoriesModel
             }
 
-            ToolTip {
-                id: toolTip
-                delay: 100
-                timeout: 2000
-            }
-
             interactive: true
             clip: true
             spacing: 10
@@ -86,65 +88,17 @@ Popup {
                     font.pixelSize: 24
                     font.bold: true
                 }
-                Grid {
+                EmojisGrid {
                     id: grid
+                    model: ImagesCache.getEmojisByCategory(category, SlackClient.lastTeam)
                     width: listView.width
-                    columns: 10
-                    rows: rep.count/columns + 1
-                    spacing: 0
-                    Repeater {
-                        id: rep
-                        model: ImagesCache.getEmojisByCategory(category, SlackClient.lastTeam)
-                        delegate: Rectangle {
-                            width: Theme.headerSize
-                            height: Theme.headerSize
-                            color: mouseArea.containsMouse ? "#bbbbbb" : "transparent"
-                            radius: 2
-                            Image {
-                                anchors.fill: parent
-                                anchors.margins: 2
-                                visible: !ImagesCache.isUnicode || (model.modelData.imagesExist & EmojiInfo.ImageSlackTeam)
-                                smooth: true
-                                cache: false
-                                source: "image://emoji/" + model.modelData.shortNames[0]
-                            }
-
-                            Label {
-                                visible: ImagesCache.isUnicode && !(model.modelData.imagesExist & EmojiInfo.ImageSlackTeam)
-                                anchors.fill: parent
-                                text: model.modelData.unified
-                                font.family: "Twitter Color Emoji"
-                                font.pixelSize: Theme.headerSize - 2
-                                renderType: Text.QtRendering
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            MouseArea {
-                                id: mouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onHoveredChanged: {
-                                    toolTip.text = model.modelData.shortNames[0]
-                                    toolTip.x = mapToItem(listView, mouseX, mouseY).x - toolTip.width/2
-                                    toolTip.y = mapToItem(listView, mouseX, mouseY).y - toolTip.height*2
-                                    toolTip.visible = containsMouse
-                                }
-
-                                onClicked: {
-                                    emojiSelected(model.modelData.unified !== "" ?
-                                                      model.modelData.unified : model.modelData.shortNames[0])
-                                    popup.close()
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
     }
 
     Page {
+        id: emojiPage
         anchors.fill: parent
         header: ToolBar {
             background: Item{}
@@ -173,6 +127,11 @@ Popup {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 3
+
+            EmojisGrid {
+                id: lastUsed
+            }
+
             RowLayout {
                 spacing: 10
 

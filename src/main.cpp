@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<Message*>>("QList<Message*>");
     qRegisterMetaType<EmojiCategoryHolder*>("EmojiCategoryHolder*");
     qRegisterMetaType<QList<EmojiInfo*>>("QList<EmojiInfo*>");
+    //qRegisterMetaType<QQmlObjectListModel<EmojiInfo>>("QQmlObjectListModel<EmojiInfo>");
     qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
     qRegisterMetaType<SlackTeamClient::ClientStatus>("SlackTeamClient::ClientStatus");
     qRegisterMetaType<Chat*>("Chat*");

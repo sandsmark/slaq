@@ -133,8 +133,8 @@ MouseArea {
                                 text: "😎"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    emojiSelector.x = emojiButton.x
-                                    emojiSelector.y = emojiButton.y
+                                    emojiSelector.x = mapToItem(teamsSwipe, x, y).x
+                                    emojiSelector.y = mapToItem(teamsSwipe, x, y).y - emojiSelector.height
                                     emojiSelector.state = "reaction"
                                     itemDelegate.emojiSelectorCalled = true
                                     emojiSelector.open()

@@ -189,7 +189,7 @@ ColumnLayout {
             font.bold: true
             onClicked: {
                 emojiSelector.x = x
-                emojiSelector.y = mapToGlobal(x, y).y - emojiSelector.height - emojiButton.height
+                emojiSelector.y = mapToItem(teamsSwipe, x, y).y - emojiSelector.height
                 emojiSelector.state = "input"
                 emojiSelector.open()
             }
