@@ -447,8 +447,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
                 QQmlEngine::setObjectOwnership(r, QQmlEngine::CppOwnership);
                 QString emojiPrepare = QString(":%1:").arg(reaction);
                 qDebug() << "added new reaction" << emojiPrepare;
-                MessageFormatter _formatter;
-                _formatter.replaceEmoji(emojiPrepare);
+                MessageFormatter::replaceEmoji(emojiPrepare);
                 r->setEmojiInfo(ImagesCache::instance()->getEmojiInfo(reaction));
                 r->setName(reaction);
                 m->reactions.append(r);

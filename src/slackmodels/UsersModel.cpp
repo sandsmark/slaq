@@ -1,5 +1,5 @@
 #include "UsersModel.h"
-
+#include "messageformatter.h"
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
@@ -214,6 +214,7 @@ QString User::status() const
 void User::setStatus(const QString &status)
 {
     m_status = status;
+    MessageFormatter::replaceEmoji(m_status);
     emit statusChanged(status);
 }
 

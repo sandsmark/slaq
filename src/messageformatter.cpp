@@ -13,9 +13,12 @@
 #include "UsersModel.h"
 #include "ChatsModel.h"
 
+QRegularExpression MessageFormatter::m_emojiPattern =
+        QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"),
+                           QRegularExpression::OptimizeOnFirstUsageOption);
+
 MessageFormatter::MessageFormatter() :
     m_labelPattern(QRegularExpression (QStringLiteral("<(http[^\\|>]+)\\|([^>]+)>"))),
-    //m_plainPattern(QRegularExpression(QStringLiteral("<([^>]+)>"))),
     m_plainPattern(QRegularExpression(QStringLiteral("<([^>][a-z0-9]+:.*)>"))),
     m_mailtoPattern(QRegularExpression(QStringLiteral("<(mailto:[^\\|>]+)\\|([^>]+)>"))),
     m_italicPattern(QRegularExpression(QStringLiteral("(^|\\s)_([^_]+)_(\\s|\\.|\\?|!|,|$)"))),
@@ -25,7 +28,6 @@ MessageFormatter::MessageFormatter() :
     m_codeBlockPattern(QRegularExpression(QStringLiteral("```(.*)```"))),
     m_variableLabelPattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)\\|([^>]+)>"))),
     m_variablePattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)>"))),
-    m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"))),
     m_channelPattern(QRegularExpression(QStringLiteral("<#([A-Z0-9]+)\\|([^>]+)>")))
 {
     m_labelPattern.optimize();
@@ -38,7 +40,6 @@ MessageFormatter::MessageFormatter() :
     m_codeBlockPattern.optimize();
     m_variableLabelPattern.optimize();
     m_variablePattern.optimize();
-    m_emojiPattern.optimize();
     m_channelPattern.optimize();
     m_codeBlockPattern.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 }

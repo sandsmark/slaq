@@ -18,7 +18,7 @@ public:
     void replaceSpecialCharacters(QString &message);
     void replaceLinks(QString &message);
     void replaceMarkdown(QString &message);
-    void replaceEmoji(QString &message);
+    static void replaceEmoji(QString &message);
     void replaceAll(ChatsModel* chat,  QString &message);
     void doReplaceChannelInfo(Chat *chat, QString &message);
 
@@ -35,7 +35,7 @@ private:
 
     QRegularExpression m_variableLabelPattern;
     QRegularExpression m_variablePattern;
-    QRegularExpression m_emojiPattern;
+    static QRegularExpression m_emojiPattern;
     QRegularExpression m_channelPattern;
 };
 
