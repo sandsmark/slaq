@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.4
+VERSION = 0.0.1.5
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
@@ -35,7 +35,7 @@ CONFIG += c++11
 QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += webengine
 
-QMAKE_LFLAGS += -fuse-ld=gold
+linux: QMAKE_LFLAGS += -fuse-ld=gold
 INCLUDEPATH += src src/slackmodels
 
 QML_IMPORT_PATH =
