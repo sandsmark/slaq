@@ -4,6 +4,7 @@
 
 #include "slackconfig.h"
 #include "teaminfo.h"
+#include "imagescache.h"
 
 SlackConfig::SlackConfig(QObject *parent) :
     QObject(parent), m_settings(this), m_currentUserId()
@@ -40,6 +41,8 @@ void SlackConfig::loadTeamInfo(TeamInfo &teamInfo)
     if (teamInfo.lastChannel().isEmpty()) {
         teamInfo.setLastChannel(m_settings.value(QStringLiteral("lastChannel")).toString());
     }
+    ImagesCache::instance()->setLastUsedEmojisList(teamInfo.teamId(),
+                                                   m_settings.value(QStringLiteral("lastUsedEmojis")).toStringList());
     m_settings.endGroup();
     m_teamsTokens[teamInfo.teamId()] = teamInfo.teamToken();
 }
@@ -55,6 +58,7 @@ void SlackConfig::saveTeamInfo(const TeamInfo &teamInfo)
     m_settings.setValue(QStringLiteral("icons"), teamInfo.icons());
     m_settings.setValue(QStringLiteral("token"), teamInfo.teamToken());
     m_settings.setValue(QStringLiteral("lastChannel"), teamInfo.lastChannel());
+    m_settings.setValue(QStringLiteral("lastUsedEmojis"), ImagesCache::instance()->getLastUsedEmojisList(teamInfo.teamId()));
     m_settings.endGroup();
     m_teamsTokens[teamInfo.teamId()] = teamInfo.teamToken();
 }

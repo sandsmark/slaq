@@ -552,6 +552,63 @@ QVariant ImagesCache::getEmojisByCategory(int category, const QString &teamId)
     return QVariant::fromValue(dataList);
 }
 
+void ImagesCache::addLastUsedEmoji(const QString &teamId, const QString &emojiName)
+{
+    EmojiInfo* ei = getEmojiInfo(emojiName);
+    if (ei != nullptr) {
+        QQmlObjectListModel<EmojiInfo>* _list = m_lastUsedEmojisModels.value(teamId);
+        if (_list == nullptr) {
+            _list = new QQmlObjectListModel<EmojiInfo>(this);
+            _list->moveToThread(qApp->thread());
+            m_lastUsedEmojisModels.insert(teamId, _list);
+        }
+        if (!_list->contains(ei)) {
+            _list->append(ei);
+        }
+    }
+}
+
+void ImagesCache::setLastUsedEmojisList(const QString &teamId, const QStringList& emojis)
+{
+    QMetaObject::invokeMethod(qApp, [this, teamId, emojis] {
+        QQmlObjectListModel<EmojiInfo>* _list = m_lastUsedEmojisModels.value(teamId);
+        if (_list == nullptr) {
+            _list = new QQmlObjectListModel<EmojiInfo>(this);
+            //_list->moveToThread(qApp->thread());
+            m_lastUsedEmojisModels.insert(teamId, _list);
+        }
+        for (const QString& emoji : emojis) {
+            EmojiInfo* ei = getEmojiInfo(emoji);
+            if (ei != nullptr) {
+                _list->append(ei);
+            }
+        }
+    }, Qt::QueuedConnection);
+}
+
+QStringList ImagesCache::getLastUsedEmojisList(const QString &teamId)
+{
+    QStringList _emojis;
+    QQmlObjectListModel<EmojiInfo>* _list = m_lastUsedEmojisModels.value(teamId, nullptr);
+    if (_list != nullptr) {
+
+        for (EmojiInfo* ei : *_list) {
+            _emojis.append(ei->shortNames().at(0));
+        }
+    }
+    return _emojis;
+}
+
+QVariant ImagesCache::getLastUsedEmojisModel(const QString &teamId)
+{
+    if (!m_lastUsedEmojisModels.contains(teamId)) {
+        QQmlObjectListModel<EmojiInfo>* _list = new QQmlObjectListModel<EmojiInfo>(this);
+        m_lastUsedEmojisModels.insert(teamId, _list);
+        _list->moveToThread(qApp->thread());
+    }
+    return QVariant::fromValue(m_lastUsedEmojisModels.value(teamId));
+}
+
 bool ImagesCache::isUnicode() const
 {
     return (m_currentImagesSetIndex == 0);

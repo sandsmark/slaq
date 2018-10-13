@@ -34,6 +34,7 @@ public:
     Q_INVOKABLE int getEmojiImagesSetIndex();
     Q_INVOKABLE QStringList getEmojiImagesSetsNames();
     Q_INVOKABLE QVariant getEmojisByCategory(int category, const QString &teamId);
+    Q_INVOKABLE QVariant getLastUsedEmojisModel(const QString &teamId);
     bool isUnicode() const;
     Q_INVOKABLE QString getEmojiByName(const QString& name) const;
     Q_INVOKABLE QString getNameByEmoji(const QString& emoji) const;
@@ -45,6 +46,10 @@ public:
 
     QQmlObjectListModel<EmojiCategoryHolder>* emojiCategoriesModel();
 
+public slots:
+    void addLastUsedEmoji(const QString &teamId, const QString &emojiName);
+    QStringList getLastUsedEmojisList(const QString &teamId);
+    void setLastUsedEmojisList(const QString &teamId, const QStringList &emojis);
 signals:
     void imageLoaded(const QString &id);
     void requestImageViaHttp(const QString &id);
@@ -80,6 +85,7 @@ private:
 
     QQmlObjectListModel<EmojiCategoryHolder> m_EmojiCategoriesModel;
     bool m_cacheSlackImages { true };
+    QMap<QString, QQmlObjectListModel<EmojiInfo>*> m_lastUsedEmojisModels;
 
     QMutex m_mutex;
 };

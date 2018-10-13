@@ -458,5 +458,6 @@
         <file>icons/filetypes/xspf.svg</file>
         <file>icons/filetypes/xz.svg</file>
         <file>icons/filetypes/zsh.svg</file>
+        <file>qml/components/EmojisGrid.qml</file>
     </qresource>
 </RCC>

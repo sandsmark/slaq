@@ -80,6 +80,7 @@ SlackTeamClient::~SlackTeamClient() {
     delete reconnectTimer;
     delete stream;
     delete networkAccessManager;
+    config->saveTeamInfo(m_teamInfo);
 }
 
 void SlackTeamClient::startConnections()
