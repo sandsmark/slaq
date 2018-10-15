@@ -21,6 +21,7 @@
 #include "teaminfo.h"
 #include "QQmlObjectListModel.h"
 #include "downloadmanager.h"
+#include "slacktext.h"
 
 int main(int argc, char *argv[])
 {
@@ -75,6 +76,9 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<QQmlObjectListModelBase> ("SlaqQmlModels", 1, 0, "QQmlObjectListModelBase",
                                                          QStringLiteral("!!!"));
     qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));
+
+    qmlRegisterType<SlackText>("SlackComponents", 1, 0, "SlackText");
+
 
     //SlackConfig::clearWebViewCache();
     engine.rootContext()->setContextProperty("availableStyles", QQuickStyle::availableStyles());

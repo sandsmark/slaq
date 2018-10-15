@@ -33,6 +33,7 @@ TRANSLATIONS += translations/slaq-fi.ts
 CONFIG += c++11
 
 QT += quick xml quickcontrols2 multimedia widgets websockets
+QT += quick-private core-private gui-private qml-private
 QT += webengine
 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
@@ -63,7 +64,8 @@ SOURCES += src/main.cpp \
     src/slackmodels/MessagesModel.cpp \
     src/slackmodels/UsersModel.cpp \
     src/slackmodels/searchmessagesmodel.cpp \
-    src/slackmodels/FilesSharesModel.cpp
+    src/slackmodels/FilesSharesModel.cpp \
+    src/slacktext.cpp
 
 OTHER_FILES += translations/*.ts \
     icons/slaq.svg \
@@ -91,7 +93,9 @@ HEADERS += \
     src/slackmodels/MessagesModel.h \
     src/slackmodels/UsersModel.h \
     src/slackmodels/searchmessagesmodel.h \
-    src/slackmodels/FilesSharesModel.h
+    src/slackmodels/FilesSharesModel.h \
+    src/slacktext.h \
+    src/slacktext_p.h
 
 DISTFILES += \
     qml/dialogs/*.qml \
