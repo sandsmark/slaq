@@ -71,19 +71,22 @@ void TeamInfo::setTeamsEmojisUpdated(bool teamsEmojisUpdated)
 void TeamInfo::createModels(SlackTeamClient *slackClient)
 {
     m_users = new UsersModel;
+    m_searchMessages = new SearchMessagesModel(this, m_users, "SEARCH");
+    m_fileSharesModel = new FilesSharesModel(this, m_teamId);
+    m_chats = new ChatsModel(m_selfId, this, m_users);
+
     QQmlEngine::setObjectOwnership(m_users, QQmlEngine::CppOwnership);
-    m_searchMessages = new SearchMessagesModel(nullptr, m_users, "SEARCH");
     QQmlEngine::setObjectOwnership(m_searchMessages, QQmlEngine::CppOwnership);
-    m_fileSharesModel = new FilesSharesModel(nullptr, m_users, m_teamId);
     QQmlEngine::setObjectOwnership(m_fileSharesModel, QQmlEngine::CppOwnership);
-    m_chats = new ChatsModel(m_selfId, nullptr, m_users);
     QQmlEngine::setObjectOwnership(m_chats, QQmlEngine::CppOwnership);
+
     if (QThread::currentThread() != qApp->thread()) {
         m_users->moveToThread(qApp->thread());
         m_searchMessages->moveToThread(qApp->thread());
         m_chats->moveToThread(qApp->thread());
         m_fileSharesModel->moveToThread(qApp->thread());
     }
+
     connect(m_users, &UsersModel::requestUserInfo, slackClient, &SlackTeamClient::requestUserInfo, Qt::QueuedConnection);
 }
 

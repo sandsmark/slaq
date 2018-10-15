@@ -2,10 +2,11 @@
 #include "UsersModel.h"
 #include "MessagesModel.h"
 
-FilesSharesModel::FilesSharesModel(QAbstractListModel *parent,
-                                         UsersModel *usersModel,
+FilesSharesModel::FilesSharesModel(QObject *parent,
                                          const QString &teamId) :
-    QAbstractListModel(parent), m_teamId(teamId) {}
+    QAbstractListModel(parent), m_teamId(teamId)
+{
+}
 
 void FilesSharesModel::addFileShares(const QList<FileShare *> &fshares, int total, int page, int pages)
 {
@@ -53,8 +54,6 @@ void FilesSharesModel::retreiveFilesFor(const QString &channel, const QString &u
         m_total = 0;
         m_pagesRetrieved.clear();
         m_fetched = 0;
-        int m_lastPageFetched = -1;
-        int m_totalPages = 0 ;
         endResetModel();
     }
     emit fetchMoreData(1, m_channelId, m_userId);
@@ -76,6 +75,8 @@ void FilesSharesModel::deleteFile(const QString &fileId)
 
 int FilesSharesModel::rowCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent);
+
     return m_fetched;
 }
 
@@ -88,7 +89,8 @@ bool FilesSharesModel::canFetchMore(const QModelIndex &parent) const
 
 void FilesSharesModel::fetchMore(const QModelIndex &parent)
 {
-    Q_UNUSED(parent)
+    Q_UNUSED(parent);
+
     emit fetchMoreData(m_lastPageFetched+1, m_channelId, m_userId);
 }
 

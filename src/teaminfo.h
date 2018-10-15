@@ -108,11 +108,11 @@ private:
     QString m_lastChannel;
     QString m_selfId;
 
-    ChatsModel* m_chats {nullptr};
-    UsersModel* m_users {nullptr};
-    SearchMessagesModel* m_searchMessages { nullptr };
-    FilesSharesModel* m_fileSharesModel { nullptr };
-    bool m_teamsEmojisUpdated { false };
+    ChatsModel* m_chats{};
+    UsersModel* m_users{};
+    SearchMessagesModel* m_searchMessages{};
+    FilesSharesModel* m_fileSharesModel{};
+    bool m_teamsEmojisUpdated{};
 };
 
 QML_DECLARE_TYPE(TeamInfo)

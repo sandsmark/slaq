@@ -20,7 +20,7 @@ class MessageListModel;
 class EmojiInfo;
 
 namespace {
-QDateTime slackToDateTime(const QString& slackts) {
+inline QDateTime slackToDateTime(const QString& slackts) {
     QDateTime dt;
     QStringList ts_ = slackts.split(".");
     if (ts_.size() >= 1) {
@@ -38,7 +38,7 @@ QDateTime slackToDateTime(const QString& slackts) {
     return dt;
 }
 
-QString dateTimeToSlack(const QDateTime& dt) {
+inline QString dateTimeToSlack(const QDateTime& dt) {
     return QString("%1.000").arg(dt.toSecsSinceEpoch()) + QString("%1").arg(dt.time().msec(), 3, 10, QChar('0'));
 }
 }
