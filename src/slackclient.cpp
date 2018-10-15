@@ -77,18 +77,15 @@ SlackTeamClient::~SlackTeamClient() {
     disconnect(this, &SlackTeamClient::connected, this, &SlackTeamClient::isOnlineChanged);
     disconnect(this, &SlackTeamClient::initSuccess, this, &SlackTeamClient::isOnlineChanged);
     disconnect(this, &SlackTeamClient::disconnected, this, &SlackTeamClient::isOnlineChanged);
-    delete reconnectTimer;
-    delete stream;
-    delete networkAccessManager;
     config->saveTeamInfo(m_teamInfo);
 }
 
 void SlackTeamClient::startConnections()
 {
-    networkAccessManager = new QNetworkAccessManager;
+    networkAccessManager = new QNetworkAccessManager(this);
 
-    stream = new SlackStream;
-    reconnectTimer = new QTimer;
+    stream = new SlackStream(this);
+    reconnectTimer = new QTimer(this);
     networkAccessible = networkAccessManager->networkAccessible();
 
     connect(networkAccessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &SlackTeamClient::handleNetworkAccessibleChanged);

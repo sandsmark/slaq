@@ -6,7 +6,7 @@
 SlackStream::SlackStream(QObject *parent) :
     QObject(parent), m_isConnected(false), m_lastMessageId(0)
 {
-    webSocket = new QWebSocket(QStringLiteral("org.slaq"), QWebSocketProtocol::VersionLatest);
+    webSocket = new QWebSocket(QStringLiteral("org.slaq"), QWebSocketProtocol::VersionLatest, this);
     checkTimer = new QTimer(this);
 
     connect(webSocket, &QWebSocket::connected, this, &SlackStream::handleListerStart);
@@ -23,10 +23,7 @@ SlackStream::~SlackStream()
     checkTimer->stop();
     disconnect(webSocket.data(), &QWebSocket::disconnected, this, &SlackStream::handleListerEnd);
 
-    if (!webSocket.isNull()) {
-        webSocket->abort();
-        delete webSocket;
-    }
+    webSocket->abort();
 }
 
 void SlackStream::listen(const QUrl& url)

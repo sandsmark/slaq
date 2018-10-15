@@ -20,7 +20,7 @@ public:
     };
     Q_ENUM(FileSharesFields)
 
-    FilesSharesModel(QAbstractListModel *parent, UsersModel *usersModel, const QString& teamId);
+    FilesSharesModel(QObject *parent, const QString& teamId);
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
