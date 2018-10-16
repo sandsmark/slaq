@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("emoji"), new EmojiProvider);
     engine.rootContext()->setContextProperty(QStringLiteral("emojiCategoriesModel"),
                                              ImagesCache::instance()->emojiCategoriesModel());
-    SlackClientThreadSpawner* _slackThread = new SlackClientThreadSpawner;
+    QPointer<SlackClientThreadSpawner> _slackThread = new SlackClientThreadSpawner(qApp);
 
     engine.rootContext()->setContextProperty(QStringLiteral("SlackClient"), _slackThread);
     engine.rootContext()->setContextProperty(QStringLiteral("teamsModel"), _slackThread->teamsModel());
@@ -114,7 +114,8 @@ int main(int argc, char *argv[])
     }
 
     int ret = app.exec();
-    _slackThread->wait();
-    delete _slackThread;
+    if (_slackThread) {
+        _slackThread->wait();
+    }
     return ret;
 }

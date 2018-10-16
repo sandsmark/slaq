@@ -1020,6 +1020,9 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
 void SlackClientThreadSpawner::onConversationMembersChanged(const QString& channelId, const QStringList &members, bool last)
 {
     DEBUG_BLOCK;
+
+    Q_UNUSED(last);
+
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     ChatsModel* _chatsModel = _slackClient->teamInfo()->chats();
     if (_chatsModel == nullptr) {
@@ -1063,9 +1066,10 @@ void SlackClientThreadSpawner::run()
             m_teamsModel.append(_slackClient->teamInfo());
         }
     });
+
     // Start QT event loop for this thread
     this->exec();
-    qDeleteAll(m_knownTeams.values());
+
     qDebug() << "closed thread" << m_lastTeam;
 }
 

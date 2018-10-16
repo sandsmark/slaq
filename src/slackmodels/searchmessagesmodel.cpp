@@ -41,6 +41,8 @@ void SearchMessagesModel::addSearchMessages(const QJsonArray &messages, int page
 
 int SearchMessagesModel::rowCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent);
+
     return m_fetched;
 }
 

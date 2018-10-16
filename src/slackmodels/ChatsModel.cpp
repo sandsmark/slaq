@@ -95,8 +95,10 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return getSectionName(chat);
     default:
         qWarning() << "Invalid role" << role;
-        return QVariant();
+        break;
     }
+
+    return QVariant();
 }
 
 QHash<int, QByteArray> ChatsModel::roleNames() const
