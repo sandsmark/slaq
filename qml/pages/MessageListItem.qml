@@ -66,6 +66,9 @@ MouseArea {
                 SlackText {
                     id: contentLabel
                     //topPadding: Theme.paddingLarge
+                    color: contentLabel.palette.windowText
+                    linkColor: contentLabel.palette.link
+
                     RowLayout {
                         spacing: Theme.paddingMedium/2
                         visible: !sameuser || itemDelegate.containsMouse

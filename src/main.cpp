@@ -22,6 +22,7 @@
 #include "QQmlObjectListModel.h"
 #include "downloadmanager.h"
 #include "slacktext.h"
+#include "UsersModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -60,14 +61,14 @@ int main(int argc, char *argv[])
     qRegisterMetaType<ChatsModel::ChatType>("ChatsModel::ChatType");
     qRegisterMetaType<SlackTeamClient::ClientStatus>("SlackTeamClient::ClientStatus");
     qRegisterMetaType<Chat*>("Chat*");
-    qRegisterMetaType<User*>("User*");
+    qRegisterMetaType<SlackUser*>("User*");
     qRegisterMetaType<FileShare*>("FileShare*");
 
     qmlRegisterUncreatableType<ChatsModel>("com.iskrembilen", 1, 0, "ChatsModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<UsersModel>("com.iskrembilen", 1, 0, "UsersModel", "Only instantiated by c++");
     qmlRegisterUncreatableType<Attachment>("com.iskrembilen", 1, 0, "Attachment", "Only instantiated by c++");
     qmlRegisterUncreatableType<MessageListModel>("com.iskrembilen", 1, 0, "MessageListModel", "Only instantiated by c++");
-    qmlRegisterUncreatableType<User>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
+    qmlRegisterUncreatableType<SlackUser>("com.iskrembilen", 1, 0, "User", "Only instantiated by c++");
     qmlRegisterUncreatableType<Chat>("com.iskrembilen", 1, 0, "Chat", "Only instantiated by c++");
     qmlRegisterUncreatableType<SlackTeamClient>("com.iskrembilen", 1, 0, "SlackTeamClient", "Only instantiated by c++");
     qmlRegisterUncreatableType<FileShare>("com.iskrembilen", 1, 0, "FileShare", "Only instantiated by c++");
@@ -77,8 +78,8 @@ int main(int argc, char *argv[])
                                                          QStringLiteral("!!!"));
     qmlRegisterUncreatableType<EmojiInfo>("SlaqQmlModels", 1, 0, "EmojiInfo", QStringLiteral("!!!"));
 
+    qmlRegisterRevision<QQuickLabel, 3>("SlackComponents", 1, 0);
     qmlRegisterType<SlackText>("SlackComponents", 1, 0, "SlackText");
-
 
     //SlackConfig::clearWebViewCache();
     engine.rootContext()->setContextProperty("availableStyles", QQuickStyle::availableStyles());

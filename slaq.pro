@@ -33,10 +33,10 @@ TRANSLATIONS += translations/slaq-fi.ts
 CONFIG += c++11
 
 QT += quick xml quickcontrols2 multimedia widgets websockets
-QT += quick-private core-private gui-private qml-private
+QT += quick-private core-private gui-private qml-private quickcontrols2-private quicktemplates2-private
 QT += webengine
 
-#linux: QMAKE_LFLAGS += -fuse-ld=gold
+linux: QMAKE_LFLAGS += -fuse-ld=gold
 INCLUDEPATH += src src/slackmodels
 
 QML_IMPORT_PATH =

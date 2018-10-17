@@ -91,17 +91,17 @@ public:
 
 class ReplyField: public QObject  {
     Q_OBJECT
-    Q_PROPERTY(User* user READ user CONSTANT)
+    Q_PROPERTY(SlackUser* user READ user CONSTANT)
     Q_PROPERTY(QDateTime ts MEMBER m_ts CONSTANT)
 
 public:
     ReplyField(QObject* parent = nullptr);
     void setData(const QJsonObject &data);
 
-    QPointer<User> m_user;
+    QPointer<SlackUser> m_user;
     QString m_userId;
     QDateTime m_ts;
-    User* user() const { return m_user.data(); }
+    SlackUser* user() const { return m_user.data(); }
 };
 
 //TODO: implement actions
@@ -159,7 +159,7 @@ class FileShare: public QObject {
     Q_PROPERTY(QString mimetype MEMBER m_mimetype CONSTANT)
     Q_PROPERTY(QString filetype MEMBER m_filetype CONSTANT)
     Q_PROPERTY(QString pretty_type MEMBER m_pretty_type CONSTANT)
-    Q_PROPERTY(User* user MEMBER m_user CONSTANT)
+    Q_PROPERTY(SlackUser* user MEMBER m_user CONSTANT)
     Q_PROPERTY(FileShareModes mode MEMBER m_mode CONSTANT)
     Q_PROPERTY(bool editable MEMBER m_editable CONSTANT)
     Q_PROPERTY(bool is_external MEMBER m_is_external CONSTANT)
@@ -218,7 +218,7 @@ public:
     QString m_mimetype;
     QString m_filetype;
     QString m_pretty_type;
-    QPointer<User> m_user;
+    QPointer<SlackUser> m_user;
     QString m_userId;
     FileShareModes m_mode { Hosted };
     bool m_editable { true };
@@ -281,7 +281,7 @@ struct Message {
     QDateTime thread_ts;
     QUrl permalink;
 
-    QPointer<User> user;
+    QPointer<SlackUser> user;
 
     QList<QObject*> reactions;
     QList<QObject*> attachments;

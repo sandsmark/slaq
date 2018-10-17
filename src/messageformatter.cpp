@@ -44,7 +44,7 @@ MessageFormatter::MessageFormatter() :
     m_codeBlockPattern.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 }
 
-void MessageFormatter::replaceUserInfo(User* user, QString &message)
+void MessageFormatter::replaceUserInfo(SlackUser* user, QString &message)
 {
     if (user == nullptr) {
         qWarning() << "no user for message" << message;

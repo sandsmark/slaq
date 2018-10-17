@@ -23,7 +23,7 @@ SlackTeamClient *SlackClientThreadSpawner::slackClient(const QString &teamId) {
     return m_knownTeams.value(teamId, nullptr);
 }
 
-User *SlackClientThreadSpawner::selfUser(const QString &teamId)
+SlackUser *SlackClientThreadSpawner::selfUser(const QString &teamId)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -469,7 +469,7 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
                               Q_ARG(QString, reaction));
 }
 
-inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, User* selfUser) {
+inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, SlackUser* selfUser) {
     return (selfUser != nullptr && (msg.contains(selfUser->userId())
             || msg.contains(selfUser->username())
             || msg.contains("@here")
@@ -559,14 +559,14 @@ void SlackClientThreadSpawner::sendUserTyping(const QString &teamId, const QStri
                               Q_ARG(QString, channelId));
 }
 
-void SlackClientThreadSpawner::updateUserInfo(const QString &teamId, User *user)
+void SlackClientThreadSpawner::updateUserInfo(const QString &teamId, SlackUser *user)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
         return;
     }
     QMetaObject::invokeMethod(_slackClient, "updateUserInfo", Qt::QueuedConnection,
-                              Q_ARG(User*, user));
+                              Q_ARG(SlackUser*, user));
 }
 
 void SlackClientThreadSpawner::updateUserAvatar(const QString &teamId, const QString &filePath, int cropSide, int cropX, int cropY)
@@ -975,7 +975,7 @@ QString SlackClientThreadSpawner::teamToken(const QString &teamId)
     return _slackClient->teamInfo()->teamToken();
 }
 
-void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<User>>& users, bool last) {
+void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<SlackUser>>& users, bool last) {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
     _slackClient->teamInfo()->addUsersData(users, last);

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QtQuick/private/qquicktext_p.h>
+#include <QtQuickTemplates2/private/qquicklabel_p.h>
 
 class SlackTextPrivate;
 
-class SlackText : public QQuickText
+class SlackText : public QQuickLabel
 {
 
     Q_OBJECT
@@ -26,9 +26,8 @@ public:
     Q_ENUM(SelectionMode)
 
     explicit SlackText(QQuickItem *parent = nullptr);
-    virtual ~SlackText();
 
-    void componentComplete() override;
+    virtual ~SlackText() = default;
 
     //Auxilliary functions needed to control the TextInput from QML
     Q_INVOKABLE void positionAt(QQmlV4Function *args) const;
@@ -72,22 +71,19 @@ private Q_SLOTS:
     void selectionChanged();
 
 protected:
-    SlackText(SlackTextPrivate &dd, QQuickItem *parent = nullptr);
+    void componentComplete() override;
+    //SlackText(SlackTextPrivate &dd, QQuickItem *parent = nullptr);
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseUngrabEvent() override;
-    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
-    void updatePolish() override;
+    //QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
+    //void updatePolish() override;
 
 private:
     void invalidateFontCaches();
-
-    Q_DISABLE_COPY(SlackText)
-
-    Q_DECLARE_PRIVATE(SlackText)
 
     QColor m_selectionColor;
     QColor m_selectedTextColor;
@@ -97,8 +93,11 @@ private:
     bool m_selectByMouse;
     SelectionMode m_mouseSelectionMode;
     bool m_persistentSelection;
-};
 
-Q_DECLARE_TYPEINFO(SlackText, Q_COMPLEX_TYPE);
+private:
+    Q_DECLARE_PRIVATE(SlackText)
+    Q_DISABLE_COPY(SlackText)
+
+};
 
 QML_DECLARE_TYPE(SlackText)

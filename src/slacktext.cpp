@@ -9,30 +9,25 @@
 DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
 
 SlackText::SlackText(QQuickItem* parent)
-: QQuickText(*(new SlackTextPrivate), parent)
+: QQuickLabel(parent)
 {
-    Q_D(SlackText);
-    d->init();
+    //Q_D(SlackText);
+    //d->init();
 }
 
-SlackText::SlackText(SlackTextPrivate &dd, QQuickItem *parent)
-: QQuickText(dd, parent)
-{
-    Q_D(SlackText);
-    d->init();
-}
+//SlackText::SlackText(SlackTextPrivate &dd, QQuickItem *parent)
+//: QQuickLabel(parent)
+//{
+////    Q_D(SlackText);
+////    d->init();
+//}
 
 void SlackText::componentComplete()
 {
     Q_D(SlackText);
 
-    QQuickText::componentComplete();
-
-    d->updateLayout();
-}
-
-SlackText::~SlackText()
-{
+    QQuickLabel::componentComplete();
+    //d->updateLayout();
 }
 
 QColor SlackText::selectionColor() const
@@ -164,9 +159,6 @@ void SlackTextPrivate::init()
 #endif
         q->setAcceptedMouseButtons(Qt::LeftButton);
 
-#if QT_CONFIG(im)
-    q->setFlag(QQuickItem::ItemAcceptsInputMethod);
-#endif
     q->setFlag(QQuickItem::ItemHasContents);
 
     lastSelectionStart = 0;
@@ -361,10 +353,10 @@ void SlackText::mousePressEvent(QMouseEvent *event)
     event->setAccepted(true);
 }
 
-void SlackText::updatePolish()
-{
-    invalidateFontCaches();
-}
+//void SlackText::updatePolish()
+//{
+//    invalidateFontCaches();
+//}
 
 void SlackText::invalidateFontCaches()
 {
@@ -392,7 +384,7 @@ void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
     } else {
 //        if (d->sendMouseEventToInputContext(event))
 //            return;
-        QQuickImplicitSizeItem::mouseDoubleClickEvent(event);
+        QQuickLabel::mouseDoubleClickEvent(event);
     }
 }
 
@@ -466,7 +458,7 @@ void SlackText::mouseMoveEvent(QMouseEvent *event)
         moveCursorSelection(d->positionAt(event->localPos()), d->mouseSelectionMode);
         event->setAccepted(true);
     } else {
-        QQuickImplicitSizeItem::mouseMoveEvent(event);
+        QQuickLabel::mouseMoveEvent(event);
     }
 }
 
@@ -493,7 +485,7 @@ void SlackText::mouseReleaseEvent(QMouseEvent *event)
 //        ensureActiveFocus();
 
     if (!event->isAccepted())
-        QQuickImplicitSizeItem::mouseReleaseEvent(event);
+        QQuickLabel::mouseReleaseEvent(event);
 }
 
 void SlackText::mouseUngrabEvent()
@@ -503,54 +495,54 @@ void SlackText::mouseUngrabEvent()
     setKeepMouseGrab(false);
 }
 
-QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
-{
-    Q_UNUSED(data);
-    Q_D(SlackText);
+//QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+//{
+//    Q_UNUSED(data);
+//    Q_D(SlackText);
 
-    if (d->updateType != SlackTextPrivate::UpdatePaintNode && oldNode != nullptr) {
-        // Update done in preprocess() in the nodes
-        d->updateType = SlackTextPrivate::UpdateNone;
-        return oldNode;
-    }
+//    if (d->updateType != SlackTextPrivate::UpdatePaintNode && oldNode != nullptr) {
+//        // Update done in preprocess() in the nodes
+//        d->updateType = SlackTextPrivate::UpdateNone;
+//        return oldNode;
+//    }
 
-    d->updateType = SlackTextPrivate::UpdateNone;
+//    d->updateType = SlackTextPrivate::UpdateNone;
 
-    QQuickTextNode *node = static_cast<QQuickTextNode *>(oldNode);
-    if (node == nullptr)
-        node = new QQuickTextNode(this);
-    d->textNode = node;
+//    QQuickTextNode *node = static_cast<QQuickTextNode *>(oldNode);
+//    if (node == nullptr)
+//        node = new QQuickTextNode(this);
+//    d->textNode = node;
 
-    if (d->textLayoutDirty || oldNode == nullptr) {
-        node->setUseNativeRenderer(d->renderType == NativeRendering);
-        node->deleteContent();
-        node->setMatrix(QMatrix4x4());
+//    if (d->textLayoutDirty || oldNode == nullptr) {
+//        node->setUseNativeRenderer(d->renderType == NativeRendering);
+//        node->deleteContent();
+//        node->setMatrix(QMatrix4x4());
 
-        QPointF offset(leftPadding(), topPadding());
-        if (d->layout.lineCount() > 0) {
-            QFontMetricsF fm(d->font);
-            // the y offset is there to keep the baseline constant in case we have script changes in the text.
-            //offset += -QPointF(d->hscroll, d->vscroll + d->layout.lineAt(0).ascent() - fm.ascent());
-        } /*else {
-            offset += -QPointF(d->hscroll, d->vscroll);
-        }*/
+//        QPointF offset(leftPadding(), topPadding());
+//        if (d->layout.lineCount() > 0) {
+//            QFontMetricsF fm(d->font);
+//            // the y offset is there to keep the baseline constant in case we have script changes in the text.
+//            //offset += -QPointF(d->hscroll, d->vscroll + d->layout.lineAt(0).ascent() - fm.ascent());
+//        } /*else {
+//            offset += -QPointF(d->hscroll, d->vscroll);
+//        }*/
 
-        if (!d->layout.text().isEmpty()) {
-            node->addTextLayout(offset, &d->layout, d->color,
-                                QQuickText::Normal, QColor(), QColor(),
-                                d->selectionColor, d->selectedTextColor,
-                                d->selectionStart(),
-                                d->selectionEnd() - 1); // selectionEnd() returns first char after
-                                                                 // selection
-        }
+//        if (!d->layout.text().isEmpty()) {
+//            node->addTextLayout(offset, &d->layout, d->color,
+//                                QQuickText::Normal, QColor(), QColor(),
+//                                d->selectionColor, d->selectedTextColor,
+//                                d->selectionStart(),
+//                                d->selectionEnd() - 1); // selectionEnd() returns first char after
+//                                                                 // selection
+//        }
 
-        d->textLayoutDirty = false;
-    }
+//        d->textLayoutDirty = false;
+//    }
 
-    invalidateFontCaches();
+//    invalidateFontCaches();
 
-    return node;
-}
+//    return node;
+//}
 
 /*!
     \qmlmethod QtQuick::TextInput::deselect()
@@ -938,7 +930,7 @@ void SlackTextPrivate::updateLayout()
     if (!q->isComponentComplete())
         return;
 
-    QQuickTextPrivate::updateLayout();
+    QQuickLabelPrivate::updateLayout();
 }
 
 void SlackTextPrivate::processKeyEvent(QKeyEvent* event)

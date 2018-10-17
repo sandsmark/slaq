@@ -54,9 +54,9 @@
 //    "updated": 1504672036
 //}
 
-User::User(QObject *parent) : QObject(parent) {}
+SlackUser::SlackUser(QObject *parent) : QObject(parent) {}
 
-User::User(const User &copy, QObject *parent) : QObject(parent) {
+SlackUser::SlackUser(const SlackUser &copy, QObject *parent) : QObject(parent) {
     m_userId = copy.m_userId;
     if (!copy.m_appId.isEmpty()) {
         m_appId = copy.m_appId;
@@ -91,7 +91,7 @@ User::User(const User &copy, QObject *parent) : QObject(parent) {
     }
 }
 
-User::User(const QString &id, const QString &name, QObject *parent)
+SlackUser::SlackUser(const QString &id, const QString &name, QObject *parent)
 {
     m_userId = id;
     m_username = name;
@@ -99,7 +99,7 @@ User::User(const QString &id, const QString &name, QObject *parent)
 }
 
 
-void User::setData(const QJsonObject &data)
+void SlackUser::setData(const QJsonObject &data)
 {
     //qDebug().noquote() << "user parse" << QJsonDocument(data).toJson();
 
@@ -135,7 +135,7 @@ void User::setData(const QJsonObject &data)
     }
 }
 
-void User::setPresence(const User::Presence presence, bool force)
+void SlackUser::setPresence(const SlackUser::Presence presence, bool force)
 {
     qDebug() << "presence for" << m_userId << m_fullName << presence;
     if (!force && m_presence == Dnd && m_snoozeEnds.isValid() && m_snoozeEnds > QDateTime::currentDateTime()) {
@@ -149,108 +149,108 @@ void User::setPresence(const User::Presence presence, bool force)
     emit presenceChanged();
 }
 
-User::Presence User::presence()
+SlackUser::Presence SlackUser::presence()
 {
     return m_presence;
 }
 
-QString User::username() const
+QString SlackUser::username() const
 {
     return m_username;
 }
 
-QString User::fullName() const
+QString SlackUser::fullName() const
 {
     return m_fullName;
 }
 
-QUrl User::avatarUrl() const
+QUrl SlackUser::avatarUrl() const
 {
     return m_avatarUrl;
 }
 
-bool User::isBot() const
+bool SlackUser::isBot() const
 {
     return m_isBot;
 }
 
-QString User::botId() const
+QString SlackUser::botId() const
 {
     return m_botId;
 }
 
-bool User::selected() const
+bool SlackUser::selected() const
 {
     return m_selected;
 }
 
-void User::setSelected(bool selected)
+void SlackUser::setSelected(bool selected)
 {
     m_selected = selected;
     emit selectedChanged(selected);
 }
 
-void User::setUserId(const QString &userId)
+void SlackUser::setUserId(const QString &userId)
 {
     m_userId = userId;
 }
 
-QString User::email() const
+QString SlackUser::email() const
 {
     return m_email;
 }
 
-void User::setEmail(const QString &email)
+void SlackUser::setEmail(const QString &email)
 {
     m_email = email;
     emit emailChanged(email);
 }
 
-QString User::status() const
+QString SlackUser::status() const
 {
     return m_status;
 }
 
-void User::setStatus(const QString &status)
+void SlackUser::setStatus(const QString &status)
 {
     m_status = status;
     MessageFormatter::replaceEmoji(m_status);
     emit statusChanged(status);
 }
 
-QString User::statusEmoji() const
+QString SlackUser::statusEmoji() const
 {
     return m_statusEmoji;
 }
 
-void User::setStatusEmoji(const QString &statusEmoji)
+void SlackUser::setStatusEmoji(const QString &statusEmoji)
 {
     m_statusEmoji = statusEmoji;
     emit statusEmojiChanged(statusEmoji);
 }
 
-void User::setAvatarUrl(const QUrl &avatarUrl)
+void SlackUser::setAvatarUrl(const QUrl &avatarUrl)
 {
     m_avatarUrl = avatarUrl;
     emit avatarChanged(avatarUrl);
 }
 
-QString User::firstName() const
+QString SlackUser::firstName() const
 {
     return m_firstName;
 }
 
-QString User::lastName() const
+QString SlackUser::lastName() const
 {
     return m_lastName;
 }
 
-QDateTime User::snoozeEnds() const
+QDateTime SlackUser::snoozeEnds() const
 {
     return m_snoozeEnds;
 }
 
-void User::setFirstName(const QString &firstName)
+void SlackUser::setFirstName(const QString &firstName)
 {
     if (m_firstName == firstName)
         return;
@@ -259,7 +259,7 @@ void User::setFirstName(const QString &firstName)
     emit firstNameChanged(m_firstName);
 }
 
-void User::setLastName(const QString &lastName)
+void SlackUser::setLastName(const QString &lastName)
 {
     if (m_lastName == lastName)
         return;
@@ -268,7 +268,7 @@ void User::setLastName(const QString &lastName)
     emit lastNameChanged(m_lastName);
 }
 
-void User::setSnoozeEnds(const QDateTime &snoozeEnds)
+void SlackUser::setSnoozeEnds(const QDateTime &snoozeEnds)
 {
     m_snoozeEnds = snoozeEnds;
     qint64 _msecs = QDateTime::currentDateTime().msecsTo(snoozeEnds);
@@ -276,7 +276,7 @@ void User::setSnoozeEnds(const QDateTime &snoozeEnds)
         QTimer::singleShot(_msecs, this, [this] {
             qDebug() << "User DnD timer expired" << username();
             m_snoozeEnds = QDateTime();
-            this->setPresence(User::Active, true);
+            this->setPresence(SlackUser::Active, true);
         });
     }
     emit snoozeEndsChanged(snoozeEnds);
@@ -317,7 +317,7 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 void UsersModel::updateUser(const QJsonObject &userData)
 {
     const QString& userId = userData.value(QStringLiteral("id")).toString();
-    QPointer<User> _user = m_users.value(userId);
+    QPointer<SlackUser> _user = m_users.value(userId);
     if (_user.isNull()) {
         qWarning() << "no user found for" << userId << "adding new one";
         addUser(userData);
@@ -334,7 +334,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
     qDebug() << "updated user" << _user->userId() << _user->username();
 }
 
-void UsersModel::addUser(User *user)
+void UsersModel::addUser(SlackUser *user)
 {
     user->moveToThread(qApp->thread());
     QMutexLocker locker(&m_modelMutex);
@@ -363,13 +363,13 @@ void UsersModel::addUser(User *user)
 
 void UsersModel::addUser(const QJsonObject &userData)
 {
-    User *user = new User;
+    SlackUser *user = new SlackUser;
     user->setData(userData);
     QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
     addUser(user);
 }
 
-void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
+void UsersModel::addUsers(const QList<QPointer<SlackUser>>& users, bool last)
 {
     int _count = m_users.count();
     qDebug() << "Adding users" << _count << last;
@@ -377,7 +377,7 @@ void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
     m_addingUsers = true;
     {
         QMutexLocker locker(&m_modelMutex);
-        for (QPointer<User> user : users) {
+        for (QPointer<SlackUser> user : users) {
             int _cnt = m_users.count();
             //if user is a bot as well
             if (user->isBot() && !user->botId().isEmpty()) {
@@ -405,7 +405,7 @@ void UsersModel::addUsers(const QList<QPointer<User>>& users, bool last)
     qDebug() << "added users" << m_userIds.count() << m_users.count();
 }
 
-QPointer<User> UsersModel::user(const QString &id)
+QPointer<SlackUser> UsersModel::user(const QString &id)
 {
     if (m_addingUsers) {
         qWarning() << "NOT ALL USERS ADDED!";
@@ -419,7 +419,7 @@ void UsersModel::createAndRequestInfo(const QString &id)
         qWarning() << "NOT ALL USERS ADDED!";
     }
     if (!m_users.contains(id)) {
-        QPointer<User> _user = new User;
+        QPointer<SlackUser> _user = new SlackUser;
         QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);
         _user->setUserId(id);
         addUser(_user);
@@ -429,7 +429,7 @@ void UsersModel::createAndRequestInfo(const QString &id)
 QStringList UsersModel::selectedUserIds()
 {
     QStringList _list;
-    for (QPointer<User> user : m_users){
+    for (QPointer<SlackUser> user : m_users){
         if (user->selected()) {
             _list.append(user->userId());
         }
@@ -439,7 +439,7 @@ QStringList UsersModel::selectedUserIds()
 
 bool UsersModel::isSelected() const
 {
-    for (QPointer<User> user : m_users){
+    for (QPointer<SlackUser> user : m_users){
         if (user->selected()) {
             return true;
         }
@@ -458,7 +458,7 @@ void UsersModel::setSelected(int index)
 void UsersModel::clearSelections()
 {
     for (const QString& userId : m_userIds) {
-        QPointer<User> user = m_users.value(userId);
+        QPointer<SlackUser> user = m_users.value(userId);
         if (!user.isNull()) {
             user->setSelected(false);
         } else {
@@ -484,7 +484,7 @@ bool UsersModel::selected() const
     return m_selected;
 }
 
-QMap<QString, QPointer<User> > UsersModel::users() const
+QMap<QString, QPointer<SlackUser> > UsersModel::users() const
 {
     return m_users;
 }

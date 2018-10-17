@@ -1,6 +1,7 @@
 #pragma once
 
-#include <QtQuick/private/qquicktext_p_p.h>
+//#include <QtQuick/private/qquicktext_p_p.h>
+#include <QtQuickTemplates2/private/qquicklabel_p_p.h>
 
 #include <QtQml/qqml.h>
 #include <QtCore/qelapsedtimer.h>
@@ -19,12 +20,11 @@
 QT_BEGIN_NAMESPACE
 
 class QQuickTextNode;
-class QInputControl;
 
-class SlackTextPrivate : public QQuickTextPrivate
+class SlackTextPrivate : public QQuickLabelPrivate
 {
-public:
     Q_DECLARE_PUBLIC(SlackText)
+public:
 
     //typedef SlackText Public;
 

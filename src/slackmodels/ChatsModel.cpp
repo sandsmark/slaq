@@ -61,7 +61,7 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         if (!chat->membersModel->users().isEmpty()) {
             return chat->membersModel->users().first()->presence();
         } else {
-            return User::Unknown;
+            return SlackUser::Unknown;
         }
     case PresenceIcon: {
         if (chat->type == ChatsModel::Channel
@@ -73,14 +73,14 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
             if (chat->membersModel->users().isEmpty()) {
                 return "qrc:/icons/offline-icon.png";
             }
-            User::Presence presence = chat->membersModel->users().first()->presence();
-            if (presence == User::Away) {
+            SlackUser::Presence presence = chat->membersModel->users().first()->presence();
+            if (presence == SlackUser::Away) {
                 return "qrc:/icons/away-icon.png";
             }
-            if (presence == User::Dnd) {
+            if (presence == SlackUser::Dnd) {
                 return "qrc:/icons/dnd-icon.png";
             }
-            if (presence == User::Active) {
+            if (presence == SlackUser::Active) {
                 return "qrc:/icons/active-icon.png";
             }
             return "qrc:/icons/offline-icon.png";
@@ -170,7 +170,7 @@ QString ChatsModel::doAddChat(Chat *chat)
 
 
     if (chat->type == Conversation) {
-        QPointer<User> _user = m_networkUsers->user(chat->user);
+        QPointer<SlackUser> _user = m_networkUsers->user(chat->user);
         if (!_user.isNull()) {
             chat->membersModel->addUser(_user);
             chat->name = chat->membersModel->users().first()->fullName();
@@ -223,7 +223,7 @@ void ChatsModel::addMembers(const QString &channelId, const QStringList &members
         return;
     }
     for (const QString &userId : members) {
-        QPointer<User> user = m_networkUsers->user(userId);
+        QPointer<SlackUser> user = m_networkUsers->user(userId);
         if (!user.isNull()) {
             _chat->membersModel->addUser(user);
         } else {
@@ -299,11 +299,11 @@ void ChatsModel::chatChanged(Chat *chat)
 void ChatsModel::setPresence(const QStringList &users, const QString &presence,
                              const QDateTime &snoozeEnds, bool force)
 {
-    User::Presence _presence = (presence == "away" ? User::Away : (presence == "dnd_on" ? User::Dnd : User::Active));
+    SlackUser::Presence _presence = (presence == "away" ? SlackUser::Away : (presence == "dnd_on" ? SlackUser::Dnd : SlackUser::Active));
     for (Chat* chat : m_chats.values()) {
         if (chat->type == ChatsModel::Conversation && chat->membersModel != nullptr
                 && !chat->membersModel->users().isEmpty()) {
-            QPointer<User> _user = chat->membersModel->users().first();
+            QPointer<SlackUser> _user = chat->membersModel->users().first();
             if (!_user.isNull() && (users.contains(_user->userId()) || users.contains(_user->botId()))) {
                 if (snoozeEnds.isValid()) {
                     _user->setSnoozeEnds(snoozeEnds);
@@ -374,7 +374,7 @@ Chat::Chat(const QJsonObject &data, const ChatsModel::ChatType type_, QObject *p
 
 void Chat::setReadableName(const QString& selfId) {
     QStringList _users;
-    for (QPointer<User> user : membersModel->users()) {
+    for (QPointer<SlackUser> user : membersModel->users()) {
         if (user->userId() != selfId) {
             if (!user->fullName().isEmpty()) {
                 _users << user->fullName();

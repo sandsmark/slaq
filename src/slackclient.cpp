@@ -978,7 +978,7 @@ QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, cons
     }
 
     QStringList nicks;
-    for (QPointer<User> user : m_teamInfo.users()->users()) {
+    for (QPointer<SlackUser> user : m_teamInfo.users()->users()) {
         const QString nick = user->username();
         if (!nick.isEmpty()) {
             if (relevant.isEmpty()) {
@@ -1228,7 +1228,7 @@ void SlackTeamClient::requestUserInfoById(const QString& userId)
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersInfoReply);
 }
 
-void SlackTeamClient::requestUserInfo(User *user)
+void SlackTeamClient::requestUserInfo(SlackUser *user)
 {
     QMap<QString, QString> params;
     params.insert(QStringLiteral("user"), user->userId());
@@ -1237,7 +1237,7 @@ void SlackTeamClient::requestUserInfo(User *user)
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleUsersInfoReply);
 }
 
-void SlackTeamClient::updateUserInfo(User *user)
+void SlackTeamClient::updateUserInfo(SlackUser *user)
 {
     QMap<QString, QString> params;
 
@@ -1312,7 +1312,7 @@ QString SlackTeamClient::userName(const QString &userId) {
         return "";
     }
 
-    User* user = teamInfo()->users()->user(userId);
+    SlackUser* user = teamInfo()->users()->user(userId);
     if (user == nullptr) {
         return "";
     }
@@ -1730,7 +1730,7 @@ void SlackTeamClient::handleUsersListReply()
     DEBUG_BLOCK;
 
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    QList<QPointer<User>> _users;
+    QList<QPointer<SlackUser>> _users;
     QString cursor;
     if (reply != nullptr) {
         const QJsonObject& data = getResult(reply);
@@ -1738,7 +1738,7 @@ void SlackTeamClient::handleUsersListReply()
         //qDebug() << __PRETTY_FUNCTION__ << "result" << data;
         reply->deleteLater();
         for (const QJsonValue& userValue : data.value("members").toArray()) {
-            QPointer<User> user = new User;
+            QPointer<SlackUser> user = new SlackUser;
             user->moveToThread(qApp->thread());
             QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
             user->setData(userValue.toObject());
@@ -1811,7 +1811,7 @@ void SlackTeamClient::handleDnDInfoReply()
                 QDateTime snoozeEnd = QDateTime::fromSecsSinceEpoch(snoole_endtime);
                 //in GUI thread
                 QMetaObject::invokeMethod(qApp, [this, snoozeEnd] {
-                    m_teamInfo.selfUser()->setPresence(User::Dnd, true);
+                    m_teamInfo.selfUser()->setPresence(SlackUser::Dnd, true);
                     m_teamInfo.selfUser()->setSnoozeEnds(snoozeEnd);
                 });
             }
