@@ -1,8 +1,34 @@
 #include "slacktext.h"
 #include "slacktext_p.h"
+#include <QTextBoundaryFinder>
 
-SlackText::SlackText(QQuickItem *parent) : QQuickText(parent)
+#include "QtQuick/private/qquicktextnode_p.h"
+#include <QtQuick/qsgsimplerectnode.h>
+#include <private/qv4scopedvalue_p.h>
+
+DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
+
+SlackText::SlackText(QQuickItem* parent)
+: QQuickText(*(new SlackTextPrivate), parent)
 {
+    Q_D(SlackText);
+    d->init();
+}
+
+SlackText::SlackText(SlackTextPrivate &dd, QQuickItem *parent)
+: QQuickText(dd, parent)
+{
+    Q_D(SlackText);
+    d->init();
+}
+
+void SlackText::componentComplete()
+{
+    Q_D(SlackText);
+
+    QQuickText::componentComplete();
+
+    d->updateLayout();
 }
 
 SlackText::~SlackText()
@@ -128,6 +154,32 @@ QString SlackText::selectedText() const
     return d->selectedText();
 }
 
+void SlackTextPrivate::init()
+{
+    Q_Q(SlackText);
+#if QT_CONFIG(clipboard)
+    if (QGuiApplication::clipboard()->supportsSelection())
+        q->setAcceptedMouseButtons(Qt::LeftButton | Qt::MiddleButton);
+    else
+#endif
+        q->setAcceptedMouseButtons(Qt::LeftButton);
+
+#if QT_CONFIG(im)
+    q->setFlag(QQuickItem::ItemAcceptsInputMethod);
+#endif
+    q->setFlag(QQuickItem::ItemHasContents);
+
+    lastSelectionStart = 0;
+    lastSelectionEnd = 0;
+    determineHorizontalAlignment();
+
+    if (!qmlDisableDistanceField()) {
+        QTextOption option = layout.textOption();
+        option.setUseDesignMetrics(renderType != QQuickText::NativeRendering);
+        layout.setTextOption(option);
+    }
+}
+
 
 /*!
     \internal
@@ -139,42 +191,153 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
 {
     Q_Q(SlackText);
 
-
-    if (pos != m_cursor) {
-        separate();
-        if (m_maskData)
-            pos = pos > m_cursor ? nextMaskBlank(pos) : prevMaskBlank(pos);
-    }
+//    if (pos != m_cursor) {
+//        separate();
+//        if (m_maskData)
+//            pos = pos > m_cursor ? nextMaskBlank(pos) : prevMaskBlank(pos);
+//    }
     if (mark) {
         int anchor;
-        if (m_selend > m_selstart && m_cursor == m_selstart)
+        if (m_selend > m_selstart/* && m_cursor == m_selstart*/)
             anchor = m_selend;
-        else if (m_selend > m_selstart && m_cursor == m_selend)
+        else if (m_selend > m_selstart/* && m_cursor == m_selend*/)
             anchor = m_selstart;
-        else
-            anchor = m_cursor;
+        /*else
+            anchor = m_cursor;*/
         m_selstart = qMin(anchor, pos);
         m_selend = qMax(anchor, pos);
     } else {
         internalDeselect();
     }
-    m_cursor = pos;
+    //m_cursor = pos;
     if (mark || m_selDirty) {
         m_selDirty = false;
         emit q->selectionChanged();
     }
-    emitCursorPositionChanged();
+    //emitCursorPositionChanged();
 
 }
 
-void QQuickTextInput::mousePressEvent(QMouseEvent *event)
+/*!
+    \qmlmethod rect QtQuick::TextInput::positionToRectangle(int pos)
+
+    This function takes a character position and returns the rectangle that the
+    cursor would occupy, if it was placed at that character position.
+
+    This is similar to setting the cursorPosition, and then querying the cursor
+    rectangle, but the cursorPosition is not changed.
+*/
+QRectF SlackText::positionToRectangle(int pos) const
 {
-    Q_D(QQuickTextInput);
+    Q_D(const SlackText);
+//    if (d->m_echoMode == NoEcho)
+//        pos = 0;
+//#if QT_CONFIG(im)
+//    else if (pos > d->m_cursor)
+//        pos += d->preeditAreaText().length();
+//#endif
+    QTextLine l = d->layout.lineForTextPosition(pos);
+    if (!l.isValid())
+        return QRectF();
+    qreal x = l.cursorToX(pos)/* - d->hscroll*/;
+    qreal y = l.y()/* - d->vscroll*/;
+    qreal w = 1;
+//    if (d->overwriteMode) {
+//        if (pos < text().length())
+//            w = l.cursorToX(pos + 1) - x;
+//        else
+//            w = QFontMetrics(font()).width(QLatin1Char(' ')); // in sync with QTextLine::draw()
+//    }
+    return QRectF(x, y, w, l.height());
+}
+
+/*!
+    \qmlmethod int QtQuick::TextInput::positionAt(real x, real y, CursorPosition position = CursorBetweenCharacters)
+
+    This function returns the character position at
+    x and y pixels from the top left  of the textInput. Position 0 is before the
+    first character, position 1 is after the first character but before the second,
+    and so on until position text.length, which is after all characters.
+
+    This means that for all x values before the first character this function returns 0,
+    and for all x values after the last character this function returns text.length.  If
+    the y value is above the text the position will be that of the nearest character on
+    the first line and if it is below the text the position of the nearest character
+    on the last line will be returned.
+
+    The cursor position type specifies how the cursor position should be resolved.
+
+    \list
+    \li TextInput.CursorBetweenCharacters - Returns the position between characters that is nearest x.
+    \li TextInput.CursorOnCharacter - Returns the position before the character that is nearest x.
+    \endlist
+*/
+
+void SlackText::positionAt(QQmlV4Function *args) const
+{
+    Q_D(const SlackText);
+
+    qreal x = 0;
+    qreal y = 0;
+    QTextLine::CursorPosition position = QTextLine::CursorBetweenCharacters;
+
+    if (args->length() < 1)
+        return;
+
+    int i = 0;
+    QV4::Scope scope(args->v4engine());
+    QV4::ScopedValue arg(scope, (*args)[0]);
+    x = arg->toNumber();
+
+    if (++i < args->length()) {
+        arg = (*args)[i];
+        y = arg->toNumber();
+    }
+
+    if (++i < args->length()) {
+        arg = (*args)[i];
+        position = QTextLine::CursorPosition(arg->toInt32());
+    }
+
+    int pos = d->positionAt(x, y, position);
+    const int cursor = d->m_cursor;
+    if (pos > cursor) {
+#if QT_CONFIG(im)
+        const int preeditLength = 0;
+        pos = pos > cursor + preeditLength
+                ? pos - preeditLength
+                : cursor;
+#else
+        pos = cursor;
+#endif
+    }
+    args->setReturnValue(QV4::Encode(pos));
+}
+
+int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition position) const
+{
+    Q_Q(const SlackText);
+    x += q->leftPadding();
+    y += q->topPadding();
+    QTextLine line = layout.lineAt(0);
+    for (int i = 1; i < layout.lineCount(); ++i) {
+        QTextLine nextLine = layout.lineAt(i);
+
+        if (y < (line.rect().bottom() + nextLine.y()) / 2)
+            break;
+        line = nextLine;
+    }
+    return line.isValid() ? line.xToCursor(x, position) : 0;
+}
+
+void SlackText::mousePressEvent(QMouseEvent *event)
+{
+    Q_D(SlackText);
 
     d->pressPos = event->localPos();
 
-    if (d->sendMouseEventToInputContext(event))
-        return;
+//    if (d->sendMouseEventToInputContext(event))
+//        return;
 
     if (d->selectByMouse) {
         setKeepMouseGrab(false);
@@ -190,45 +353,128 @@ void QQuickTextInput::mousePressEvent(QMouseEvent *event)
 
     bool mark = (event->modifiers() & Qt::ShiftModifier) && d->selectByMouse;
     int cursor = d->positionAt(event->localPos());
-    d->moveCursor(cursor, mark);
+    d->moveSelectionCursor(cursor, mark);
 
-    if (d->focusOnPress && !qGuiApp->styleHints()->setFocusOnTouchRelease())
-        ensureActiveFocus();
+//    if (d->focusOnPress && !qGuiApp->styleHints()->setFocusOnTouchRelease())
+//        ensureActiveFocus();
 
     event->setAccepted(true);
 }
 
-void QQuickTextInput::mouseMoveEvent(QMouseEvent *event)
+void SlackText::updatePolish()
 {
-    Q_D(QQuickTextInput);
+    invalidateFontCaches();
+}
+
+void SlackText::invalidateFontCaches()
+{
+    Q_D(SlackText);
+
+    if (d->layout.engine() != nullptr)
+        d->layout.engine()->resetFontEngineCache();
+}
+
+void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    Q_D(SlackText);
+
+    if (d->selectByMouse && event->button() == Qt::LeftButton) {
+//#if QT_CONFIG(im)
+//        d->commitPreedit();
+//#endif
+        int cursor = d->positionAt(event->localPos());
+        d->selectWordAtPos(cursor);
+        event->setAccepted(true);
+        if (!d->hasPendingTripleClick()) {
+            d->tripleClickStartPoint = event->localPos();
+            d->tripleClickTimer.start();
+        }
+    } else {
+//        if (d->sendMouseEventToInputContext(event))
+//            return;
+        QQuickImplicitSizeItem::mouseDoubleClickEvent(event);
+    }
+}
+
+
+/*!
+    \internal
+
+    Sets the selection to cover the word at the given cursor position.
+    The word boundaries are defined by the behavior of QTextLayout::SkipWords
+    cursor mode.
+*/
+void SlackTextPrivate::selectWordAtPos(int cursor)
+{
+    int next = cursor + 1;
+    if (next > end())
+        --next;
+    int c = layout.previousCursorPosition(next, QTextLayout::SkipWords);
+    moveSelectionCursor(c, false);
+    // ## text layout should support end of words.
+    int end = layout.nextCursorPosition(c, QTextLayout::SkipWords);
+    while (end > cursor && text[end-1].isSpace())
+        --end;
+    moveSelectionCursor(end, true);
+}
+
+
+#if QT_CONFIG(clipboard)
+/*!
+    \internal
+
+    Copies the currently selected text into the clipboard using the given
+    \a mode.
+
+    \note If the echo mode is set to a mode other than Normal then copy
+    will not work.  This is to prevent using copy as a method of bypassing
+    password features of the line control.
+*/
+void SlackTextPrivate::copy(QClipboard::Mode mode) const
+{
+    QString t = selectedText();
+    if (!t.isEmpty()) {
+        QGuiApplication::clipboard()->setText(t, mode);
+    }
+}
+
+#endif // clipboard
+
+/*!
+    \qmlmethod QtQuick::TextInput::copy()
+
+    Copies the currently selected text to the system clipboard.
+
+    \note If the echo mode is set to a mode other than Normal then copy
+    will not work.  This is to prevent using copy as a method of bypassing
+    password features of the line control.
+*/
+void SlackText::copy()
+{
+    Q_D(SlackText);
+    d->copy();
+}
+
+
+void SlackText::mouseMoveEvent(QMouseEvent *event)
+{
+    Q_D(SlackText);
 
     if (d->selectPressed) {
         if (qAbs(int(event->localPos().x() - d->pressPos.x())) > QGuiApplication::styleHints()->startDragDistance())
             setKeepMouseGrab(true);
-
-#if QT_CONFIG(im)
-        if (d->composeMode()) {
-            // start selection
-            int startPos = d->positionAt(d->pressPos);
-            int currentPos = d->positionAt(event->localPos());
-            if (startPos != currentPos)
-                d->setSelection(startPos, currentPos - startPos);
-        } else
-#endif
-        {
-            moveCursorSelection(d->positionAt(event->localPos()), d->mouseSelectionMode);
-        }
+        moveCursorSelection(d->positionAt(event->localPos()), d->mouseSelectionMode);
         event->setAccepted(true);
     } else {
         QQuickImplicitSizeItem::mouseMoveEvent(event);
     }
 }
 
-void QQuickTextInput::mouseReleaseEvent(QMouseEvent *event)
+void SlackText::mouseReleaseEvent(QMouseEvent *event)
 {
-    Q_D(QQuickTextInput);
-    if (d->sendMouseEventToInputContext(event))
-        return;
+    Q_D(SlackText);
+//    if (d->sendMouseEventToInputContext(event))
+//        return;
     if (d->selectPressed) {
         d->selectPressed = false;
         setKeepMouseGrab(false);
@@ -237,81 +483,66 @@ void QQuickTextInput::mouseReleaseEvent(QMouseEvent *event)
     if (QGuiApplication::clipboard()->supportsSelection()) {
         if (event->button() == Qt::LeftButton) {
             d->copy(QClipboard::Selection);
-        } else if (!d->m_readOnly && event->button() == Qt::MidButton) {
+        } else if (event->button() == Qt::MidButton) {
             d->deselect();
-            d->insert(QGuiApplication::clipboard()->text(QClipboard::Selection));
         }
     }
 #endif
 
-    if (d->focusOnPress && qGuiApp->styleHints()->setFocusOnTouchRelease())
-        ensureActiveFocus();
+//    if (d->focusOnPress && qGuiApp->styleHints()->setFocusOnTouchRelease())
+//        ensureActiveFocus();
 
     if (!event->isAccepted())
         QQuickImplicitSizeItem::mouseReleaseEvent(event);
 }
 
-void QQuickTextInput::mouseUngrabEvent()
+void SlackText::mouseUngrabEvent()
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     d->selectPressed = false;
     setKeepMouseGrab(false);
 }
 
-QSGNode *QQuickTextInput::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
 {
     Q_UNUSED(data);
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
 
-    if (d->updateType != QQuickTextInputPrivate::UpdatePaintNode && oldNode != nullptr) {
+    if (d->updateType != SlackTextPrivate::UpdatePaintNode && oldNode != nullptr) {
         // Update done in preprocess() in the nodes
-        d->updateType = QQuickTextInputPrivate::UpdateNone;
+        d->updateType = SlackTextPrivate::UpdateNone;
         return oldNode;
     }
 
-    d->updateType = QQuickTextInputPrivate::UpdateNone;
+    d->updateType = SlackTextPrivate::UpdateNone;
 
     QQuickTextNode *node = static_cast<QQuickTextNode *>(oldNode);
     if (node == nullptr)
         node = new QQuickTextNode(this);
     d->textNode = node;
 
-    const bool showCursor = !isReadOnly() && d->cursorItem == nullptr && d->cursorVisible && d->m_blinkStatus;
-
-    if (!d->textLayoutDirty && oldNode != nullptr) {
-        if (showCursor)
-            node->setCursor(cursorRectangle(), d->color);
-        else
-            node->clearCursor();
-    } else {
+    if (d->textLayoutDirty || oldNode == nullptr) {
         node->setUseNativeRenderer(d->renderType == NativeRendering);
         node->deleteContent();
         node->setMatrix(QMatrix4x4());
 
         QPointF offset(leftPadding(), topPadding());
-        if (d->autoScroll && d->m_textLayout.lineCount() > 0) {
+        if (d->layout.lineCount() > 0) {
             QFontMetricsF fm(d->font);
             // the y offset is there to keep the baseline constant in case we have script changes in the text.
-            offset += -QPointF(d->hscroll, d->vscroll + d->m_textLayout.lineAt(0).ascent() - fm.ascent());
-        } else {
+            //offset += -QPointF(d->hscroll, d->vscroll + d->layout.lineAt(0).ascent() - fm.ascent());
+        } /*else {
             offset += -QPointF(d->hscroll, d->vscroll);
-        }
+        }*/
 
-        if (!d->m_textLayout.text().isEmpty()
-#if QT_CONFIG(im)
-                || !d->m_textLayout.preeditAreaText().isEmpty()
-#endif
-                ) {
-            node->addTextLayout(offset, &d->m_textLayout, d->color,
+        if (!d->layout.text().isEmpty()) {
+            node->addTextLayout(offset, &d->layout, d->color,
                                 QQuickText::Normal, QColor(), QColor(),
                                 d->selectionColor, d->selectedTextColor,
                                 d->selectionStart(),
                                 d->selectionEnd() - 1); // selectionEnd() returns first char after
                                                                  // selection
         }
-
-        if (showCursor)
-                node->setCursor(cursorRectangle(), d->color);
 
         d->textLayoutDirty = false;
     }
@@ -326,9 +557,9 @@ QSGNode *QQuickTextInput::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData 
 
     Removes active text selection.
 */
-void QQuickTextInput::deselect()
+void SlackText::deselect()
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     d->deselect();
 }
 
@@ -337,9 +568,9 @@ void QQuickTextInput::deselect()
 
     Causes all text to be selected.
 */
-void QQuickTextInput::selectAll()
+void SlackText::selectAll()
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     d->setSelection(0, text().length());
 }
 
@@ -348,9 +579,9 @@ void QQuickTextInput::selectAll()
 
     Causes the word closest to the current cursor position to be selected.
 */
-void QQuickTextInput::selectWord()
+void SlackText::selectWord()
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     d->selectWordAtPos(d->m_cursor);
 }
 
@@ -364,15 +595,15 @@ void QQuickTextInput::selectWord()
     not be an appropriate interaction (it may conflict with how
     the text needs to behave inside a \l Flickable, for example).
 */
-bool QQuickTextInput::selectByMouse() const
+bool SlackText::selectByMouse() const
 {
-    Q_D(const QQuickTextInput);
+    Q_D(const SlackText);
     return d->selectByMouse;
 }
 
-void QQuickTextInput::setSelectByMouse(bool on)
+void SlackText::setSelectByMouse(bool on)
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     if (d->selectByMouse != on) {
         d->selectByMouse = on;
         emit selectByMouseChanged(on);
@@ -392,15 +623,15 @@ void QQuickTextInput::setSelectByMouse(bool on)
     This property only applies when \l selectByMouse is true.
 */
 
-QQuickTextInput::SelectionMode QQuickTextInput::mouseSelectionMode() const
+SlackText::SelectionMode SlackText::mouseSelectionMode() const
 {
-    Q_D(const QQuickTextInput);
+    Q_D(const SlackText);
     return d->mouseSelectionMode;
 }
 
-void QQuickTextInput::setMouseSelectionMode(SelectionMode mode)
+void SlackText::setMouseSelectionMode(SelectionMode mode)
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     if (d->mouseSelectionMode != mode) {
         d->mouseSelectionMode = mode;
         emit mouseSelectionModeChanged(mode);
@@ -414,25 +645,25 @@ void QQuickTextInput::setMouseSelectionMode(SelectionMode mode)
     item in the scene. By default this is set to false;
 */
 
-bool QQuickTextInput::persistentSelection() const
+bool SlackText::persistentSelection() const
 {
-    Q_D(const QQuickTextInput);
+    Q_D(const SlackText);
     return d->persistentSelection;
 }
 
-void QQuickTextInput::setPersistentSelection(bool on)
+void SlackText::setPersistentSelection(bool on)
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     if (d->persistentSelection == on)
         return;
     d->persistentSelection = on;
     emit persistentSelectionChanged();
 }
 
-void QQuickTextInput::moveCursorSelection(int position)
+void SlackText::moveCursorSelection(int position)
 {
-    Q_D(QQuickTextInput);
-    d->moveCursor(position, true);
+    Q_D(SlackText);
+    d->moveSelectionCursor(position, true);
 }
 
 /*!
@@ -472,12 +703,12 @@ void QQuickTextInput::moveCursorSelection(int position)
     The same sequence with TextInput.SelectWords will extend the selection start to a word boundary
     before or on position 5 and extend the selection end to a word boundary on or past position 9.
 */
-void QQuickTextInput::moveCursorSelection(int pos, SelectionMode mode)
+void SlackText::moveCursorSelection(int pos, SelectionMode mode)
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
 
     if (mode == SelectCharacters) {
-        d->moveCursor(pos, true);
+        d->moveSelectionCursor(pos, true);
     } else if (pos != d->m_cursor){
         const int cursor = d->m_cursor;
         int anchor;
@@ -528,11 +759,11 @@ void QQuickTextInput::moveCursorSelection(int pos, SelectionMode mode)
     }
 }
 
-void QQuickTextInput::selectionChanged()
+void SlackText::selectionChanged()
 {
-    Q_D(QQuickTextInput);
+    Q_D(SlackText);
     d->textLayoutDirty = true; //TODO: Only update rect in selection
-    d->updateType = QQuickTextInputPrivate::UpdatePaintNode;
+    d->updateType = SlackTextPrivate::UpdatePaintNode;
     polish();
     update();
     emit selectedTextChanged();
@@ -559,14 +790,11 @@ void QQuickTextInput::selectionChanged()
     the line control.  If \a length characters cannot be selected, then
     the selection will extend to the end of the current text.
 */
-void QQuickTextInputPrivate::setSelection(int start, int length)
+void SlackTextPrivate::setSelection(int start, int length)
 {
-    Q_Q(QQuickTextInput);
-#if QT_CONFIG(im)
-    commitPreedit();
-#endif
+    Q_Q(SlackText);
 
-    if (start < 0 || start > m_text.length()) {
+    if (start < 0 || start > text.length()) {
         qWarning("QQuickTextInputPrivate::setSelection: Invalid start position");
         return;
     }
@@ -575,7 +803,7 @@ void QQuickTextInputPrivate::setSelection(int start, int length)
         if (start == m_selstart && start + length == m_selend && m_cursor == m_selend)
             return;
         m_selstart = start;
-        m_selend = qMin(start + length, m_text.length());
+        m_selend = qMin(start + length, text.length());
         m_cursor = m_selend;
     } else if (length < 0){
         if (start == m_selend && start + length == m_selstart && m_cursor == m_selstart)
@@ -589,13 +817,169 @@ void QQuickTextInputPrivate::setSelection(int start, int length)
         m_cursor = start;
     } else {
         m_cursor = start;
-        emitCursorPositionChanged();
+        //emitCursorPositionChanged();
         return;
     }
     emit q->selectionChanged();
-    emitCursorPositionChanged();
-#if QT_CONFIG(im)
-    q->updateInputMethod(Qt::ImCursorRectangle | Qt::ImAnchorRectangle | Qt::ImCursorPosition | Qt::ImAnchorPosition
-                       | Qt::ImCurrentSelection);
-#endif
+    //emitCursorPositionChanged();
 }
+
+/*!
+    \internal
+
+    Completes a change to the line control text.  If the change is not valid
+    will undo the line control state back to the given \a validateFromState.
+
+    If \a edited is true and the change is valid, will emit textEdited() in
+    addition to textChanged().  Otherwise only emits textChanged() on a valid
+    change.
+
+    The \a update value is currently unused.
+*/
+bool SlackTextPrivate::finishChange(bool update)
+{
+    Q_Q(SlackText);
+
+    Q_UNUSED(update)
+//#if QT_CONFIG(im)
+//    bool inputMethodAttributesChanged = m_textDirty || m_selDirty;
+//#endif
+    bool alignmentChanged = false;
+    bool textChanged = false;
+
+//    if (m_textDirty) {
+//        // do validation
+//        bool wasValidInput = m_validInput;
+//        bool wasAcceptable = m_acceptableInput;
+//        m_validInput = true;
+//        m_acceptableInput = true;
+//#if QT_CONFIG(validator)
+//        if (m_validator) {
+//            QString textCopy = m_text;
+//            if (m_maskData)
+//                textCopy = maskString(0, m_text, true);
+//            int cursorCopy = m_cursor;
+//            QValidator::State state = m_validator->validate(textCopy, cursorCopy);
+//            if (m_maskData)
+//                textCopy = m_text;
+//            m_validInput = state != QValidator::Invalid;
+//            m_acceptableInput = state == QValidator::Acceptable;
+//            if (m_validInput && !m_maskData) {
+//                if (m_text != textCopy) {
+//                    internalSetText(textCopy, cursorCopy);
+//                    return true;
+//                }
+//                m_cursor = cursorCopy;
+//            }
+//        }
+//#endif
+//        if (m_maskData)
+//            checkIsValid();
+
+//        if (validateFromState >= 0 && wasValidInput && !m_validInput) {
+//            if (m_transactions.count())
+//                return false;
+//            internalUndo(validateFromState);
+//            m_history.resize(m_undoState);
+//            m_validInput = true;
+//            m_acceptableInput = wasAcceptable;
+//            m_textDirty = false;
+//        }
+
+//        if (m_textDirty) {
+//            textChanged = true;
+//            m_textDirty = false;
+//#if QT_CONFIG(im)
+//            m_preeditDirty = false;
+//#endif
+//            alignmentChanged = determineHorizontalAlignment();
+//            if (edited)
+//                emit q->textEdited();
+//            emit q->textChanged();
+//        }
+
+//        updateDisplayText(alignmentChanged);
+
+//        if (m_acceptableInput != wasAcceptable)
+//            emit q->acceptableInputChanged();
+//    }
+//#if QT_CONFIG(im)
+//    if (m_preeditDirty) {
+//        m_preeditDirty = false;
+//        if (determineHorizontalAlignment()) {
+//            alignmentChanged = true;
+//            updateLayout();
+//        }
+//    }
+//#endif
+
+    if (m_selDirty) {
+        m_selDirty = false;
+        emit q->selectionChanged();
+    }
+
+//#if QT_CONFIG(im)
+//    inputMethodAttributesChanged |= (m_cursor != m_lastCursorPos);
+//    if (inputMethodAttributesChanged)
+//        q->updateInputMethod();
+//#endif
+//    emitUndoRedoChanged();
+
+//    if (!emitCursorPositionChanged() && (alignmentChanged || textChanged))
+//        q->updateCursorRectangle();
+
+    return true;
+}
+
+void SlackTextPrivate::updateLayout()
+{
+    Q_Q(SlackText);
+
+    if (!q->isComponentComplete())
+        return;
+
+    QQuickTextPrivate::updateLayout();
+}
+
+void SlackTextPrivate::processKeyEvent(QKeyEvent* event)
+{
+    Q_Q(SlackText);
+
+    if (event == QKeySequence::Copy) {
+        copy();
+        event->accept();
+    } else {
+        event->ignore();
+    }
+}
+
+//qreal SlackTextPrivate::getImplicitWidth() const
+//{
+//    Q_Q(const SlackText);
+//    if (!requireImplicitWidth) {
+//        SlackTextPrivate *d = const_cast<SlackTextPrivate *>(this);
+//        d->requireImplicitWidth = true;
+
+//        if (q->isComponentComplete()) {
+//            // One time cost, only incurred if implicitWidth is first requested after
+//            // componentComplete.
+//            QTextLayout layout(text);
+
+//            QTextOption option = layout.textOption();
+//            option.setTextDirection(layoutDirection);
+//            option.setFlags(QTextOption::IncludeTrailingSpaces);
+//            option.setWrapMode(QTextOption::WrapMode(wrapMode));
+//            option.setAlignment(Qt::Alignment(q->effectiveHAlign()));
+//            layout.setTextOption(option);
+//            layout.setFont(font);
+//            layout.beginLayout();
+
+//            QTextLine line = layout.createLine();
+//            line.setLineWidth(INT_MAX);
+//            d->implicitWidth = qCeil(line.naturalTextWidth()) + q->leftPadding() + q->rightPadding();
+
+//            layout.endLayout();
+//        }
+//    }
+//    return implicitWidth;
+//}

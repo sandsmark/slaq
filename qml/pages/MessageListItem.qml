@@ -3,6 +3,8 @@ import QtQuick.Controls 2.4
 import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 
+import SlackComponents 1.0
+
 import ".."
 import "../components"
 
@@ -61,9 +63,9 @@ MouseArea {
                 height: implicitHeight
                 width: parent.width
                 spacing: 1
-                TextArea {
+                SlackText {
                     id: contentLabel
-                    topPadding: Theme.paddingLarge
+                    //topPadding: Theme.paddingLarge
                     RowLayout {
                         spacing: Theme.paddingMedium/2
                         visible: !sameuser || itemDelegate.containsMouse
@@ -186,7 +188,7 @@ MouseArea {
 
                     width: parent.width - avatarImage.width - parent.spacing
                     height: text === "" ? 0 : implicitHeight
-                    readOnly: true
+                    //readOnly: true
                     font.pixelSize: Theme.fontSizeLarge
                     font.italic: model.IsChanged
                     verticalAlignment: Text.AlignVCenter
@@ -195,14 +197,14 @@ MouseArea {
                     renderType: Text.QtRendering
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
-                    activeFocusOnPress: false
-                    onLinkHovered:  {
-                        if (link !== "") {
-                            mouseArea.cursorShape = Qt.PointingHandCursor
-                        } else {
-                            mouseArea.cursorShape = Qt.ArrowCursor
-                        }
-                    }
+                    //activeFocusOnPress: false
+//                    onLinkHovered:  {
+//                        if (link !== "") {
+//                            mouseArea.cursorShape = Qt.PointingHandCursor
+//                        } else {
+//                            mouseArea.cursorShape = Qt.ArrowCursor
+//                        }
+//                    }
                     onSelectedTextChanged: {
                         if (selectedText !== "") {
                             forceActiveFocus()
@@ -210,14 +212,14 @@ MouseArea {
                             input.forceActiveFocus()
                         }
                     }
-                    onEditingFinished: {
-                        //undo editing if new focus is not edit save button
-                        if (editButton.focus == false) {
-                            undo();
-                            readOnly = true
-                            input.forceActiveFocus()
-                        }
-                    }
+//                    onEditingFinished: {
+//                        //undo editing if new focus is not edit save button
+//                        if (editButton.focus == false) {
+//                            undo();
+//                            readOnly = true
+//                            input.forceActiveFocus()
+//                        }
+//                    }
                     Keys.onReturnPressed: {
                         if (readOnly == false && event.modifiers == 0) {
                             updateText()
@@ -234,7 +236,7 @@ MouseArea {
                     wrapMode: Text.WordWrap
 
                     // To avoid the border on some styles, we only want a textarea to be able to select things
-                    background: Item {}
+                    //background: Item {}
 
                     MouseArea {
                         id: mouseArea

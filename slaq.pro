@@ -36,7 +36,7 @@ QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += quick-private core-private gui-private qml-private
 QT += webengine
 
-linux: QMAKE_LFLAGS += -fuse-ld=gold
+#linux: QMAKE_LFLAGS += -fuse-ld=gold
 INCLUDEPATH += src src/slackmodels
 
 QML_IMPORT_PATH =
