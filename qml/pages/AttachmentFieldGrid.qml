@@ -15,7 +15,6 @@ RowLayout {
 
         ColumnLayout {
             Layout.columnSpan: repeater.model[index].fieldIsShort ? 1 : 2
-            Layout.preferredWidth: repeater.model[index].fieldIsShort ? grid.implicitWidth / 2 : grid.implicitWidth
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
 
             Label {
