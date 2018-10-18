@@ -1,10 +1,11 @@
 #pragma once
 
 #include <QtQuickTemplates2/private/qquicklabel_p.h>
+#include <QtQuickControls2/private/qtquickcontrols2global_p.h>
 
 class SlackTextPrivate;
 
-class SlackText : public QQuickLabel
+class Q_QUICKCONTROLS2_PRIVATE_EXPORT  SlackText : public QQuickLabel
 {
 
     Q_OBJECT
