@@ -65,7 +65,7 @@ MouseArea {
                 spacing: 1
                 SlackText {
                     id: contentLabel
-                    //topPadding: Theme.paddingLarge
+                    topPadding: Theme.paddingLarge
                     color: contentLabel.palette.windowText
                     linkColor: contentLabel.palette.link
 

@@ -11,8 +11,8 @@ DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
 SlackText::SlackText(QQuickItem* parent)
 : QQuickLabel(parent)
 {
-    //Q_D(SlackText);
-    //d->init();
+    Q_D(SlackText);
+    d->init();
 }
 
 //SlackText::SlackText(SlackTextPrivate &dd, QQuickItem *parent)
@@ -311,6 +311,7 @@ int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition pos
     Q_Q(const SlackText);
     x += q->leftPadding();
     y += q->topPadding();
+    qDebug() << "layout lines" << layout.lineCount();
     QTextLine line = layout.lineAt(0);
     for (int i = 1; i < layout.lineCount(); ++i) {
         QTextLine nextLine = layout.lineAt(i);
