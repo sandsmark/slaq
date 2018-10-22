@@ -217,7 +217,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
     const QString& type = message.value(QStringLiteral("type")).toString();
 
     if (type != "pong" && type != "user_typing") {
-        qDebug() << "stream message type" << type;
+//        qDebug() << "stream message type" << type;
     }
 //    qDebug().noquote() << QJsonDocument(message).toJson();
 
@@ -640,7 +640,7 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
         request.setAttribute(QNetworkRequest::User, attribute);
     }
 
-    qDebug() << "GET" << url.toString();
+//    qDebug() << "GET" << url.toString();
     return networkAccessManager->get(request);
 }
 
@@ -658,7 +658,7 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QByteAr
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json; charset=utf-8"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, data.length());
 
-    qDebug() << "POST (2)" << url.toString() << data;// << query.toString();
+//    qDebug() << "POST (2)" << url.toString() << data;// << query.toString();
     return networkAccessManager->post(request, data);
 }
 
@@ -685,7 +685,7 @@ QNetworkReply *SlackTeamClient::executePost(const QString& method, const QMap<QS
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
     request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
 
-    qDebug() << "POST" << url.toString() << body << query.toString();
+//    qDebug() << "POST" << url.toString() << body << query.toString();
     return networkAccessManager->post(request, body);
 }
 
@@ -730,7 +730,7 @@ QNetworkReply *SlackTeamClient::executePostWithFile(const QString& method, const
     url.setQuery(query);
     QNetworkRequest request(url);
 
-    qDebug() << "POST" << url << dataParts;
+//    qDebug() << "POST" << url << dataParts;
 
     QNetworkReply *reply = networkAccessManager->post(request, dataParts);
     connect(reply, &QNetworkReply::finished, dataParts, &QObject::deleteLater);
@@ -783,7 +783,7 @@ void SlackTeamClient::handleTestLoginReply()
         QString teamId = data.value(QStringLiteral("team_id")).toString();
         QString userId = data.value(QStringLiteral("user_id")).toString();
         QString teamName = data.value(QStringLiteral("team")).toString();
-        qDebug() << "Login success" << userId << teamId << teamName;
+//        qDebug() << "Login success" << userId << teamId << teamName;
 
         config->setUserInfo(userId, teamId, teamName);
     }
@@ -865,7 +865,7 @@ void SlackTeamClient::handleTeamFilesReply()
             _list.append(fileshare);
         }
     }
-    qDebug() << "file shares for team:" << _list.size() << _page << _pages << _total;
+//    qDebug() << "file shares for team:" << _list.size() << _page << _pages << _total;
     emit fileSharesReceived(_list, _total, _page, _pages);
 }
 
@@ -911,7 +911,7 @@ void SlackTeamClient::startClient()
 {
     DEBUG_BLOCK
 
-    qDebug() << "Start init" << QThread::currentThread();
+//    qDebug() << "Start init" << QThread::currentThread();
     QMap<QString, QString> params;
     params.insert(QStringLiteral("batch_presence_aware"), QStringLiteral("1"));
     params.insert(QStringLiteral("presence_sub"), QStringLiteral("true"));
@@ -929,7 +929,7 @@ void SlackTeamClient::handleStartReply()
     reply->deleteLater();
 
     if (isError(data)) {
-        qDebug() << "Start result error";
+//        qDebug() << "Start result error";
         setState(ClientStates::DISCONNECTED);
         emit disconnected(m_teamInfo.teamId());
 
@@ -953,7 +953,7 @@ void SlackTeamClient::handleStartReply()
     QUrl url(data.value(QStringLiteral("url")).toString());
     stream->listen(url);
     m_status = STARTED;
-    qDebug() << "connect success" << QThread::currentThread();
+//    qDebug() << "connect success" << QThread::currentThread();
 }
 
 QStringList SlackTeamClient::getNickSuggestions(const QString &currentText, const int cursorPosition)
@@ -1027,18 +1027,18 @@ QString SlackTeamClient::lastChannel()
         if (_chatsModel != nullptr) {
             Chat* _generalChat = _chatsModel->generalChat();
             if (_generalChat != nullptr) {
-                qDebug() << "taken general chat";
+//                qDebug() << "taken general chat";
                 _lastChannel = _generalChat->id;
             } else if (_chatsModel->rowCount() > 0){
-                qDebug() << "taken 1st chat";
+//                qDebug() << "taken 1st chat";
                 _lastChannel = _chatsModel->chat(0)->id;
             }
         }
     } else {
-        qDebug() << "taken last chat for team" << m_teamInfo.name();
+//        qDebug() << "taken last chat for team" << m_teamInfo.name();
     }
 
-    qDebug() << "last channel" << _lastChannel;
+//    qDebug() << "last channel" << _lastChannel;
     return _lastChannel;
 }
 
@@ -1111,13 +1111,13 @@ void SlackTeamClient::handleCreateChatReply()
 {
     DEBUG_BLOCK
 
-    qDebug() << "create chat reply";
+//    qDebug() << "create chat reply";
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
     QJsonObject data = getResult(reply);
 
     if (isError(data)) {
-        qDebug() << "Chat open failed" << data;
+//        qDebug() << "Chat open failed" << data;
         return;
     }
 
@@ -1188,7 +1188,7 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
-    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
+//    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
     if (m_teamInfo.users() == nullptr || !m_teamInfo.users()->usersFetched() || !cursor.isEmpty()) {
         QMap<QString, QString> params;
         params.insert(QStringLiteral("limit"), "10000");
@@ -1275,7 +1275,7 @@ void SlackTeamClient::updateUserAvatar(const QString& filePath, int cropSide, in
     }
 
     QString _fileFormData = QStringLiteral("form-data; name=\"image\"; filename=\"") + file->fileName() + "\"";
-    qDebug() << "sending picture image image" << filePath;
+//    qDebug() << "sending picture image image" << filePath;
     QNetworkReply *reply = executePostWithFile(QStringLiteral("users.setPhoto"), data, file, _fileFormData);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handlePostFile);
@@ -1329,14 +1329,14 @@ void SlackTeamClient::handleTeamInfoReply()
         reply->deleteLater();
 
         if (isError(data)) {
-            qDebug() << "Team info failed" << data;
+//            qDebug() << "Team info failed" << data;
         } else {
             m_teamInfo.parseTeamInfoData(data.value("team").toObject());
         }
     }
     config->saveTeamInfo(m_teamInfo);
     emit teamInfoChanged(m_teamInfo.teamId());
-    qDebug() << __PRETTY_FUNCTION__ << "teaminfo:" << m_teamInfo.name() << m_teamInfo.teamId();
+//    qDebug() << __PRETTY_FUNCTION__ << "teaminfo:" << m_teamInfo.name() << m_teamInfo.teamId();
     requestUsersList("");
 }
 
@@ -1349,7 +1349,7 @@ void SlackTeamClient::addTeamEmoji(const QString& name, const QString& url) {
     einfo->m_imagesExist |= EmojiInfo::ImageSlackTeam;
     einfo->m_category = EmojiInfo::EmojiCategoryCustom;
     einfo->m_teamId = m_teamInfo.teamId();
-    //qDebug() << "adding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
+//    qDebug() << "adding emoji" << einfo->m_shortNames << einfo->m_image << einfo->m_category;
     imagesCache->addEmoji(einfo);
 }
 
@@ -1390,7 +1390,7 @@ void SlackTeamClient::handleTeamEmojisReply()
 void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& latest)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << channelId << latest << sender();
+//    qDebug() << "Loading messages" << channelId << latest << sender();
     if (channelId.isEmpty()) {
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
@@ -1514,7 +1514,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     emit messagesReceived(channelId, _mlist, _hasMore, threadMsgsCount);
     messageModel->setHistoryLoaded(true);
 
-    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count();
+//    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count();
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 
@@ -1537,7 +1537,7 @@ QString SlackTeamClient::markMethod(ChatsModel::ChatType type)
 
 SlackTeamClient::ClientStatus SlackTeamClient::getStatus() const
 {
-    qDebug() << "status" << m_teamInfo.name() << m_status;
+//    qDebug() << "status" << m_teamInfo.name() << m_status;
     return m_status;
 }
 
@@ -1583,11 +1583,11 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
         if (messagesModel != nullptr) {
             dt = messagesModel->lastMessage();
         } else {
-            qDebug() << "message model not ready for the channel" << channelId;
+//            qDebug() << "message model not ready for the channel" << channelId;
         }
     }
     if (!dt.isValid()) {
-        qWarning() << "Cant find timestamp for the channel" << channelId;
+//        qWarning() << "Cant find timestamp for the channel" << channelId;
         return;
     }
     params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
@@ -1869,7 +1869,7 @@ void SlackTeamClient::handleCommonReply()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     QJsonObject data = getResult(reply);
     bool error = isError(data);
-    qDebug() << "Common result" << data << error;
+//    qDebug() << "Common result" << data << error;
     reply->deleteLater();
 }
 

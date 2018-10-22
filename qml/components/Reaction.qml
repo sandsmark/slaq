@@ -14,12 +14,12 @@ Button {
     ToolTip.delay: 500
     ToolTip.timeout: 5000
     ToolTip.visible: hovered
-    text: reaction.emojiInfo.unified
+    text: reaction.emojiInfo ?  reaction.emojiInfo.unified : ""
     height: Theme.headerSize
-    width: (ImagesCache.isUnicode  && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam) ?
+    width: reaction.emojiInfo ? ((ImagesCache.isUnicode  && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam) ?
                 contentItem.contentWidth : Theme.headerSize - 4)
            + Theme.paddingMedium*2
-           + countLabel.contentWidth
+           + countLabel.contentWidth) : 0
 
     onClicked: {
         SlackClient.deleteReaction(teamId, channel.id, Time, reaction.name)
@@ -30,12 +30,12 @@ Button {
             anchors.centerIn: parent
             sourceSize: Qt.size(Theme.headerSize - 4, Theme.headerSize - 4)
             smooth: true
-            visible: !ImagesCache.isUnicode || (reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)
+            visible: reaction.emojiInfo ? (!ImagesCache.isUnicode || (reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)) : false
             source: "image://emoji/" + reaction.name
         }
 
         Label {
-            visible: ImagesCache.isUnicode && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)
+            visible: reaction.emojiInfo ? (ImagesCache.isUnicode && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam)) : false
             anchors.centerIn: parent
             text: control.text
             font.family: "Twitter Color Emoji"
