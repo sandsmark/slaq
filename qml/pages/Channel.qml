@@ -13,6 +13,7 @@ Page {
 
     property Chat channel: null
     property alias nickPopup: nickPopup
+    property real reViewHeight: 0
 
     property var usersTyping: []
     onChannelChanged: {
@@ -132,39 +133,92 @@ Page {
         width: parent.width
         spacing: Theme.paddingSmall
 
-        MessageListView {
-            id: messagesListView
+        Flickable {
+            id: chanScrollView
             Layout.fillHeight: true
             Layout.fillWidth: true
+            contentHeight: rcView.height
+            contentWidth: rcView.width
+            clip: true
 
-            onLoadCompleted: {
-                loaderIndicator.visible = false
+            property real oldHeight: contentHeight
+
+            onContentHeightChanged: {
+                chanScrollView.contentY = (chanScrollView.contentY + (contentHeight - oldHeight))
+                oldHeight = contentHeight
             }
 
-            onLoadStarted: {
-                loaderIndicator.visible = true
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AlwaysOn
             }
 
-            Rectangle {
-                width: parent.width - parent.ScrollBar.vertical.width
-                height: 50
-                opacity: messagesListView.contentY > messagesListView.originY ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: 100 } }
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.5) }
-                    GradientStop { position: 1.0; color: "transparent" }
+            property int currentIndex: messagesListView.currentIndex
+            onMovementEnded: {
+                if (atYEnd) {
+                    messagesListView.markLatest()
+                }
+
+                if (atYBeginning && messagesListView.model) {
+                    currentIndex = messagesListView.count - 1
+                    messagesListView.model.requestMessages()
+                    messagesListView.positionViewAtEnd()
                 }
             }
 
-            Rectangle {
-                width: parent.width - parent.ScrollBar.vertical.width
-                height: 50
-                anchors.bottom: parent.bottom
-                opacity: messagesListView.contentY - messagesListView.originY < messagesListView.contentHeight - messagesListView.height ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: 100 } }
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.5) }
+            Item {
+                id: rcView
+                width: chanScrollView.width
+                height: chanScrollView.height
+
+                MessageListView {
+                    interactive: false
+                    id: messagesListView
+                    anchors.fill: parent
+                    onCountChanged:{
+                        if (chanScrollView.currentIndex == -1) {
+                            return;
+                        }
+                        positionViewAtIndex(chanScrollView.currentIndex, ListView.Contain)
+                        chanScrollView.currentIndex = -1
+                    }
+
+                    onMessageHeightChanged: {
+                        if (reViewHeight === rcView.height) {
+                            return
+                        }
+                        rcView.height = reViewHeight
+                    }
+
+                    onLoadCompleted: {
+                        loaderIndicator.visible = false
+                    }
+
+                    onLoadStarted: {
+                        loaderIndicator.visible = true
+                    }
+
+                }
+                Rectangle {
+                    width: parent.width - chanScrollView.ScrollBar.vertical.width
+                    height: 50
+                    opacity: chanScrollView.contentY > chanScrollView.originY ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 100 } }
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.5) }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width - chanScrollView.ScrollBar.vertical.width
+                    height: 50
+                    anchors.bottom: parent.bottom
+                    opacity: chanScrollView.contentY - chanScrollView.originY < chanScrollView.contentHeight - chanScrollView.height ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 100 } }
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.5) }
+                    }
                 }
             }
         }

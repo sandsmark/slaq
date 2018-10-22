@@ -13,6 +13,24 @@ MouseArea {
     property bool isSearchResult: false
     property bool isReplies: false
     property bool emojiSelectorCalled: false
+    property real oldHeight: 0
+
+    Component.onCompleted: {
+        oldHeight = height
+        reViewHeight = reViewHeight + height
+    }
+
+    onHeightChanged: {
+        if (oldHeight == height || !oldHeight || !height) {
+            oldHeight = height
+            return
+        }
+
+        var newHeight = height
+        reViewHeight = (reViewHeight - oldHeight) + height
+        oldHeight = newHeight
+        heightChangedTimer.restart()
+    }
 
     // counts as same if previouse user is same and last message was within 3 minutes
     readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000

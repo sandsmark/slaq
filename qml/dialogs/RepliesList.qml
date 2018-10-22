@@ -40,18 +40,48 @@ Drawer {
             font.pixelSize: Theme.fontSizeHuge
             text: qsTr("Message thread on channel: #") + repliesDialog.channelName
         }
-        MessageListView {
-            id: repliesListView
-            Layout.fillWidth: true
+
+        Flickable {
+            id: chanScrollView
             Layout.fillHeight: true
-            isReplies: true
+            Layout.fillWidth: true
+            contentHeight: rcView.height
+            contentWidth: rcView.width
+            clip: true
+
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AlwaysOn
+            }
+
+            onMovementEnded: {
+                if (messagesListView.atBottom) {
+                    messagesListView.markLatest()
+                }
+            }
+
+            Rectangle {
+                id: rcView
+                color: "red"
+                width: chanScrollView.width
+                height: chanScrollView.height
+                border.width: 10
+                border.color: "green"
+
+                MessageListView {
+                    id: repliesListView
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    isReplies: true
+                }
+            }
         }
+
 
         MessageInput {
             Layout.fillWidth: true
             placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
             onSendMessage: {
-                if (parentMessage != undefined) {
+                if (parentMessage !== undefined) {
                     SlackClient.postMessage(teamRoot.teamId, channel.id, content, modelMsg.ThreadTs)
                 }
             }

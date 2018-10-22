@@ -14,12 +14,21 @@ ListView {
 
     signal loadCompleted()
     signal loadStarted()
-    property alias atBottom: msgListView.atYEnd
+    property bool atBottom: chanScrollView.atYEnd
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
     property bool inputEnabled: false
     property bool isReplies: false
     property var latestRead
+
+    signal messageHeightChanged()
+
+    Timer {
+        id: heightChangedTimer
+        interval: 100
+        onTriggered: messageHeightChanged()
+        repeat: false
+    }
 
     onAppActiveChanged: {
         markLatest()
@@ -42,7 +51,6 @@ ListView {
         console.log("load messages start", channel.name, teamRoot.teamId, channelRoot.channel.type)
         SlackClient.loadMessages(teamRoot.teamId, channelRoot.channel.id)
     }
-    ScrollBar.vertical: ScrollBar {}
 
     Timer {
         id: readTimer
@@ -76,7 +84,7 @@ ListView {
     }
 
     delegate: MessageListItem {
-        width: msgListView.width - msgListView.ScrollBar.vertical.width - Theme.paddingSmall
+        width: chanScrollView.width - chanScrollView.ScrollBar.vertical.width - Theme.paddingSmall
         isReplies: msgListView.isReplies
     }
 
@@ -86,19 +94,14 @@ ListView {
         labelPositioning: ViewSection.CurrentLabelAtStart
         delegate: Label {
             text: Qt.formatDate(section, "MMM dd, yyyy")
-            width: msgListView.width - msgListView.ScrollBar.vertical.width
+            width: chanScrollView.width - chanScrollView.ScrollBar.vertical.width
             horizontalAlignment: "AlignHCenter"
+            Component.onCompleted: { reViewHeight = reViewHeight + height }
         }
     }
 
     onCountChanged: {
         if (atBottom && count > 0) {
-            markLatest()
-        }
-    }
-
-    onMovementEnded: {
-        if (atBottom) {
             markLatest()
         }
     }
