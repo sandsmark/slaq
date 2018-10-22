@@ -5,7 +5,7 @@
 
 class SlackTextPrivate;
 
-class Q_QUICKCONTROLS2_PRIVATE_EXPORT  SlackText : public QQuickLabel
+class SlackText : public QQuickLabel
 {
 
     Q_OBJECT
@@ -37,8 +37,8 @@ public:
     virtual ~SlackText() = default;
 
     //Auxilliary functions needed to control the TextInput from QML
-    Q_INVOKABLE void positionAt(QQmlV4Function *args) const;
-    Q_INVOKABLE QRectF positionToRectangle(int pos) const;
+    Q_INVOKABLE void positionAt(QQmlV4Function *args);
+    Q_INVOKABLE QRectF positionToRectangle(int pos);
     Q_INVOKABLE void moveCursorSelection(int pos);
     Q_INVOKABLE void moveCursorSelection(int pos, SelectionMode mode);
 
@@ -102,6 +102,7 @@ private:
     bool m_persistentSelection;
 
 private:
+    SlackTextPrivate* d_ptr { nullptr };
     Q_DECLARE_PRIVATE(SlackText)
     Q_DISABLE_COPY(SlackText)
 

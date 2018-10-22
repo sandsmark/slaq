@@ -1,6 +1,6 @@
 #pragma once
 
-//#include <QtQuick/private/qquicktext_p_p.h>
+#include <QtQuick/private/qquicktext_p_p.h>
 #include <QtQuickTemplates2/private/qquicklabel_p_p.h>
 
 #include <QtQml/qqml.h>
@@ -17,11 +17,9 @@
 
 #include "slacktext.h"
 
-QT_BEGIN_NAMESPACE
-
 class QQuickTextNode;
 
-class SlackTextPrivate : public QQuickLabelPrivate
+class SlackTextPrivate //: public QQuickTextPrivate
 {
     Q_DECLARE_PUBLIC(SlackText)
 public:
@@ -39,6 +37,7 @@ public:
       , persistentSelection(false)
       , m_cursor(0)
     {
+        qWarning() << "SlackTextPrivate ctor";
     }
 
     ~SlackTextPrivate()
@@ -51,8 +50,7 @@ public:
     enum DrawFlags {
         DrawText = 0x01,
         DrawSelections = 0x02,
-        DrawCursor = 0x04,
-        DrawAll = DrawText | DrawSelections | DrawCursor
+        DrawAll = DrawText | DrawSelections
     };
 
     QElapsedTimer tripleClickTimer;
@@ -70,8 +68,9 @@ public:
     int m_cursor;
 
     QQuickTextNode *textNode;
+    SlackText* q_ptr { nullptr };
 
-    UpdateType updateType;
+    QQuickTextPrivate::UpdateType updateType;
     SlackText::SelectionMode mouseSelectionMode;
 
     bool selectByMouse:1;
@@ -81,27 +80,53 @@ public:
     bool persistentSelection:1;
 
     static inline SlackTextPrivate *get(SlackText *t) {
+        qWarning() << "SlackTextPrivate *get";
         return t->d_func();
     }
+
+    QQuickLabelPrivate* labelPrivate() {
+        //QQuickLabelPrivate *label = qobject_cast<QQuickLabel *>(q);
+        Q_Q(SlackText);
+        return QQuickLabelPrivate::get(qobject_cast<QQuickLabel *>(q));
+    }
+
     bool hasPendingTripleClick() const {
         return !tripleClickTimer.hasExpired(QGuiApplication::styleHints()->mouseDoubleClickInterval());
     }
-    int positionAt(qreal x, qreal y, QTextLine::CursorPosition position) const;
-    int positionAt(const QPointF &point, QTextLine::CursorPosition position = QTextLine::CursorBetweenCharacters) const {
+    int positionAt(qreal x, qreal y, QTextLine::CursorPosition position);
+    int positionAt(const QPointF &point, QTextLine::CursorPosition position = QTextLine::CursorBetweenCharacters) {
         return positionAt(point.x(), point.y(), position);
     }
 
     void moveSelectionCursor(int pos, bool mark = false);
 
-    bool allSelected() const { return !text.isEmpty() && m_selstart == 0 && m_selend == (int)text.length(); }
-    bool hasSelectedText() const { return !text.isEmpty() && m_selend > m_selstart; }
+    bool allSelected() const {
+        Q_Q(const SlackText);
+        return !q->text().isEmpty() && m_selstart == 0 && m_selend == (int)q->text().length();
+    }
+    bool hasSelectedText() const {
+        Q_Q(const SlackText);
+        return !q->text().isEmpty() && m_selend > m_selstart;
+    }
 
     void setSelection(int start, int length);
-    int end() const { return text.length(); }
+    int end() const {
+        Q_Q(const SlackText);
+        return q->text().length();
+    }
 
-    inline QString selectedText() const { return hasSelectedText() ? text.mid(m_selstart, m_selend - m_selstart) : QString(); }
-    QString textBeforeSelection() const { return hasSelectedText() ? text.left(m_selstart) : QString(); }
-    QString textAfterSelection() const { return hasSelectedText() ? text.mid(m_selend) : QString(); }
+    inline QString selectedText() const {
+        Q_Q(const SlackText);
+        return hasSelectedText() ? q->text().mid(m_selstart, m_selend - m_selstart) : QString();
+    }
+    QString textBeforeSelection() const {
+        Q_Q(const SlackText);
+        return hasSelectedText() ? q->text().left(m_selstart) : QString();
+    }
+    QString textAfterSelection() const {
+        Q_Q(const SlackText);
+        return hasSelectedText() ? q->text().mid(m_selend) : QString();
+    }
 
     int selectionStart() const { return hasSelectedText() ? m_selstart : -1; }
     int selectionEnd() const { return hasSelectedText() ? m_selend : -1; }
@@ -114,10 +139,13 @@ public:
         finishChange();
     }
 
-    QString realText() const { return text; };
+    QString realText() const {
+        Q_Q(const SlackText);
+        return q->text();
+    };
 
     void deselect() { internalDeselect(); finishChange(); }
-    void selectAll() { m_selstart = m_selend = 0; moveSelectionCursor(text.length(), true); }
+    void selectAll() { m_selstart = m_selend = 0; moveSelectionCursor(end(), true); }
 
     void selectWordAtPos(int);
     void processKeyEvent(QKeyEvent* ev);
@@ -150,5 +178,3 @@ private:
 
     //bool separateSelection();
 };
-
-QT_END_NAMESPACE

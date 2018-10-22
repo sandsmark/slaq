@@ -5,12 +5,15 @@
 #include "QtQuick/private/qquicktextnode_p.h"
 #include <QtQuick/qsgsimplerectnode.h>
 #include <private/qv4scopedvalue_p.h>
+#include <QtQuickTemplates2/private/qquicklabel_p_p.h>
 
 DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
 
 SlackText::SlackText(QQuickItem* parent)
 : QQuickLabel(parent)
 {
+    d_ptr = new SlackTextPrivate;
+    d_ptr->q_ptr = this;
     Q_D(SlackText);
     d->init();
 }
@@ -27,7 +30,7 @@ void SlackText::componentComplete()
     Q_D(SlackText);
 
     QQuickLabel::componentComplete();
-    //d->updateLayout();
+    d->updateLayout();
 }
 
 QColor SlackText::selectionColor() const
@@ -45,7 +48,7 @@ void SlackText::setSelectionColor(const QColor &color)
     d->selectionColor = color;
     if (d->hasSelectedText()) {
         d->textLayoutDirty = true;
-        d->updateType = SlackTextPrivate::UpdatePaintNode;
+        d->updateType = QQuickTextPrivate::UpdatePaintNode;
         polish();
         update();
     }
@@ -71,7 +74,7 @@ void SlackText::setSelectedTextColor(const QColor &color)
     d->selectedTextColor = color;
     if (d->hasSelectedText()) {
         d->textLayoutDirty = true;
-        d->updateType = SlackTextPrivate::UpdatePaintNode;
+        d->updateType = QQuickTextPrivate::UpdatePaintNode;
         polish();
         update();
     }
@@ -124,7 +127,7 @@ int SlackText::selectionEnd() const
 void SlackText::select(int start, int end)
 {
     Q_D(SlackText);
-    if (start < 0 || end < 0 || start > d->text.length() || end > d->text.length())
+    if (start < 0 || end < 0 || start > text().length() || end > text().length())
         return;
     d->setSelection(start, end-start);
 }
@@ -163,12 +166,13 @@ void SlackTextPrivate::init()
 
     lastSelectionStart = 0;
     lastSelectionEnd = 0;
-    determineHorizontalAlignment();
+
+    labelPrivate()->determineHorizontalAlignment();
 
     if (!qmlDisableDistanceField()) {
-        QTextOption option = layout.textOption();
-        option.setUseDesignMetrics(renderType != QQuickText::NativeRendering);
-        layout.setTextOption(option);
+        QTextOption option = labelPrivate()->layout.textOption();
+        option.setUseDesignMetrics(labelPrivate()->renderType != QQuickText::NativeRendering);
+        labelPrivate()->layout.setTextOption(option);
     }
 }
 
@@ -219,16 +223,17 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
     This is similar to setting the cursorPosition, and then querying the cursor
     rectangle, but the cursorPosition is not changed.
 */
-QRectF SlackText::positionToRectangle(int pos) const
+QRectF SlackText::positionToRectangle(int pos)
 {
-    Q_D(const SlackText);
+    Q_D(SlackText);
 //    if (d->m_echoMode == NoEcho)
 //        pos = 0;
 //#if QT_CONFIG(im)
 //    else if (pos > d->m_cursor)
 //        pos += d->preeditAreaText().length();
 //#endif
-    QTextLine l = d->layout.lineForTextPosition(pos);
+    QTextLine l = d->labelPrivate()->layout.lineForTextPosition(pos);
+    //QTextLine l = d->layout.lineForTextPosition(pos);
     if (!l.isValid())
         return QRectF();
     qreal x = l.cursorToX(pos)/* - d->hscroll*/;
@@ -265,9 +270,9 @@ QRectF SlackText::positionToRectangle(int pos) const
     \endlist
 */
 
-void SlackText::positionAt(QQmlV4Function *args) const
+void SlackText::positionAt(QQmlV4Function *args)
 {
-    Q_D(const SlackText);
+    Q_D(SlackText);
 
     qreal x = 0;
     qreal y = 0;
@@ -306,15 +311,16 @@ void SlackText::positionAt(QQmlV4Function *args) const
     args->setReturnValue(QV4::Encode(pos));
 }
 
-int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition position) const
+int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition position)
 {
-    Q_Q(const SlackText);
+    Q_Q(SlackText);
     x += q->leftPadding();
     y += q->topPadding();
-    qDebug() << "layout lines" << layout.lineCount();
-    QTextLine line = layout.lineAt(0);
-    for (int i = 1; i < layout.lineCount(); ++i) {
-        QTextLine nextLine = layout.lineAt(i);
+    QQuickLabelPrivate* lp = labelPrivate();
+    qDebug() << "layout lines" << lp->layout.lineCount();
+    QTextLine line = lp->layout.lineAt(0);
+    for (int i = 1; i < lp->layout.lineCount(); ++i) {
+        QTextLine nextLine = lp->layout.lineAt(i);
 
         if (y < (line.rect().bottom() + nextLine.y()) / 2)
             break;
@@ -363,8 +369,9 @@ void SlackText::invalidateFontCaches()
 {
     Q_D(SlackText);
 
-    if (d->layout.engine() != nullptr)
-        d->layout.engine()->resetFontEngineCache();
+
+    if (d->labelPrivate()->layout.engine() != nullptr)
+        d->labelPrivate()->layout.engine()->resetFontEngineCache();
 }
 
 void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
@@ -399,14 +406,16 @@ void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
 */
 void SlackTextPrivate::selectWordAtPos(int cursor)
 {
+    Q_Q(SlackText);
     int next = cursor + 1;
     if (next > end())
         --next;
-    int c = layout.previousCursorPosition(next, QTextLayout::SkipWords);
+
+    int c = labelPrivate()->layout.previousCursorPosition(next, QTextLayout::SkipWords);
     moveSelectionCursor(c, false);
     // ## text layout should support end of words.
-    int end = layout.nextCursorPosition(c, QTextLayout::SkipWords);
-    while (end > cursor && text[end-1].isSpace())
+    int end = labelPrivate()->layout.nextCursorPosition(c, QTextLayout::SkipWords);
+    while (end > cursor && q->text()[end-1].isSpace())
         --end;
     moveSelectionCursor(end, true);
 }
@@ -756,7 +765,7 @@ void SlackText::selectionChanged()
 {
     Q_D(SlackText);
     d->textLayoutDirty = true; //TODO: Only update rect in selection
-    d->updateType = SlackTextPrivate::UpdatePaintNode;
+    d->updateType = QQuickTextPrivate::UpdatePaintNode;
     polish();
     update();
     emit selectedTextChanged();
@@ -787,7 +796,7 @@ void SlackTextPrivate::setSelection(int start, int length)
 {
     Q_Q(SlackText);
 
-    if (start < 0 || start > text.length()) {
+    if (start < 0 || start > q->text().length()) {
         qWarning("QQuickTextInputPrivate::setSelection: Invalid start position");
         return;
     }
@@ -796,7 +805,7 @@ void SlackTextPrivate::setSelection(int start, int length)
         if (start == m_selstart && start + length == m_selend && m_cursor == m_selend)
             return;
         m_selstart = start;
-        m_selend = qMin(start + length, text.length());
+        m_selend = qMin(start + length, q->text().length());
         m_cursor = m_selend;
     } else if (length < 0){
         if (start == m_selend && start + length == m_selstart && m_cursor == m_selstart)
@@ -908,7 +917,7 @@ bool SlackTextPrivate::finishChange(bool update)
 
     if (m_selDirty) {
         m_selDirty = false;
-        emit q->selectionChanged();
+        //emit q->selectionChanged();
     }
 
 //#if QT_CONFIG(im)
@@ -931,7 +940,7 @@ void SlackTextPrivate::updateLayout()
     if (!q->isComponentComplete())
         return;
 
-    QQuickLabelPrivate::updateLayout();
+    labelPrivate()->updateLayout();
 }
 
 void SlackTextPrivate::processKeyEvent(QKeyEvent* event)
