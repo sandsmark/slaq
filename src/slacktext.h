@@ -10,6 +10,7 @@ class SlackText : public QQuickLabel
 
     Q_OBJECT
 
+    Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
     Q_PROPERTY(QColor selectionColor READ selectionColor WRITE setSelectionColor NOTIFY selectionColorChanged)
     Q_PROPERTY(QColor selectedTextColor READ selectedTextColor WRITE setSelectedTextColor NOTIFY selectedTextColorChanged)
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY selectionStartChanged)
@@ -51,7 +52,12 @@ public:
     SelectionMode mouseSelectionMode() const;
     bool persistentSelection() const;
 
+    QString text() const;
+    void setText(const QString &txt);
+
+
 Q_SIGNALS:
+    void textChanged();
     void selectionColorChanged();
     void selectedTextColorChanged();
     void selectionStartChanged();
@@ -86,7 +92,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseUngrabEvent() override;
-    //QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
+    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
     //void updatePolish() override;
 
 private:

@@ -32,12 +32,13 @@ public:
       , m_selstart(0)
       , m_selend(0)
       , mouseSelectionMode(SlackText::SelectCharacters)
-      , selectByMouse(false)
+      , selectByMouse(true)
       , selectPressed(false)
+      , m_selDirty(false)
+      , textLayoutDirty(false)
       , persistentSelection(false)
       , m_cursor(0)
     {
-        qWarning() << "SlackTextPrivate ctor";
     }
 
     ~SlackTextPrivate()
@@ -70,7 +71,6 @@ public:
     QQuickTextNode *textNode;
     SlackText* q_ptr { nullptr };
 
-    QQuickTextPrivate::UpdateType updateType;
     SlackText::SelectionMode mouseSelectionMode;
 
     bool selectByMouse:1;
