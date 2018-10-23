@@ -35,9 +35,12 @@ void FilesSharesModel::addFileShares(const QList<FileShare *> &fshares, int tota
         }
     }
 
-    beginInsertRows(QModelIndex(), _initialCount, m_filesIds.size() - _initialCount - 1);
-    endInsertRows();
-    m_fetched += (m_filesIds.size() - _initialCount);
+    if (m_filesIds.size() > _initialCount) {
+        beginInsertRows(QModelIndex(), _initialCount, m_filesIds.size() - _initialCount - 1);
+        endInsertRows();
+        m_fetched += (m_filesIds.size() - _initialCount);
+    }
+
     m_lastPageFetched = page;
     m_pagesRetrieved.insert(page);
 }
