@@ -254,9 +254,9 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
     }
     if (mark) {
         int anchor;
-        if (m_selend > m_selstart/* && m_cursor == m_selstart*/)
+        if (m_selend > m_selstart && m_cursor == m_selstart)
             anchor = m_selend;
-        else if (m_selend > m_selstart/* && m_cursor == m_selend*/)
+        else if (m_selend > m_selstart && m_cursor == m_selend)
             anchor = m_selstart;
         else
             anchor = m_cursor;
@@ -488,7 +488,7 @@ void SlackTextPrivate::selectWordAtPos(int cursor)
     int end = 0;
     if (m_lp->richText) {
         QTextDocumentPrivate* td_p = m_tp->extra->doc->docHandle();
-        c = td_p->nextCursorPosition(next, QTextLayout::SkipWords);
+        c = td_p->previousCursorPosition(next, QTextLayout::SkipWords);
         end = td_p->nextCursorPosition(c, QTextLayout::SkipWords);
         qDebug() << cursor << next << c << end;
     } else {
@@ -518,6 +518,7 @@ void SlackTextPrivate::copy(QClipboard::Mode mode) const
 {
     QString t = selectedText();
     if (!t.isEmpty()) {
+        qDebug() << "copy to clipboard:" << t;
         QGuiApplication::clipboard()->setText(t, mode);
     }
 }
@@ -859,6 +860,7 @@ void SlackText::moveCursorSelection(int pos, SelectionMode mode)
 {
     Q_D(SlackText);
 
+    qDebug() << pos << mode << d->m_cursor;
     if (mode == SelectCharacters) {
         d->moveSelectionCursor(pos, true);
     } else if (pos != d->m_cursor){
