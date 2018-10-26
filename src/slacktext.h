@@ -26,6 +26,10 @@ class SlackText : public QQuickLabel
     Q_PROPERTY(qreal rightPadding READ rightPadding WRITE setRightPadding RESET resetRightPadding NOTIFY rightPaddingChanged)
     Q_PROPERTY(qreal bottomPadding READ bottomPadding WRITE setBottomPadding RESET resetBottomPadding NOTIFY bottomPaddingChanged)
 
+    Q_PROPERTY(QString hoveredLink READ hoveredLink NOTIFY linkHovered)
+    Q_PROPERTY(QJSValue fontInfo READ fontInfo NOTIFY fontInfoChanged)
+    Q_PROPERTY(QSizeF advance READ advance NOTIFY contentSizeChanged)
+
 public:
     enum SelectionMode {
         SelectCharacters,
@@ -55,7 +59,6 @@ public:
     QString text() const;
     void setText(const QString &txt);
 
-
 Q_SIGNALS:
     void textChanged();
     void selectionColorChanged();
@@ -66,6 +69,8 @@ Q_SIGNALS:
     void selectByMouseChanged(bool selectByMouse);
     void mouseSelectionModeChanged(SelectionMode mouseSelectionMode);
     void persistentSelectionChanged();
+
+    void linkHovered(const QString &link);
 
 public Q_SLOTS:
     void copy();

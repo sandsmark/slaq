@@ -110,49 +110,18 @@ void SlackText::setSelectedTextColor(const QColor &color)
     emit selectedTextColorChanged();
 }
 
-/*!
-    \qmlproperty int QtQuick::TextInput::selectionStart
-
-    The cursor position before the first character in the current selection.
-
-    This property is read-only. To change the selection, use select(start,end),
-    selectAll(), or selectWord().
-
-    \sa selectionEnd, cursorPosition, selectedText
-*/
 int SlackText::selectionStart() const
 {
     Q_D(const SlackText);
     return d->lastSelectionStart;
 }
-/*!
-    \qmlproperty int QtQuick::TextInput::selectionEnd
 
-    The cursor position after the last character in the current selection.
-
-    This property is read-only. To change the selection, use select(start,end),
-    selectAll(), or selectWord().
-
-    \sa selectionStart, cursorPosition, selectedText
-*/
 int SlackText::selectionEnd() const
 {
     Q_D(const SlackText);
     return d->lastSelectionEnd;
 }
-/*!
-    \qmlmethod QtQuick::TextInput::select(int start, int end)
 
-    Causes the text from \a start to \a end to be selected.
-
-    If either start or end is out of range, the selection is not changed.
-
-    After calling this, selectionStart will become the lesser
-    and selectionEnd will become the greater (regardless of the order passed
-    to this method).
-
-    \sa selectionStart, selectionEnd
-*/
 void SlackText::select(int start, int end)
 {
     Q_D(SlackText);
@@ -161,20 +130,6 @@ void SlackText::select(int start, int end)
     d->setSelection(start, end-start);
 }
 
-/*!
-    \qmlproperty string QtQuick::TextInput::selectedText
-
-    This read-only property provides the text currently selected in the
-    text input.
-
-    It is equivalent to the following snippet, but is faster and easier
-    to use.
-
-    \js
-    myTextInput.text.toString().substring(myTextInput.selectionStart,
-        myTextInput.selectionEnd);
-    \endjs
-*/
 QString SlackText::selectedText() const
 {
     Q_D(const SlackText);
@@ -209,11 +164,6 @@ void SlackTextPrivate::init()
 //    }
 }
 
-
-/*!
-    \internal
-    searches forward/backward in m_maskData for either a separator or a m_blank
-*/
 int SlackTextPrivate::findInMask(int pos, bool forward, bool findSeparator, QChar searchChar) const
 {
     if (pos >= m_maxLength || pos < 0)
@@ -237,12 +187,6 @@ int SlackTextPrivate::findInMask(int pos, bool forward, bool findSeparator, QCha
     return -1;
 }
 
-/*!
-    \internal
-
-    Moves the cursor to the given position \a pos.   If \a mark is true will
-    adjust the currently selected text.
-*/
 void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
 {
     Q_Q(SlackText);
@@ -274,15 +218,6 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
 
 }
 
-/*!
-    \qmlmethod rect QtQuick::TextInput::positionToRectangle(int pos)
-
-    This function takes a character position and returns the rectangle that the
-    cursor would occupy, if it was placed at that character position.
-
-    This is similar to setting the cursorPosition, and then querying the cursor
-    rectangle, but the cursorPosition is not changed.
-*/
 QRectF SlackText::positionToRectangle(int pos)
 {
     Q_D(SlackText);
@@ -402,36 +337,6 @@ int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition pos
 
 }
 
-void SlackText::mousePressEvent(QMouseEvent *event)
-{
-    Q_D(SlackText);
-
-    d->pressPos = event->localPos();
-
-//    if (d->sendMouseEventToInputContext(event))
-//        return;
-
-    if (d->selectByMouse) {
-        setKeepMouseGrab(false);
-        d->selectPressed = true;
-        QPointF distanceVector = d->pressPos - d->tripleClickStartPoint;
-        if (d->hasPendingTripleClick()
-            && distanceVector.manhattanLength() < QGuiApplication::styleHints()->startDragDistance()) {
-            event->setAccepted(true);
-            selectAll();
-            return;
-        }
-    }
-
-    bool mark = (event->modifiers() & Qt::ShiftModifier) && d->selectByMouse;
-    int cursor = d->positionAt(event->localPos());
-    d->moveSelectionCursor(cursor, mark);
-
-//    if (d->focusOnPress && !qGuiApp->styleHints()->setFocusOnTouchRelease())
-//        ensureActiveFocus();
-
-    event->setAccepted(true);
-}
 
 //void SlackText::updatePolish()
 //{
@@ -540,6 +445,37 @@ void SlackText::copy()
     d->copy();
 }
 
+void SlackText::mousePressEvent(QMouseEvent *event)
+{
+    Q_D(SlackText);
+
+    d->pressPos = event->localPos();
+
+//    if (d->sendMouseEventToInputContext(event))
+//        return;
+
+    if (d->selectByMouse) {
+        setKeepMouseGrab(false);
+        d->selectPressed = true;
+        QPointF distanceVector = d->pressPos - d->tripleClickStartPoint;
+        if (d->hasPendingTripleClick()
+            && distanceVector.manhattanLength() < QGuiApplication::styleHints()->startDragDistance()) {
+            event->setAccepted(true);
+            selectAll();
+            return;
+        }
+    }
+
+    bool mark = (event->modifiers() & Qt::ShiftModifier) && d->selectByMouse;
+    int cursor = d->positionAt(event->localPos());
+    d->moveSelectionCursor(cursor, mark);
+
+//    if (d->focusOnPress && !qGuiApp->styleHints()->setFocusOnTouchRelease())
+//        ensureActiveFocus();
+
+    QQuickLabel::mousePressEvent(event);
+    event->setAccepted(true);
+}
 
 void SlackText::mouseMoveEvent(QMouseEvent *event)
 {
@@ -567,7 +503,7 @@ void SlackText::mouseReleaseEvent(QMouseEvent *event)
 #if QT_CONFIG(clipboard)
     if (QGuiApplication::clipboard()->supportsSelection()) {
         if (event->button() == Qt::LeftButton) {
-            d->copy(QClipboard::Selection);
+            d->copy(QClipboard::Clipboard);
         } else if (event->button() == Qt::MidButton) {
             d->deselect();
         }
@@ -800,8 +736,6 @@ QString SlackText::text() const
 void SlackText::setText(const QString &txt)
 {
     QQuickLabel::setText(txt);
-//    m_codePattern(QRegularExpression(QStringLiteral("(^|\\s)`([^`]+)`(\\s|\\.|\\?|!|,|$)"))),
-//    m_codeBlockPattern(QRegularExpression(QStringLiteral("```(.*)```"))),
 }
 
 void SlackText::setPersistentSelection(bool on)

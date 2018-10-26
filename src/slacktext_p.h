@@ -1,5 +1,6 @@
 #pragma once
 
+#include "QtQuick/private/qquicktextdocument_p.h"
 #include <QtQuick/private/qquicktext_p_p.h>
 #include <QtQuickTemplates2/private/qquicklabel_p_p.h>
 
@@ -144,7 +145,7 @@ public:
 
     inline QString selectedText() const {
         Q_Q(const SlackText);
-        return hasSelectedText() ? q->text().mid(m_selstart, m_selend - m_selstart) : QString();
+        return hasSelectedText() ? m_tp->extra->doc->toPlainText().mid(m_selstart, m_selend - m_selstart) : QString();
     }
     QString textBeforeSelection() const {
         Q_Q(const SlackText);
