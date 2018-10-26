@@ -31,6 +31,7 @@ public:
       , selectedTextColor(QRgb(0xFFFFFFFF))
       , m_selstart(0)
       , m_selend(0)
+      , m_maskData(nullptr)
       , mouseSelectionMode(SlackText::SelectCharacters)
       , selectByMouse(true)
       , selectPressed(false)
@@ -38,6 +39,8 @@ public:
       , textLayoutDirty(false)
       , persistentSelection(false)
       , m_cursor(0)
+      , m_separator(0)
+      , m_maxLength(32767)
     {
     }
 
@@ -47,6 +50,13 @@ public:
 
     //void mirrorChange() override;
     void init();
+
+    struct MaskInputData {
+        enum Casemode { NoCaseMode, Upper, Lower };
+        QChar maskChar; // either the separator char or the inputmask
+        bool separator;
+        Casemode caseMode;
+    };
 
     enum DrawFlags {
         DrawText = 0x01,
@@ -67,17 +77,34 @@ public:
     int m_selstart;
     int m_selend;
     int m_cursor;
+    int m_maxLength;
 
     QQuickTextNode *textNode;
     SlackText* q_ptr { nullptr };
+    MaskInputData *m_maskData;
 
     SlackText::SelectionMode mouseSelectionMode;
 
     bool selectByMouse:1;
     bool selectPressed:1;
     bool m_selDirty : 1;
+    bool m_separator : 1;
     bool textLayoutDirty:1;
     bool persistentSelection:1;
+
+    int nextMaskBlank(int pos)
+    {
+        int c = findInMask(pos, true, false);
+        m_separator |= (c != pos);
+        return (c != -1 ?  c : m_maxLength);
+    }
+
+    int prevMaskBlank(int pos)
+    {
+        int c = findInMask(pos, false, false);
+        m_separator |= (c != pos);
+        return (c != -1 ? c : 0);
+    }
 
     static inline SlackTextPrivate *get(SlackText *t) {
         qWarning() << "SlackTextPrivate *get";
@@ -132,6 +159,7 @@ public:
     int selectionEnd() const { return hasSelectedText() ? m_selend : -1; }
 
     void copy(QClipboard::Mode mode = QClipboard::Clipboard) const;
+    int findInMask(int pos, bool forward, bool findSeparator, QChar searchChar = QChar()) const;
 
     void removeSelection()
     {
@@ -165,6 +193,8 @@ private:
 //    void internalDelete(bool wasBackspace = false);
 //    void internalRemove(int pos);
 
+    inline void separate() { m_separator = true; }
+
     inline void internalDeselect()
     {
         m_selDirty |= (m_selend > m_selstart);
@@ -175,6 +205,9 @@ private:
     //bool emitCursorPositionChanged();
 
     bool finishChange(bool update = false);
+
+    QQuickLabelPrivate* m_lp { nullptr };
+    QQuickTextPrivate* m_tp { nullptr };
 
     //bool separateSelection();
 };

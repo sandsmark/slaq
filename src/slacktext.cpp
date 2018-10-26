@@ -11,6 +11,39 @@
 
 DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
 
+qreal alignedX(const qreal textWidth, const qreal itemWidth, int alignment)
+{
+    qreal x = 0;
+    switch (alignment) {
+    case Qt::AlignLeft:
+    case Qt::AlignJustify:
+        break;
+    case Qt::AlignRight:
+        x = itemWidth - textWidth;
+        break;
+    case Qt::AlignHCenter:
+        x = (itemWidth - textWidth) / 2;
+        break;
+    }
+    return x;
+}
+
+qreal alignedY(const qreal textHeight, const qreal itemHeight, int alignment)
+{
+    qreal y = 0;
+    switch (alignment) {
+    case Qt::AlignTop:
+        break;
+    case Qt::AlignBottom:
+        y = itemHeight - textHeight;
+        break;
+    case Qt::AlignVCenter:
+        y = (itemHeight - textHeight) / 2;
+        break;
+    }
+    return y;
+}
+
 SlackText::SlackText(QQuickItem* parent)
 : QQuickLabel(parent)
 {
@@ -26,7 +59,7 @@ void SlackText::componentComplete()
     Q_D(SlackText);
 
     QQuickLabel::componentComplete();
-    d->updateLayout();
+    //d->updateLayout();
 }
 
 QColor SlackText::selectionColor() const
@@ -44,7 +77,7 @@ void SlackText::setSelectionColor(const QColor &color)
     d->selectionColor = color;
     if (d->hasSelectedText()) {
         d->textLayoutDirty = true;
-        d->labelPrivate()->updateType = QQuickTextPrivate::UpdatePaintNode;
+        d->m_lp->updateType = QQuickTextPrivate::UpdatePaintNode;
         polish();
         update();
     }
@@ -70,7 +103,7 @@ void SlackText::setSelectedTextColor(const QColor &color)
     d->selectedTextColor = color;
     if (d->hasSelectedText()) {
         d->textLayoutDirty = true;
-        d->labelPrivate()->updateType = QQuickTextPrivate::UpdatePaintNode;
+        d->m_lp->updateType = QQuickTextPrivate::UpdatePaintNode;
         polish();
         update();
     }
@@ -151,6 +184,10 @@ QString SlackText::selectedText() const
 void SlackTextPrivate::init()
 {
     Q_Q(SlackText);
+
+    m_lp = labelPrivate();
+    m_tp = QQuickTextPrivate::get(qobject_cast<QQuickText *>(q_ptr));
+
 #if QT_CONFIG(clipboard)
     if (QGuiApplication::clipboard()->supportsSelection())
         q->setAcceptedMouseButtons(Qt::LeftButton | Qt::MiddleButton);
@@ -158,20 +195,47 @@ void SlackTextPrivate::init()
 #endif
         q->setAcceptedMouseButtons(Qt::LeftButton);
 
-    q->setFlag(QQuickItem::ItemHasContents);
+    //q->setFlag(QQuickItem::ItemHasContents);
 
     lastSelectionStart = 0;
     lastSelectionEnd = 0;
 
-    labelPrivate()->determineHorizontalAlignment();
+//    m_lp->determineHorizontalAlignment();
 
-    if (!qmlDisableDistanceField()) {
-        QTextOption option = labelPrivate()->layout.textOption();
-        option.setUseDesignMetrics(labelPrivate()->renderType != QQuickText::NativeRendering);
-        labelPrivate()->layout.setTextOption(option);
-    }
+//    if (!qmlDisableDistanceField()) {
+//        QTextOption option = m_lp->layout.textOption();
+//        option.setUseDesignMetrics(m_lp->renderType != QQuickText::NativeRendering);
+//        m_lp->layout.setTextOption(option);
+//    }
 }
 
+
+/*!
+    \internal
+    searches forward/backward in m_maskData for either a separator or a m_blank
+*/
+int SlackTextPrivate::findInMask(int pos, bool forward, bool findSeparator, QChar searchChar) const
+{
+    if (pos >= m_maxLength || pos < 0)
+        return -1;
+
+    int end = forward ? m_maxLength : -1;
+    int step = forward ? 1 : -1;
+    int i = pos;
+
+    while (i != end) {
+        if (findSeparator) {
+            if (m_maskData[i].separator && m_maskData[i].maskChar == searchChar)
+                return i;
+        } else {
+            if (!m_maskData[i].separator) {
+                return i;
+            }
+        }
+        i += step;
+    }
+    return -1;
+}
 
 /*!
     \internal
@@ -183,11 +247,11 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
 {
     Q_Q(SlackText);
 
-//    if (pos != m_cursor) {
-//        separate();
-//        if (m_maskData)
-//            pos = pos > m_cursor ? nextMaskBlank(pos) : prevMaskBlank(pos);
-//    }
+    if (pos != m_cursor) {
+        separate();
+        if (m_maskData)
+            pos = pos > m_cursor ? nextMaskBlank(pos) : prevMaskBlank(pos);
+    }
     if (mark) {
         int anchor;
         if (m_selend > m_selstart/* && m_cursor == m_selstart*/)
@@ -195,13 +259,13 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
         else if (m_selend > m_selstart/* && m_cursor == m_selend*/)
             anchor = m_selstart;
         else
-            anchor = 0; //m_cursor
+            anchor = m_cursor;
         m_selstart = qMin(anchor, pos);
         m_selend = qMax(anchor, pos);
     } else {
         internalDeselect();
     }
-    //m_cursor = pos;
+    m_cursor = pos;
     if (mark || m_selDirty) {
         m_selDirty = false;
         emit q->selectionChanged();
@@ -310,19 +374,32 @@ void SlackText::positionAt(QQmlV4Function *args)
 int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition position)
 {
     Q_Q(SlackText);
-    x += q->leftPadding();
-    y += q->topPadding();
-    QQuickLabelPrivate* lp = labelPrivate();
-    qDebug() << "layout lines" << lp->layout.lineCount();
-    QTextLine line = lp->layout.lineAt(0);
-    for (int i = 1; i < lp->layout.lineCount(); ++i) {
-        QTextLine nextLine = lp->layout.lineAt(i);
+    int pos = 0;
 
-        if (y < (line.rect().bottom() + nextLine.y()) / 2)
-            break;
-        line = nextLine;
+    if (m_tp->richText && m_tp->extra.isAllocated() && m_tp->extra->doc) {
+        qDebug() << __PRETTY_FUNCTION__ << y << m_tp->layedOutTextRect.height() << m_tp->availableHeight() << m_tp->extra->topPadding;
+        QPointF translatedMousePos = QPointF(x, y);
+        translatedMousePos.rx() -= alignedX(m_tp->layedOutTextRect.width(), m_tp->availableWidth(), q->effectiveHAlign());
+        translatedMousePos.ry() -= m_tp->extra->topPadding;
+        qDebug() << "corrected mouse pos" << translatedMousePos;
+        pos = m_tp->extra->doc->documentLayout()->hitTest(translatedMousePos, Qt::FuzzyHit);
+    } else {
+        x += q->leftPadding();
+        y += q->topPadding();
+        QQuickLabelPrivate* lp = labelPrivate();
+        qDebug() << "layout lines" << lp->layout.lineCount();
+        QTextLine line = lp->layout.lineAt(0);
+        for (int i = 1; i < lp->layout.lineCount(); ++i) {
+            QTextLine nextLine = lp->layout.lineAt(i);
+
+            if (y < (line.rect().bottom() + nextLine.y()) / 2)
+                break;
+            line = nextLine;
+        }
+        pos = line.isValid() ? line.xToCursor(x, position) : 0;
     }
-    return line.isValid() ? line.xToCursor(x, position) : 0;
+    return pos;
+
 }
 
 void SlackText::mousePressEvent(QMouseEvent *event)
@@ -365,8 +442,8 @@ void SlackText::invalidateFontCaches()
 {
     Q_D(SlackText);
 
-    if (d->labelPrivate()->layout.engine() != nullptr)
-        d->labelPrivate()->layout.engine()->resetFontEngineCache();
+    if (d->m_lp->layout.engine() != nullptr)
+        d->m_lp->layout.engine()->resetFontEngineCache();
 }
 
 void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
@@ -378,7 +455,7 @@ void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
 //        d->commitPreedit();
 //#endif
         int cursor = d->positionAt(event->localPos());
-        qDebug() << __PRETTY_FUNCTION__ << cursor << event->localPos();
+        qDebug() << __PRETTY_FUNCTION__ << cursor << event->localPos() << event->pos() << event->windowPos();
         d->selectWordAtPos(cursor);
         event->setAccepted(true);
         if (!d->hasPendingTripleClick()) {
@@ -407,10 +484,19 @@ void SlackTextPrivate::selectWordAtPos(int cursor)
     if (next > end())
         --next;
 
-    int c = labelPrivate()->layout.previousCursorPosition(next, QTextLayout::SkipWords);
+    int c = 0;
+    int end = 0;
+    if (m_lp->richText) {
+        QTextDocumentPrivate* td_p = m_tp->extra->doc->docHandle();
+        c = td_p->nextCursorPosition(next, QTextLayout::SkipWords);
+        end = td_p->nextCursorPosition(c, QTextLayout::SkipWords);
+        qDebug() << cursor << next << c << end;
+    } else {
+        c = m_lp->layout.previousCursorPosition(next, QTextLayout::SkipWords);
+        end = m_lp->layout.nextCursorPosition(c, QTextLayout::SkipWords);
+    }
     moveSelectionCursor(c, false);
     // ## text layout should support end of words.
-    int end = labelPrivate()->layout.nextCursorPosition(c, QTextLayout::SkipWords);
     while (end > cursor && q->text()[end-1].isSpace())
         --end;
     moveSelectionCursor(end, true);
@@ -501,109 +587,32 @@ void SlackText::mouseUngrabEvent()
     setKeepMouseGrab(false);
 }
 
-qreal alignedX(const qreal textWidth, const qreal itemWidth, int alignment)
-{
-    qreal x = 0;
-    switch (alignment) {
-    case Qt::AlignLeft:
-    case Qt::AlignJustify:
-        break;
-    case Qt::AlignRight:
-        x = itemWidth - textWidth;
-        break;
-    case Qt::AlignHCenter:
-        x = (itemWidth - textWidth) / 2;
-        break;
-    }
-    return x;
-}
-
-qreal alignedY(const qreal textHeight, const qreal itemHeight, int alignment)
-{
-    qreal y = 0;
-    switch (alignment) {
-    case Qt::AlignTop:
-        break;
-    case Qt::AlignBottom:
-        y = itemHeight - textHeight;
-        break;
-    case Qt::AlignVCenter:
-        y = (itemHeight - textHeight) / 2;
-        break;
-    }
-    return y;
-}
+/**
+ * @brief SlackText::updatePaintNode. Direct copy of QQuickText one with select modifications. Keep in sync
+ * @param oldNode
+ * @param data
+ * @return
+ */
 
 QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
 {
     Q_UNUSED(data);
     Q_D(SlackText);
 
-    /*
-    QSGNode *labelNode = QQuickLabel::updatePaintNode(oldNode, data);
-
-    if (d->updateType != QQuickTextPrivate::UpdatePaintNode && oldNode != nullptr) {
-        // Update done in preprocess() in the nodes
-        d->updateType = QQuickTextPrivate::UpdateNone;
-        return labelNode;
-    }
-
-    d->updateType = QQuickTextPrivate::UpdateNone;
-
-//    QQuickTextNode *node = static_cast<QQuickTextNode *>(oldNode);
-//    if (node == nullptr)
-//        node = new QQuickTextNode(this);
-    d->textNode = static_cast<QQuickTextNode *>(labelNode);
-
-    if (d->textLayoutDirty || oldNode == nullptr) {
-//        node->setUseNativeRenderer(d->renderType == NativeRendering);
-//        node->deleteContent();
-//        node->setMatrix(QMatrix4x4());
-
-        QPointF offset(leftPadding(), topPadding());
-
-//        if (d->layout.lineCount() > 0) {
-//            QFontMetricsF fm(d->font);
-//            // the y offset is there to keep the baseline constant in case we have script changes in the text.
-//            //offset += -QPointF(d->hscroll, d->vscroll + d->layout.lineAt(0).ascent() - fm.ascent());
-//        } //else {
-//            offset += -QPointF(d->hscroll, d->vscroll);
-//        }
-        QQuickLabelPrivate* lp = d->labelPrivate();
-        qDebug() << offset << lp->layout.text() << d->selectionStart() << d->selectionEnd() << d->selectionColor << d->selectedTextColor;
-        if (!lp->layout.text().isEmpty()) {
-            d->textNode->addTextLayout(offset, &lp->layout, lp->color,
-                                QQuickText::Normal, QColor(), QColor(),
-                                d->selectionColor, d->selectedTextColor,
-                                d->selectionStart(),
-                                d->selectionEnd() - 1); // selectionEnd() returns first char after
-                                                                 // selection
-        }
-
-        d->textLayoutDirty = false;
-    }
-
-    invalidateFontCaches();
-
-    return labelNode;*/
-
-    QQuickLabelPrivate* lp = d->labelPrivate();
-    QQuickTextPrivate* tp = QQuickTextPrivate::get(qobject_cast<QQuickText *>(this));
-
-    if (lp->text.isEmpty()) {
+    if (d->m_lp->text.isEmpty()) {
         delete oldNode;
         return nullptr;
     }
 
-    if (lp->updateType != QQuickTextPrivate::UpdatePaintNode && oldNode != nullptr) {
+    if (d->m_lp->updateType != QQuickTextPrivate::UpdatePaintNode && oldNode != nullptr) {
         // Update done in preprocess() in the nodes
-        lp->updateType = QQuickTextPrivate::UpdateNone;
+        d->m_lp->updateType = QQuickTextPrivate::UpdateNone;
         return oldNode;
     }
 
-    lp->updateType = QQuickTextPrivate::UpdateNone;
+    d->m_lp->updateType = QQuickTextPrivate::UpdateNone;
 
-    const qreal dy = alignedY(lp->layedOutTextRect.height() + lp->lineHeightOffset(), lp->availableHeight(), lp->vAlign) + topPadding();
+    const qreal dy = alignedY(d->m_lp->layedOutTextRect.height() + d->m_lp->lineHeightOffset(), d->m_lp->availableHeight(), d->m_lp->vAlign) + topPadding();
 
     QQuickTextNode *node = nullptr;
     if (!oldNode)
@@ -611,45 +620,66 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
     else
         node = static_cast<QQuickTextNode *>(oldNode);
 
-    node->setUseNativeRenderer(lp->renderType == NativeRendering);
+    node->setUseNativeRenderer(d->m_lp->renderType == NativeRendering);
     node->deleteContent();
     node->setMatrix(QMatrix4x4());
 
-    const QColor color = QColor::fromRgba(lp->color);
-    const QColor styleColor = QColor::fromRgba(lp->styleColor);
-    const QColor linkColor = QColor::fromRgba(lp->linkColor);
+    const QColor color = QColor::fromRgba(d->m_lp->color);
+    const QColor styleColor = QColor::fromRgba(d->m_lp->styleColor);
+    const QColor linkColor = QColor::fromRgba(d->m_lp->linkColor);
 
-    qDebug() << lp->richText << lp->layout.text() << d->selectionStart() << d->selectionEnd() << d->selectionColor << d->selectedTextColor;
-    if (lp->richText) {
-        const qreal dx = alignedX(lp->layedOutTextRect.width(), lp->availableWidth(), effectiveHAlign()) + leftPadding();
-        lp->ensureDoc();
-        node->addTextDocument(QPointF(dx, dy), tp->extra->doc, color, lp->style, styleColor, linkColor,
+    //qDebug() << d->m_lp->richText << d->m_lp->layout.text() << d->selectionStart() << d->selectionEnd() << d->selectionColor << d->selectedTextColor;
+    if (d->m_lp->richText) {
+        const qreal dx = alignedX(d->m_lp->layedOutTextRect.width(), d->m_lp->availableWidth(), effectiveHAlign()) + leftPadding();
+        d->m_lp->ensureDoc();
+        QTextBlock currentBlock = d->m_tp->extra->doc->begin();
+
+        while (currentBlock.isValid()) {
+            QTextBlock::iterator it;
+            for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
+                QTextFragment currentFragment = it.fragment();
+                if (currentFragment.isValid()) {
+                    QTextImageFormat newImageFormat = currentFragment.charFormat().toImageFormat();
+                    if (newImageFormat.isValid()) {
+                        currentFragment.charFormat().setVerticalAlignment(QTextCharFormat::AlignBaseline);
+                        qDebug() << newImageFormat.name() << newImageFormat.verticalAlignment() << d->m_tp->extra->doc->rootFrame()->childFrames().count();
+                    }
+                }
+            }
+            currentBlock = currentBlock.next();
+        }
+
+        node->addTextDocument(QPointF(dx, dy), d->m_tp->extra->doc, color, d->m_lp->style, styleColor, linkColor,
                               d->selectionColor, d->selectedTextColor,
-                              d->selectionStart(), d->selectionEnd());
-    } else if (lp->layedOutTextRect.width() > 0) {
-        const qreal dx = alignedX(lp->lineWidth, lp->availableWidth(), effectiveHAlign()) + leftPadding();
-        int unelidedLineCount = lp->lineCount;
-        if (lp->elideLayout)
+                              d->selectionStart(), d->selectionEnd() - 1);
+    } else if (d->m_lp->layedOutTextRect.width() > 0) {
+        const qreal dx = alignedX(d->m_lp->lineWidth, d->m_lp->availableWidth(), effectiveHAlign()) + leftPadding();
+        node->addRectangleNode(QRectF(dx, dy, d->m_lp->layedOutTextRect.width(), d->m_lp->layedOutTextRect.height()),
+                               QColor(Qt::gray));
+        int unelidedLineCount = d->m_lp->lineCount;
+        if (d->m_lp->elideLayout)
             unelidedLineCount -= 1;
         if (unelidedLineCount > 0) {
             node->addTextLayout(
                         QPointF(dx, dy),
-                        &lp->layout,
-                        color, lp->style, styleColor, linkColor,
+                        &d->m_lp->layout,
+                        color, d->m_lp->style, styleColor, linkColor,
                         d->selectionColor, d->selectedTextColor,
-                        selectionStart(), d->selectionEnd(),
+                        selectionStart(), d->selectionEnd() - 1,
                         0, unelidedLineCount);
         }
-        if (lp->elideLayout)
-            node->addTextLayout(QPointF(dx, dy), lp->elideLayout, color, lp->style, styleColor, linkColor,
+        if (d->m_lp->elideLayout)
+            node->addTextLayout(QPointF(dx, dy), d->m_lp->elideLayout, color, d->m_lp->style, styleColor, linkColor,
                                 d->selectionColor, d->selectedTextColor,
-                                selectionStart(), d->selectionEnd());
+                                selectionStart(), d->selectionEnd() - 1);
 
-        if (lp->extra.isAllocated()) {
-            for (QQuickStyledTextImgTag *img : qAsConst(tp->extra->visibleImgTags)) {
+        if (d->m_lp->extra.isAllocated()) {
+            for (QQuickStyledTextImgTag *img : qAsConst(d->m_tp->extra->visibleImgTags)) {
                 QQuickPixmap *pix = img->pix;
-                if (pix && pix->isReady())
+                if (pix && pix->isReady()) {
+                    qDebug() << "image" << img->url << img->pos << pix->rect();
                     node->addImage(QRectF(img->pos.x() + dx, img->pos.y() + dy, pix->width(), pix->height()), pix->image());
+                }
             }
         }
     }
@@ -768,9 +798,9 @@ QString SlackText::text() const
 
 void SlackText::setText(const QString &txt)
 {
-    Q_D(SlackText);
     QQuickLabel::setText(txt);
-    d->labelPrivate()->layout.setText(txt);
+//    m_codePattern(QRegularExpression(QStringLiteral("(^|\\s)`([^`]+)`(\\s|\\.|\\?|!|,|$)"))),
+//    m_codeBlockPattern(QRegularExpression(QStringLiteral("```(.*)```"))),
 }
 
 void SlackText::setPersistentSelection(bool on)
@@ -885,7 +915,7 @@ void SlackText::selectionChanged()
 {
     Q_D(SlackText);
     d->textLayoutDirty = true; //TODO: Only update rect in selection
-    d->labelPrivate()->updateType = QQuickTextPrivate::UpdatePaintNode;
+    d->m_lp->updateType = QQuickTextPrivate::UpdatePaintNode;
     polish();
     update();
     emit selectedTextChanged();
@@ -1060,7 +1090,7 @@ void SlackTextPrivate::updateLayout()
     if (!q->isComponentComplete())
         return;
 
-    labelPrivate()->updateLayout();
+    m_lp->updateLayout();
 }
 
 void SlackTextPrivate::processKeyEvent(QKeyEvent* event)
