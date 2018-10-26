@@ -46,8 +46,8 @@ const QMap<QString, QString> SlackTeamClient::kSlackErrors = {
     { "file_not_found", "The file does not exist, or is not visible to the calling user." },
     { "file_deleted", "The file has already been deleted." },
     { "cant_delete_file", "Authenticated user does not have permission to delete this file." },
-    { "user_not_found", "Value passed for user was invalid" }
-
+    { "user_not_found", "Value passed for user was invalid" },
+    { "message_not_found", "No message exists with the requested timestamp." }
 };
 
 SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const QString &accessToken, QObject *parent) :
@@ -1638,7 +1638,8 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::updateMessage(const QString &channelId, QString content, const QDateTime &ts)
+void SlackTeamClient::updateMessage(const QString &channelId, QString content,
+                                    const QDateTime &ts, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
@@ -1646,7 +1647,11 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content, c
     data.insert(QStringLiteral("text"), content);
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
     data.insert(QStringLiteral("parse"), QStringLiteral("full"));
-    data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+    if (!slackTs.isEmpty()) {
+        data.insert(QStringLiteral("ts"), slackTs);
+    } else {
+        data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+    }
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.update"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
