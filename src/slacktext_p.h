@@ -73,6 +73,9 @@ public:
     QColor selectionColor;
     QColor selectedTextColor;
 
+    QString m_linkHovered;
+    QString m_imageHovered;
+
     int lastSelectionStart;
     int lastSelectionEnd;
     int m_selstart;
@@ -110,12 +113,6 @@ public:
     static inline SlackTextPrivate *get(SlackText *t) {
         qWarning() << "SlackTextPrivate *get";
         return t->d_func();
-    }
-
-    QQuickLabelPrivate* labelPrivate() {
-        //QQuickLabelPrivate *label = qobject_cast<QQuickLabel *>(q);
-        Q_Q(SlackText);
-        return QQuickLabelPrivate::get(qobject_cast<QQuickLabel *>(q));
     }
 
     bool hasPendingTripleClick() const {

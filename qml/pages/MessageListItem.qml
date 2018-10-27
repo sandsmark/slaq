@@ -201,13 +201,16 @@ MouseArea {
                     selectByMouse: true
                     onLinkActivated: handleLink(link)
                     //activeFocusOnPress: false
-//                    onLinkHovered:  {
-//                        if (link !== "") {
-//                            mouseArea.cursorShape = Qt.PointingHandCursor
-//                        } else {
-//                            mouseArea.cursorShape = Qt.ArrowCursor
-//                        }
-//                    }
+                    onLinkHovered:  {
+                        if (link !== "") {
+                            mouseArea.cursorShape = Qt.PointingHandCursor
+                        } else {
+                            mouseArea.cursorShape = Qt.ArrowCursor
+                        }
+                    }
+                    onImageHovered:  {
+                        console.log("image", imagelink)
+                    }
                     onSelectedTextChanged: {
                         if (selectedText !== "") {
                             forceActiveFocus()

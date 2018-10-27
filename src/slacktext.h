@@ -27,6 +27,8 @@ class SlackText : public QQuickLabel
     Q_PROPERTY(qreal bottomPadding READ bottomPadding WRITE setBottomPadding RESET resetBottomPadding NOTIFY bottomPaddingChanged)
 
     Q_PROPERTY(QString hoveredLink READ hoveredLink NOTIFY linkHovered)
+    Q_PROPERTY(QString hoveredImage READ hoveredImage NOTIFY imageHovered)
+
     Q_PROPERTY(QJSValue fontInfo READ fontInfo NOTIFY fontInfoChanged)
     Q_PROPERTY(QSizeF advance READ advance NOTIFY contentSizeChanged)
 
@@ -59,6 +61,9 @@ public:
     QString text() const;
     void setText(const QString &txt);
 
+    QString hoveredLink() const;
+    QString hoveredImage() const;
+
 Q_SIGNALS:
     void textChanged();
     void selectionColorChanged();
@@ -71,6 +76,7 @@ Q_SIGNALS:
     void persistentSelectionChanged();
 
     void linkHovered(const QString &link);
+    void imageHovered(const QString &imagelink);
 
 public Q_SLOTS:
     void copy();
@@ -100,6 +106,11 @@ protected:
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
     //void updatePolish() override;
 
+    void hoverEnterEvent(QHoverEvent *event) override;
+    void hoverMoveEvent(QHoverEvent *event) override;
+    void hoverLeaveEvent(QHoverEvent *event) override;
+
+
 private:
     void invalidateFontCaches();
 
@@ -116,7 +127,6 @@ private:
     SlackTextPrivate* d_ptr { nullptr };
     Q_DECLARE_PRIVATE(SlackText)
     Q_DISABLE_COPY(SlackText)
-
 };
 
 QML_DECLARE_TYPE(SlackText)

@@ -140,7 +140,7 @@ void SlackTextPrivate::init()
 {
     Q_Q(SlackText);
 
-    m_lp = labelPrivate();
+    m_lp = QQuickLabelPrivate::get(qobject_cast<QQuickLabel *>(q_ptr));
     m_tp = QQuickTextPrivate::get(qobject_cast<QQuickText *>(q_ptr));
 
 #if QT_CONFIG(clipboard)
@@ -227,7 +227,7 @@ QRectF SlackText::positionToRectangle(int pos)
 //    else if (pos > d->m_cursor)
 //        pos += d->preeditAreaText().length();
 //#endif
-    QTextLine l = d->labelPrivate()->layout.lineForTextPosition(pos);
+    QTextLine l = d->m_lp->layout.lineForTextPosition(pos);
     //QTextLine l = d->layout.lineForTextPosition(pos);
     if (!l.isValid())
         return QRectF();
@@ -312,20 +312,18 @@ int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition pos
     int pos = 0;
 
     if (m_tp->richText && m_tp->extra.isAllocated() && m_tp->extra->doc) {
-        qDebug() << __PRETTY_FUNCTION__ << y << m_tp->layedOutTextRect.height() << m_tp->availableHeight() << m_tp->extra->topPadding;
+        //qDebug() << __PRETTY_FUNCTION__ << y << m_tp->layedOutTextRect.height() << m_tp->availableHeight() << m_tp->extra->topPadding;
         QPointF translatedMousePos = QPointF(x, y);
         translatedMousePos.rx() -= alignedX(m_tp->layedOutTextRect.width(), m_tp->availableWidth(), q->effectiveHAlign());
         translatedMousePos.ry() -= m_tp->extra->topPadding;
-        qDebug() << "corrected mouse pos" << translatedMousePos;
+        //qDebug() << "corrected mouse pos" << translatedMousePos;
         pos = m_tp->extra->doc->documentLayout()->hitTest(translatedMousePos, Qt::FuzzyHit);
     } else {
         x += q->leftPadding();
         y += q->topPadding();
-        QQuickLabelPrivate* lp = labelPrivate();
-        qDebug() << "layout lines" << lp->layout.lineCount();
-        QTextLine line = lp->layout.lineAt(0);
-        for (int i = 1; i < lp->layout.lineCount(); ++i) {
-            QTextLine nextLine = lp->layout.lineAt(i);
+        QTextLine line = m_lp->layout.lineAt(0);
+        for (int i = 1; i < m_lp->layout.lineCount(); ++i) {
+            QTextLine nextLine = m_lp->layout.lineAt(i);
 
             if (y < (line.rect().bottom() + nextLine.y()) / 2)
                 break;
@@ -524,6 +522,54 @@ void SlackText::mouseUngrabEvent()
     setKeepMouseGrab(false);
 }
 
+void SlackText::hoverEnterEvent(QHoverEvent *event)
+{
+    //qDebug() << __PRETTY_FUNCTION__ << event->pos();
+    QQuickLabel::hoverEnterEvent(event);
+}
+
+void SlackText::hoverMoveEvent(QHoverEvent *event)
+{
+    Q_D(SlackText);
+    //qDebug() << __PRETTY_FUNCTION__ << event->pos();
+    //
+    QString link;
+    QString imglink;
+    QPointF translatedMousePos = event->posF();
+    translatedMousePos.rx() -= leftPadding();
+    translatedMousePos.ry() -= topPadding() + alignedY(d->m_tp->layedOutTextRect.height() + d->m_tp->lineHeightOffset(),
+                                                       d->m_tp->availableHeight(), d->m_tp->vAlign);
+    if (d->m_tp->styledText) {
+        QString link = d->m_tp->anchorAt(&d->m_tp->layout, translatedMousePos);
+        if (link.isEmpty() && d->m_tp->elideLayout)
+            link = d->m_tp->anchorAt(d->m_tp->elideLayout, translatedMousePos);
+    } else if (d->m_tp->richText && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
+        translatedMousePos.rx() -= alignedX(d->m_tp->layedOutTextRect.width(), d->m_tp->availableWidth(),
+                                            effectiveHAlign());
+        link = d->m_tp->extra->doc->documentLayout()->anchorAt(translatedMousePos);
+        imglink = d->m_tp->extra->doc->documentLayout()->imageAt(translatedMousePos);
+    }
+    if (link != d->m_linkHovered) {
+        d->m_linkHovered = link;
+        if (!link.isEmpty()) {
+            emit linkHovered(link);
+        }
+    }
+    if (imglink != d->m_imageHovered) {
+        d->m_imageHovered = imglink;
+        if (!imglink.isEmpty()) {
+            emit imageHovered(imglink);
+        }
+    }
+    QQuickLabel::hoverMoveEvent(event);
+}
+
+void SlackText::hoverLeaveEvent(QHoverEvent *event)
+{
+    //qDebug() << __PRETTY_FUNCTION__ << event->pos();
+    QQuickLabel::hoverLeaveEvent(event);
+}
+
 /**
  * @brief SlackText::updatePaintNode. Direct copy of QQuickText one with select modifications. Keep in sync
  * @param oldNode
@@ -569,22 +615,22 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
     if (d->m_lp->richText) {
         const qreal dx = alignedX(d->m_lp->layedOutTextRect.width(), d->m_lp->availableWidth(), effectiveHAlign()) + leftPadding();
         d->m_lp->ensureDoc();
-        QTextBlock currentBlock = d->m_tp->extra->doc->begin();
+//        QTextBlock currentBlock = d->m_tp->extra->doc->begin();
 
-        while (currentBlock.isValid()) {
-            QTextBlock::iterator it;
-            for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
-                QTextFragment currentFragment = it.fragment();
-                if (currentFragment.isValid()) {
-                    QTextImageFormat newImageFormat = currentFragment.charFormat().toImageFormat();
-                    if (newImageFormat.isValid()) {
-                        currentFragment.charFormat().setVerticalAlignment(QTextCharFormat::AlignBaseline);
-                        qDebug() << newImageFormat.name() << newImageFormat.verticalAlignment() << d->m_tp->extra->doc->rootFrame()->childFrames().count();
-                    }
-                }
-            }
-            currentBlock = currentBlock.next();
-        }
+//        while (currentBlock.isValid()) {
+//            QTextBlock::iterator it;
+//            for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
+//                QTextFragment currentFragment = it.fragment();
+//                if (currentFragment.isValid()) {
+//                    QTextImageFormat newImageFormat = currentFragment.charFormat().toImageFormat();
+//                    if (newImageFormat.isValid()) {
+//                        //currentFragment.charFormat().setVerticalAlignment(QTextCharFormat::AlignBaseline);
+//                        qDebug() << newImageFormat.name() << newImageFormat.verticalAlignment() << d->m_tp->extra->doc->rootFrame()->childFrames().count();
+//                    }
+//                }
+//            }
+//            currentBlock = currentBlock.next();
+//        }
 
         node->addTextDocument(QPointF(dx, dy), d->m_tp->extra->doc, color, d->m_lp->style, styleColor, linkColor,
                               d->selectionColor, d->selectedTextColor,
@@ -736,6 +782,18 @@ QString SlackText::text() const
 void SlackText::setText(const QString &txt)
 {
     QQuickLabel::setText(txt);
+}
+
+QString SlackText::hoveredLink() const
+{
+    Q_D(const SlackText);
+    return d->m_linkHovered;
+}
+
+QString SlackText::hoveredImage() const
+{
+    Q_D(const SlackText);
+    return d->m_imageHovered;
 }
 
 void SlackText::setPersistentSelection(bool on)
