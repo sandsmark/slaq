@@ -494,14 +494,22 @@ void SlackText::mouseReleaseEvent(QMouseEvent *event)
     Q_D(SlackText);
 //    if (d->sendMouseEventToInputContext(event))
 //        return;
-    if (d->selectPressed) {
+    if (keepMouseGrab() == false && d->hasSelectedText() == false) {
+        QString link = d->m_tp->anchorAt(event->localPos());
+        if (!link.isEmpty()) {
+            qDebug() << "activating link:" << link << text() << d->m_selstart << d->m_selend;
+            emit linkActivated(d->m_tp->extra->activeLink);
+            event->setAccepted(true);
+            return;
+        }
+    } else if (d->selectPressed) {
         d->selectPressed = false;
         setKeepMouseGrab(false);
     }
 #if QT_CONFIG(clipboard)
     if (QGuiApplication::clipboard()->supportsSelection()) {
         if (event->button() == Qt::LeftButton) {
-            d->copy(QClipboard::Clipboard);
+            d->copy(QClipboard::Selection);
         } else if (event->button() == Qt::MidButton) {
             d->deselect();
         }
@@ -852,7 +860,7 @@ void SlackText::moveCursorSelection(int pos, SelectionMode mode)
 {
     Q_D(SlackText);
 
-    qDebug() << pos << mode << d->m_cursor;
+    //qDebug() << pos << mode << d->m_cursor;
     if (mode == SelectCharacters) {
         d->moveSelectionCursor(pos, true);
     } else if (pos != d->m_cursor){
