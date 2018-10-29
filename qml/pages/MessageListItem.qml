@@ -21,7 +21,7 @@ MouseArea {
 
     function updateText() {
         var editedText = contentLabel.getText(0, contentLabel.text.length);
-        SlackClient.updateMessage(teamRoot.teamId, channel.id, editedText, model.Time)
+        SlackClient.updateMessage(teamRoot.teamId, channel.id, editedText, model.Time, model.SlackTimestamp)
         contentLabel.focus = false
         contentLabel.readOnly = true
         input.forceActiveFocus()

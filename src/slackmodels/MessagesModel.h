@@ -308,6 +308,7 @@ struct Message {
         jo["team_id"] = team_id;
         jo["userName"] = userName;
         jo["time_slack"] = dateTimeToSlack(time);
+        jo["ts"] = ts;
         return jo;
     }
 };

@@ -115,7 +115,8 @@ public slots:
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QDateTime &thread_ts = QDateTime());
-    void updateMessage(const QString& teamId, const QString& channelId, const QString& content, const QDateTime &ts);
+    void updateMessage(const QString& teamId, const QString& channelId, const QString& content,
+                       const QDateTime &ts, const QString& slackTs);
     void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts);
     void postFile(const QString& teamId, const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
