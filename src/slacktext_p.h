@@ -20,7 +20,7 @@
 
 class QQuickTextNode;
 
-class SlackTextPrivate //: public QQuickTextPrivate
+class SlackTextPrivate
 {
     Q_DECLARE_PUBLIC(SlackText)
 public:
@@ -49,7 +49,6 @@ public:
     {
     }
 
-    //void mirrorChange() override;
     void init();
 
     struct MaskInputData {
@@ -177,10 +176,6 @@ public:
     void processKeyEvent(QKeyEvent* ev);
 
     void updateLayout();
-    //void updateBaselineOffset();
-
-    //qreal getImplicitWidth() const override;
-
 
 private:
     //void removeSelectedText();

@@ -9,8 +9,6 @@
 #include <private/qv4scopedvalue_p.h>
 #include <QtQuickTemplates2/private/qquicklabel_p_p.h>
 
-DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
-
 qreal alignedX(const qreal textWidth, const qreal itemWidth, int alignment)
 {
     qreal x = 0;
@@ -56,7 +54,7 @@ SlackText::SlackText(QQuickItem* parent)
 
 void SlackText::componentComplete()
 {
-    Q_D(SlackText);
+    //Q_D(SlackText);
 
     QQuickLabel::componentComplete();
     //d->updateLayout();
@@ -150,18 +148,8 @@ void SlackTextPrivate::init()
 #endif
         q->setAcceptedMouseButtons(Qt::LeftButton);
 
-    //q->setFlag(QQuickItem::ItemHasContents);
-
     lastSelectionStart = 0;
     lastSelectionEnd = 0;
-
-//    m_lp->determineHorizontalAlignment();
-
-//    if (!qmlDisableDistanceField()) {
-//        QTextOption option = m_lp->layout.textOption();
-//        option.setUseDesignMetrics(m_lp->renderType != QQuickText::NativeRendering);
-//        m_lp->layout.setTextOption(option);
-//    }
 }
 
 int SlackTextPrivate::findInMask(int pos, bool forward, bool findSeparator, QChar searchChar) const
@@ -243,28 +231,6 @@ QRectF SlackText::positionToRectangle(int pos)
     return QRectF(x, y, w, l.height());
 }
 
-/*!
-    \qmlmethod int QtQuick::TextInput::positionAt(real x, real y, CursorPosition position = CursorBetweenCharacters)
-
-    This function returns the character position at
-    x and y pixels from the top left  of the textInput. Position 0 is before the
-    first character, position 1 is after the first character but before the second,
-    and so on until position text.length, which is after all characters.
-
-    This means that for all x values before the first character this function returns 0,
-    and for all x values after the last character this function returns text.length.  If
-    the y value is above the text the position will be that of the nearest character on
-    the first line and if it is below the text the position of the nearest character
-    on the last line will be returned.
-
-    The cursor position type specifies how the cursor position should be resolved.
-
-    \list
-    \li TextInput.CursorBetweenCharacters - Returns the position between characters that is nearest x.
-    \li TextInput.CursorOnCharacter - Returns the position before the character that is nearest x.
-    \endlist
-*/
-
 void SlackText::positionAt(QQmlV4Function *args)
 {
     Q_D(SlackText);
@@ -336,17 +302,9 @@ int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition pos
 }
 
 
-//void SlackText::updatePolish()
-//{
-//    invalidateFontCaches();
-//}
-
 void SlackText::invalidateFontCaches()
 {
-    Q_D(SlackText);
-
-    if (d->m_lp->layout.engine() != nullptr)
-        d->m_lp->layout.engine()->resetFontEngineCache();
+    QQuickText::invalidateFontCaches();
 }
 
 void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
@@ -683,49 +641,24 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
 
 }
 
-/*!
-    \qmlmethod QtQuick::TextInput::deselect()
-
-    Removes active text selection.
-*/
 void SlackText::deselect()
 {
     Q_D(SlackText);
     d->deselect();
 }
 
-/*!
-    \qmlmethod QtQuick::TextInput::selectAll()
-
-    Causes all text to be selected.
-*/
 void SlackText::selectAll()
 {
     Q_D(SlackText);
     d->setSelection(0, text().length());
 }
 
-/*!
-    \qmlmethod QtQuick::TextInput::selectWord()
-
-    Causes the word closest to the current cursor position to be selected.
-*/
 void SlackText::selectWord()
 {
     Q_D(SlackText);
     d->selectWordAtPos(d->m_cursor);
 }
 
-/*!
-    \qmlproperty bool QtQuick::TextInput::selectByMouse
-
-    Defaults to false.
-
-    If true, the user can use the mouse to select text in some
-    platform-specific way. Note that for some platforms this may
-    not be an appropriate interaction (it may conflict with how
-    the text needs to behave inside a \l Flickable, for example).
-*/
 bool SlackText::selectByMouse() const
 {
     Q_D(const SlackText);
@@ -741,19 +674,6 @@ void SlackText::setSelectByMouse(bool on)
     }
 }
 
-/*!
-    \qmlproperty enumeration QtQuick::TextInput::mouseSelectionMode
-
-    Specifies how text should be selected using a mouse.
-
-    \list
-    \li TextInput.SelectCharacters - The selection is updated with individual characters. (Default)
-    \li TextInput.SelectWords - The selection is updated with whole words.
-    \endlist
-
-    This property only applies when \l selectByMouse is true.
-*/
-
 SlackText::SelectionMode SlackText::mouseSelectionMode() const
 {
     Q_D(const SlackText);
@@ -768,13 +688,6 @@ void SlackText::setMouseSelectionMode(SelectionMode mode)
         emit mouseSelectionModeChanged(mode);
     }
 }
-
-/*!
-    \qmlproperty bool QtQuick::TextInput::persistentSelection
-
-    Whether the TextInput should keep its selection when it loses active focus to another
-    item in the scene. By default this is set to false;
-*/
 
 bool SlackText::persistentSelection() const
 {
@@ -819,43 +732,6 @@ void SlackText::moveCursorSelection(int position)
     d->moveSelectionCursor(position, true);
 }
 
-/*!
-    \qmlmethod QtQuick::TextInput::moveCursorSelection(int position, SelectionMode mode = TextInput.SelectCharacters)
-
-    Moves the cursor to \a position and updates the selection according to the optional \a mode
-    parameter.  (To only move the cursor, set the \l cursorPosition property.)
-
-    When this method is called it additionally sets either the
-    selectionStart or the selectionEnd (whichever was at the previous cursor position)
-    to the specified position. This allows you to easily extend and contract the selected
-    text range.
-
-    The selection mode specifies whether the selection is updated on a per character or a per word
-    basis.  If not specified the selection mode will default to TextInput.SelectCharacters.
-
-    \list
-    \li TextInput.SelectCharacters - Sets either the selectionStart or selectionEnd (whichever was at
-    the previous cursor position) to the specified position.
-    \li TextInput.SelectWords - Sets the selectionStart and selectionEnd to include all
-    words between the specified position and the previous cursor position.  Words partially in the
-    range are included.
-    \endlist
-
-    For example, take this sequence of calls:
-
-    \code
-        cursorPosition = 5
-        moveCursorSelection(9, TextInput.SelectCharacters)
-        moveCursorSelection(7, TextInput.SelectCharacters)
-    \endcode
-
-    This moves the cursor to position 5, extend the selection end from 5 to 9
-    and then retract the selection end from 9 to 7, leaving the text from position 5 to 7
-    selected (the 6th and 7th characters).
-
-    The same sequence with TextInput.SelectWords will extend the selection start to a word boundary
-    before or on position 5 and extend the selection end to a word boundary on or past position 9.
-*/
 void SlackText::moveCursorSelection(int pos, SelectionMode mode)
 {
     Q_D(SlackText);
@@ -936,20 +812,12 @@ void SlackText::selectionChanged()
     }
 }
 
-/*!
-    \internal
-
-    Sets \a length characters from the given \a start position as selected.
-    The given \a start position must be within the current text for
-    the line control.  If \a length characters cannot be selected, then
-    the selection will extend to the end of the current text.
-*/
 void SlackTextPrivate::setSelection(int start, int length)
 {
     Q_Q(SlackText);
 
     if (start < 0 || start > q->text().length()) {
-        qWarning("QQuickTextInputPrivate::setSelection: Invalid start position");
+        qWarning("SlackTextPrivate::setSelection: Invalid start position");
         return;
     }
 
@@ -978,18 +846,6 @@ void SlackTextPrivate::setSelection(int start, int length)
     //emitCursorPositionChanged();
 }
 
-/*!
-    \internal
-
-    Completes a change to the line control text.  If the change is not valid
-    will undo the line control state back to the given \a validateFromState.
-
-    If \a edited is true and the change is valid, will emit textEdited() in
-    addition to textChanged().  Otherwise only emits textChanged() on a valid
-    change.
-
-    The \a update value is currently unused.
-*/
 bool SlackTextPrivate::finishChange(bool update)
 {
     Q_Q(SlackText);
@@ -1106,34 +962,3 @@ void SlackTextPrivate::processKeyEvent(QKeyEvent* event)
         event->ignore();
     }
 }
-
-//qreal SlackTextPrivate::getImplicitWidth() const
-//{
-//    Q_Q(const SlackText);
-//    if (!requireImplicitWidth) {
-//        SlackTextPrivate *d = const_cast<SlackTextPrivate *>(this);
-//        d->requireImplicitWidth = true;
-
-//        if (q->isComponentComplete()) {
-//            // One time cost, only incurred if implicitWidth is first requested after
-//            // componentComplete.
-//            QTextLayout layout(text);
-
-//            QTextOption option = layout.textOption();
-//            option.setTextDirection(layoutDirection);
-//            option.setFlags(QTextOption::IncludeTrailingSpaces);
-//            option.setWrapMode(QTextOption::WrapMode(wrapMode));
-//            option.setAlignment(Qt::Alignment(q->effectiveHAlign()));
-//            layout.setTextOption(option);
-//            layout.setFont(font);
-//            layout.beginLayout();
-
-//            QTextLine line = layout.createLine();
-//            line.setLineWidth(INT_MAX);
-//            d->implicitWidth = qCeil(line.naturalTextWidth()) + q->leftPadding() + q->rightPadding();
-
-//            layout.endLayout();
-//        }
-//    }
-//    return implicitWidth;
-//}
