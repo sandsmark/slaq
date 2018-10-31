@@ -31,7 +31,9 @@ MouseArea {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamId, channel.id, model.Time, ImagesCache.getNameByEmoji(emoji));
+                SlackClient.addReaction(teamId, channel.id, model.Time,
+                                        ImagesCache.getNameByEmoji(emoji),
+                                        model.SlackTimestamp);
             }
         }
     }

@@ -1609,15 +1609,20 @@ void SlackTeamClient::deleteReaction(const QString& channelId, const QDateTime &
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction)
+void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
+                                  const QString &reaction,
+                                  const QString &slackTs)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
-
+    if (!slackTs.isEmpty()) {
+        data.insert(QStringLiteral("timestamp"), slackTs);
+    } else {
+        data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
+    }
     QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
