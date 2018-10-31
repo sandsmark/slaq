@@ -118,7 +118,8 @@ public slots:
     void testLogin();
 
     void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
-    void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
+    void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction,
+                     const QString &slackTs);
 
     void searchMessages(const QString& searchString, int page =  1);
     void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());

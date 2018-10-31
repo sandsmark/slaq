@@ -459,7 +459,9 @@ void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QStri
                               Q_ARG(QString, reaction));
 }
 
-void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString &channelId, const QDateTime &ts, const QString &reaction)
+void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString &channelId,
+                                           const QDateTime &ts, const QString &reaction,
+                                           const QString &slackTs)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -468,7 +470,8 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
     QMetaObject::invokeMethod(_slackClient, "addReaction", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
                               Q_ARG(QDateTime, ts),
-                              Q_ARG(QString, reaction));
+                              Q_ARG(QString, reaction),
+                              Q_ARG(QString, slackTs));
 }
 
 inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, SlackUser* selfUser) {

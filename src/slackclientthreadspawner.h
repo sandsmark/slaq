@@ -120,7 +120,8 @@ public slots:
     void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts);
     void postFile(const QString& teamId, const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
     void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
-    void addReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
+    void addReaction(const QString& teamId, const QString& channelId,
+                     const QDateTime& ts, const QString& reaction, const QString& slackTs);
 
     //from slack thread to main thread
     void onMessageReceived(Message* message);
