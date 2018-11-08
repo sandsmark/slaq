@@ -11,6 +11,8 @@ class SlackText : public QQuickLabel
     Q_OBJECT
 
     Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+    Q_PROPERTY(TextFormat textFormat READ textFormat WRITE setTextFormat NOTIFY textFormatChanged)
+
     Q_PROPERTY(QColor selectionColor READ selectionColor WRITE setSelectionColor NOTIFY selectionColorChanged)
     Q_PROPERTY(QColor selectedTextColor READ selectedTextColor WRITE setSelectedTextColor NOTIFY selectedTextColorChanged)
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY selectionStartChanged)
@@ -61,11 +63,20 @@ public:
     QString text() const;
     void setText(const QString &txt);
 
+    TextFormat textFormat() const;
+    void setTextFormat(TextFormat format);
+
+//    qreal topPadding() const;
+//    void setTopPadding(qreal padding);
+//    void resetTopPadding();
+
     QString hoveredLink() const;
     QString hoveredImage() const;
 
 Q_SIGNALS:
-    void textChanged();
+    //void topPaddingChanged();
+    void textChanged(const QString &text);
+    void textFormatChanged(QQuickText::TextFormat textFormat);
     void selectionColorChanged();
     void selectedTextColorChanged();
     void selectionStartChanged();

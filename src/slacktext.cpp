@@ -43,7 +43,7 @@ qreal alignedY(const qreal textHeight, const qreal itemHeight, int alignment)
 }
 
 SlackText::SlackText(QQuickItem* parent)
-: QQuickLabel(parent)
+    : QQuickLabel(parent)
 {
     d_ptr = new SlackTextPrivate;
     d_ptr->q_ptr = this;
@@ -54,10 +54,110 @@ SlackText::SlackText(QQuickItem* parent)
 
 void SlackText::componentComplete()
 {
-    //Q_D(SlackText);
+    Q_D(SlackText);
 
     QQuickLabel::componentComplete();
-    //d->updateLayout();
+    //qDebug() << "text is rich" << d->m_tp->richText << d->m_tp->extra.isAllocated() << d->m_tp->extra->doc << d->m_tp->updateType;
+    // create frames for quotes
+    // TODO: code highlight?
+
+    if (d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
+        bool modified = false;
+        const QPalette& palette = QGuiApplication::palette();
+        bool singleQuote = false;
+        QTextCursor prevCursor(d->m_tp->extra->doc);
+        while (!prevCursor.isNull() && !prevCursor.atEnd()) {
+            QString searchQuote = "```";
+            prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+            if (prevCursor.isNull()) {
+                prevCursor = QTextCursor(d->m_tp->extra->doc);
+                searchQuote = "`";
+                singleQuote = true;
+                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+            }
+            if (!prevCursor.isNull()) {
+                QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+                if (nextCursor.isNull()) {
+                    qWarning() << "no next cursor found! Assume its will be end of the document";
+                    nextCursor = d->m_tp->extra->doc->rootFrame()->lastCursorPosition();
+                }
+                modified = true;
+                bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
+                d->m_tp->extra->doc->setUndoRedoEnabled(false);
+                //nextCursor.beginEditBlock();
+                prevCursor.movePosition(QTextCursor::NextCharacter,
+                                        QTextCursor::KeepAnchor,
+                                        nextCursor.position() - prevCursor.position());
+                QString selectedText = prevCursor.selectedText();
+                //qDebug() << "found quote" << selectedText << singleQuote;
+                selectedText = selectedText.remove(searchQuote);
+                prevCursor.removeSelectedText();
+
+                if (singleQuote) {
+                    QTextCharFormat chFmt = prevCursor.charFormat();
+                    QFont fnt = chFmt.font();
+                    const QFontMetrics fm(fnt);
+                    const QRectF strRect = fm.boundingRect(selectedText);
+                    //fmt.setPosition(QTextFrameFormat::InFlow);
+                    //fmt.setWidth(QTextLength(QTextLength::FixedLength, strRect.width()));
+                    //fmt.setHeight(QTextLength(QTextLength::FixedLength, strRect.height()));
+
+                    //make some extra space for better visibility
+                    selectedText.prepend(" ");
+                    selectedText += " ";
+                    chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
+                    chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
+                    prevCursor.insertText(selectedText, chFmt);
+                } else {
+                    QTextFrameFormat fmt;
+                    fmt.setPageBreakPolicy(QTextBlockFormat::PageBreak_AlwaysBefore|
+                                           QTextBlockFormat::PageBreak_AlwaysAfter);
+                    fmt.setBorderStyle(QTextFrameFormat::BorderStyle_Dotted);
+                    fmt.setBorder(singleQuote ? 1 : 2);
+                    fmt.setPadding(singleQuote ? 1: 5);
+                    fmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
+                    fmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
+                    QTextFrame *codeBlockFrame = prevCursor.insertFrame(fmt);
+                    QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
+                    blockCursor.insertText(selectedText);
+                }
+
+                //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
+                //nextCursor.endEditBlock();
+                d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
+
+            }
+        }
+        //QTextCursor someCursor(d->m_tp->extra->doc);
+        //qDebug() << "text is rich: " << someCursor.block().text();
+        //        QList<QTextFrame *> frames;
+        //        frames.append(d->m_tp->extra->doc->rootFrame());
+        //        while (!frames.isEmpty()) {
+        //            QTextFrame *textFrame = frames.takeFirst();
+        //            qWarning() << "frame" << textFrame;
+        //            frames.append(textFrame->childFrames());
+        //            QTextCursor cursor = textFrame->firstCursorPosition();
+        //            QTextFrameFormat fmt = textFrame->frameFormat();
+        //            qDebug() << "text" << cursor.block().text() << fmt.padding() << fmt.height().value(100);
+        //            fmt.setBackground(QBrush(QColor(Qt::red)));
+        //            //fmt.setTopMargin(20);
+        //            textFrame->setFrameFormat(fmt);
+        //        }
+        //        for (QTextFrame *textFrame : d->m_tp->extra->doc->rootFrame()->childFrames()) {
+        //            QTextCursor cursor = textFrame->firstCursorPosition();
+        //            QTextFrameFormat fmt = textFrame->frameFormat();
+        //            qDebug() << "text" << cursor.block().text() << fmt.padding();
+        //            fmt.setBackground(QBrush(QColor(Qt::red)));
+        //            //fmt.setTopMargin(20);
+        //            textFrame->setFrameFormat(fmt);
+        //        }
+
+        if (modified) {
+            qDebug() << "updating";
+            d->m_lp->updateSize();
+            d->m_lp->updateLayout();
+        }
+    }
 }
 
 QColor SlackText::selectionColor() const
@@ -209,12 +309,12 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
 QRectF SlackText::positionToRectangle(int pos)
 {
     Q_D(SlackText);
-//    if (d->m_echoMode == NoEcho)
-//        pos = 0;
-//#if QT_CONFIG(im)
-//    else if (pos > d->m_cursor)
-//        pos += d->preeditAreaText().length();
-//#endif
+    //    if (d->m_echoMode == NoEcho)
+    //        pos = 0;
+    //#if QT_CONFIG(im)
+    //    else if (pos > d->m_cursor)
+    //        pos += d->preeditAreaText().length();
+    //#endif
     QTextLine l = d->m_lp->layout.lineForTextPosition(pos);
     //QTextLine l = d->layout.lineForTextPosition(pos);
     if (!l.isValid())
@@ -222,12 +322,12 @@ QRectF SlackText::positionToRectangle(int pos)
     qreal x = l.cursorToX(pos)/* - d->hscroll*/;
     qreal y = l.y()/* - d->vscroll*/;
     qreal w = 1;
-//    if (d->overwriteMode) {
-//        if (pos < text().length())
-//            w = l.cursorToX(pos + 1) - x;
-//        else
-//            w = QFontMetrics(font()).width(QLatin1Char(' ')); // in sync with QTextLine::draw()
-//    }
+    //    if (d->overwriteMode) {
+    //        if (pos < text().length())
+    //            w = l.cursorToX(pos + 1) - x;
+    //        else
+    //            w = QFontMetrics(font()).width(QLatin1Char(' ')); // in sync with QTextLine::draw()
+    //    }
     return QRectF(x, y, w, l.height());
 }
 
@@ -301,7 +401,6 @@ int SlackTextPrivate::positionAt(qreal x, qreal y, QTextLine::CursorPosition pos
 
 }
 
-
 void SlackText::invalidateFontCaches()
 {
     QQuickText::invalidateFontCaches();
@@ -312,9 +411,9 @@ void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
     Q_D(SlackText);
 
     if (d->selectByMouse && event->button() == Qt::LeftButton) {
-//#if QT_CONFIG(im)
-//        d->commitPreedit();
-//#endif
+        //#if QT_CONFIG(im)
+        //        d->commitPreedit();
+        //#endif
         int cursor = d->positionAt(event->localPos());
         qDebug() << __PRETTY_FUNCTION__ << cursor << event->localPos() << event->pos() << event->windowPos();
         d->selectWordAtPos(cursor);
@@ -324,8 +423,8 @@ void SlackText::mouseDoubleClickEvent(QMouseEvent *event)
             d->tripleClickTimer.start();
         }
     } else {
-//        if (d->sendMouseEventToInputContext(event))
-//            return;
+        //        if (d->sendMouseEventToInputContext(event))
+        //            return;
         QQuickLabel::mouseDoubleClickEvent(event);
     }
 }
@@ -407,15 +506,15 @@ void SlackText::mousePressEvent(QMouseEvent *event)
 
     d->pressPos = event->localPos();
 
-//    if (d->sendMouseEventToInputContext(event))
-//        return;
+    //    if (d->sendMouseEventToInputContext(event))
+    //        return;
 
     if (d->selectByMouse) {
         setKeepMouseGrab(false);
         d->selectPressed = true;
         QPointF distanceVector = d->pressPos - d->tripleClickStartPoint;
         if (d->hasPendingTripleClick()
-            && distanceVector.manhattanLength() < QGuiApplication::styleHints()->startDragDistance()) {
+                && distanceVector.manhattanLength() < QGuiApplication::styleHints()->startDragDistance()) {
             event->setAccepted(true);
             selectAll();
             return;
@@ -426,8 +525,8 @@ void SlackText::mousePressEvent(QMouseEvent *event)
     int cursor = d->positionAt(event->localPos());
     d->moveSelectionCursor(cursor, mark);
 
-//    if (d->focusOnPress && !qGuiApp->styleHints()->setFocusOnTouchRelease())
-//        ensureActiveFocus();
+    //    if (d->focusOnPress && !qGuiApp->styleHints()->setFocusOnTouchRelease())
+    //        ensureActiveFocus();
 
     QQuickLabel::mousePressEvent(event);
     event->setAccepted(true);
@@ -450,8 +549,8 @@ void SlackText::mouseMoveEvent(QMouseEvent *event)
 void SlackText::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_D(SlackText);
-//    if (d->sendMouseEventToInputContext(event))
-//        return;
+    //    if (d->sendMouseEventToInputContext(event))
+    //        return;
     if (keepMouseGrab() == false && d->hasSelectedText() == false) {
         QString link = d->m_tp->anchorAt(event->localPos());
         if (!link.isEmpty()) {
@@ -474,8 +573,8 @@ void SlackText::mouseReleaseEvent(QMouseEvent *event)
     }
 #endif
 
-//    if (d->focusOnPress && qGuiApp->styleHints()->setFocusOnTouchRelease())
-//        ensureActiveFocus();
+    //    if (d->focusOnPress && qGuiApp->styleHints()->setFocusOnTouchRelease())
+    //        ensureActiveFocus();
 
     if (!event->isAccepted())
         QQuickLabel::mouseReleaseEvent(event);
@@ -516,10 +615,9 @@ void SlackText::hoverMoveEvent(QHoverEvent *event)
         imglink = d->m_tp->extra->doc->documentLayout()->imageAt(translatedMousePos);
     }
     if (link != d->m_linkHovered) {
+        //qDebug() << link << d->m_linkHovered;
         d->m_linkHovered = link;
-        if (!link.isEmpty()) {
-            emit linkHovered(link);
-        }
+        emit linkHovered(link);
     }
     if (imglink != d->m_imageHovered) {
         d->m_imageHovered = imglink;
@@ -559,9 +657,11 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
         return oldNode;
     }
 
-    d->m_lp->updateType = QQuickTextPrivate::UpdateNone;
+    d->m_tp->updateType = QQuickTextPrivate::UpdateNone;
 
     const qreal dy = alignedY(d->m_lp->layedOutTextRect.height() + d->m_lp->lineHeightOffset(), d->m_lp->availableHeight(), d->m_lp->vAlign) + topPadding();
+
+    //qDebug() << dy << topPadding() << d->m_lp->vAlign;
 
     QQuickTextNode *node = nullptr;
     if (!oldNode)
@@ -581,22 +681,23 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
     if (d->m_lp->richText) {
         const qreal dx = alignedX(d->m_lp->layedOutTextRect.width(), d->m_lp->availableWidth(), effectiveHAlign()) + leftPadding();
         d->m_lp->ensureDoc();
-//        QTextBlock currentBlock = d->m_tp->extra->doc->begin();
 
-//        while (currentBlock.isValid()) {
-//            QTextBlock::iterator it;
-//            for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
-//                QTextFragment currentFragment = it.fragment();
-//                if (currentFragment.isValid()) {
-//                    QTextImageFormat newImageFormat = currentFragment.charFormat().toImageFormat();
-//                    if (newImageFormat.isValid()) {
-//                        //currentFragment.charFormat().setVerticalAlignment(QTextCharFormat::AlignBaseline);
-//                        qDebug() << newImageFormat.name() << newImageFormat.verticalAlignment() << d->m_tp->extra->doc->rootFrame()->childFrames().count();
-//                    }
-//                }
-//            }
-//            currentBlock = currentBlock.next();
-//        }
+        //        QTextBlock currentBlock = d->m_tp->extra->doc->begin();
+
+        //        while (currentBlock.isValid()) {
+        //            QTextBlock::iterator it;
+        //            for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
+        //                QTextFragment currentFragment = it.fragment();
+        //                if (currentFragment.isValid()) {
+        //                    QTextImageFormat newImageFormat = currentFragment.charFormat().toImageFormat();
+        //                    if (newImageFormat.isValid()) {
+        //                        //currentFragment.charFormat().setVerticalAlignment(QTextCharFormat::AlignBaseline);
+        //                        qDebug() << newImageFormat.name() << newImageFormat.verticalAlignment() << d->m_tp->extra->doc->rootFrame()->childFrames().count();
+        //                    }
+        //                }
+        //            }
+        //            currentBlock = currentBlock.next();
+        //        }
 
         node->addTextDocument(QPointF(dx, dy), d->m_tp->extra->doc, color, d->m_lp->style, styleColor, linkColor,
                               d->selectionColor, d->selectedTextColor,
@@ -695,6 +796,31 @@ bool SlackText::persistentSelection() const
     return d->persistentSelection;
 }
 
+void SlackText::setTextFormat(TextFormat format)
+{
+    QQuickLabel::setTextFormat(format);
+}
+
+//qreal SlackText::topPadding() const
+//{
+//    return QQuickLabel::topPadding();
+//}
+
+//void SlackText::setTopPadding(qreal padding)
+//{
+//    QQuickLabel::setTopPadding(padding);
+//}
+
+//void SlackText::resetTopPadding()
+//{
+//    QQuickLabel::resetTopPadding();
+//}
+
+QQuickText::TextFormat SlackText::textFormat() const
+{
+    return QQuickLabel::textFormat();
+}
+
 QString SlackText::text() const
 {
     return QQuickLabel::text();
@@ -702,6 +828,7 @@ QString SlackText::text() const
 
 void SlackText::setText(const QString &txt)
 {
+    Q_D(const SlackText);
     QQuickLabel::setText(txt);
 }
 
@@ -781,7 +908,7 @@ void SlackText::moveCursorSelection(int pos, SelectionMode mode)
 
             finder.setPosition(pos);
             if (pos < text.length() && !finder.boundaryReasons())
-                 finder.toPreviousBoundary();
+                finder.toPreviousBoundary();
             const int cursor = finder.position() != -1 ? finder.position() : 0;
 
             d->setSelection(anchor, cursor - anchor);
@@ -851,92 +978,92 @@ bool SlackTextPrivate::finishChange(bool update)
     Q_Q(SlackText);
 
     Q_UNUSED(update)
-//#if QT_CONFIG(im)
-//    bool inputMethodAttributesChanged = m_textDirty || m_selDirty;
-//#endif
+    //#if QT_CONFIG(im)
+    //    bool inputMethodAttributesChanged = m_textDirty || m_selDirty;
+    //#endif
     bool alignmentChanged = false;
     bool textChanged = false;
 
-//    if (m_textDirty) {
-//        // do validation
-//        bool wasValidInput = m_validInput;
-//        bool wasAcceptable = m_acceptableInput;
-//        m_validInput = true;
-//        m_acceptableInput = true;
-//#if QT_CONFIG(validator)
-//        if (m_validator) {
-//            QString textCopy = m_text;
-//            if (m_maskData)
-//                textCopy = maskString(0, m_text, true);
-//            int cursorCopy = m_cursor;
-//            QValidator::State state = m_validator->validate(textCopy, cursorCopy);
-//            if (m_maskData)
-//                textCopy = m_text;
-//            m_validInput = state != QValidator::Invalid;
-//            m_acceptableInput = state == QValidator::Acceptable;
-//            if (m_validInput && !m_maskData) {
-//                if (m_text != textCopy) {
-//                    internalSetText(textCopy, cursorCopy);
-//                    return true;
-//                }
-//                m_cursor = cursorCopy;
-//            }
-//        }
-//#endif
-//        if (m_maskData)
-//            checkIsValid();
+    //    if (m_textDirty) {
+    //        // do validation
+    //        bool wasValidInput = m_validInput;
+    //        bool wasAcceptable = m_acceptableInput;
+    //        m_validInput = true;
+    //        m_acceptableInput = true;
+    //#if QT_CONFIG(validator)
+    //        if (m_validator) {
+    //            QString textCopy = m_text;
+    //            if (m_maskData)
+    //                textCopy = maskString(0, m_text, true);
+    //            int cursorCopy = m_cursor;
+    //            QValidator::State state = m_validator->validate(textCopy, cursorCopy);
+    //            if (m_maskData)
+    //                textCopy = m_text;
+    //            m_validInput = state != QValidator::Invalid;
+    //            m_acceptableInput = state == QValidator::Acceptable;
+    //            if (m_validInput && !m_maskData) {
+    //                if (m_text != textCopy) {
+    //                    internalSetText(textCopy, cursorCopy);
+    //                    return true;
+    //                }
+    //                m_cursor = cursorCopy;
+    //            }
+    //        }
+    //#endif
+    //        if (m_maskData)
+    //            checkIsValid();
 
-//        if (validateFromState >= 0 && wasValidInput && !m_validInput) {
-//            if (m_transactions.count())
-//                return false;
-//            internalUndo(validateFromState);
-//            m_history.resize(m_undoState);
-//            m_validInput = true;
-//            m_acceptableInput = wasAcceptable;
-//            m_textDirty = false;
-//        }
+    //        if (validateFromState >= 0 && wasValidInput && !m_validInput) {
+    //            if (m_transactions.count())
+    //                return false;
+    //            internalUndo(validateFromState);
+    //            m_history.resize(m_undoState);
+    //            m_validInput = true;
+    //            m_acceptableInput = wasAcceptable;
+    //            m_textDirty = false;
+    //        }
 
-//        if (m_textDirty) {
-//            textChanged = true;
-//            m_textDirty = false;
-//#if QT_CONFIG(im)
-//            m_preeditDirty = false;
-//#endif
-//            alignmentChanged = determineHorizontalAlignment();
-//            if (edited)
-//                emit q->textEdited();
-//            emit q->textChanged();
-//        }
+    //        if (m_textDirty) {
+    //            textChanged = true;
+    //            m_textDirty = false;
+    //#if QT_CONFIG(im)
+    //            m_preeditDirty = false;
+    //#endif
+    //            alignmentChanged = determineHorizontalAlignment();
+    //            if (edited)
+    //                emit q->textEdited();
+    //            emit q->textChanged();
+    //        }
 
-//        updateDisplayText(alignmentChanged);
+    //        updateDisplayText(alignmentChanged);
 
-//        if (m_acceptableInput != wasAcceptable)
-//            emit q->acceptableInputChanged();
-//    }
-//#if QT_CONFIG(im)
-//    if (m_preeditDirty) {
-//        m_preeditDirty = false;
-//        if (determineHorizontalAlignment()) {
-//            alignmentChanged = true;
-//            updateLayout();
-//        }
-//    }
-//#endif
+    //        if (m_acceptableInput != wasAcceptable)
+    //            emit q->acceptableInputChanged();
+    //    }
+    //#if QT_CONFIG(im)
+    //    if (m_preeditDirty) {
+    //        m_preeditDirty = false;
+    //        if (determineHorizontalAlignment()) {
+    //            alignmentChanged = true;
+    //            updateLayout();
+    //        }
+    //    }
+    //#endif
 
     if (m_selDirty) {
         m_selDirty = false;
         emit q->selectionChanged();
     }
 
-//#if QT_CONFIG(im)
-//    inputMethodAttributesChanged |= (m_cursor != m_lastCursorPos);
-//    if (inputMethodAttributesChanged)
-//        q->updateInputMethod();
-//#endif
-//    emitUndoRedoChanged();
+    //#if QT_CONFIG(im)
+    //    inputMethodAttributesChanged |= (m_cursor != m_lastCursorPos);
+    //    if (inputMethodAttributesChanged)
+    //        q->updateInputMethod();
+    //#endif
+    //    emitUndoRedoChanged();
 
-//    if (!emitCursorPositionChanged() && (alignmentChanged || textChanged))
-//        q->updateCursorRectangle();
+    //    if (!emitCursorPositionChanged() && (alignmentChanged || textChanged))
+    //        q->updateCursorRectangle();
 
     return true;
 }

@@ -60,17 +60,17 @@ MouseArea {
                                                         "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
+
             Column {
                 id: columnText
                 height: implicitHeight
                 width: parent.width
                 spacing: 1
-                SlackText {
-                    id: contentLabel
-                    topPadding: Theme.paddingLarge
-                    color: contentLabel.palette.windowText
-                    linkColor: contentLabel.palette.link
 
+                Control {
+                    topPadding: Theme.paddingLarge
+                    width: parent.width - avatarImage.width - parent.spacing
+                    height: contentLabel.text.length == 0 ? topPadding : contentLabel.implicitHeight + topPadding
                     RowLayout {
                         spacing: Theme.paddingMedium/2
                         visible: !sameuser || itemDelegate.containsMouse
@@ -176,81 +176,85 @@ MouseArea {
                                 id: editButton
                                 visible: !isSearchResult && (model.User != null &&
                                                              model.User.userId === teamRoot.slackClient.teamInfo().selfId)
-                                text: contentLabel.readOnly ? "✎" : "💾"
+                                text: "✎"// : "💾"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    if (contentLabel.readOnly == true) {
-                                        contentLabel.readOnly = false
-                                        contentLabel.forceActiveFocus();
-                                    } else {
-                                        updateText()
-                                    }
+//                                    if (contentLabel.readOnly == true) {
+//                                        contentLabel.readOnly = false
+//                                        contentLabel.forceActiveFocus();
+//                                    } else {
+//                                        updateText()
+//                                    }
                                 }
                                 background: Item {}
                             }
                         }
                     }
-
-                    width: parent.width - avatarImage.width - parent.spacing
-                    height: text === "" ? 0 : implicitHeight
-                    //readOnly: true
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.italic: model.IsChanged
-                    verticalAlignment: Text.AlignVCenter
-                    textFormat: Text.RichText
-                    text: model.Text
-                    renderType: Text.QtRendering
-                    selectByMouse: true
-                    onLinkActivated: handleLink(link)
-                    //activeFocusOnPress: false
-                    onLinkHovered:  {
-                        if (link !== "") {
-                            mouseArea.cursorShape = Qt.PointingHandCursor
-                        } else {
-                            mouseArea.cursorShape = Qt.ArrowCursor
+                    SlackText {
+                        id: contentLabel
+                        y: parent.topPadding
+                        color: contentLabel.palette.windowText
+                        linkColor: contentLabel.palette.link
+                        width: parent.width
+                        //readOnly: true
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.italic: model.IsChanged
+                        verticalAlignment: Text.AlignVCenter
+                        textFormat: Text.RichText
+                        text: model.Text
+                        renderType: Text.QtRendering
+                        selectByMouse: true
+                        onLinkActivated: handleLink(link)
+                        //activeFocusOnPress: false
+                        onLinkHovered:  {
+                            if (link !== "") {
+                                mouseArea.cursorShape = Qt.PointingHandCursor
+                            } else {
+                                mouseArea.cursorShape = Qt.ArrowCursor
+                            }
                         }
-                    }
-                    onImageHovered:  {
-                        console.log("image", imagelink)
-                    }
-                    onSelectedTextChanged: {
-                        if (selectedText !== "") {
-                            forceActiveFocus()
-                        } else {
-                            input.forceActiveFocus()
+                        onImageHovered:  {
+                            console.log("image", imagelink)
                         }
-                    }
-//                    onEditingFinished: {
-//                        //undo editing if new focus is not edit save button
-//                        if (editButton.focus == false) {
-//                            undo();
-//                            readOnly = true
-//                            input.forceActiveFocus()
-//                        }
-//                    }
-                    Keys.onReturnPressed: {
-                        if (readOnly == false && event.modifiers == 0) {
-                            updateText()
+                        onSelectedTextChanged: {
+                            if (selectedText !== "") {
+                                forceActiveFocus()
+                            } else {
+                                input.forceActiveFocus()
+                            }
                         }
-                        event.accepted = false
-                    }
-
-                    Keys.onEnterPressed: {
-                        if (readOnly == false && event.modifiers == 0) {
-                            updateText()
+                        //                    onEditingFinished: {
+                        //                        //undo editing if new focus is not edit save button
+                        //                        if (editButton.focus == false) {
+                        //                            undo();
+                        //                            readOnly = true
+                        //                            input.forceActiveFocus()
+                        //                        }
+                        //                    }
+                        Keys.onReturnPressed: {
+                            if (readOnly == false && event.modifiers == 0) {
+                                updateText()
+                            }
+                            event.accepted = false
                         }
-                        event.accepted = false
-                    }
-                    wrapMode: Text.WordWrap
 
-                    // To avoid the border on some styles, we only want a textarea to be able to select things
-                    //background: Item {}
+                        Keys.onEnterPressed: {
+                            if (readOnly == false && event.modifiers == 0) {
+                                updateText()
+                            }
+                            event.accepted = false
+                        }
+                        wrapMode: Text.WordWrap
 
-                    MouseArea {
-                        id: mouseArea
-                        enabled: false //we need this just for changing cursor shape
-                        anchors.fill: parent
-                        propagateComposedEvents: true
+                        // To avoid the border on some styles, we only want a textarea to be able to select things
+                        //background: Item {}
+
+                        MouseArea {
+                            id: mouseArea
+                            enabled: false //we need this just for changing cursor shape
+                            anchors.fill: parent
+                            propagateComposedEvents: true
+                        }
                     }
                 }
 
@@ -318,7 +322,7 @@ MouseArea {
 
                 delegate: Attachment {
                     width: column.width
-                    Layout.maximumWidth: column.width
+                    //Layout.maximumWidth: column.width
                     attachment: Attachments[index]
                     onLinkClicked: handleLink(link)
                 }

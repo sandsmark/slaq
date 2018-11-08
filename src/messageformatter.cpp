@@ -93,16 +93,45 @@ void MessageFormatter::replaceLinks(QString &message)
 
 void MessageFormatter::replaceMarkdown(QString &message)
 {
-    const QPalette& palette = QGuiApplication::palette();
-    const QString& blockStyleBg = palette.color(QPalette::AlternateBase).name(QColor::HexRgb);
-    const QString& blockStyleFg = palette.color(QPalette::HighlightedText).name(QColor::HexRgb);
+//    const QPalette& palette = QGuiApplication::palette();
+//    const QString& blockStyleBg = palette.color(QPalette::AlternateBase).name(QColor::HexRgb);
+//    const QString& blockStyleFg = palette.color(QPalette::HighlightedText).name(QColor::HexRgb);
 
+    message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));
     message.replace(m_boldPattern, QStringLiteral("\\1<b>\\2</b>\\3"));
     message.replace(m_strikePattern, QStringLiteral("\\1<s>\\2</s>\\3"));
-    message.replace(m_codeBlockPattern, QStringLiteral("<blockquote><table style=\"background-color:%1; color:%2; white-space:pre; word-wrap:break-word;\"><tr><td>\\1</td></tr></table></blockquote>").arg(blockStyleBg).arg(blockStyleFg));
-    message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:%1; color:%2; white-space:pre;\"> \\2 </span>\\3").arg(blockStyleBg).arg(blockStyleFg));
-    message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
+
+    QStringList _blocks = message.split("```");
+    // there must be at least 3 blocks and the numbers of blocks must be odd
+    if (_blocks.size() > 2 && _blocks.size() % 2 == 1) {
+        message = _blocks.at(0);
+        for (int i = 1; i < _blocks.size(); i++) {
+            if (i % 2 != 0) {
+                message += "```";
+                message += _blocks[i].replace(" ","&nbsp;");
+                message += "```";
+            } else {
+                message += _blocks.at(i);
+            }
+        }
+    }
+//    int _currentIndex = 0;
+//    int _firstIndex = -1;
+//    do {
+//        _currentIndex = message.indexOf("```", 0);
+//        if (_currentIndex >= 0) {
+//            if (_firstIndex == -1) {
+//                _firstIndex = _currentIndex;
+//            } else {
+//                message.replace(" ","&nbsp;");
+//                //message.replace("```"
+//                _firstIndex = -1;
+//            }
+//        }
+//    } while(_currentIndex != -1);
+    //message.replace(m_codeBlockPattern, QStringLiteral("<blockquote><table style=\"background-color:%1; color:%2; white-space:pre; word-wrap:break-word;\"><tr><td>\\1</td></tr></table></blockquote>").arg(blockStyleBg).arg(blockStyleFg));
+    //message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:%1; color:%2; white-space:pre;\"> \\2 </span>\\3").arg(blockStyleBg).arg(blockStyleFg));
 }
 
 void MessageFormatter::replaceEmoji(QString &message)
@@ -129,7 +158,7 @@ void MessageFormatter::replaceEmoji(QString &message)
             } else {
                 QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
                         .arg(captured)
-                        .arg(QStringLiteral("middle"))
+                        .arg(QStringLiteral("center"))
                         .arg(24)
                         .arg(24);
 
