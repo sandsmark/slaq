@@ -241,9 +241,11 @@ bool MessageListModel::deleteMessage(const QDateTime &ts)
         } else {
             //also check replies
             if (message->messageThread != nullptr) {
+                locker.unlock();
                 if (message->messageThread->deleteMessage(ts) == true) {
                     return true;
                 }
+                locker.relock();
             }
         }
     }

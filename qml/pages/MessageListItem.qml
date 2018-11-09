@@ -162,7 +162,7 @@ MouseArea {
                                 text: "\uD83D\uDDD1"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    teamRoot.deleteMessage(channel.id, model.Time)
+                                    teamRoot.deleteMessage(channel.id, model.Time, model.SlackTimestamp)
                                 }
                                 background: Item {}
                             }

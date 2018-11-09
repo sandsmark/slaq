@@ -423,7 +423,8 @@ void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QStrin
                               Q_ARG(QString, slackTs));
 }
 
-void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId, const QDateTime &ts)
+void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId,
+                                             const QDateTime &ts, const QString& slackTs)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -431,7 +432,8 @@ void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QStrin
     }
     QMetaObject::invokeMethod(_slackClient, "deleteMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(QDateTime, ts));
+                              Q_ARG(QDateTime, ts),
+                              Q_ARG(QString, slackTs));
 }
 
 void SlackClientThreadSpawner::postFile(const QString& teamId, const QString &channelId, const QString &filePath, const QString &title, const QString &comment)
