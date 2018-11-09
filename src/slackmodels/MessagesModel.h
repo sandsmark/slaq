@@ -266,6 +266,7 @@ struct Message {
     void setData(const QJsonObject &data);
 
     QString text;
+    QString originalText;
     QString ts;
     QString type;
     QString subtype;
@@ -299,7 +300,7 @@ struct Message {
 
     QJsonObject toJson() {
         QJsonObject jo;
-        jo["text"] = text;
+        jo["text"] = originalText;
         jo["type"] = type;
         jo["subtype"] = subtype;
         jo["channel_id"] = channel_id;
@@ -320,6 +321,7 @@ class MessageListModel : public QAbstractListModel
 public:
     enum MessageFields {
         Text,
+        OriginalText,
         User,
         Time,
         SlackTimestamp,

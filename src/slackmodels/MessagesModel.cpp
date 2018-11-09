@@ -45,6 +45,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     switch(role) {
     case Text:
         return message->text;
+    case OriginalText:
+        return message->originalText;
     case User:
         if (message->user.isNull()) {
             message->user = m_usersModel->user(message->user_id);
@@ -630,6 +632,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
 {
     QHash<int, QByteArray> names;
     names[Text] = "Text";
+    names[OriginalText] = "OriginalText";
     names[User] = "User";
     names[Time] = "Time";
     names[SlackTimestamp] = "SlackTimestamp";
@@ -671,6 +674,7 @@ void Message::setData(const QJsonObject &data)
 //    Q_ASSERT(time.isValid());
 
     text = data.value(QStringLiteral("text")).toString();
+    originalText = text;
     const QJsonValue chan_ = data.value(QStringLiteral("channel"));
     if (chan_.isString()) {
         channel_id = chan_.toString();

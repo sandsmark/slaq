@@ -51,39 +51,30 @@ SlackText::SlackText(QQuickItem* parent)
     d->init();
 }
 
-
-void SlackText::componentComplete()
-{
-    Q_D(SlackText);
-
-    QQuickLabel::componentComplete();
-    //qDebug() << "text is rich" << d->m_tp->richText << d->m_tp->extra.isAllocated() << d->m_tp->extra->doc << d->m_tp->updateType;
-    // create frames for quotes
-    // TODO: code highlight?
-
-    if (d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
-        bool modified = false;
+void SlackTextPrivate::prepareText() {
+    if (m_dirty && m_tp->extra.isAllocated() && m_tp->extra->doc) {
+        m_modified = false;
         const QPalette& palette = QGuiApplication::palette();
         bool singleQuote = false;
-        QTextCursor prevCursor(d->m_tp->extra->doc);
+        QTextCursor prevCursor(m_tp->extra->doc);
         while (!prevCursor.isNull() && !prevCursor.atEnd()) {
             QString searchQuote = "```";
-            prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+            prevCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
             if (prevCursor.isNull()) {
-                prevCursor = QTextCursor(d->m_tp->extra->doc);
+                prevCursor = QTextCursor(m_tp->extra->doc);
                 searchQuote = "`";
                 singleQuote = true;
-                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+                prevCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
             }
             if (!prevCursor.isNull()) {
-                QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+                QTextCursor nextCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
                 if (nextCursor.isNull()) {
                     qWarning() << "no next cursor found! Assume its will be end of the document";
-                    nextCursor = d->m_tp->extra->doc->rootFrame()->lastCursorPosition();
+                    nextCursor = m_tp->extra->doc->rootFrame()->lastCursorPosition();
                 }
-                modified = true;
-                bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
-                d->m_tp->extra->doc->setUndoRedoEnabled(false);
+                m_modified = true;
+                bool isundo = m_tp->extra->doc->isUndoRedoEnabled();
+                m_tp->extra->doc->setUndoRedoEnabled(false);
                 //nextCursor.beginEditBlock();
                 prevCursor.movePosition(QTextCursor::NextCharacter,
                                         QTextCursor::KeepAnchor,
@@ -124,41 +115,57 @@ void SlackText::componentComplete()
 
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
                 //nextCursor.endEditBlock();
-                d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
-
+                m_tp->extra->doc->setUndoRedoEnabled(isundo);
             }
         }
-        //QTextCursor someCursor(d->m_tp->extra->doc);
-        //qDebug() << "text is rich: " << someCursor.block().text();
-        //        QList<QTextFrame *> frames;
-        //        frames.append(d->m_tp->extra->doc->rootFrame());
-        //        while (!frames.isEmpty()) {
-        //            QTextFrame *textFrame = frames.takeFirst();
-        //            qWarning() << "frame" << textFrame;
-        //            frames.append(textFrame->childFrames());
-        //            QTextCursor cursor = textFrame->firstCursorPosition();
-        //            QTextFrameFormat fmt = textFrame->frameFormat();
-        //            qDebug() << "text" << cursor.block().text() << fmt.padding() << fmt.height().value(100);
-        //            fmt.setBackground(QBrush(QColor(Qt::red)));
-        //            //fmt.setTopMargin(20);
-        //            textFrame->setFrameFormat(fmt);
-        //        }
-        //        for (QTextFrame *textFrame : d->m_tp->extra->doc->rootFrame()->childFrames()) {
-        //            QTextCursor cursor = textFrame->firstCursorPosition();
-        //            QTextFrameFormat fmt = textFrame->frameFormat();
-        //            qDebug() << "text" << cursor.block().text() << fmt.padding();
-        //            fmt.setBackground(QBrush(QColor(Qt::red)));
-        //            //fmt.setTopMargin(20);
-        //            textFrame->setFrameFormat(fmt);
-        //        }
-
-        if (modified) {
+        if (m_modified) {
             qDebug() << "updating";
-            d->m_lp->updateSize();
-            d->m_lp->updateLayout();
+            m_lp->updateSize();
+            m_lp->updateLayout();
+            m_modified = false;
         }
+        m_dirty = false;
     }
 }
+
+void SlackText::componentComplete()
+{
+    Q_D(SlackText);
+
+    QQuickLabel::componentComplete();
+    d->prepareText();
+    //qDebug() << "text is rich" << d->m_tp->richText << d->m_tp->extra.isAllocated() << d->m_tp->extra->doc << d->m_tp->updateType;
+    // create frames for quotes
+    // TODO: code highlight?
+
+
+    //QTextCursor someCursor(d->m_tp->extra->doc);
+    //qDebug() << "text is rich: " << someCursor.block().text();
+    //        QList<QTextFrame *> frames;
+    //        frames.append(d->m_tp->extra->doc->rootFrame());
+    //        while (!frames.isEmpty()) {
+    //            QTextFrame *textFrame = frames.takeFirst();
+    //            qWarning() << "frame" << textFrame;
+    //            frames.append(textFrame->childFrames());
+    //            QTextCursor cursor = textFrame->firstCursorPosition();
+    //            QTextFrameFormat fmt = textFrame->frameFormat();
+    //            qDebug() << "text" << cursor.block().text() << fmt.padding() << fmt.height().value(100);
+    //            fmt.setBackground(QBrush(QColor(Qt::red)));
+    //            //fmt.setTopMargin(20);
+    //            textFrame->setFrameFormat(fmt);
+    //        }
+    //        for (QTextFrame *textFrame : d->m_tp->extra->doc->rootFrame()->childFrames()) {
+    //            QTextCursor cursor = textFrame->firstCursorPosition();
+    //            QTextFrameFormat fmt = textFrame->frameFormat();
+    //            qDebug() << "text" << cursor.block().text() << fmt.padding();
+    //            fmt.setBackground(QBrush(QColor(Qt::red)));
+    //            //fmt.setTopMargin(20);
+    //            textFrame->setFrameFormat(fmt);
+    //        }
+
+
+}
+
 
 QColor SlackText::selectionColor() const
 {
@@ -828,8 +835,10 @@ QString SlackText::text() const
 
 void SlackText::setText(const QString &txt)
 {
-    Q_D(const SlackText);
+    Q_D(SlackText);
     QQuickLabel::setText(txt);
+    d->m_dirty = true;
+    d->prepareText();
 }
 
 QString SlackText::hoveredLink() const

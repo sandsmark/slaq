@@ -459,5 +459,6 @@
         <file>icons/filetypes/xz.svg</file>
         <file>icons/filetypes/zsh.svg</file>
         <file>qml/components/EmojisGrid.qml</file>
+        <file>qml/dialogs/EditMessageDialog.qml</file>
     </qresource>
 </RCC>

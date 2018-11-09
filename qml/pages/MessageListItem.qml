@@ -19,13 +19,7 @@ MouseArea {
     // counts as same if previouse user is same and last message was within 3 minutes
     readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000
 
-    function updateText() {
-        var editedText = contentLabel.getText(0, contentLabel.text.length);
-        SlackClient.updateMessage(teamRoot.teamId, channel.id, editedText, model.Time, model.SlackTimestamp)
-        contentLabel.focus = false
-        contentLabel.readOnly = true
-        input.forceActiveFocus()
-    }
+    property var messageInput
 
     Connections {
         target: emojiSelector
@@ -99,9 +93,9 @@ MouseArea {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     var cursorpos = input.messageInput.cursorPosition
-                                    input.messageInput.insert(input.messageInput.cursorPosition, "@" + User.username + " ")
-                                    input.messageInput.forceActiveFocus()
-                                    input.messageInput.cursorPosition = cursorpos + User.username.length + 2
+                                    messageInput.messageInput.insert(input.messageInput.cursorPosition, "@" + User.username + " ")
+                                    messageInput.messageInput.forceActiveFocus()
+                                    messageInput.messageInput.cursorPosition = cursorpos + User.username.length + 2
                                 }
                             }
                         }
@@ -176,15 +170,18 @@ MouseArea {
                                 id: editButton
                                 visible: !isSearchResult && (model.User != null &&
                                                              model.User.userId === teamRoot.slackClient.teamInfo().selfId)
-                                text: "✎"// : "💾"
+                                text: input.updating ? "💾" : "✎"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-//                                    if (contentLabel.readOnly == true) {
-//                                        contentLabel.readOnly = false
-//                                        contentLabel.forceActiveFocus();
-//                                    } else {
-//                                        updateText()
-//                                    }
+                                    messageInput.messageInput.text = model.OriginalText
+                                    messageInput.updating = true
+                                    messageInput.messageTime = model.Time
+                                    messageInput.messageSlackTime = model.SlackTimestamp
+                                    messageInput.messageInput.forceActiveFocus();
+//                                    editMessageDialog.teamId = teamRoot.teamId
+//                                    editMessageDialog.channelId = channel.id
+//                                    editMessageDialog.messageText = model.OriginalText
+//                                    editMessageDialog.open()
                                 }
                                 background: Item {}
                             }
@@ -220,30 +217,10 @@ MouseArea {
                             if (selectedText !== "") {
                                 forceActiveFocus()
                             } else {
-                                input.forceActiveFocus()
+                                messageInput.forceActiveFocus()
                             }
-                        }
-                        //                    onEditingFinished: {
-                        //                        //undo editing if new focus is not edit save button
-                        //                        if (editButton.focus == false) {
-                        //                            undo();
-                        //                            readOnly = true
-                        //                            input.forceActiveFocus()
-                        //                        }
-                        //                    }
-                        Keys.onReturnPressed: {
-                            if (readOnly == false && event.modifiers == 0) {
-                                updateText()
-                            }
-                            event.accepted = false
                         }
 
-                        Keys.onEnterPressed: {
-                            if (readOnly == false && event.modifiers == 0) {
-                                updateText()
-                            }
-                            event.accepted = false
-                        }
                         wrapMode: Text.WordWrap
 
                         // To avoid the border on some styles, we only want a textarea to be able to select things

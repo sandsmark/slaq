@@ -42,17 +42,25 @@ Drawer {
         }
         MessageListView {
             id: repliesListView
+            messageInput: msgInput
             Layout.fillWidth: true
             Layout.fillHeight: true
             isReplies: true
         }
 
         MessageInput {
+            id: msgInput
             Layout.fillWidth: true
             placeholder: qsTr("Message %1%2").arg("#").arg(channelName)
             onSendMessage: {
                 if (parentMessage != undefined) {
-                    SlackClient.postMessage(teamRoot.teamId, channel.id, content, modelMsg.ThreadTs)
+                    if (updating) {
+                        SlackClient.updateMessage(teamId, channel.id, content,
+                                                  messageTime, messageSlackTime)
+                        updating = false
+                    } else {
+                        SlackClient.postMessage(teamRoot.teamId, channel.id, content, modelMsg.ThreadTs)
+                    }
                 }
             }
 

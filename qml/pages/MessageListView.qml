@@ -20,6 +20,7 @@ ListView {
     property bool inputEnabled: false
     property bool isReplies: false
     property var latestRead
+    property var messageInput
 
     onAppActiveChanged: {
         markLatest()
@@ -78,6 +79,7 @@ ListView {
     delegate: MessageListItem {
         width: msgListView.width - msgListView.ScrollBar.vertical.width - Theme.paddingSmall
         isReplies: msgListView.isReplies
+        messageInput: msgListView.messageInput
     }
 
     section {

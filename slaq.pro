@@ -104,7 +104,9 @@ DISTFILES += \
     qml/*.qml \
     scripts/*.py \
     qml/components/*.qml \
-    qml/components/EmojisGrid.qml
+    qml/components/EmojisGrid.qml \
+    qml/dialogs/EditMessageDialog.qml \
+    qml/dialogs/EditMessageDialog.qml
 
 RESOURCES += \
     qml.qrc \

@@ -30,6 +30,7 @@ ApplicationWindow {
     property alias errorDialog: errorDialog
     property alias dndDialog: dndDialog
     property alias filesSharesList: filesSharesList
+    property alias editMessageDialog: editMessageDialog
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
@@ -135,6 +136,7 @@ ApplicationWindow {
     LoginDialog { id: loginDialog }
     AboutDialog { id: aboutDialog }
     DndDialog { id: dndDialog }
+    EditMessageDialog { id: editMessageDialog }
 
     color: palette.window
 

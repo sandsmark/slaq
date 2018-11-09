@@ -39,6 +39,8 @@ public:
       , m_selDirty(false)
       , textLayoutDirty(false)
       , persistentSelection(false)
+      , m_modified(false)
+      , m_dirty(false)
       , m_cursor(0)
       , m_separator(0)
       , m_maxLength(32767)
@@ -94,6 +96,8 @@ public:
     bool m_separator : 1;
     bool textLayoutDirty:1;
     bool persistentSelection:1;
+    bool m_modified : 1;
+    bool m_dirty : 1;
 
     int nextMaskBlank(int pos)
     {
@@ -176,7 +180,7 @@ public:
     void processKeyEvent(QKeyEvent* ev);
 
     void updateLayout();
-
+    void prepareText();
 private:
     //void removeSelectedText();
     //void internalSetText(const QString &txt, int pos = -1, bool edited = true);
