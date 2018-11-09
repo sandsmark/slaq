@@ -170,15 +170,19 @@ MouseArea {
                                 id: editButton
                                 visible: !isSearchResult && (model.User != null &&
                                                              model.User.userId === teamRoot.slackClient.teamInfo().selfId)
-                                text: input.updating ? "💾" : "✎"
+                                text: input.updating ? "✖" : "✎" //"💾"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    messageInput.messageInput.text = model.OriginalText
-                                    messageInput.updating = true
-                                    messageInput.messageTime = model.Time
-                                    messageInput.messageSlackTime = model.SlackTimestamp
-                                    messageInput.messageInput.forceActiveFocus();
-//                                    editMessageDialog.teamId = teamRoot.teamId
+                                    if (messageInput.updating === true) {
+                                        messageInput.updating = false
+                                    } else {
+                                        messageInput.messageInput.text = model.OriginalText
+                                        messageInput.updating = true
+                                        messageInput.messageTime = model.Time
+                                        messageInput.messageSlackTime = model.SlackTimestamp
+                                        messageInput.messageInput.forceActiveFocus();
+                                    }
+                                    //                                    editMessageDialog.teamId = teamRoot.teamId
 //                                    editMessageDialog.channelId = channel.id
 //                                    editMessageDialog.messageText = model.OriginalText
 //                                    editMessageDialog.open()
