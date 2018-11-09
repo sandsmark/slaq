@@ -1662,12 +1662,16 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content,
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts)
+void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
-    data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+    if (!slackTs.isEmpty()) {
+        data.insert(QStringLiteral("ts"), slackTs);
+    } else {
+        data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+    }
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.delete"), data);
