@@ -25,6 +25,7 @@ Control {
         font.family: "Twitter Color Emoji"
         font.pixelSize: parent.height - 2
         font.italic: false
+        font.underline: false
         renderType: Text.QtRendering
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter

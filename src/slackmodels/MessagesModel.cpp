@@ -45,6 +45,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     switch(role) {
     case Text:
         return message->text;
+    case Subtype:
+        return message->subtype;
     case OriginalText:
         return message->originalText;
     case User:
@@ -634,6 +636,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
 {
     QHash<int, QByteArray> names;
     names[Text] = "Text";
+    names[Subtype] = "Subtype";
     names[OriginalText] = "OriginalText";
     names[User] = "User";
     names[Time] = "Time";

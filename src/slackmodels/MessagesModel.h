@@ -321,6 +321,7 @@ class MessageListModel : public QAbstractListModel
 public:
     enum MessageFields {
         Text,
+        Subtype,
         OriginalText,
         User,
         Time,

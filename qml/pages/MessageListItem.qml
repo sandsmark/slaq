@@ -196,6 +196,7 @@ MouseArea {
                         //readOnly: true
                         font.pixelSize: Theme.fontSizeLarge
                         font.italic: model.IsChanged
+                        font.underline: model.Subtype === "me_message"
                         verticalAlignment: Text.AlignVCenter
                         textFormat: Text.RichText
                         text: model.Text

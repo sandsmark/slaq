@@ -5,6 +5,7 @@ RoundButton {
     id: emojiButton
     font.bold: true
     font.italic: false
+    font.underline: false
 
     contentItem: Label {
         text: emojiButton.text

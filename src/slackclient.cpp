@@ -219,7 +219,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
     if (type != "pong" && type != "user_typing") {
         qDebug() << "stream message type" << type;
     }
-//    qDebug().noquote() << QJsonDocument(message).toJson();
+    //qDebug().noquote() << QJsonDocument(message).toJson();
 
     if (type == QStringLiteral("message")) {
         parseMessageUpdate(message);
@@ -1631,15 +1631,24 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
+    QNetworkReply *reply = nullptr;
     data.insert(QStringLiteral("channel"), channelId);
-    data.insert(QStringLiteral("text"), content);
-    data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
-    data.insert(QStringLiteral("parse"), QStringLiteral("full"));
     if (thread_ts.isValid()) {
         data.insert(QStringLiteral("thread_ts"), dateTimeToSlack(thread_ts));
     }
 
-    QNetworkReply *reply = executePost(QStringLiteral("chat.postMessage"), data);
+    if (content.startsWith("/me ")) {
+        content.remove("/me ");
+        data.insert(QStringLiteral("text"), content);
+        reply = executePost(QStringLiteral("chat.meMessage"), data);
+    } else {
+        data.insert(QStringLiteral("text"), content);
+        data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
+        data.insert(QStringLiteral("parse"), QStringLiteral("full"));
+        reply = executePost(QStringLiteral("chat.postMessage"), data);
+    }
+
+
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
