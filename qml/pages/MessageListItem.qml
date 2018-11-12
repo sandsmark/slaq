@@ -182,10 +182,6 @@ MouseArea {
                                         messageInput.messageSlackTime = model.SlackTimestamp
                                         messageInput.messageInput.forceActiveFocus();
                                     }
-                                    //                                    editMessageDialog.teamId = teamRoot.teamId
-//                                    editMessageDialog.channelId = channel.id
-//                                    editMessageDialog.messageText = model.OriginalText
-//                                    editMessageDialog.open()
                                 }
                                 background: Item {}
                             }
@@ -215,7 +211,18 @@ MouseArea {
                             }
                         }
                         onImageHovered:  {
-                            console.log("image", imagelink)
+                            if (imagelink.length <= 0) {
+                                imgToolTip.close()
+                                return
+                            }
+
+//                            console.log("image: `" + imagelink +"` " + imagelink.length + " " +
+//                                        imgToolTip.visible)
+                            imgToolTip.text = imagelink.replace("image://emoji/", "")
+                            imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
+                            imgToolTip.y = mapToItem(msgListView, x, 0).y -
+                                    (imgToolTip.height + Theme.paddingSmall)
+                            imgToolTip.open()
                         }
                         onSelectedTextChanged: {
                             if (selectedText !== "") {

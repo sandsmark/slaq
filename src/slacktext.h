@@ -87,7 +87,7 @@ Q_SIGNALS:
     void persistentSelectionChanged();
 
     void linkHovered(const QString &link);
-    void imageHovered(const QString &imagelink);
+    void imageHovered(const QString &imagelink, qreal x, qreal y);
 
 public Q_SLOTS:
     void copy();

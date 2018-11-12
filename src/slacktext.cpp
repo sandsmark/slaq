@@ -628,9 +628,7 @@ void SlackText::hoverMoveEvent(QHoverEvent *event)
     }
     if (imglink != d->m_imageHovered) {
         d->m_imageHovered = imglink;
-        if (!imglink.isEmpty()) {
-            emit imageHovered(imglink);
-        }
+        emit imageHovered(imglink, event->posF().x(), event->posF().y());
     }
     QQuickLabel::hoverMoveEvent(event);
 }
@@ -638,7 +636,12 @@ void SlackText::hoverMoveEvent(QHoverEvent *event)
 void SlackText::hoverLeaveEvent(QHoverEvent *event)
 {
     //qDebug() << __PRETTY_FUNCTION__ << event->pos();
+    Q_D(SlackText);
     QQuickLabel::hoverLeaveEvent(event);
+    d->m_linkHovered = "";
+    emit linkHovered(d->m_linkHovered);
+    d->m_imageHovered = "";
+    emit imageHovered(d->m_imageHovered, 0, 0);
 }
 
 /**
