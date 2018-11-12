@@ -320,6 +320,7 @@ class MessageListModel : public QAbstractListModel
 public:
     enum MessageFields {
         Text,
+        Subtype,
         User,
         Time,
         SlackTimestamp,

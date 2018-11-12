@@ -45,6 +45,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     switch(role) {
     case Text:
         return message->text;
+    case Subtype:
+        return message->subtype;
     case User:
         if (message->user.isNull()) {
             message->user = m_usersModel->user(message->user_id);
@@ -632,6 +634,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
 {
     QHash<int, QByteArray> names;
     names[Text] = "Text";
+    names[Subtype] = "Subtype";
     names[User] = "User";
     names[Time] = "Time";
     names[SlackTimestamp] = "SlackTimestamp";
