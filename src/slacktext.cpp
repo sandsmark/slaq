@@ -782,24 +782,6 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
     if (d->m_lp->richText) {
         const qreal dx = alignedX(d->m_lp->layedOutTextRect.width(), d->m_lp->availableWidth(), effectiveHAlign()) + leftPadding();
         d->m_lp->ensureDoc();
-
-        //        QTextBlock currentBlock = d->m_tp->extra->doc->begin();
-
-        //        while (currentBlock.isValid()) {
-        //            QTextBlock::iterator it;
-        //            for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
-        //                QTextFragment currentFragment = it.fragment();
-        //                if (currentFragment.isValid()) {
-        //                    QTextImageFormat newImageFormat = currentFragment.charFormat().toImageFormat();
-        //                    if (newImageFormat.isValid()) {
-        //                        //currentFragment.charFormat().setVerticalAlignment(QTextCharFormat::AlignBaseline);
-        //                        qDebug() << newImageFormat.name() << newImageFormat.verticalAlignment() << d->m_tp->extra->doc->rootFrame()->childFrames().count();
-        //                    }
-        //                }
-        //            }
-        //            currentBlock = currentBlock.next();
-        //        }
-
         node->addTextDocument(QPointF(dx, dy), d->m_tp->extra->doc, color, d->m_lp->style, styleColor, linkColor,
                               d->selectionColor, d->selectedTextColor,
                               d->selectionStart(), d->selectionEnd() - 1);
