@@ -156,9 +156,9 @@ void MessageFormatter::replaceEmoji(QString &message)
             if (imageCache->isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
                 message.replace(":" + captured + ":", imageCache->getEmojiByName(captured));
             } else {
-                QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
+                QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" vertical-align:\"%2\" width=\"%3\" height=\"%4\" />"))
                         .arg(captured)
-                        .arg(QStringLiteral("center"))
+                        .arg(QStringLiteral("middle"))
                         .arg(24)
                         .arg(24);
 

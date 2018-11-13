@@ -87,6 +87,7 @@ public:
     QQuickTextNode *textNode;
     SlackText* q_ptr { nullptr };
     MaskInputData *m_maskData;
+    QImage frameImage;
 
     SlackText::SelectionMode mouseSelectionMode;
 
