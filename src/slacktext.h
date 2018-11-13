@@ -104,6 +104,8 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void selectionChanged();
+    void prepareText();
+    void onImageLoaded(const QString &id);
 
 protected:
     void componentComplete() override;
@@ -124,6 +126,7 @@ protected:
 
 private:
     void invalidateFontCaches();
+    void insertImage(QTextCursor &cursor, const QString &url, const QImage &img);
 
     QColor m_selectionColor;
     QColor m_selectedTextColor;

@@ -123,7 +123,7 @@ bool ImagesCache::isCached(const QString& id) {
 //suppose to be run in non-gui thread
 QImage ImagesCache::image(const QString &id)
 {
-    qDebug() << "request for image id" << id;
+    //qDebug() << "request for image id" << id;
     QImage image_;
     QString path_;
     bool cached_ = false;

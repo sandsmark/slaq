@@ -53,32 +53,75 @@ SlackText::SlackText(QQuickItem* parent)
     d->init();
 }
 
-void SlackTextPrivate::prepareText() {
-    if (m_dirty && m_tp->extra.isAllocated() && m_tp->extra->doc) {
-        m_modified = false;
+void SlackText::insertImage(QTextCursor& cursor, const QString& url, const QImage& img) {
+    Q_D(SlackText);
+    d->m_tp->extra->doc->addResource(QTextDocument::ImageResource, QUrl(url), img);
+    QTextImageFormat fmt;
+    fmt.setWidth(32);
+    fmt.setHeight(32);
+    fmt.setName(url);
+    fmt.setVerticalAlignment(QTextCharFormat::AlignMiddle);
+    cursor.insertImage(fmt, QTextFrameFormat::InFlow);
+}
+
+void SlackText::onImageLoaded(const QString &id)
+{
+    //qDebug() << __PRETTY_FUNCTION__ << id;
+    Q_D(SlackText);
+    ImagesCache* imageCache = ImagesCache::instance();
+
+    int pos = d->m_requestedImages.value(id, -1);
+    if (pos >= 0 && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
+        d->m_requestedImages.remove(id);
+        if (d->m_requestedImages.size() == 0) {
+            disconnect(imageCache, &ImagesCache::imageLoaded,
+                              this, &SlackText::onImageLoaded);
+        }
+
+        QImage img = imageCache->image(id);
+        if (img.isNull()) {
+            qWarning() << "Still no image for ID:" << id;
+            return;
+        }
+        const QString imgUrl = "image://emoji/"+id;
+        bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
+        d->m_tp->extra->doc->setUndoRedoEnabled(false);
+        QTextCursor cursor(d->m_tp->extra->doc);
+        cursor.setPosition(pos);
+        insertImage(cursor, imgUrl, img);
+        d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
+        d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());
+        d->m_lp->updateSize();
+        d->m_lp->updateLayout();
+    }
+}
+
+void SlackText::prepareText() {
+    Q_D(SlackText);
+    if (d->m_dirty && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
+        d->m_modified = false;
         const QPalette& palette = QGuiApplication::palette();
         bool singleQuote = false;
-        QTextCursor prevCursor(m_tp->extra->doc);
+        QTextCursor prevCursor(d->m_tp->extra->doc);
         ImagesCache* imageCache = ImagesCache::instance();
         QString searchQuote = "```";
         while (!prevCursor.isNull() && !prevCursor.atEnd()) {
-            prevCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
+            prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
             if (prevCursor.isNull()) {
-                prevCursor = QTextCursor(m_tp->extra->doc);
+                prevCursor = QTextCursor(d->m_tp->extra->doc);
                 searchQuote = "`";
                 singleQuote = true;
-                prevCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
+                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
             }
             if (!prevCursor.isNull()) {
-                QTextCursor nextCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
+                QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
                 if (nextCursor.isNull()) {
                     qWarning() << "no next cursor found! Assume its will be end of the document";
-                    nextCursor = m_tp->extra->doc->rootFrame()->lastCursorPosition();
+                    nextCursor = d->m_tp->extra->doc->rootFrame()->lastCursorPosition();
                 }
-                m_modified = true;
-                bool isundo = m_tp->extra->doc->isUndoRedoEnabled();
-                m_tp->extra->doc->setUndoRedoEnabled(false);
-                //nextCursor.beginEditBlock();
+                d->m_modified = true;
+                bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
+                d->m_tp->extra->doc->setUndoRedoEnabled(false);
                 prevCursor.movePosition(QTextCursor::NextCharacter,
                                         QTextCursor::KeepAnchor,
                                         nextCursor.position() - prevCursor.position());
@@ -91,19 +134,11 @@ void SlackTextPrivate::prepareText() {
                     QTextCharFormat chFmt = prevCursor.charFormat();
                     QFont fnt = chFmt.font();
                     const QFontMetrics fm(fnt);
-                    const QRectF strRect = fm.boundingRect(selectedText);
-                    //fmt.setPosition(QTextFrameFormat::InFlow);
-                    //fmt.setWidth(QTextLength(QTextLength::FixedLength, strRect.width()));
-                    //fmt.setHeight(QTextLength(QTextLength::FixedLength, strRect.height()));
-
                     //make some extra space for better visibility
                     selectedText.prepend(" ");
                     selectedText += " ";
-                    //chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
-                    QVariant val = m_tp->extra->doc->resource(QTextDocument::ImageResource, QUrl("frames://frame"));
-                    QImage image = qvariant_cast<QImage>(val).scaled(strRect.size().toSize());
-                    qDebug() << "res image" << image;
-                    chFmt.setBackground(image);
+                    const QRectF strRect = fm.boundingRect(selectedText);
+                    chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
                     chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
                     prevCursor.insertText(selectedText, chFmt);
                 } else {
@@ -121,25 +156,23 @@ void SlackTextPrivate::prepareText() {
                 }
 
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
-                //nextCursor.endEditBlock();
-                m_tp->extra->doc->setUndoRedoEnabled(isundo);
+                d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
             }
         }
-#if 1
         //search for emojis
-        prevCursor = QTextCursor(m_tp->extra->doc);
+        prevCursor = QTextCursor(d->m_tp->extra->doc);
         searchQuote = ":";
         while (!prevCursor.isNull() && !prevCursor.atEnd()) {
-            prevCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
+            prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
             if (!prevCursor.isNull()) {
-                QTextCursor nextCursor = m_tp->extra->doc->find(searchQuote, prevCursor);
+                QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
                 if (nextCursor.isNull()) {
                     qWarning() << "no next cursor found! not an emoji";
                     break;
                 }
 
-                bool isundo = m_tp->extra->doc->isUndoRedoEnabled();
-                m_tp->extra->doc->setUndoRedoEnabled(false);
+                bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
+                d->m_tp->extra->doc->setUndoRedoEnabled(false);
                 //nextCursor.beginEditBlock();
                 prevCursor.movePosition(QTextCursor::NextCharacter,
                                         QTextCursor::KeepAnchor,
@@ -148,48 +181,38 @@ void SlackTextPrivate::prepareText() {
                 selectedText = selectedText.remove(searchQuote);
                 EmojiInfo* einfo = imageCache->getEmojiInfo(selectedText);
                 if (einfo != nullptr) {
-                    m_modified = true;
+                    d->m_modified = true;
                     prevCursor.removeSelectedText();
-                    qDebug() << "found emoji" << selectedText << einfo << einfo->image();
+                    //qDebug() << "found emoji" << selectedText << einfo << einfo->image();
                     if (imageCache->isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
                         prevCursor.insertText(einfo->unified());
                     } else {
                         const QString imgUrl = "image://emoji/"+selectedText;
                         QImage img = imageCache->image(selectedText);
                         if (img.isNull()) {
-                            qWarning() << "img for" << selectedText << "not ready";
+                            connect(imageCache, &ImagesCache::imageLoaded,
+                                              this, &SlackText::onImageLoaded, Qt::UniqueConnection);
+                            d->m_requestedImages[selectedText] = prevCursor.position();
+                            //qWarning() << "img for" << selectedText << "not ready";
                         } else {
-                            qWarning() << "img for" << selectedText << "ready" << img;
+                            insertImage(prevCursor, imgUrl, img);
                         }
-                        m_tp->extra->doc->addResource(QTextDocument::ImageResource, QUrl(imgUrl), img);
-                        QTextImageFormat fmt;
-                        fmt.setWidth(32);
-                        fmt.setHeight(32);
-                        fmt.setName(imgUrl);
-
-                        prevCursor.insertImage(fmt, QTextFrameFormat::InFlow);
-                        prevCursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
-                        prevCursor.insertText("A");
-                        prevCursor.movePosition(QTextCursor::NextCharacter);
-
-                        // Move to the end of document
-                        //prevCursor.movePosition(QTextCursor::End);
-
                     }
                 }
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
                 //nextCursor.endEditBlock();
-                m_tp->extra->doc->setUndoRedoEnabled(isundo);
+                d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
             }
         }
-#endif
-        if (m_modified) {
+
+        if (d->m_modified) {
             qDebug() << "updating";
-            m_lp->updateSize();
-            m_lp->updateLayout();
-            m_modified = false;
+            d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());
+            d->m_lp->updateSize();
+            d->m_lp->updateLayout();
+            d->m_modified = false;
         }
-        m_dirty = false;
+        d->m_dirty = false;
     }
 }
 
@@ -198,11 +221,10 @@ void SlackText::componentComplete()
     Q_D(SlackText);
 
     QQuickLabel::componentComplete();
-    d->frameImage = QImage(":/icons/no-image.png");
-    //qDebug() << "frame image" << d->frameImage;
-    d->m_tp->extra->doc->addResource(QTextDocument::ImageResource, QUrl("frames://frame"), d->frameImage);
+//    d->frameImage = QImage(":/icons/no-image.png");
+//    d->m_tp->extra->doc->addResource(QTextDocument::ImageResource, QUrl("frames://frame"), d->frameImage);
 
-    d->prepareText();
+    prepareText();
     //qDebug() << "text is rich" << d->m_tp->richText << d->m_tp->extra.isAllocated() << d->m_tp->extra->doc << d->m_tp->updateType;
     // create frames for quotes
     // TODO: code highlight?
@@ -910,7 +932,7 @@ void SlackText::setText(const QString &txt)
     Q_D(SlackText);
     QQuickLabel::setText(txt);
     d->m_dirty = true;
-    d->prepareText();
+    prepareText();
 }
 
 QString SlackText::hoveredLink() const

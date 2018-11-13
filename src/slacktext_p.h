@@ -88,6 +88,7 @@ public:
     SlackText* q_ptr { nullptr };
     MaskInputData *m_maskData;
     QImage frameImage;
+    QHash<QString, int> m_requestedImages;
 
     SlackText::SelectionMode mouseSelectionMode;
 
@@ -181,7 +182,6 @@ public:
     void processKeyEvent(QKeyEvent* ev);
 
     void updateLayout();
-    void prepareText();
 private:
     //void removeSelectedText();
     //void internalSetText(const QString &txt, int pos = -1, bool edited = true);
