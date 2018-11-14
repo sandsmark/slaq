@@ -43,6 +43,15 @@ inline QDateTime slackToDateTime(const QString& slackts) {
 inline QString dateTimeToSlack(const QDateTime& dt) {
     return QString("%1.000").arg(dt.toSecsSinceEpoch()) + QString("%1").arg(dt.time().msec(), 3, 10, QChar('0'));
 }
+
+static int compareSlackTs(const QString& ts1, const QString& ts2) {
+    if (ts1 == ts2) {
+        return 0;
+    }
+    double ts1d = ts1.toDouble()*1000.0;
+    double ts2d = ts2.toDouble()*1000.0;
+    return ts1d > ts2d ? 1 : -1;
+}
 }
 
 class Reaction : public QObject
@@ -297,7 +306,7 @@ struct Message {
     QSharedPointer<MessageListModel> messageThread;
     Message* parentMessage { nullptr };
 
-    static bool compare(const Message* a, const Message* b) { return a->time > b->time; }
+    static bool compare(const Message* a, const Message* b) { return compareSlackTs(a->ts, b->ts) > 0; }
 
     QJsonObject toJson() {
         QJsonObject jo;
@@ -360,7 +369,8 @@ public:
 public slots:
     void addMessage(Message *message);
     void updateMessage(Message *message, bool replace = true);
-    void addMessages(const QList<Message *> &messages, bool hasMore, const QString &threadTs);
+    void addMessages(const QList<Message *> &messages, bool hasMore, const QString &threadTs,
+                     bool isThread = false);
     Message* message(const QString &ts);
     bool deleteMessage(const QDateTime& ts);
     Message* message(int row);
