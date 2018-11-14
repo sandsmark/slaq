@@ -114,7 +114,7 @@ public slots:
     //messages
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
-    void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QDateTime &thread_ts = QDateTime());
+    void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QString &thread_ts = "");
     void updateMessage(const QString& teamId, const QString& channelId, const QString& content,
                        const QDateTime &ts, const QString& slackTs);
     void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& slackTs);
@@ -153,7 +153,7 @@ public slots:
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
     void onUsersPresenceChanged(const QStringList &users, const QString &presence,
                                 const QDateTime& snoozeEnds = QDateTime(), bool force = false);
-    void onMessagesReceived(const QString &channelId, const QList<Message *> &messages, bool hasMore, int threadMsgsCount);
+    void onMessagesReceived(const QString &channelId, const QList<Message *> &messages, bool hasMore, const QString &threadTs);
 
     void sendUserTyping(const QString& teamId, const QString& channelId);
     void updateUserInfo(const QString& teamId, User *user);
