@@ -26,15 +26,6 @@ int MessageListModel::rowCount(const QModelIndex &parent) const
     return m_messages.count();
 }
 
-static int compareSlackTs(const QString& ts1, const QString& ts2) {
-    if (ts1 == ts2) {
-        return 0;
-    }
-    double ts1d = ts1.toDouble()*1000.0;
-    double ts2d = ts2.toDouble()*1000.0;
-    return ts1d > ts2d ? 1 : -1;
-}
-
 QVariant MessageListModel::data(const QModelIndex &index, int role) const
 {
     QMutexLocker locker(&m_modelMutex);
@@ -430,12 +421,12 @@ void MessageListModel::usersModelChanged(const QModelIndex &topLeft, const QMode
 }
 
 void MessageListModel::processChildMessage(Message* message) {
-    Message* parent_msg = this->message(message->thread_ts);
     QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
     if (thrdModel == nullptr) {
-        thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
-        QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
+        //thread was not opened yet. Will fetch it on 1st open using conversations api
+        return;
     }
+    Message* parent_msg = this->message(message->thread_ts);
     if (parent_msg != nullptr) {
         if (parent_msg->messageThread.isNull()) {
             parent_msg->messageThread = thrdModel;
@@ -598,15 +589,16 @@ void MessageListModel::findNewUsers(QString& message)
     }
 }
 
-void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore, const QString& threadTs)
+void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore,
+                                   const QString& threadTs, bool isThread)
 {
     DEBUG_BLOCK;
     qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore << threadTs;
 
     if (threadTs.isEmpty()) {
         m_hasMore = hasMore;
-        beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
 
+        beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
         for (Message* message : messages) {
             updateReactionUsers(message);
             preprocessMessage(message);
@@ -616,7 +608,11 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                 prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
             }
             m_modelMutex.lock();
-            m_messages.append(message);
+            if (isThread) {
+                m_messages.prepend(message);
+            } else {
+                m_messages.append(message);
+            }
             m_modelMutex.unlock();
         }
         endInsertRows();
@@ -627,7 +623,9 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
             if (m_MessageThreads.contains(parentMsg->ts) && parentMsg->messageThread == nullptr) {
                 parentMsg->messageThread = m_MessageThreads.value(parentMsg->ts);
             }
-            parentMsg->messageThread->addMessages(messages, hasMore, "");
+            if (parentMsg->messageThread != nullptr) {
+                parentMsg->messageThread->addMessages(messages, hasMore, "", true);
+            }
         }
     }
 }
