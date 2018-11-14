@@ -381,6 +381,7 @@ public slots:
     int countUnread(const QDateTime& lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
     QDateTime lastMessage() const;
+    void requestMessages();
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;
     void fetchMore(const QModelIndex &parent) override;
@@ -407,4 +408,5 @@ private:
     bool m_hasMore { false }; //indicator if there is more data in the channel's history
     bool m_isThreadModel { false };
     bool m_historyLoaded { false };
+    bool m_isFetching = false;
 };

@@ -108,7 +108,7 @@ void MessageListModel::updateReactionUsers(Message* message) {
                 qWarning() << "Cant find user" << userId << "while adding reaction";
             }
         }
-        qDebug() << "reaction users" << reaction->m_users << "for" << reaction->m_userIds;
+//        qDebug() << "reaction users" << reaction->m_users << "for" << reaction->m_userIds;
         if (reaction->usersCount() <= 0) {
             message->reactions.removeOne(r);
             reaction->deleteLater();
@@ -165,7 +165,7 @@ Message *MessageListModel::message(int row)
 
 QDateTime MessageListModel::lastMessage() const
 {
-    qDebug() << "searching for last message at" << this;
+//    qDebug() << "searching for last message at" << this;
     // debugging
     if (!m_modelMutex.tryLock(100)) {
         qWarning() << "message model mutex was locked too long!" << QThread::currentThread();
@@ -196,9 +196,24 @@ QDateTime MessageListModel::lastMessage() const
     return _lastMsgTs;
 }
 
+void MessageListModel::requestMessages()
+{
+    if (!m_hasMore || m_isFetching) {
+        return;
+    }
+
+    if (m_messages.isEmpty()) {
+        qDebug() << "requestning initial";
+        emit fetchMoreMessages(m_channelId, QDateTime());
+    } else {
+        qDebug() << "requestning more";
+        emit fetchMoreMessages(m_channelId, m_messages.last()->time);
+    }
+}
+
 Message *MessageListModel::message(const QDateTime &ts)
 {
-    qDebug() << "searching for" << ts << "at" << this;
+//    qDebug() << "searching for" << ts << "at" << this;
     // debugging
     if (!m_modelMutex.tryLock(100)) {
         qWarning() << "message model mutex was locked too long!" << QThread::currentThread();
@@ -209,23 +224,23 @@ Message *MessageListModel::message(const QDateTime &ts)
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
         if (message->time == ts) {
-            qDebug() << "found message";
+//            qDebug() << "found message";
             return message;
         }
         // 1st message in the message thread is parent message
         // so to avoid recursive search - check if the message thread its not current thread
         if (!message->messageThread.isNull() && message->messageThread.data() != this) {
-            qDebug() << "search in subthread";
+//            qDebug() << "search in subthread";
             locker.unlock();
             Message* threadedMsg = message->messageThread->message(ts);
             if (threadedMsg != nullptr) {
-                qDebug() << "found message in subthread";
+//                qDebug() << "found message in subthread";
                 return threadedMsg;
             }
             locker.relock();
         }
     }
-    qDebug() << "nothing found";
+//    qDebug() << "nothing found";
     return nullptr;
 }
 
@@ -580,8 +595,9 @@ void MessageListModel::findNewUsers(QString& message)
 void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore, int threadMsgsCount)
 {
     DEBUG_BLOCK;
-    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore << threadMsgsCount;
+//    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore << threadMsgsCount;
 
+    m_isFetching = false;
     m_hasMore = hasMore;
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1 - threadMsgsCount);
 
@@ -615,19 +631,14 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
 
 bool MessageListModel::canFetchMore(const QModelIndex &parent) const
 {
-    Q_UNUSED(parent)
-    return m_hasMore;
+    // We can't trust QML to do anything sane, so refuse to let it try to fetch automatically
+    return false;
 }
 
 void MessageListModel::fetchMore(const QModelIndex &parent)
 {
     Q_UNUSED(parent)
-    qDebug() << "called fetch more" << parent;
-    if (m_messages.isEmpty()) {
-        emit fetchMoreMessages(m_channelId, QDateTime());
-    } else {
-        emit fetchMoreMessages(m_channelId, m_messages.last()->time);
-    }
+    return;
 }
 
 QHash<int, QByteArray> MessageListModel::roleNames() const
