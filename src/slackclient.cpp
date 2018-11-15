@@ -1473,14 +1473,7 @@ void SlackTeamClient::handleLoadMessagesReply()
         emit loadMessagesFail(m_teamInfo.teamId());
         return;
     }
-//    if (threadTs.isEmpty() == false) {
-//        Message* threadMsg = messageModel->message(threadTs);
-//        if (threadMsg == nullptr) {
-//            qWarning() << "Cant find thread message for" << threadTs;
-//            return;
-//        }
-//    }
-#if 1
+#if 0
         {
             QFile f("msglist_dumps_" + m_teamInfo.name() + "_" + channelId + ".json");
             if (f.open(QIODevice::Append)) {
@@ -1519,9 +1512,6 @@ void SlackTeamClient::handleLoadMessagesReply()
             rply->m_user = _usersModel->user(rply->m_userId);
         }
         messageModel->preprocessFormatting(_chatsModel, message);
-//        if (messageModel->isMessageThreadChild(message)) {
-//            threadMsgsCount++;
-//        }
         _mlist.append(message);
     }
     emit messagesReceived(channelId, _mlist, _hasMore, threadTs);
