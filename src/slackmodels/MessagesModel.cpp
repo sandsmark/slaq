@@ -534,7 +534,7 @@ void MessageListModel::updateMessage(Message *message, bool replace)
     }
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
-        qDebug() << "updating message:" << message->toJson() << message->user_id << oldmessage->toJson() << _index_to_replace << replace;
+        qDebug() << "updating message:" << message->toJson() << message->user_id << oldmessage << _index_to_replace << replace;
         updateReactionUsers(message);
         if (replace) {
             preprocessMessage(message);
