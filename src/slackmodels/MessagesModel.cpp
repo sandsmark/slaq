@@ -485,7 +485,7 @@ void MessageListModel::updateMessage(Message *message, bool replace)
         for (int i = 0; i < m_messages.count(); i++) {
             oldmessage = m_messages.at(i);
             if (_isChild && !isThreadModel()) {
-                if (oldmessage->thread_ts == message->thread_ts) {
+                if (!oldmessage->messageThread.isNull() && oldmessage->thread_ts == message->thread_ts) {
                     oldmessage->messageThread->updateMessage(message, replace);
                     break;
                 }
