@@ -593,11 +593,11 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                                    const QString& threadTs, bool isThread)
 {
     DEBUG_BLOCK;
-    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore << threadTs;
+    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() <<
+                hasMore << threadTs;
 
     if (threadTs.isEmpty()) {
         m_hasMore = hasMore;
-
         beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
         for (Message* message : messages) {
             updateReactionUsers(message);
@@ -608,6 +608,13 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                 prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
             }
             m_modelMutex.lock();
+            //check for duplicates. Debug only purposes!
+//            for (int i = 0; i < m_messages.count(); i++) {
+//                if (m_messages.at(i)->ts == message->ts) {
+//                    qWarning() << QString("Duplicate message for ts %1 at %2 messages %3").
+//                                  arg(message->ts).arg(i).arg(m_messages.count());
+//                }
+//            }
             if (isThread) {
                 m_messages.prepend(message);
             } else {
@@ -639,10 +646,13 @@ bool MessageListModel::canFetchMore(const QModelIndex &parent) const
 void MessageListModel::fetchMore(const QModelIndex &parent)
 {
     Q_UNUSED(parent)
-    qDebug() << "called fetch more" << parent;
+    // disable has more temporarily until new messages arrives with real status
+    // to avoid duplicate requests
+    m_hasMore = false;
     if (m_messages.isEmpty()) {
         emit fetchMoreMessages(m_channelId, "", "");
     } else {
+        qDebug() << "called fetch more" << m_messages.last()->ts << m_messages.first()->ts;
         emit fetchMoreMessages(m_channelId, m_messages.last()->ts, "");
     }
 }
