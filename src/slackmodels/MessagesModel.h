@@ -32,7 +32,9 @@ inline QDateTime slackToDateTime(const QString& slackts) {
     }
 
     if (ts_.size() == 2) {
-        int msecs = ts_.at(1).toInt();
+        QString _secondPart = ts_.at(1);
+        //_secondPart.remove(0, 3);
+        int msecs = _secondPart.toInt();
         dt = dt.addMSecs(msecs);
     }
     return dt;
@@ -40,6 +42,15 @@ inline QDateTime slackToDateTime(const QString& slackts) {
 
 inline QString dateTimeToSlack(const QDateTime& dt) {
     return QString("%1.000").arg(dt.toSecsSinceEpoch()) + QString("%1").arg(dt.time().msec(), 3, 10, QChar('0'));
+}
+
+static int compareSlackTs(const QString& ts1, const QString& ts2) {
+    if (ts1 == ts2) {
+        return 0;
+    }
+    double ts1d = ts1.toDouble()*1000.0;
+    double ts2d = ts2.toDouble()*1000.0;
+    return ts1d > ts2d ? 1 : -1;
 }
 }
 
@@ -279,7 +290,7 @@ struct Message {
 
     QStringList pinnedTo;
     QDateTime time;
-    QDateTime thread_ts;
+    QString thread_ts;
     QUrl permalink;
 
     QPointer<SlackUser> user;
@@ -296,7 +307,7 @@ struct Message {
     QSharedPointer<MessageListModel> messageThread;
     Message* parentMessage { nullptr };
 
-    static bool compare(const Message* a, const Message* b) { return a->time > b->time; }
+    static bool compare(const Message* a, const Message* b) { return compareSlackTs(a->ts, b->ts) > 0; }
 
     QJsonObject toJson() {
         QJsonObject jo;
@@ -310,6 +321,7 @@ struct Message {
         jo["userName"] = userName;
         jo["time_slack"] = dateTimeToSlack(time);
         jo["ts"] = ts;
+        jo["thread_ts"] = thread_ts;
         return jo;
     }
 };
@@ -351,7 +363,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     inline bool isMessageThreadParent(const Message* msg) const { return !isMessageThreadChild(msg); }
-    inline bool isMessageThreadChild(const Message* msg) const { return (msg->thread_ts.isValid() && msg->thread_ts != msg->time); }
+    inline bool isMessageThreadChild(const Message* msg) const { return (!msg->thread_ts.isEmpty() && msg->thread_ts != msg->ts); }
 
     bool historyLoaded() const;
     void setHistoryLoaded(bool historyLoaded);
@@ -359,8 +371,9 @@ public:
 public slots:
     void addMessage(Message *message);
     void updateMessage(Message *message, bool replace = true);
-    void addMessages(const QList<Message *> &messages, bool hasMore, int threadMsgsCount);
-    Message* message(const QDateTime& ts);
+    void addMessages(const QList<Message *> &messages, bool hasMore, const QString &threadTs,
+                     bool isThread = false);
+    Message* message(const QString &ts);
     bool deleteMessage(const QDateTime& ts);
     Message* message(int row);
     void clear();
@@ -374,7 +387,7 @@ public slots:
 
     // to provide for channel history in case if history fetched after new messages comes via RTM
     // avoid duplicates
-    QDateTime firstMessageTs();
+    QString firstMessageTs() const;
     bool isThreadModel() const;
     MessageListModel* createThread(Message* parentMessage);
     void processChildMessage(Message *message);
@@ -382,13 +395,13 @@ public slots:
     void updateReactionUsers(Message *message);
     int countUnread(const QDateTime& lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
-    QDateTime lastMessage() const;
+    QString lastMessage() const;
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;
     void fetchMore(const QModelIndex &parent) override;
 
 signals:
-    void fetchMoreMessages(const QString& channelId, const QDateTime& latest);
+    void fetchMoreMessages(const QString& channelId, const QString& latest, const QString& threadTs);
 private:
     void findNewUsers(QString &message);
 
@@ -400,7 +413,7 @@ protected:
 
 private:
     QMap<QString, Reaction*> m_reactions;
-    QMap<QDateTime, QSharedPointer<MessageListModel>> m_MessageThreads;
+    QMap<QString, QSharedPointer<MessageListModel>> m_MessageThreads;
 
     QString m_channelId;
     MessageFormatter m_formatter;

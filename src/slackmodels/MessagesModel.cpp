@@ -138,11 +138,11 @@ MessageListModel *MessageListModel::createThread(Message *parentMessage)
 {
     if (parentMessage != nullptr) {
         if (parentMessage->messageThread.isNull()) {
-            parentMessage->thread_ts = parentMessage->time;
+            parentMessage->thread_ts = parentMessage->ts;
             parentMessage->messageThread = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
             QQmlEngine::setObjectOwnership(parentMessage->messageThread.data(), QQmlEngine::CppOwnership);
-            parentMessage->messageThread->prependMessageToModel(parentMessage);
-            parentMessage->messageThread->refresh();
+            //parentMessage->messageThread->prependMessageToModel(parentMessage);
+
             if (!m_MessageThreads.contains(parentMessage->thread_ts)) {
                 m_MessageThreads.insert(parentMessage->thread_ts, parentMessage->messageThread);
             }
@@ -153,6 +153,10 @@ MessageListModel *MessageListModel::createThread(Message *parentMessage)
                 QModelIndex modelIndex = index(_index);
                 emit dataChanged(modelIndex, modelIndex, roleNames().keys().toVector());
             }
+        }
+        if (parentMessage->replies.count() > parentMessage->messageThread->rowCount(QModelIndex()) - 1) {
+            qDebug() << "requesting data for thread" << parentMessage->thread_ts;
+            emit fetchMoreMessages(m_channelId, "", parentMessage->thread_ts);
         }
         return parentMessage->messageThread.data();
     }
@@ -165,9 +169,9 @@ Message *MessageListModel::message(int row)
     return m_messages.at(row);
 }
 
-QDateTime MessageListModel::lastMessage() const
+QString MessageListModel::lastMessage() const
 {
-    qDebug() << "searching for last message at" << this;
+
     // debugging
     if (!m_modelMutex.tryLock(100)) {
         qWarning() << "message model mutex was locked too long!" << QThread::currentThread();
@@ -176,29 +180,31 @@ QDateTime MessageListModel::lastMessage() const
     // end debugging
     QMutexLocker locker(&m_modelMutex);
     if (m_messages.count() <= 0) {
-        return QDateTime();
+        qDebug() << "Last message not found";
+        return "";
     }
-    QDateTime _lastMsgTs = m_messages.at(0)->time;
+    QString _lastMsgTs = m_messages.at(0)->ts;
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
-        if (message->time > _lastMsgTs) {
-            _lastMsgTs = message->time;
+        if (::compareSlackTs(message->ts, _lastMsgTs) > 0) {
+            _lastMsgTs = message->ts;
         }
         // 1st message in the message thread is parent message
         // so to avoid recursive search - check if the message thread its not current thread
         if (!message->messageThread.isNull() && message->messageThread.data() != this) {
             locker.unlock();
-            QDateTime _lastMsgTsThread = message->messageThread->lastMessage();
-            if (_lastMsgTsThread > _lastMsgTs) {
+            QString _lastMsgTsThread = message->messageThread->lastMessage();
+            if (::compareSlackTs(_lastMsgTsThread, _lastMsgTs) > 0) {
                 _lastMsgTs = _lastMsgTsThread;
             }
             locker.relock();
         }
     }
+    //qDebug() << "Found last message at:" << _lastMsgTs;
     return _lastMsgTs;
 }
 
-Message *MessageListModel::message(const QDateTime &ts)
+Message *MessageListModel::message(const QString &ts)
 {
     qDebug() << "searching for" << ts << "at" << this;
     // debugging
@@ -210,7 +216,7 @@ Message *MessageListModel::message(const QDateTime &ts)
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
-        if (message->time == ts) {
+        if (message->ts == ts) {
             qDebug() << "found message";
             return message;
         }
@@ -320,7 +326,10 @@ void MessageListModel::refresh()
 void MessageListModel::replaceMessage(Message *oldmessage, Message *message)
 {
     QMutexLocker locker(&m_modelMutex);
-    m_messages.replace(m_messages.indexOf(oldmessage), message);
+    int index = m_messages.indexOf(oldmessage);
+    if (index >= 0 && index < m_messages.size()) {
+        m_messages.replace(index, message);
+    }
 }
 
 void MessageListModel::preprocessMessage(Message *message)
@@ -343,13 +352,12 @@ void MessageListModel::preprocessMessage(Message *message)
     findNewUsers(message->text);
 }
 
-QDateTime MessageListModel::firstMessageTs()
+QString MessageListModel::firstMessageTs() const
 {
-    QDateTime _time;
     if (!m_messages.isEmpty()) {
-        _time = m_messages.last()->time;
+        return m_messages.last()->ts;
     }
-    return _time;
+    return "";
 }
 
 void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
@@ -420,23 +428,27 @@ void MessageListModel::usersModelChanged(const QModelIndex &topLeft, const QMode
 }
 
 void MessageListModel::processChildMessage(Message* message) {
-    Message* parent_msg = this->message(message->thread_ts);
     QSharedPointer<MessageListModel> thrdModel = m_MessageThreads.value(message->thread_ts);
     if (thrdModel == nullptr) {
-        thrdModel = QSharedPointer<MessageListModel>(new MessageListModel(parent(), m_usersModel, m_channelId, true));
-        QQmlEngine::setObjectOwnership(thrdModel.data(), QQmlEngine::CppOwnership);
+        //thread was not opened yet. Will fetch it on 1st open using conversations api
+        return;
     }
+    Message* parent_msg = this->message(message->thread_ts);
     if (parent_msg != nullptr) {
         if (parent_msg->messageThread.isNull()) {
             parent_msg->messageThread = thrdModel;
             //add parent message as a 1st message in the thread
-            thrdModel->prependMessageToModel(parent_msg);
-            thrdModel->sortMessages();
+            //            if (thrdModel->rowCount(QModelIndex()) == 0) {
+            //                thrdModel->prependMessageToModel(parent_msg);
+            //                thrdModel->sortMessages();
+            //            }
         }
     }
-    message->parentMessage = parent_msg;
-    thrdModel->prependMessageToModel(message);
-    thrdModel->sortMessages();
+    if (thrdModel->message(message->ts) == nullptr) {
+        message->parentMessage = parent_msg;
+        thrdModel->prependMessageToModel(message);
+        thrdModel->sortMessages();
+    }
     if (!m_MessageThreads.contains(message->thread_ts)) {
         m_MessageThreads.insert(message->thread_ts, thrdModel);
     }
@@ -451,10 +463,10 @@ void MessageListModel::addMessage(Message* message)
         processChildMessage(message);
     } else {
         // check if the message is parent thread
-        if (m_MessageThreads.contains(message->time) && message->messageThread == nullptr) {
-            message->messageThread = m_MessageThreads.value(message->time);
-            message->messageThread->prependMessageToModel(message);
-            message->messageThread->sortMessages();
+        if (m_MessageThreads.contains(message->ts) && message->messageThread == nullptr) {
+            message->messageThread = m_MessageThreads.value(message->ts);
+            //            message->messageThread->prependMessageToModel(message);
+            //            message->messageThread->sortMessages();
         }
         m_modelMutex.lock();
         if (!m_messages.isEmpty()) {
@@ -480,7 +492,7 @@ void MessageListModel::updateMessage(Message *message, bool replace)
         for (int i = 0; i < m_messages.count(); i++) {
             oldmessage = m_messages.at(i);
             if (_isChild && !isThreadModel()) {
-                if (oldmessage->thread_ts == message->thread_ts) {
+                if (!oldmessage->messageThread.isNull() && oldmessage->thread_ts == message->thread_ts) {
                     oldmessage->messageThread->updateMessage(message, replace);
                     break;
                 }
@@ -529,7 +541,7 @@ void MessageListModel::updateMessage(Message *message, bool replace)
     }
     m_modelMutex.unlock();
     if (_index_to_replace >= 0) {
-        qDebug() << "updating message:" << message->text << message->user_id << message << oldmessage << _index_to_replace << replace;
+        qDebug() << "updating message:" << message->toJson() << message->user_id << oldmessage << _index_to_replace << replace;
         updateReactionUsers(message);
         if (replace) {
             preprocessMessage(message);
@@ -584,40 +596,52 @@ void MessageListModel::findNewUsers(QString& message)
     }
 }
 
-void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore, int threadMsgsCount)
+void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore,
+                                   const QString& threadTs, bool isThread)
 {
     DEBUG_BLOCK;
-    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() << hasMore << threadMsgsCount;
+    qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() <<
+                hasMore << threadTs;
 
-    m_hasMore = hasMore;
-    beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1 - threadMsgsCount);
-
-    for (Message* message : messages) {
-        updateReactionUsers(message);
-        preprocessMessage(message);
-        //check for message thread
-        if (isMessageThreadChild(message)) {
-            processChildMessage(message);
-        } else {
-            // check if the message is parent thread
-            if (m_MessageThreads.contains(message->time) && message->messageThread == nullptr) {
-                message->messageThread = m_MessageThreads.value(message->time);
-                message->messageThread->appendMessageToModel(message);
-                message->messageThread->sortMessages();
-            }
-
+    if (threadTs.isEmpty()) {
+        m_hasMore = hasMore;
+        beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
+        for (Message* message : messages) {
+            updateReactionUsers(message);
+            preprocessMessage(message);
             if (!m_messages.isEmpty()) {
                 Message* prevMsg = m_messages.last();
                 prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
                 prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
             }
             m_modelMutex.lock();
-            m_messages.append(message);
+            //check for duplicates. Debug only purposes!
+//            for (int i = 0; i < m_messages.count(); i++) {
+//                if (m_messages.at(i)->ts == message->ts) {
+//                    qWarning() << QString("Duplicate message for ts %1 at %2 messages %3").
+//                                  arg(message->ts).arg(i).arg(m_messages.count());
+//                }
+//            }
+            if (isThread) {
+                m_messages.prepend(message);
+            } else {
+                m_messages.append(message);
+            }
             m_modelMutex.unlock();
         }
+        endInsertRows();
+    } else {
+        Message* parentMsg = message(threadTs);
+        if (parentMsg != nullptr) {
+            // check if the message is parent thread
+            if (m_MessageThreads.contains(parentMsg->ts) && parentMsg->messageThread == nullptr) {
+                parentMsg->messageThread = m_MessageThreads.value(parentMsg->ts);
+            }
+            if (parentMsg->messageThread != nullptr) {
+                parentMsg->messageThread->addMessages(messages, hasMore, "", true);
+            }
+        }
     }
-
-    endInsertRows();
 }
 
 bool MessageListModel::canFetchMore(const QModelIndex &parent) const
@@ -629,11 +653,14 @@ bool MessageListModel::canFetchMore(const QModelIndex &parent) const
 void MessageListModel::fetchMore(const QModelIndex &parent)
 {
     Q_UNUSED(parent)
-    qDebug() << "called fetch more" << parent;
+    // disable has more temporarily until new messages arrives with real status
+    // to avoid duplicate requests
+    m_hasMore = false;
     if (m_messages.isEmpty()) {
-        emit fetchMoreMessages(m_channelId, QDateTime());
+        emit fetchMoreMessages(m_channelId, "", "");
     } else {
-        emit fetchMoreMessages(m_channelId, m_messages.last()->time);
+        qDebug() << "called fetch more" << m_messages.last()->ts << m_messages.first()->ts;
+        emit fetchMoreMessages(m_channelId, m_messages.last()->ts, "");
     }
 }
 
@@ -677,11 +704,11 @@ void Message::setData(const QJsonObject &data)
     time = slackToDateTime(ts);
     const QJsonValue thread_ = data.value(QStringLiteral("thread_ts"));
     if (!thread_.isUndefined()) {
-        thread_ts = slackToDateTime(thread_.toString());
+        thread_ts = thread_.toString();
     }
     isChanged = !data.value(QStringLiteral("edited")).isUndefined();
-//    qDebug() << ts << time;
-//    Q_ASSERT(time.isValid());
+    //    qDebug() << ts << time;
+    //    Q_ASSERT(time.isValid());
 
     text = data.value(QStringLiteral("text")).toString();
     originalText = text;

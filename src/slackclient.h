@@ -76,7 +76,7 @@ signals:
 
     // signals to main thread
     void messageReceived(Message* message);
-    void messagesReceived(const QString &channelId, const QList<Message*>& messages, bool hasMore, int threadMsgsCount);
+    void messagesReceived(const QString &channelId, const QList<Message*>& messages, bool hasMore, const QString &threadTs);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message, bool replace = true);
     void messageDeleted(const QString& channelId, const QDateTime& ts);
@@ -122,8 +122,8 @@ public slots:
                      const QString &slackTs);
 
     void searchMessages(const QString& searchString, int page =  1);
-    void loadMessages(const QString& channelId, const QDateTime &latest = QDateTime());
-    void postMessage(const QString& channelId, QString content, const QDateTime &thread_ts);
+    void loadMessages(const QString& channelId, const QString &latest = "", const QString &threadTs = "");
+    void postMessage(const QString& channelId, QString content, const QString &thread_ts);
     void updateMessage(const QString& channelId, QString content, const QDateTime &ts, const QString& slackTs);
     void deleteMessage(const QString& channelId, const QDateTime& ts, const QString& slackTs);
 

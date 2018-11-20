@@ -397,7 +397,7 @@ Chat *SlackClientThreadSpawner::getGeneralChannel(const QString &teamId)
     return _chatsModel->generalChat();
 }
 
-void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString &channelId, const QString& content, const QDateTime &thread_ts)
+void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString &channelId, const QString& content, const QString &thread_ts)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -406,7 +406,7 @@ void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString 
     QMetaObject::invokeMethod(_slackClient, "postMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
                               Q_ARG(QString, content),
-                              Q_ARG(QDateTime, thread_ts));
+                              Q_ARG(QString, thread_ts));
 }
 
 void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QString &channelId, const QString &content,
@@ -530,7 +530,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     }
 }
 
-void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, const QList<Message*>& messages, bool hasMore, int threadMsgsCount)
+void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, const QList<Message*>& messages, bool hasMore, const QString &threadTs)
 {
     auto _slackClient = static_cast<SlackTeamClient*>(sender());
 
@@ -552,7 +552,7 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, cons
         _lastRead = _chat->lastRead;
     }
 
-    messagesModel->addMessages(messages, hasMore, threadMsgsCount);
+    messagesModel->addMessages(messages, hasMore, threadTs);
     qDebug() << "unread messages" << messagesModel->countUnread(_lastRead);
 }
 

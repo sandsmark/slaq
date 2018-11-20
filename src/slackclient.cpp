@@ -408,7 +408,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
     //"{\"type\":\"reaction_added\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C09PZTN5S\",\"ts\":\"1525437188.000435\"},\"reaction\":\"slightly_smiling_face\",\"item_user\":\"U3ZC1RYJG\",\"event_ts\":\"1525437431.000236\",\"ts\":\"1525437431.000236\"}"
     //"{\"type\":\"reaction_removed\",\"user\":\"U4NH7TD8D\",\"item\":{\"type\":\"message\",\"channel\":\"C0CK10FA9\",\"ts\":\"1526478339.000316\"},\"reaction\":\"+1\",\"item_user\":\"U1WTHK18E\",\"event_ts\":\"1526736040.000047\",\"ts\":\"1526736040.000047\"}"
     const QJsonObject& item = message.value(QStringLiteral("item")).toObject();
-    const QDateTime& ts = slackToDateTime(item.value(QStringLiteral("ts")).toString());
+    const QString& ts = item.value(QStringLiteral("ts")).toString();
     const QString& channelid = item.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
@@ -1047,7 +1047,7 @@ QString SlackTeamClient::historyMethod(const ChatsModel::ChatType type)
     DEBUG_BLOCK
 
     if (type == ChatsModel::Channel) {
-        return QStringLiteral("channels.history");
+        return QStringLiteral("conversations.history");
     } else if (type == ChatsModel::Group) {
         return QStringLiteral("groups.history");
     } else if (type == ChatsModel::MultiUserConversation) {
@@ -1387,7 +1387,8 @@ void SlackTeamClient::handleTeamEmojisReply()
     m_teamInfo.setTeamsEmojisUpdated(true);
 }
 
-void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& latest)
+void SlackTeamClient::loadMessages(const QString& channelId, const QString& latest,
+                                   const QString &threadTs)
 {
     DEBUG_BLOCK;
     qDebug() << "Loading messages" << channelId << latest << sender();
@@ -1395,7 +1396,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
     }
-    QDateTime _latest = latest;
+    QString _latest = latest;
     ChatsModel* _chatsModel = teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
@@ -1405,7 +1406,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
         qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
-    if (!_latest.isValid()) {
+    if (_latest.isEmpty() && threadTs.isEmpty() == true) {
         MessageListModel* mesgs = _chatsModel->messages(channelId);
         //check if send from QML (sender == null)
         if (sender() == nullptr && mesgs->historyLoaded()) {
@@ -1422,14 +1423,18 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QDateTime& la
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
     params.insert(QStringLiteral("count"), "50");
-    if (_latest.isValid()) {
-        params.insert(QStringLiteral("latest"), dateTimeToSlack(_latest));
+    if (threadTs.isEmpty() == false) {
+        params.insert(QStringLiteral("ts"), threadTs);
+    }
+    if (_latest.isEmpty() == false) {
+        params.insert(QStringLiteral("latest"), _latest);
         params.insert(QStringLiteral("inclusive"), "0");
-    } else {
-        qWarning() << "NO LATEST!!";
     }
 
-    QNetworkReply *reply = executeGet(historyMethod(chat->type), params);
+    QNetworkReply *reply = executeGet(threadTs.isEmpty() ? "conversations.history" :
+                                                           "conversations.replies",
+                                      params);
+    reply->setProperty("threadTs", threadTs);
     reply->setProperty("channelId", channelId);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleLoadMessagesReply, Qt::QueuedConnection);
@@ -1453,6 +1458,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     bool _hasMore = data.value(QStringLiteral("has_more")).toBool(false);
 
     QString channelId = reply->property("channelId").toString();
+    QString threadTs = reply->property("threadTs").toString();
     ChatsModel* _chatsModel = teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
@@ -1481,7 +1487,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     UsersModel* _usersModel = m_teamInfo.users();
     int threadMsgsCount = 0;
     for (const QJsonValue &messageData : messageList) {
-        const QJsonObject messageObject = messageData.toObject();
+        const QJsonObject& messageObject = messageData.toObject();
         if (messageObject.value(QStringLiteral("subtype")).toString() == "file_comment") {
             qWarning() << "file comment. skipping for now";
             continue; //TODO: not yet supported
@@ -1499,22 +1505,19 @@ void SlackTeamClient::handleLoadMessagesReply()
             qWarning() << "user id is empty" << messageObject;
         }
 
-        //fill up users for replys
+        //fill up users for replies
         UsersModel* _usersModel = m_teamInfo.users();
         for(QObject* rplyObj : message->replies) {
             ReplyField* rply = static_cast<ReplyField*>(rplyObj);
             rply->m_user = _usersModel->user(rply->m_userId);
         }
         messageModel->preprocessFormatting(_chatsModel, message);
-        if (messageModel->isMessageThreadChild(message)) {
-            threadMsgsCount++;
-        }
         _mlist.append(message);
     }
-    emit messagesReceived(channelId, _mlist, _hasMore, threadMsgsCount);
+    emit messagesReceived(channelId, _mlist, _hasMore, threadTs);
     messageModel->setHistoryLoaded(true);
 
-    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count();
+    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count() << "thread ts" << threadTs;
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 
@@ -1573,12 +1576,12 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    QDateTime dt = time;
+    QString dt;// = time;
     ChatsModel* _chatsModel = teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
     }
-    if (dt.isNull() || !dt.isValid()) {
+    if (dt.isEmpty()) {
         auto messagesModel = _chatsModel->messages(channelId);
         if (messagesModel != nullptr) {
             dt = messagesModel->lastMessage();
@@ -1586,11 +1589,11 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
             qDebug() << "message model not ready for the channel" << channelId;
         }
     }
-    if (!dt.isValid()) {
+    if (dt.isEmpty()) {
         qWarning() << "Cant find timestamp for the channel" << channelId;
         return;
     }
-    params.insert(QStringLiteral("ts"), dateTimeToSlack(dt));
+    params.insert(QStringLiteral("ts"), dt);
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
@@ -1627,14 +1630,14 @@ void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::postMessage(const QString& channelId, QString content, const QDateTime &thread_ts)
+void SlackTeamClient::postMessage(const QString& channelId, QString content, const QString &thread_ts)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
     QNetworkReply *reply = nullptr;
     data.insert(QStringLiteral("channel"), channelId);
-    if (thread_ts.isValid()) {
-        data.insert(QStringLiteral("thread_ts"), dateTimeToSlack(thread_ts));
+    if (!thread_ts.isEmpty()) {
+        data.insert(QStringLiteral("thread_ts"), thread_ts);
     }
 
     if (content.startsWith("/me ")) {
