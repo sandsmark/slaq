@@ -116,22 +116,6 @@ void MessageFormatter::replaceMarkdown(QString &message)
             }
         }
     }
-//    int _currentIndex = 0;
-//    int _firstIndex = -1;
-//    do {
-//        _currentIndex = message.indexOf("```", 0);
-//        if (_currentIndex >= 0) {
-//            if (_firstIndex == -1) {
-//                _firstIndex = _currentIndex;
-//            } else {
-//                message.replace(" ","&nbsp;");
-//                //message.replace("```"
-//                _firstIndex = -1;
-//            }
-//        }
-//    } while(_currentIndex != -1);
-    //message.replace(m_codeBlockPattern, QStringLiteral("<blockquote><table style=\"background-color:%1; color:%2; white-space:pre; word-wrap:break-word;\"><tr><td>\\1</td></tr></table></blockquote>").arg(blockStyleBg).arg(blockStyleFg));
-    //message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:%1; color:%2; white-space:pre;\"> \\2 </span>\\3").arg(blockStyleBg).arg(blockStyleFg));
 }
 
 void MessageFormatter::replaceEmoji(QString &message)

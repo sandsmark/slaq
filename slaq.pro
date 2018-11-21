@@ -37,7 +37,7 @@ QT += quick-private core-private gui-private qml-private quickcontrols2-private 
 QT += webengine
 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
-INCLUDEPATH += src src/slackmodels
+INCLUDEPATH += src src/slackmodels src/slacktext
 
 QML_IMPORT_PATH =
 # enable for address sanitizer
@@ -65,7 +65,10 @@ SOURCES += src/main.cpp \
     src/slackmodels/UsersModel.cpp \
     src/slackmodels/searchmessagesmodel.cpp \
     src/slackmodels/FilesSharesModel.cpp \
-    src/slacktext.cpp
+    src/slaqtext/slaqtext.cpp \
+    src/slaqtext/slaqtextnode.cpp \
+    src/slaqtext/slaqtextnodeengine.cpp \
+    src/slaqtext/slaqtextdocument.cpp
 
 OTHER_FILES += translations/*.ts \
     icons/slaq.svg \
@@ -94,8 +97,11 @@ HEADERS += \
     src/slackmodels/UsersModel.h \
     src/slackmodels/searchmessagesmodel.h \
     src/slackmodels/FilesSharesModel.h \
-    src/slacktext.h \
-    src/slacktext_p.h
+    src/slaqtext/slaqtext.h \
+    src/slaqtext/slaqtext_p.h \
+    src/slaqtext/slaqtextnode_p.h \
+    src/slaqtext/slaqtextnodeengine_p.h \
+    src/slaqtext/slaqtextdocument_p.h
 
 DISTFILES += \
     qml/dialogs/*.qml \
