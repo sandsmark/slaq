@@ -15,13 +15,15 @@ def is_linux_platform():
 def is_mac_platform():
     return sys.platform.startswith('darwin')
 
+def ensure_dir(destdir, ensure):
+    if ensure and not os.path.isdir(destdir):
+        os.makedirs(destdir)
+    return False
+
 # copy of shutil.copytree that does not bail out if the target directory already exists
 # and that does not create empty directories
 def copytree(src, dst, symlinks=False, ignore=None):
-    def ensure_dir(destdir, ensure):
-        if ensure and not os.path.isdir(destdir):
-            os.makedirs(destdir)
-        return False
+
 
     names = os.listdir(src)
     if ignore is not None:
@@ -100,14 +102,16 @@ def fix_rpaths(path, qt_deploy_path, qt_install_info, chrpath=None):
         if len(rpath) <= 0:
             return
         # remove previous Qt RPATH
-        new_rpath = filter(lambda path: not path.startswith(qt_install_prefix) and not path.startswith(qt_install_libs),
-                           rpath)
+        new_rpath = filter(lambda path: not path.startswith(qt_install_prefix)
+        and not path.startswith(qt_install_libs), rpath)
 
         # check for Qt linking
         lddOutput = subprocess.check_output(['ldd', filepath])
+        #print("ldd output:" + lddOutput)
         if lddOutput.decode(encoding).find('libQt5') >= 0 or lddOutput.find('libicu') >= 0:
             # add Qt RPATH if necessary
             relative_path = os.path.relpath(qt_deploy_path, os.path.dirname(filepath))
+            print("relative_path:" + relative_path)
             if relative_path == '.':
                 relative_path = ''
             else:
@@ -115,13 +119,16 @@ def fix_rpaths(path, qt_deploy_path, qt_install_info, chrpath=None):
             qt_rpath = '$ORIGIN' + relative_path
             if not any((path == qt_rpath) for path in rpath):
                 new_rpath.append(qt_rpath)
+            print("new_rpath:" + qt_rpath)
 
         # change RPATH
-        if len(new_rpath) > 0:
-            subprocess.check_call([chrpath, '-r', ':'.join(new_rpath), filepath])
-        else: # no RPATH / RUNPATH left. delete.
-            subprocess.check_call([chrpath, '-d', filepath])
-
+        try:
+            if len(new_rpath) > 0:
+                subprocess.check_call([chrpath, '-r', ':'.join(new_rpath), filepath])
+            else: # no RPATH / RUNPATH left. delete.
+                subprocess.check_call([chrpath, '-d', filepath])
+        except:
+            print("chrpath error")
     def is_unix_executable(filepath):
         # Whether a file is really a binary executable and not a script and not a symlink (unix only)
         if os.path.exists(filepath) and os.access(filepath, os.X_OK) and not os.path.islink(filepath):
@@ -164,7 +171,7 @@ def ldd(filename):
 
         for x in result:
             s = x.split()
-            if "=>" in x:
+            if '=>' in s:
                 if len(s) == 3: # virtual library
                     pass
                 else:
