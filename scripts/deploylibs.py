@@ -78,7 +78,7 @@ def ignored_qt_lib_files(path, filenames):
         return [fn for fn in filenames if fn.lower().endswith(('.debug'))]
     return [fn for fn in filenames if is_ignored_windows_file(debug_build, path, fn)]
 
-def copy_libs(target_qt_prefix_path, qt_plugin_dir, qt_import_dir, qt_qml_dir, plugins, imports, qmlimports, qtlibs):
+def copy_libs(qt_prefix_path, target_qt_prefix_path, qt_plugin_dir, qt_import_dir, qt_qml_dir, plugins, imports, qmlimports, qtlibs):
     print("copying Qt libraries...")
     if common.is_windows_platform():
         lib_dest = os.path.join(target_qt_prefix_path)
@@ -87,6 +87,25 @@ def copy_libs(target_qt_prefix_path, qt_plugin_dir, qt_import_dir, qt_qml_dir, p
 
     if not os.path.exists(lib_dest):
         os.makedirs(lib_dest)
+
+    print("copying Qt WebEngine.. from " + qt_prefix_path)
+    webengprocessdest = os.path.join(target_qt_prefix_path, "libexec/QtWebEngineProcess")
+    webengtrandest = os.path.join(target_qt_prefix_path, "libexec/qtwebengine_locales/en-US.pak")
+    webengres1dest = os.path.join(target_qt_prefix_path, "data/resources/qtwebengine_resources.pak")
+    webengres2dest = os.path.join(target_qt_prefix_path, "data/resources/qtwebengine_resources_100p.pak")
+    webengres3dest = os.path.join(target_qt_prefix_path, "data/resources/qtwebengine_resources_200p.pak")
+    webengres4dest = os.path.join(target_qt_prefix_path, "data/icudtl.dat")
+
+    common.ensure_dir(os.path.dirname(webengprocessdest), True)
+    common.ensure_dir(os.path.dirname(webengtrandest), True)
+    common.ensure_dir(os.path.dirname(webengres1dest), True)
+
+    shutil.copy(os.path.join(qt_prefix_path, "libexec/QtWebEngineProcess"), webengprocessdest)
+    shutil.copy(os.path.join(qt_prefix_path, "translations/qtwebengine_locales/en-US.pak"), webengtrandest)
+    shutil.copy(os.path.join(qt_prefix_path, "resources/qtwebengine_resources.pak"), webengres1dest)
+    shutil.copy(os.path.join(qt_prefix_path, "resources/qtwebengine_resources_100p.pak"), webengres2dest)
+    shutil.copy(os.path.join(qt_prefix_path, "resources/qtwebengine_resources_200p.pak"), webengres3dest)
+    shutil.copy(os.path.join(qt_prefix_path, "resources/icudtl.dat"), webengres4dest)
 
     for library in qtlibs:
         print(library, '->', lib_dest)
@@ -144,6 +163,7 @@ def add_qt_conf(target_path, qt_prefix_path):
     f.write('Plugins=plugins\n')
     f.write('Imports=imports\n')
     f.write('Qml2Imports=qml\n')
+    f.write('Data=data\n')
     f.close()
 
 def copyPreservingLinks(source, destination):
@@ -200,6 +220,7 @@ def main():
             sys.exit(2)
 
     qt_install_info = common.get_qt_install_info(qmake_bin)
+    QT_INSTALL_PREFIX = qt_install_info['QT_INSTALL_PREFIX']
     QT_INSTALL_LIBS = qt_install_info['QT_INSTALL_LIBS']
     QT_INSTALL_BINS = qt_install_info['QT_INSTALL_BINS']
     QT_INSTALL_PLUGINS = qt_install_info['QT_INSTALL_PLUGINS']
@@ -222,8 +243,8 @@ def main():
         #add extra lib no included in ldd
         libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5XcbQpa.so.5"))
         libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5DBus.so.5"))
-        copy_libs(qt_deploy_prefix, QT_INSTALL_PLUGINS, QT_INSTALL_IMPORTS, QT_INSTALL_QML,
-        plugins, imports, qmlimports, libraries)
+        copy_libs(QT_INSTALL_PREFIX, qt_deploy_prefix, QT_INSTALL_PLUGINS, QT_INSTALL_IMPORTS,
+        QT_INSTALL_QML, plugins, imports, qmlimports, libraries)
 
     if not common.is_windows_platform():
         print("fixing rpaths...")
