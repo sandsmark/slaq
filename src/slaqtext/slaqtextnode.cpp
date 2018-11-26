@@ -114,7 +114,19 @@ void SlaqTextNode::clearCursor()
 void SlaqTextNode::addRectangleNode(const QRectF &rect, const QColor &color)
 {
     QSGRenderContext *sg = QQuickItemPrivate::get(m_ownerElement)->sceneGraphRenderContext();
-    appendChildNode(sg->sceneGraphContext()->createInternalRectangleNode(rect, color));
+    auto rectNode = sg->sceneGraphContext()->createInternalRectangleNode(rect, color);
+
+//    rectNode->setRect(rect);
+//    rectNode->setColor(color);
+
+//    rectNode->setAligned(true);
+//    rectNode->setRadius(5);
+//    rectNode->setAntialiasing(true);
+//    rectNode->setPenWidth(3);
+//    rectNode->setPenColor(color);
+//    rectNode->update();
+
+    appendChildNode(rectNode);
 }
 
 
@@ -165,6 +177,7 @@ void SlaqTextNode::addTextDocument(const QPointF &position, QTextDocument *textD
             QRectF rect = a->frameBoundingRect(textFrame);
 
             QTextBlock block = textFrame->firstCursorPosition().block();
+            qDebug() << "add block" << block.text();
             engine.setCurrentLine(block.layout()->lineForTextPosition(pos - block.position()));
             engine.addTextObject(rect.topLeft(), format, SlaqTextNodeEngine::Unselected, textDocument,
                                  pos, textFrame->frameFormat().position());

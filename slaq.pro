@@ -37,7 +37,7 @@ QT += quick-private core-private gui-private qml-private quickcontrols2-private 
 QT += webengine
 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
-INCLUDEPATH += src src/slackmodels src/slacktext
+INCLUDEPATH += src src/slackmodels src/slaqtext
 
 QML_IMPORT_PATH =
 # enable for address sanitizer

@@ -21,7 +21,7 @@
 #include "teaminfo.h"
 #include "QQmlObjectListModel.h"
 #include "downloadmanager.h"
-#include "slacktext.h"
+#include "slaqtext.h"
 #include "UsersModel.h"
 
 int main(int argc, char *argv[])

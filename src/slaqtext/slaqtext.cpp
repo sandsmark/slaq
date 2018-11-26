@@ -739,7 +739,7 @@ QSGNode *SlackText::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
     if (d->m_lp->richText) {
         const qreal dx = alignedX(d->m_lp->layedOutTextRect.width(), d->m_lp->availableWidth(), effectiveHAlign()) + leftPadding();
         d->m_lp->ensureDoc();
-        qDebug() << QPointF(dx, dy) << d->m_lp->style << styleColor << color << d->selectionStart() << d->selectionEnd() << d->selectionColor << d->selectedTextColor;
+        //qDebug() << QPointF(dx, dy) << d->m_lp->style << styleColor << color << d->selectionStart() << d->selectionEnd() << d->selectionColor << d->selectedTextColor;
         node->addTextDocument(QPointF(dx, dy), d->m_tp->extra->doc, color,
                               d->m_lp->style, styleColor, linkColor,
                               d->selectionColor, d->selectedTextColor,

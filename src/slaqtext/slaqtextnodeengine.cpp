@@ -132,6 +132,7 @@ int SlaqTextNodeEngine::addText(const QTextBlock &block,
     else
         setTextColor(textColor);
 
+    qDebug() << "add text" <<  block.text() << m_textColor;
     while (textPos < fragmentEnd) {
         int blockRelativePosition = textPos - block.position();
         QTextLine line = block.layout()->lineForTextPosition(blockRelativePosition);
@@ -542,6 +543,7 @@ void SlaqTextNodeEngine::addGlyphsInRange(int rangeStart, int rangeLength,
             && selectionStart <= selectionEnd;
 
     QTextLine &line = m_currentLine;
+    qDebug() << selectionStart << selectionEnd << m_textColor << m_backgroundColor;
     int rangeEnd = rangeStart + rangeLength;
     if (!hasSelection || (selectionStart > rangeEnd || selectionEnd < rangeStart)) {
         QList<QGlyphRun> glyphRuns = line.glyphRuns(rangeStart, rangeLength);
