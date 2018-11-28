@@ -59,8 +59,11 @@ LazyLoadDialog {
                 TextField {
                     id: password
                     width: parent.width
+                    passwordMaskDelay: 300
+                    echoMode: TextInput.Password
                     placeholderText: "Password..."
                 }
+
                 TextField {
                     id: teamName
                     width: parent.width
