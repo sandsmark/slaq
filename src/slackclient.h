@@ -62,9 +62,6 @@ signals:
     void testLoginSuccess(QString userId, QString teamId, QString team);
     void testLoginFail(const QString& teamId);
 
-    void accessTokenSuccess(QString userId, QString teamId, QString team);
-    void accessTokenFail(const QString& teamId);
-
     void loadMessagesSuccess(const QString& teamId, QString channelId);
     void loadMessagesFail(const QString& teamId);
 

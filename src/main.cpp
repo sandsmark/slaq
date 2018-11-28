@@ -1,8 +1,6 @@
-#include <QQuickView>
 #include <QApplication>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
-#include <QtWebEngine>
 #include <QNetworkProxyFactory>
 #include <QThread>
 #include <QTextCodec>
@@ -25,10 +23,8 @@
 int main(int argc, char *argv[])
 {
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
-    qputenv("QTWEBENGINE_CHROMIUM_FLAGS=", "--disable-gpu --no-zygote --no-sandbox");
     QApplication app(argc, argv);
 
-    QtWebEngine::initialize();
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));
     app.setApplicationName(QStringLiteral("Slaq"));
     app.setApplicationVersion(QString(SLAQ_VERSION));

@@ -11,11 +11,13 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.6
+VERSION = 0.0.1.7
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
+
+include(src/QGumboParser/QGumboParser.pri)
 
 CONFIG(debug, debug|release) {
   DEFINES += SLAQ_DEBUG
@@ -33,11 +35,9 @@ TRANSLATIONS += translations/slaq-fi.ts
 CONFIG += c++11
 
 QT += quick xml quickcontrols2 multimedia widgets websockets
-QT += webengine
 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
-INCLUDEPATH += src src/slackmodels
-
+INCLUDEPATH += src src/slackmodels src/QGumboParser
 QML_IMPORT_PATH =
 # enable for address sanitizer
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr

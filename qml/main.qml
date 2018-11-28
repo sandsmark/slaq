@@ -122,13 +122,6 @@ ApplicationWindow {
         }
     }
 
-    Connections {
-        target: SlackClient
-        onError: {
-            errorDialog.showError(err.domain, err.error_str, "", 0)
-        }
-    }
-
     ErrorMessageDialog { id: errorDialog }
     UserDialog { id: userDialog }
     SettingsDialog { id: settingsDialog }
