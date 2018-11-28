@@ -73,9 +73,20 @@ def is_ignored_windows_file(use_debug, basepath, filename):
             return True
     return False
 
+def is_ignored_linux_file(use_debug, basepath, filename):
+    if filename.lower().endswith(('.debug')):
+        return True
+    ignore_plugins = ['libqeglfs.so', 'libqminimalegl.so', 'libqoffscreen.so', 'libqwayland-egl.so',
+    'libqwayland-xcomposite-egl.so', 'libqwebgl.so', 'libqlinuxfb.so', 'libqminimal.so',
+    'libqvnc.so', 'libqwayland-generic.so', 'libqwayland-xcomposite-glx.so']
+    for ip in ignore_plugins:
+        if filename == ip:
+            return True
+    return False
+
 def ignored_qt_lib_files(path, filenames):
     if not common.is_windows_platform():
-        return [fn for fn in filenames if fn.lower().endswith(('.debug'))]
+        return [fn for fn in filenames if is_ignored_linux_file(debug_build, path, fn)]
     return [fn for fn in filenames if is_ignored_windows_file(debug_build, path, fn)]
 
 def copy_libs(qt_prefix_path, target_qt_prefix_path, qt_plugin_dir, qt_import_dir, qt_qml_dir, plugins, imports, qmlimports, qtlibs):
@@ -87,25 +98,6 @@ def copy_libs(qt_prefix_path, target_qt_prefix_path, qt_plugin_dir, qt_import_di
 
     if not os.path.exists(lib_dest):
         os.makedirs(lib_dest)
-
-    print("copying Qt WebEngine.. from " + qt_prefix_path)
-    webengprocessdest = os.path.join(target_qt_prefix_path, "libexec/QtWebEngineProcess")
-    webengtrandest = os.path.join(target_qt_prefix_path, "libexec/qtwebengine_locales/en-US.pak")
-    webengres1dest = os.path.join(target_qt_prefix_path, "data/resources/qtwebengine_resources.pak")
-    webengres2dest = os.path.join(target_qt_prefix_path, "data/resources/qtwebengine_resources_100p.pak")
-    webengres3dest = os.path.join(target_qt_prefix_path, "data/resources/qtwebengine_resources_200p.pak")
-    webengres4dest = os.path.join(target_qt_prefix_path, "data/icudtl.dat")
-
-    common.ensure_dir(os.path.dirname(webengprocessdest), True)
-    common.ensure_dir(os.path.dirname(webengtrandest), True)
-    common.ensure_dir(os.path.dirname(webengres1dest), True)
-
-    shutil.copy(os.path.join(qt_prefix_path, "libexec/QtWebEngineProcess"), webengprocessdest)
-    shutil.copy(os.path.join(qt_prefix_path, "translations/qtwebengine_locales/en-US.pak"), webengtrandest)
-    shutil.copy(os.path.join(qt_prefix_path, "resources/qtwebengine_resources.pak"), webengres1dest)
-    shutil.copy(os.path.join(qt_prefix_path, "resources/qtwebengine_resources_100p.pak"), webengres2dest)
-    shutil.copy(os.path.join(qt_prefix_path, "resources/qtwebengine_resources_200p.pak"), webengres3dest)
-    shutil.copy(os.path.join(qt_prefix_path, "resources/icudtl.dat"), webengres4dest)
 
     for library in qtlibs:
         print(library, '->', lib_dest)
@@ -230,7 +222,7 @@ def main():
     plugins = ['codecs', 'audio', 'imageformats', 'platformthemes',
                'mediaservice', 'platforms', 'bearer', 'xcbglintegrations']
     imports = ['Qt']
-    qmlimports = ['Qt', 'QtQuick', 'QtQml', 'QtMultimedia', 'QtGraphicalEffects', 'QtQuick.2', 'QtWebEngine']
+    qmlimports = ['Qt', 'QtQuick', 'QtQml', 'QtMultimedia', 'QtGraphicalEffects', 'QtQuick.2']
     extralibs = ['libstdc++.so']
 
     if common.is_windows_platform():

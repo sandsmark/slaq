@@ -4,6 +4,7 @@
 #include <QMutex>
 #include "slackclient.h"
 #include "QQmlObjectListModel.h"
+#include "networkaccessmanager.h"
 
 class ThreadExecutor;
 
@@ -83,9 +84,13 @@ signals:
     void chatsModelChanged(const QString& teamId, ChatsModel* chatsModel);
     void usersModelChanged(const QString& teamId, UsersModel* usersModel);
     void searchStarted();
-    void error(QJsonObject err);
+    void error(const QJsonObject& err);
 
 public slots:
+    // Slack login procedure
+    void loginAttempt(const QString& email, const QString& password, const QString& teamName);
+    void getSessionDetails(const QString &url);
+
     void startClient(const QString& teamId);
     void testLogin(const QString& teamId);
 
@@ -165,6 +170,8 @@ public slots:
     void onFileSharesReceived(const QList<FileShare*>& shares, int total, int page, int pages);
     void deleteFile(const QString& teamId, const QString& fileId);
     void clearSettingsAndRestartApp();
+    void showError(const QString& errorDomain, const QString& errorMessage,
+                   const QString& errorDetails = "", int timeout = 0);
 
 protected:
     void run() override;
@@ -182,6 +189,7 @@ private:
     ThreadExecutor* m_threadExecutor {nullptr};
     QSettings m_settings;
     QDir m_fileTypesResDir { ":/icons/filetypes" };
+    NetworkAccessManager m_qnam;
 };
 
 class ThreadExecutor: public QObject {
