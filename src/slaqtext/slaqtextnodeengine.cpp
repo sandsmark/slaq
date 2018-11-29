@@ -391,6 +391,7 @@ void SlaqTextNodeEngine::addImage(const QRectF &rect, const QImage &image, qreal
                 searchRect.moveTopLeft(m_position + m_currentLine.position() + QPointF(0,1));
         } else {
             const BinaryTreeNode *lastNode = m_currentLineTree.data() + m_currentLineTree.size() - 1;
+
             if (lastNode->glyphRun.isRightToLeft()) {
                 QPointF lastPos = lastNode->boundingRect.topLeft();
                 searchRect.moveTopRight(lastPos - QPointF(0, ascent - lastNode->ascent));
@@ -442,7 +443,7 @@ void SlaqTextNodeEngine::addTextObject(const QPointF &position, const QTextCharF
         switch (format.verticalAlignment())
         {
         case QTextCharFormat::AlignMiddle:
-            ascent = size.height() / 2 - 1;
+            ascent = currentLine().ascent() + (currentLine().height() - size.height());
             break;
         case QTextCharFormat::AlignBaseline:
             ascent = size.height() - m.descent() - 1;
@@ -450,6 +451,7 @@ void SlaqTextNodeEngine::addTextObject(const QPointF &position, const QTextCharF
         default:
             ascent = size.height() - 1;
         }
+        //qDebug() << __PRETTY_FUNCTION__ << ascent << currentLine().ascent() << currentLine().descent() << size << m_currentLineTree.isEmpty();
 
         addImage(QRectF(position, size), image, ascent, selectionState, layoutPosition);
     }
