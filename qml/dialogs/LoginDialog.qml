@@ -1,6 +1,6 @@
 import QtQuick 2.11
-import QtWebEngine 1.7
 import QtQuick.Controls 2.4
+import Qt.labs.settings 1.0
 
 LazyLoadDialog {
     sourceComponent: Dialog {
@@ -10,20 +10,34 @@ LazyLoadDialog {
         modal: true
         focus: true
 
-        standardButtons: Dialog.Ok | Dialog.Cancel
-
-        property string startUrl: "https://slack.com/signin"
-
-        title: "Sign in with Slack"
-
-        onOpened: {
-            webViewLoader.sourceComponent = webViewComponent
-            webViewLoader.active = true
+        Connections {
+            target: SlackClient
+            onAccessTokenSuccess: {
+                close()
+            }
         }
-        onClosed: {
-            webViewLoader.active = false
-            webViewLoader.sourceComponent = undefined
+
+        footer: DialogButtonBox {
+            Button {
+                text: qsTr("Login")
+                enabled: email.text.length > 0 && password.text.length > 0 && teamName.text.length > 0
+                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+                onClicked: {
+                    SlackClient.loginAttempt(email.text, password.text, teamName.text)
+                }
+            }
+
+            Button {
+                text: qsTr("Cancel")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            }
+
+            onRejected: {
+                close()
+            }
         }
+
+        title: "Sign in to Slack"
 
         Rectangle {
             anchors {
@@ -32,53 +46,30 @@ LazyLoadDialog {
             }
             color: "transparent"
             border.color: "black"
-            Loader {
-                id: webViewLoader
+            Column {
                 anchors {
                     fill: parent
                     margins: 5
                 }
-                active: false
-                onStatusChanged: {
-                    if (webViewLoader.status == Loader.Loading) {
-                        SlackClient.onAccessTokenSuccess.connect(handleAccessTokenSuccess)
-                        SlackClient.onAccessTokenFail.connect(handleAccessTokenFail)
-                    }
-                    if (webViewLoader.status == Loader.Null) {
-                        SlackClient.onAccessTokenSuccess.disconnect(handleAccessTokenSuccess)
-                        SlackClient.onAccessTokenFail.disconnect(handleAccessTokenFail)
-                    }
+                TextField {
+                    id: email
+                    width: parent.width
+                    placeholderText: "Email..."
+                }
+                TextField {
+                    id: password
+                    width: parent.width
+                    passwordMaskDelay: 300
+                    echoMode: TextInput.Password
+                    placeholderText: "Password..."
+                }
+
+                TextField {
+                    id: teamName
+                    width: parent.width
+                    placeholderText: "Team/Subdomain name..."
                 }
             }
-        }
-
-        Component {
-            id: webViewComponent
-            WebEngineView {
-                id: webView
-                url: loginDialog.startUrl
-
-                onLoadingChanged: {
-                    runJavaScript("JSON.stringify(boot_data)", function(result){
-                        if (result !== undefined) {
-                            if (SlackClient.handleAccessTokenReply(JSON.parse(result))) {
-                                webView.visible = false
-                                webView.stop()
-                                loginDialog.close();
-                            }
-                        }
-                    })
-                }
-            }
-        }
-
-        function handleAccessTokenSuccess(userId, teamId, teamName) {
-            loginDialog.close();
-        }
-
-        function handleAccessTokenFail() {
-            console.warn('access token failed')
-            webView.visible = true
         }
     }
 }

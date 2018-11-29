@@ -6,6 +6,16 @@
 #include "searchmessagesmodel.h"
 #include "debugblock.h"
 
+#include "qgumbodocument.h"
+#include <qgumbonode.h>
+#include <qgumboattribute.h>
+
+const QString apiTokenString   = "api_token: \"";
+const QString logOutURLString  = "boot_data.logout_url = \"";
+const QString versionTSstring  = "version_ts: \"";
+const QString versionUIDstring = "version_uid: \"";
+const QString teamIDstring = "team_id: '";
+
 SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
     QThread(parent)
 {
@@ -352,6 +362,227 @@ QString SlackClientThreadSpawner::version() const
     return qApp->applicationVersion();
 }
 
+static QString parseInlineJsValue(const QByteArray& data, const QString& search, QChar end) {
+    // get the index of the search value
+    int i = data.indexOf(search);
+    if (i < 0) {
+        qWarning() << search << "not found";
+        return "";
+    }
+
+    // b is the index of the beginning of the value we want
+    int b = i + search.length();
+
+    // get the index of the next double quote character, starting from b
+    int ii = data.indexOf(end, b);
+    if (ii < 0) {
+        qWarning() << "did not find terminating byte in input" << end;
+        return "";
+    }
+
+    return data.mid(b, ii - b);
+}
+
+void SlackClientThreadSpawner::getSessionDetails(const QString &url) {
+    //now get session details
+    QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+    QNetworkReply * sessionDetailsReply = m_qnam.get(request);
+    connect(sessionDetailsReply, &QNetworkReply::finished, [this, sessionDetailsReply]() {
+        int httpCode = sessionDetailsReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QByteArray& data = sessionDetailsReply->readAll();
+//        qDebug() << "session details:" << data;
+//        qDebug() << "session details http code 2:" << httpCode;
+        if (data.size() <= apiTokenString.size()) {
+            showError("Slack login error", "Session data error",
+                      "Input data too short to contain valid data");
+            return;
+        }
+
+        // look for the api_token value within the response body buffer
+        QString apiToken = parseInlineJsValue(data, apiTokenString, '"');
+        if (apiToken.isEmpty()) {
+            showError("Slack login error", "Session data error",
+                      "Unable to find api token in response");
+            return;
+        }
+
+        // look for the version_ts value within the response body buffer
+        QString versionTS = parseInlineJsValue(data, versionTSstring, '"');
+        if (versionTS.isEmpty()) {
+            qWarning() << "unable to find version_ts in response";
+        }
+
+        // look for the version_uid value within the response body buffer
+        QString versionUID = parseInlineJsValue(data, versionUIDstring, '"');
+        if (versionUID.isEmpty()) {
+            qWarning() << "unable to find version_uid in response";
+        }
+
+        QString teamID = parseInlineJsValue(data, teamIDstring, '\'');
+        if (teamID.isEmpty()) {
+            showError("Slack login error", "Session data error",
+                      "Unable to find team id in response");
+            return;
+        }
+
+        // get the logoutURL value; while noting its format is different than those above
+        // because of this format difference we also need to do some later string formatting
+        QString logoutURL = parseInlineJsValue(data, logOutURLString, ';');
+        logoutURL = logoutURL.remove("+").remove("'").remove('"').replace("\\/", "/");
+        if (logoutURL.isEmpty()) {
+            qWarning() << "unable to find boot_data.logout_url in response";
+        }
+        qDebug() << "got slack api details" << teamID << apiToken << "\n" << versionTS << "\n" << versionUID << "\n" << logoutURL;
+        delete sessionDetailsReply;
+        // check if the team already connected
+        if (m_knownTeams.value(teamID) != nullptr) {
+            showError("Slack login error", "Team already connected!");
+        } else {
+            setLastTeam(teamID);
+            QMetaObject::invokeMethod(this->m_threadExecutor, "connectToTeam", Qt::QueuedConnection,
+                                      Q_ARG(QString, teamID),
+                                      Q_ARG(QString, apiToken));
+            emit accessTokenSuccess("", teamID, "");
+        }
+    });
+
+}
+void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString &password,
+                                            const QString &teamName)
+{
+    //getting login details
+    QString _url = QString("https://%1.slack.com").arg(teamName);
+    QNetworkRequest req(_url);
+    req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+    req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+
+    QNetworkReply* reply = m_qnam.get(req);
+    //qDebug() << "sending get to" << req.url() << _url;
+    connect(reply, &QNetworkReply::finished, [this, reply, email, password, _url]() {
+        int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        qDebug() << "http error:" << reply->errorString();
+        qDebug() << "http code:" << httpCode;
+        if (httpCode == 302) {
+            QUrl redirUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+            if (redirUrl.toString().contains("/messages")) {
+                this->getSessionDetails(_url + redirUrl.toString());
+                //already logged in
+            }
+        } else if (httpCode == 200) { //not yet logged in
+            QString crumb;
+            QString signin;
+            QString redir;
+            QGumboDocument htmlDoc = QGumboDocument::parse(reply->readAll());
+            const auto& root = htmlDoc.rootNode();
+            const auto& nodes = root.getElementsByTagName(HtmlTag::INPUT);
+            for (const auto& node: nodes) {
+                //qDebug() << node.tagName() << node.getAttribute("crumb") << node.childNodes().size();
+                bool isCrumb = false;
+                bool isSignin = false;
+                bool isRedir = false;
+                for (const auto& attr: node.allAttributes()) {
+                    //qDebug() << attr.name() << attr.value();
+                    if (attr.name() == "name" && attr.value() == "crumb") {
+                        isCrumb = true;
+                    }
+                    if (attr.name() == "name" && attr.value() == "signin") {
+                        isSignin = true;
+                    }
+                    if (attr.name() == "name" && attr.value() == "redir") {
+                        isRedir = true;
+                    }
+                    if (isCrumb && crumb.isEmpty() && attr.name() == "value") {
+                        crumb = attr.value();
+                    }
+                    if (isSignin && signin.isEmpty() && attr.name() == "value") {
+                        signin = attr.value();
+                    }
+                    if (isRedir && redir.isEmpty() && attr.name() == "value") {
+                        redir = attr.value();
+                    }
+                }
+            }
+            //qDebug() << "found crumb" << crumb << signin << redir;
+            delete reply;
+
+            if (!crumb.isEmpty() && !signin.isEmpty()) {
+                //login
+                QUrlQuery query;
+                query.addQueryItem(QStringLiteral("crumb"), crumb);
+                query.addQueryItem(QStringLiteral("email"), email);
+                query.addQueryItem(QStringLiteral("password"), password);
+                query.addQueryItem(QStringLiteral("redir"), redir);
+                query.addQueryItem(QStringLiteral("signin"), signin);
+
+                QUrl params;
+                params.setQuery(query);
+                // replace '+' manually, since QUrl does not replacing it
+                QByteArray body = params.toEncoded().replace('+', "%2B");
+                body.remove(0, 1);
+
+                QUrl url(_url);
+                QNetworkRequest request(url);
+                request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+                request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+                request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
+                request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
+
+               // qDebug() << "POST" << url.toString() << body;
+                QNetworkReply * loginReply = m_qnam.post(request, body);
+                connect(loginReply, &QNetworkReply::finished, [this, loginReply, _url]() {
+                    int httpCode = loginReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                    QUrl redirUrl = loginReply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                    const QByteArray& data = loginReply->readAll();
+                    delete loginReply;
+                    if (httpCode == 200 && data.contains("Sorry, you entered an incorrect email address or password.")) {
+                        //login error. wrong credentials
+                        qWarning() << "login error";
+                        this->showError("Slack login error", "Invalid credentials");
+                    } else if (httpCode == 302) {
+                        //got smthg like: https://slack.com/checkcookie?redir=https%3A%2F%2Fqtmob.slack.com%2F
+                        QNetworkRequest request(redirUrl);
+                        request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+                        request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+                        QNetworkReply * loginReply1 = m_qnam.get(request);
+                        connect(loginReply1, &QNetworkReply::finished, [this, loginReply1, _url]() {
+                            int httpCode = loginReply1->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                            QUrl redirUrl = loginReply1->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                            delete loginReply1;
+                            if (httpCode == 302) {
+                                //now check if we redirected to /messages
+                                QNetworkRequest request(redirUrl);
+                                request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+                                request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+                                QNetworkReply * loginReply2 = m_qnam.get(request);
+                                connect(loginReply2, &QNetworkReply::finished, [this, loginReply2, _url]() {
+                                    int httpCode = loginReply2->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                                    QUrl redirUrl = loginReply2->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                                    delete loginReply2;
+                                    if (httpCode == 302) {
+                                        this->getSessionDetails(_url + redirUrl.toString());
+                                    } else {
+                                        this->showError("Slack login error", "Undefined error");
+                                    }
+                                });
+                            } else {
+                                this->showError("Slack login error", "Undefined error");
+                            }
+                        });
+                    } else {
+                        this->showError("Slack login error", QString("Cant access slack.com. response code: %1").arg(httpCode));
+                    }
+                });
+            } else {
+                this->showError("Slack login error", "Cant retreive login info. Check team name");
+            }
+        } else {
+            this->showError("Slack login error", "Cant retreive login info. Check team name");
+        }
+    });
+}
+
 int SlackClientThreadSpawner::getTotalUnread(const QString &teamId, ChatsModel::ChatType type, bool personal)
 {
     int total = 0;
@@ -478,11 +709,11 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
 
 inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, SlackUser* selfUser) {
     return (selfUser != nullptr && (msg.contains(selfUser->userId())
-            || msg.contains(selfUser->username())
-            || msg.contains("@here")
-            || msg.contains("@channel")
-            || msg.contains("@group")
-            || msg.contains("@everyone")));
+                                    || msg.contains(selfUser->username())
+                                    || msg.contains("@here")
+                                    || msg.contains("@channel")
+                                    || msg.contains("@group")
+                                    || msg.contains("@everyone")));
 }
 
 void SlackClientThreadSpawner::onMessageReceived(Message *message)
@@ -652,6 +883,17 @@ void SlackClientThreadSpawner::clearSettingsAndRestartApp()
     QProcess::startDetached(qApp->arguments()[0], qApp->arguments());
 }
 
+void SlackClientThreadSpawner::showError(const QString &errorDomain, const QString &errorMessage,
+                                         const QString &errorDetails, int timeout)
+{
+    QJsonObject errorData;
+    errorData["domain"] = errorDomain;
+    errorData["error_str"] = errorMessage;
+    errorData["details"] = errorDetails;
+    errorData["timeout"] = timeout;
+    emit error(errorData);
+}
+
 void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
 {
     DEBUG_BLOCK;
@@ -723,7 +965,7 @@ void SlackClientThreadSpawner::onChannelLeft(const QString &channelId)
         return;
     }
     disconnect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
-            _slackClient, &SlackTeamClient::loadMessages);
+               _slackClient, &SlackTeamClient::loadMessages);
     chat->isOpen = false;
     _chatsModel->chatChanged(chat);
     emit channelLeft(_slackClient->teamInfo()->teamId(), channelId);
@@ -793,10 +1035,6 @@ SlackTeamClient* SlackClientThreadSpawner::createNewClientInstance(const QString
     connect(_slackClient, &SlackTeamClient::testConnectionFail, this, &SlackClientThreadSpawner::testConnectionFail, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::testLoginSuccess, this, &SlackClientThreadSpawner::testLoginSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::testLoginFail, this, &SlackClientThreadSpawner::testLoginFail, Qt::QueuedConnection);
-
-    connect(_slackClient, &SlackTeamClient::accessTokenSuccess, this, &SlackClientThreadSpawner::accessTokenSuccess, Qt::QueuedConnection);
-    connect(_slackClient, &SlackTeamClient::accessTokenFail, this, &SlackClientThreadSpawner::accessTokenFail, Qt::QueuedConnection);
-    connect(_slackClient, &SlackTeamClient::accessTokenFail, this, &SlackClientThreadSpawner::leaveTeam, Qt::QueuedConnection);
 
     connect(_slackClient, &SlackTeamClient::loadMessagesSuccess, this, &SlackClientThreadSpawner::loadMessagesSuccess, Qt::QueuedConnection);
     connect(_slackClient, &SlackTeamClient::loadMessagesFail, this, &SlackClientThreadSpawner::loadMessagesFail, Qt::QueuedConnection);

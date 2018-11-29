@@ -6,6 +6,17 @@ DD.MessageDialog {
     id: dialog
     property int timeout: 0
 
+    property Connections conn: Connections {
+        target: SlackClient
+        onError: {
+            title = err.domain
+            text = err.error_str
+            detailedText = err.details
+            timeout = err.timeout
+            open()
+        }
+    }
+
     standardButtons: DD.StandardButton.Ok
 
     property Timer timer: Timer {
