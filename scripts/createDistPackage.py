@@ -10,7 +10,7 @@ import common
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Create Slaq package, filtering out debug information files.")
     parser.add_argument('--7z', help='path to 7z binary',
-        default='7z.exe' if common.is_windows_platform() else '7z',
+        default='c:/Program Files/7-Zip/7z.exe' if common.is_windows_platform() else '7z',
         metavar='<7z_binary>', dest='sevenzip')
     parser.add_argument('--debug', help='package only the files with debug information',
                         dest='debug', action='store_true', default=False)

@@ -117,6 +117,11 @@ DISTFILES += \
     qml/dialogs/EditMessageDialog.qml \
     qml/dialogs/EditMessageDialog.qml
 
+win* {
+OTHER_FILES += \
+    3rdparty/ssl/win32/*.dll \
+
+}
 RESOURCES += \
     qml.qrc \
     data.qrc \
@@ -143,7 +148,7 @@ contains(QT_ARCH, i386): ARCHITECTURE = x86
 else: ARCHITECTURE = $$QT_ARCH
 
 macx: PLATFORM = "mac"
-else:win32: PLATFORM = "windows"
+else:win*: PLATFORM = "windows"
 else:linux-*: PLATFORM = "linux-$${ARCHITECTURE}"
 else: PLATFORM = "unknown"
 
@@ -159,7 +164,7 @@ macx {
 #    dmg.commands = python -u \"$$PWD/scripts/makedmg.py\" \"$${BASENAME}.dmg\" \"Slaq\" \"$$IDE_SOURCE_TREE\" \"$$OUT_PWD/bin\"
     #dmg.depends = deployqt
     QMAKE_EXTRA_TARGETS += codesign dmg
-} else {
+} else:linux-*: {
     BINDIST_SOURCE = "$${TO_DEPLOY}"
     BINDIST_EXCLUDE_ARG = "--exclude-toplevel"
     deploylibs.commands = python -u $$PWD/scripts/deploylibs.py -i \"$${TO_DEPLOY}/slaq\" \"$(QMAKE)\"
@@ -175,7 +180,7 @@ isEmpty(INSTALLER_ARCHIVE_FROM_ENV) {
 
 bindist_installer.commands = python -u $$PWD/scripts/createDistPackage.py $$BINDIST_EXCLUDE_ARG $${INSTALLER_ARCHIVE} \"$$BINDIST_SOURCE\"
 
-win32 {
+win* {
     deploylibs.commands ~= s,/,\\\\,g
     bindist.commands ~= s,/,\\\\,g
     bindist_installer.commands ~= s,/,\\\\,g
