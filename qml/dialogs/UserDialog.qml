@@ -16,6 +16,7 @@ LazyLoadDialog {
 
     sourceComponent: Dialog {
         id: userDialog
+        clip: true
 
         property string selectedFile: ""
         property bool userDataChanged: false
@@ -98,14 +99,14 @@ LazyLoadDialog {
 
         Flickable {
             width: userDialog.availableWidth
-            height: userDialog.availableHeight
+            height: userDialog.availableHeight - userDialog.footer.height - userDialog.padding
             enabled: user != null
 
             contentWidth: column.width
             contentHeight: column.height
             clip: true
             ScrollIndicator.vertical: ScrollIndicator{}
-            Column {
+            ColumnLayout {
                 id: column
                 width: userDialog.availableWidth - Theme.paddingMedium*2
                 x: Theme.paddingMedium
@@ -115,10 +116,10 @@ LazyLoadDialog {
                     id: avatar
                     property int start_x: 0
                     property int start_y: 0
-                    x: (parent.width - width)/2
+                    Layout.alignment: Qt.AlignHCenter
                     source: selectedFile === "" ? "image://emoji/slack/" + user.avatarUrl : selectedFile
-                    width: parent.width / 2
-                    height: parent.width / 2
+                    Layout.minimumWidth: (userDialog.availableWidth - Theme.paddingMedium*2) / 2
+                    Layout.minimumHeight: (userDialog.availableWidth - Theme.paddingMedium*2) / 2
                     fillMode: Image.PreserveAspectFit
                     onStatusChanged: {
                         if (avatar.status == Image.Ready) {
@@ -217,7 +218,7 @@ LazyLoadDialog {
                     }
                 }
                 TextField {
-                    width: parent.width
+                    Layout.fillWidth: true
                     placeholderText: qsTr("First name...")
                     text: user.firstName
                     //readOnly: true
@@ -229,7 +230,7 @@ LazyLoadDialog {
                     }
                 }
                 TextField {
-                    width: parent.width
+                    Layout.fillWidth: true
                     placeholderText: qsTr("Last name...")
                     text: user.lastName
                     readOnly: true
@@ -241,7 +242,7 @@ LazyLoadDialog {
                     }
                 }
                 TextField {
-                    width: parent.width
+                    Layout.fillWidth: true
                     placeholderText: qsTr("E-mail...")
                     text: user.email
                     readOnly: true
