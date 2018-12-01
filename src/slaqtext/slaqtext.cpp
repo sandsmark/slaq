@@ -317,6 +317,10 @@ void SlackTextPrivate::init()
 #endif
         q->setAcceptedMouseButtons(Qt::LeftButton);
 
+    const QPalette& palette = QGuiApplication::palette();
+    selectionColor = palette.color(QPalette::Highlight);
+    selectedTextColor = palette.color(QPalette::HighlightedText);
+
     lastSelectionStart = 0;
     lastSelectionEnd = 0;
 }
