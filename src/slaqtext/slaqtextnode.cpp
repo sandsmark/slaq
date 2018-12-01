@@ -177,7 +177,7 @@ void SlaqTextNode::addTextDocument(const QPointF &position, QTextDocument *textD
             QRectF rect = a->frameBoundingRect(textFrame);
 
             QTextBlock block = textFrame->firstCursorPosition().block();
-            qDebug() << "add block" << block.text();
+            //qDebug() << "add block" << block.text();
             engine.setCurrentLine(block.layout()->lineForTextPosition(pos - block.position()));
             engine.addTextObject(rect.topLeft(), format, SlaqTextNodeEngine::Unselected, textDocument,
                                  pos, textFrame->frameFormat().position());
@@ -188,6 +188,7 @@ void SlaqTextNode::addTextDocument(const QPointF &position, QTextDocument *textD
                 Q_ASSERT(!engine.currentLine().isValid());
 
                 QTextBlock block = it.currentBlock();
+                //qDebug() << "add block 1" << block.text() << block.position() << selectionStart << selectionEnd;
                 engine.addTextBlock(textDocument, block, position, textColor, anchorColor, selectionStart, selectionEnd);
                 ++it;
             }

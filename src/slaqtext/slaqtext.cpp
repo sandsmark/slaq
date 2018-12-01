@@ -128,7 +128,7 @@ void SlackText::prepareText() {
                 QString selectedText = prevCursor.selectedText();
                 //qDebug() << "found quote" << selectedText << singleQuote;
                 selectedText = selectedText.remove(searchQuote);
-                prevCursor.removeSelectedText();
+                //prevCursor.removeSelectedText();
 
                 if (singleQuote) {
                     QTextCharFormat chFmt = prevCursor.charFormat();
@@ -143,15 +143,15 @@ void SlackText::prepareText() {
                     prevCursor.insertText(selectedText, chFmt);
                 } else {
                     QTextFrameFormat fmt;
-                    fmt.setPosition(QTextFrameFormat::InFlow);
+                    //fmt.setPosition(QTextFrameFormat::InFlow);
                     fmt.setBorderStyle(QTextFrameFormat::BorderStyle_Dashed);
                     fmt.setBorder(singleQuote ? 1 : 2);
                     fmt.setPadding(singleQuote ? 1: 5);
                     fmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
                     fmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
                     QTextFrame *codeBlockFrame = prevCursor.insertFrame(fmt);
-                    QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
-                    blockCursor.insertText(selectedText);
+                    //QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
+                    prevCursor.insertText(selectedText);
                 }
 
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();

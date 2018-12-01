@@ -132,7 +132,7 @@ int SlaqTextNodeEngine::addText(const QTextBlock &block,
     else
         setTextColor(textColor);
 
-    qDebug() << "add text" <<  block.text() << m_textColor;
+    //qDebug() << "add text" <<  block.text() << m_textColor << selectionStart << selectionEnd << block.position();
     while (textPos < fragmentEnd) {
         int blockRelativePosition = textPos - block.position();
         QTextLine line = block.layout()->lineForTextPosition(blockRelativePosition);
@@ -545,7 +545,7 @@ void SlaqTextNodeEngine::addGlyphsInRange(int rangeStart, int rangeLength,
             && selectionStart <= selectionEnd;
 
     QTextLine &line = m_currentLine;
-    qDebug() << selectionStart << selectionEnd << m_textColor << m_backgroundColor;
+
     int rangeEnd = rangeStart + rangeLength;
     if (!hasSelection || (selectionStart > rangeEnd || selectionEnd < rangeStart)) {
         QList<QGlyphRun> glyphRuns = line.glyphRuns(rangeStart, rangeLength);
@@ -554,6 +554,7 @@ void SlaqTextNodeEngine::addGlyphsInRange(int rangeStart, int rangeLength,
             addUnselectedGlyphs(glyphRun);
         }
     } else {
+        //qDebug() << selectionStart << selectionEnd << rangeStart << rangeLength << m_textColor << m_backgroundColor;
         if (rangeStart < selectionStart) {
             int length = qMin(selectionStart - rangeStart, rangeLength);
             QList<QGlyphRun> glyphRuns = line.glyphRuns(rangeStart, length);
@@ -798,7 +799,7 @@ void  SlaqTextNodeEngine::addToSceneGraph(SlaqTextNode *parentNode,
 
             // If the previous or next node completely overlaps this one, then we have already drawn the glyphs of
             // this node
-            bool drawCurrent = false;
+            bool drawCurrent = true;
             if (previousNode != nullptr || nextNode != nullptr) {
                 for (int i = 0; i < node->ranges.size(); ++i) {
                     const QPair<int, int> &range = node->ranges.at(i);
