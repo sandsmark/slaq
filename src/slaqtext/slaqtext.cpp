@@ -96,6 +96,39 @@ void SlackText::onImageLoaded(const QString &id)
     }
 }
 
+bool SlackText::markupUpdate(const QString markupQuote,
+                             std::function<void(QTextCursor& from, QString &selText)> markupReplace) {
+    Q_D(SlackText);
+    QTextCursor fromCursor = d->m_tp->extra->doc->find(markupQuote, 0);
+    if (!fromCursor.isNull()) {
+        QTextCursor toCursor = d->m_tp->extra->doc->find(markupQuote, fromCursor);
+        if (!toCursor.isNull()) {
+
+            QTextCursor brCursor = d->m_tp->extra->doc->find(QChar(QChar::LineSeparator),
+                                                             fromCursor);
+            if (brCursor.isNull()) {
+                brCursor = d->m_tp->extra->doc->find(QChar(QChar::ParagraphSeparator), fromCursor);
+            }
+            if (brCursor.isNull()) {
+                brCursor = d->m_tp->extra->doc->find(QStringLiteral("<br/>"), fromCursor);
+            }
+            //check if is the same line
+            if (brCursor.isNull() || brCursor.position() > toCursor.position()) {
+                bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
+                d->m_tp->extra->doc->setUndoRedoEnabled(false);
+                fromCursor.movePosition(QTextCursor::NextCharacter,
+                                        QTextCursor::KeepAnchor,
+                                        toCursor.position() - fromCursor.position());
+                QString selectedText = fromCursor.selectedText();
+                selectedText = selectedText.remove(markupQuote);
+                markupReplace(fromCursor, selectedText);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void SlackText::postProcessText() {
     Q_D(SlackText);
     if (d->m_dirty && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
@@ -113,42 +146,12 @@ void SlackText::postProcessText() {
                 singleQuote = true;
                 prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
             }
-            if (prevCursor.isNull()) {
-                prevCursor = QTextCursor(d->m_tp->extra->doc);
-                searchQuote = "*";
-                singleQuote = true;
-                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
-            }
-            if (prevCursor.isNull()) {
-                prevCursor = QTextCursor(d->m_tp->extra->doc);
-                searchQuote = "_";
-                singleQuote = true;
-                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
-            }
-            if (prevCursor.isNull()) {
-                prevCursor = QTextCursor(d->m_tp->extra->doc);
-                searchQuote = "~";
-                singleQuote = true;
-                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
-            }
+
             if (!prevCursor.isNull()) {
                 QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
                 if (nextCursor.isNull() && !singleQuote) {
                     qWarning() << "no next cursor found! Assume its will be end of the document";
                     nextCursor = d->m_tp->extra->doc->rootFrame()->lastCursorPosition();
-                } else {
-                    //check is single quote on same line
-                    QTextCursor brCursor = d->m_tp->extra->doc->find(QStringLiteral("<br/>"),
-                                                                     prevCursor);
-                    if (brCursor.isNull()) {
-                        brCursor = d->m_tp->extra->doc->find(QStringLiteral("\n"), prevCursor);
-                    }
-                    //qDebug() << "quote" << searchQuote << brCursor.position();
-                    if (!brCursor.isNull() && (brCursor.position() < nextCursor.position())) {
-                        searchQuote = "```";
-                        singleQuote = false;
-                        continue;
-                    }
                 }
                 d->m_modified = true;
                 bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
@@ -164,24 +167,10 @@ void SlackText::postProcessText() {
                 if (singleQuote) {
                     QTextCharFormat chFmt = prevCursor.charFormat();
                     //make some extra space for better visibility
-                    if (searchQuote == "`") {
-                        selectedText.prepend(" ");
-                        selectedText += " ";
-                        chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
-                        chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
-                    } else if (searchQuote == "*") {
-                        QFont fnt = chFmt.font();
-                        fnt.setBold(true);
-                        chFmt.setFont(fnt);
-                    } else if (searchQuote == "_") {
-                        QFont fnt = chFmt.font();
-                        fnt.setItalic(true);
-                        chFmt.setFont(fnt);
-                    } else if (searchQuote == "~") {
-                        QFont fnt = chFmt.font();
-                        fnt.setStrikeOut(true);
-                        chFmt.setFont(fnt);
-                    }
+                    selectedText.prepend(" ");
+                    selectedText += " ";
+                    chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
+                    chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
                     prevCursor.insertText(selectedText, chFmt);
                 } else {
                     QTextFrameFormat fmt;
@@ -247,7 +236,27 @@ void SlackText::postProcessText() {
             prevCursor = QTextCursor(d->m_tp->extra->doc);
             prevCursor.setPosition(d->m_tp->extra->doc->characterCount() - 1);
         }
-
+        d->m_modified |= markupUpdate("*", [=] (QTextCursor& from, QString& selText) {
+            QTextCharFormat chFmt = from.charFormat();
+            QFont fnt = chFmt.font();
+            fnt.setBold(true);
+            chFmt.setFont(fnt);
+            from.insertText(selText, chFmt);
+        });
+        d->m_modified |= markupUpdate("_", [=] (QTextCursor& from, QString& selText) {
+            QTextCharFormat chFmt = from.charFormat();
+            QFont fnt = chFmt.font();
+            fnt.setItalic(true);
+            chFmt.setFont(fnt);
+            from.insertText(selText, chFmt);
+        });
+        d->m_modified |= markupUpdate("~", [=] (QTextCursor& from, QString& selText) {
+            QTextCharFormat chFmt = from.charFormat();
+            QFont fnt = chFmt.font();
+            fnt.setStrikeOut(true);
+            chFmt.setFont(fnt);
+            from.insertText(selText, chFmt);
+        });
         if (d->m_modified) {
             qDebug() << "updating";
             d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());

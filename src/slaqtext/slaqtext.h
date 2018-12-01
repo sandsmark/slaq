@@ -123,6 +123,8 @@ protected:
 private:
     void invalidateFontCaches();
     void insertImage(QTextCursor &cursor, const QString &url, const QImage &img);
+    bool markupUpdate(const QString markupQuote,
+                      std::function<void(QTextCursor& from, QString &selText)> markupReplace);
 
     QColor m_selectionColor;
     QColor m_selectedTextColor;
