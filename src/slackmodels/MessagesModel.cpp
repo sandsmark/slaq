@@ -362,13 +362,9 @@ QString MessageListModel::firstMessageTs() const
 
 void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
 {
-    //updateReactionUsers(message);
-    //m_formatter.replaceAll(chat, message->text);
     m_formatter.replaceLinks(message->text); //must be 1st
     m_formatter.replaceChannelInfo(chat, message->text);
     m_formatter.replaceTargetInfo(message->text);
-    m_formatter.replaceMarkdown(message->text);
-    //m_formatter.replaceEmoji(message->text);
     for (QObject* attachmentObj : message->attachments) {
         Attachment* attachment = static_cast<Attachment*>(attachmentObj);
         m_formatter.replaceAll(chat, attachment->text);

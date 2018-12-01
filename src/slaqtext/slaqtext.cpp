@@ -96,7 +96,7 @@ void SlackText::onImageLoaded(const QString &id)
     }
 }
 
-void SlackText::prepareText() {
+void SlackText::postProcessText() {
     Q_D(SlackText);
     if (d->m_dirty && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
         d->m_modified = false;
@@ -113,11 +113,42 @@ void SlackText::prepareText() {
                 singleQuote = true;
                 prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
             }
+            if (prevCursor.isNull()) {
+                prevCursor = QTextCursor(d->m_tp->extra->doc);
+                searchQuote = "*";
+                singleQuote = true;
+                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+            }
+            if (prevCursor.isNull()) {
+                prevCursor = QTextCursor(d->m_tp->extra->doc);
+                searchQuote = "_";
+                singleQuote = true;
+                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+            }
+            if (prevCursor.isNull()) {
+                prevCursor = QTextCursor(d->m_tp->extra->doc);
+                searchQuote = "~";
+                singleQuote = true;
+                prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
+            }
             if (!prevCursor.isNull()) {
                 QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
-                if (nextCursor.isNull()) {
+                if (nextCursor.isNull() && !singleQuote) {
                     qWarning() << "no next cursor found! Assume its will be end of the document";
                     nextCursor = d->m_tp->extra->doc->rootFrame()->lastCursorPosition();
+                } else {
+                    //check is single quote on same line
+                    QTextCursor brCursor = d->m_tp->extra->doc->find(QStringLiteral("<br/>"),
+                                                                     prevCursor);
+                    if (brCursor.isNull()) {
+                        brCursor = d->m_tp->extra->doc->find(QStringLiteral("\n"), prevCursor);
+                    }
+                    //qDebug() << "quote" << searchQuote << brCursor.position();
+                    if (!brCursor.isNull() && (brCursor.position() < nextCursor.position())) {
+                        searchQuote = "```";
+                        singleQuote = false;
+                        continue;
+                    }
                 }
                 d->m_modified = true;
                 bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
@@ -132,18 +163,29 @@ void SlackText::prepareText() {
 
                 if (singleQuote) {
                     QTextCharFormat chFmt = prevCursor.charFormat();
-                    QFont fnt = chFmt.font();
-                    const QFontMetrics fm(fnt);
                     //make some extra space for better visibility
-                    selectedText.prepend(" ");
-                    selectedText += " ";
-                    const QRectF strRect = fm.boundingRect(selectedText);
-                    chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
-                    chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
+                    if (searchQuote == "`") {
+                        selectedText.prepend(" ");
+                        selectedText += " ";
+                        chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
+                        chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
+                    } else if (searchQuote == "*") {
+                        QFont fnt = chFmt.font();
+                        fnt.setBold(true);
+                        chFmt.setFont(fnt);
+                    } else if (searchQuote == "_") {
+                        QFont fnt = chFmt.font();
+                        fnt.setItalic(true);
+                        chFmt.setFont(fnt);
+                    } else if (searchQuote == "~") {
+                        QFont fnt = chFmt.font();
+                        fnt.setStrikeOut(true);
+                        chFmt.setFont(fnt);
+                    }
                     prevCursor.insertText(selectedText, chFmt);
                 } else {
                     QTextFrameFormat fmt;
-                    //fmt.setPosition(QTextFrameFormat::InFlow);
+                    fmt.setPosition(QTextFrameFormat::InFlow);
                     fmt.setBorderStyle(QTextFrameFormat::BorderStyle_Dashed);
                     fmt.setBorder(singleQuote ? 1 : 2);
                     fmt.setPadding(singleQuote ? 1: 5);
@@ -153,7 +195,7 @@ void SlackText::prepareText() {
                     //QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
                     prevCursor.insertText(selectedText);
                 }
-
+                prevCursor = nextCursor;
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
                 d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
             }
@@ -222,7 +264,7 @@ void SlackText::componentComplete()
     Q_D(SlackText);
 
     QQuickLabel::componentComplete();
-    prepareText();
+    postProcessText();
     //qDebug() << "text is rich" << d->m_tp->richText << d->m_tp->extra.isAllocated() << d->m_tp->extra->doc << d->m_tp->updateType;
     // create frames for quotes
     // TODO: code highlight?
@@ -829,9 +871,11 @@ QString SlackText::text() const
 void SlackText::setText(const QString &txt)
 {
     Q_D(SlackText);
-    QQuickLabel::setText(txt);
+    QString _txt = txt;
+    QQuickLabel::setText(_txt.replace(" ", QChar(0x00a0U)).
+                         replace(QStringLiteral("\n"), QStringLiteral("<br/>")));
     d->m_dirty = true;
-    prepareText();
+    postProcessText();
 }
 
 QString SlackText::hoveredLink() const

@@ -66,15 +66,11 @@ public:
     TextFormat textFormat() const;
     void setTextFormat(TextFormat format);
 
-//    qreal topPadding() const;
-//    void setTopPadding(qreal padding);
-//    void resetTopPadding();
-
     QString hoveredLink() const;
     QString hoveredImage() const;
 
 Q_SIGNALS:
-    //void topPaddingChanged();
+
     void textChanged(const QString &text);
     void textFormatChanged(QQuickText::TextFormat textFormat);
     void selectionColorChanged();
@@ -104,7 +100,7 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void selectionChanged();
-    void prepareText();
+    void postProcessText();
     void onImageLoaded(const QString &id);
 
 protected:

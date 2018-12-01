@@ -93,29 +93,10 @@ void MessageFormatter::replaceLinks(QString &message)
 
 void MessageFormatter::replaceMarkdown(QString &message)
 {
-//    const QPalette& palette = QGuiApplication::palette();
-//    const QString& blockStyleBg = palette.color(QPalette::AlternateBase).name(QColor::HexRgb);
-//    const QString& blockStyleFg = palette.color(QPalette::HighlightedText).name(QColor::HexRgb);
-
     message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));
     message.replace(m_boldPattern, QStringLiteral("\\1<b>\\2</b>\\3"));
     message.replace(m_strikePattern, QStringLiteral("\\1<s>\\2</s>\\3"));
-
-    QStringList _blocks = message.split("```");
-    // there must be at least 3 blocks and the numbers of blocks must be odd
-    if (_blocks.size() > 2 && _blocks.size() % 2 == 1) {
-        message = _blocks.at(0);
-        for (int i = 1; i < _blocks.size(); i++) {
-            if (i % 2 != 0) {
-                message += "```";
-                message += _blocks[i].replace(" ","&nbsp;");
-                message += "```";
-            } else {
-                message += _blocks.at(i);
-            }
-        }
-    }
 }
 
 void MessageFormatter::replaceEmoji(QString &message)
