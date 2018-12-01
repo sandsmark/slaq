@@ -232,9 +232,8 @@ void SlackText::postProcessText() {
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
                 //nextCursor.endEditBlock();
                 d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
+                prevCursor = nextCursor;
             }
-            prevCursor = QTextCursor(d->m_tp->extra->doc);
-            prevCursor.setPosition(d->m_tp->extra->doc->characterCount() - 1);
         }
         d->m_modified |= markupUpdate("*", [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
