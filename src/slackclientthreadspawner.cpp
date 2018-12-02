@@ -874,11 +874,13 @@ void SlackClientThreadSpawner::deleteFile(const QString &teamId, const QString &
     QMetaObject::invokeMethod(_slackClient, "deleteFile", Qt::QueuedConnection, Q_ARG(QString, fileId));
 }
 
-void SlackClientThreadSpawner::clearSettingsAndRestartApp()
+void SlackClientThreadSpawner::clearSettingsAndRestartApp(bool clear)
 {
-    QSettings s;
-    s.clear();
-    s.sync();
+    if (clear) {
+        QSettings s;
+        s.clear();
+        s.sync();
+    }
     qApp->quit();
     QProcess::startDetached(qApp->arguments()[0], qApp->arguments());
 }
