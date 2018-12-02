@@ -138,6 +138,7 @@ void SlackText::postProcessText() {
         QTextCursor prevCursor(d->m_tp->extra->doc);
         ImagesCache* imageCache = ImagesCache::instance();
         QString searchQuote = "```";
+
         while (!prevCursor.isNull() && !prevCursor.atEnd()) {
             prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
             if (prevCursor.isNull()) {
@@ -189,6 +190,7 @@ void SlackText::postProcessText() {
                 d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
             }
         }
+
         //search for emojis
         prevCursor = QTextCursor(d->m_tp->extra->doc);
         searchQuote = ":";
@@ -879,9 +881,24 @@ QString SlackText::text() const
 void SlackText::setText(const QString &txt)
 {
     Q_D(SlackText);
-    QString _txt = txt;
-    QQuickLabel::setText(_txt.replace(" ", QChar(0x00a0U)).
-                         replace(QStringLiteral("\n"), QStringLiteral("<br/>")));
+    //preprocess text to replace CRs and spaces for frames, otherwize wordwarp not working
+    QString _txt;
+    QStringList _blocks = txt.split("```");
+    // there must be at least 3 blocks and the numbers of blocks must be odd
+    if (_blocks.size() > 2 && _blocks.size() % 2 == 1) {
+        _txt = _blocks.at(0);
+        for (int i = 1; i < _blocks.size(); i++) {
+            if (i % 2 != 0) {
+                _txt += "```";
+                _txt += _blocks[i].replace(" ", QChar(QChar::Nbsp)).replace("\n", "<br/>");
+                _txt += "```";
+            } else {
+                _txt += _blocks.at(i);
+            }
+        }
+    }
+
+    QQuickLabel::setText(_txt.isEmpty() ? txt : _txt);
     d->m_dirty = true;
     postProcessText();
 }

@@ -192,6 +192,7 @@ MouseArea {
                         y: parent.topPadding
                         color: contentLabel.palette.windowText
                         linkColor: contentLabel.palette.link
+                        wrapMode: Text.WordWrap
                         width: parent.width
                         //readOnly: true
                         font.pixelSize: Theme.fontSizeLarge
@@ -232,11 +233,6 @@ MouseArea {
                                 messageInput.forceActiveFocus()
                             }
                         }
-
-                        wrapMode: Text.WordWrap
-
-                        // To avoid the border on some styles, we only want a textarea to be able to select things
-                        //background: Item {}
 
                         MouseArea {
                             id: mouseArea
