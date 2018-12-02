@@ -13,42 +13,62 @@ LazyLoadDialog {
         focus: true
         title: qsTr("Settings")
 
-        footer: DialogButtonBox {
-            Button {
-                text: qsTr("Clear settings and restart")
-                DialogButtonBox.buttonRole: DialogButtonBox.ResetRole
+        property bool restart: styleBox.currentIndex !== styleBox.styleIndex ||
+                               unloadCb.initialState != unloadCb.checked ||
+                               loadLastCb.initialState != loadLastCb.checked ||
+                               imagesCacheCb.initialState != imagesCacheCb.checked
+
+        footer: RowLayout {
+            Label {
+                text: "Restart required"
+                color: "#e41e25"
+                opacity: settingsDialog.restart ? 1.0 : 0.0
+                horizontalAlignment: Label.AlignHCenter
+                verticalAlignment: Label.AlignVCenter
+                Layout.fillWidth: true
+                Layout.fillHeight: true
             }
-            Button {
-                text: qsTr("Cancel")
-                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            DialogButtonBox {
+                Button {
+                    text: qsTr("Clear settings and restart")
+                    DialogButtonBox.buttonRole: DialogButtonBox.ResetRole
+                }
+                Button {
+                    text: qsTr("Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                }
+                Button {
+                    text: qsTr("Ok")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                }
+                onReset: {
+                    SlackClient.clearSettingsAndRestartApp(true);
+                }
+
+                onAccepted: {
+                    ImagesCache.setEmojiImagesSet(setsBox.displayText)
+                    settings.style = styleBox.displayText
+                    settingsDialog.close()
+                    if (settingsDialog.restart) {
+                        SlackClient.clearSettingsAndRestartApp(false);
+                    }
+                }
+
+                onRejected: {
+                    setsBox.currentIndex = setsBox.setIndex
+                    settingsDialog.close()
+                }
             }
-            Button {
-                text: qsTr("Ok")
-                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-            }
         }
 
-        onReset: {
-            SlackClient.clearSettingsAndRestartApp();
-        }
-
-        onAccepted: {
-            ImagesCache.setEmojiImagesSet(setsBox.displayText)
-            settings.style = styleBox.displayText
-            settingsDialog.close()
-        }
-
-        onRejected: {
-            setsBox.currentIndex = setsBox.setIndex
-            settingsDialog.close()
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
             id: settingsColumn
             spacing: 20
+            width: settingsDialog.contentWidth
 
             RowLayout {
                 spacing: 10
+                Layout.fillWidth: true
 
                 Label {
                     text: qsTr("Emojis:")
@@ -65,6 +85,7 @@ LazyLoadDialog {
                     }
                     Layout.fillWidth: true
                 }
+
             }
 
             RowLayout {
@@ -85,16 +106,6 @@ LazyLoadDialog {
                     }
                     Layout.fillWidth: true
                 }
-                Label {
-                    text: "Restart required"
-                    color: "#e41e25"
-                    opacity: styleBox.currentIndex !== styleBox.styleIndex ? 1.0 : 0.0
-                    horizontalAlignment: Label.AlignHCenter
-                    verticalAlignment: Label.AlignVCenter
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                }
-
             }
 
             RowLayout {
@@ -105,7 +116,6 @@ LazyLoadDialog {
                 }
 
                 ComboBox {
-                    property int setIndex: 0
                     model: [qsTr("Light"), qsTr("Dark"), qsTr("System Default")]
                     currentIndex: settings.theme
                     onCurrentIndexChanged: settings.theme = currentIndex
@@ -119,28 +129,40 @@ LazyLoadDialog {
 
                     CheckBox {
                         id: unloadCb
-                        text: qsTr("Unload view on teams switch (Reduce memory usage but slow down switching)")
+                        property bool initialState
+                        Component.onCompleted: initialState = checked
+                        text: qsTr("Unload view on teams switch \n(Reduce memory usage but slow down switching)")
                         checked: settings.unloadViewOnTeamSwitch
                         onClicked: {
                             settings.unloadViewOnTeamSwitch = checked
                         }
+                        Layout.fillWidth: true
                     }
 
                     CheckBox {
+                        id: loadLastCb
                         text: qsTr("Load only last team on startup (faster startup)")
+                        property bool initialState
+                        Component.onCompleted: initialState = checked
                         enabled: !unloadCb.checked
                         checked: settings.loadOnlyLastTeam || unloadCb.checked
                         onCheckedChanged: {
                             settings.loadOnlyLastTeam = checked
                         }
+                        Layout.fillWidth: true
                     }
 
                     CheckBox {
+                        id: imagesCacheCb
                         text: qsTr("Cache images from Slack")
+                        property bool initialState
+                        Component.onCompleted: initialState = checked
                         checked: settings.cacheSlackImages
                         onCheckedChanged: {
                             settings.cacheSlackImages = checked
                         }
+
+                        Layout.fillWidth: true
                     }
                 }
             }

@@ -169,7 +169,7 @@ public slots:
     void cancelDnD(const QString& teamId);
     void onFileSharesReceived(const QList<FileShare*>& shares, int total, int page, int pages);
     void deleteFile(const QString& teamId, const QString& fileId);
-    void clearSettingsAndRestartApp();
+    void clearSettingsAndRestartApp(bool clear);
     void showError(const QString& errorDomain, const QString& errorMessage,
                    const QString& errorDetails = "", int timeout = 0);
 
