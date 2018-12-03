@@ -733,7 +733,7 @@ void SlackText::hoverMoveEvent(QHoverEvent *event)
     }
     if (imglink != d->m_imageHovered) {
         d->m_imageHovered = imglink;
-        emit imageHovered(imglink, event->posF().x(), event->posF().y());
+        emit imageHovered(imglink, translatedMousePos.x(), translatedMousePos.y());
     }
     QQuickLabel::hoverMoveEvent(event);
 }

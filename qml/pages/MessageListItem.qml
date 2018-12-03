@@ -218,12 +218,12 @@ MouseArea {
                                 return
                             }
 
-//                            console.log("image: `" + imagelink +"` " + imagelink.length + " " +
-//                                        imgToolTip.visible)
                             imgToolTip.text = imagelink.replace("image://emoji/", "")
                             imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
                             imgToolTip.y = mapToItem(msgListView, x, 0).y -
                                     (imgToolTip.height + Theme.paddingSmall)
+//                            console.log("image: `" + imagelink +"` " + " x: " + x + " y: " + y +
+//                                        " tt x: " + imgToolTip.x + " tt y: " + imgToolTip.y)
                             imgToolTip.open()
                         }
                         onSelectedTextChanged: {
