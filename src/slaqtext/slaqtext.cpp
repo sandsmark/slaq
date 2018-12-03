@@ -594,7 +594,7 @@ void SlackTextPrivate::copy(QClipboard::Mode mode) const
 {
     QString t = selectedText();
     if (!t.isEmpty()) {
-        qDebug() << "copy to clipboard:" << t;
+        qDebug() << "copy to clipboard:" << t << mode;
         QGuiApplication::clipboard()->setText(t, mode);
     }
 }
@@ -1147,6 +1147,20 @@ void SlackTextPrivate::updateLayout()
         return;
 
     m_lp->updateLayout();
+}
+
+void SlackText::keyPressEvent(QKeyEvent* ev)
+{
+    Q_D(SlackText);
+    // Don't allow MacOSX up/down support, and we don't allow a completer.
+    bool ignore = (ev->key() == Qt::Key_Up || ev->key() == Qt::Key_Down) && ev->modifiers() == Qt::NoModifier;
+    if (ignore) {
+        ev->ignore();
+    } else {
+        d->processKeyEvent(ev);
+    }
+    if (!ev->isAccepted())
+        QQuickLabel::keyPressEvent(ev);
 }
 
 void SlackTextPrivate::processKeyEvent(QKeyEvent* event)
