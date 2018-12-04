@@ -179,7 +179,7 @@ void SlaqTextNode::addTextDocument(const QPointF &position, QTextDocument *textD
             QTextBlock block = textFrame->firstCursorPosition().block();
             //qDebug() << "add block" << block.text();
             engine.setCurrentLine(block.layout()->lineForTextPosition(pos - block.position()));
-            engine.addTextObject(rect.topLeft(), format, SlaqTextNodeEngine::Unselected, textDocument,
+            engine.addTextObject(block, rect.topLeft(), format, SlaqTextNodeEngine::Unselected, textDocument,
                                  pos, textFrame->frameFormat().position());
         } else {
             QTextFrame::iterator it = textFrame->begin();

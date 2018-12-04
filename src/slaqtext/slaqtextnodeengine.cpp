@@ -385,10 +385,11 @@ void SlaqTextNodeEngine::addImage(const QRectF &rect, const QImage &image, qreal
     QRectF searchRect = rect;
     if (layoutPosition == QTextFrameFormat::InFlow) {
         if (m_currentLineTree.isEmpty()) {
+            qreal y = m_currentLine.ascent() - ascent;
             if (m_currentTextDirection == Qt::RightToLeft)
-                searchRect.moveTopRight(m_position + m_currentLine.rect().topRight() + QPointF(0, 1));
+                searchRect.moveTopRight(m_position + m_currentLine.rect().topRight() + QPointF(0, y));
             else
-                searchRect.moveTopLeft(m_position + m_currentLine.position() + QPointF(0,1));
+                searchRect.moveTopLeft(m_position + m_currentLine.position() + QPointF(0, y));
         } else {
             const BinaryTreeNode *lastNode = m_currentLineTree.data() + m_currentLineTree.size() - 1;
 
@@ -406,7 +407,7 @@ void SlaqTextNodeEngine::addImage(const QRectF &rect, const QImage &image, qreal
     m_hasContents = true;
 }
 
-void SlaqTextNodeEngine::addTextObject(const QPointF &position, const QTextCharFormat &format,
+void SlaqTextNodeEngine::addTextObject(const QTextBlock &block, const QPointF &position, const QTextCharFormat &format,
                                          SelectionState selectionState,
                                          QTextDocument *textDocument, int pos,
                                          QTextFrameFormat::Position layoutPosition)
@@ -439,17 +440,25 @@ void SlaqTextNodeEngine::addTextObject(const QPointF &position, const QTextCharF
         }
 
         qreal ascent;
-        QFontMetrics m(format.font());
+        QTextLine line = block.layout()->lineForTextPosition(pos);
         switch (format.verticalAlignment())
         {
-        case QTextCharFormat::AlignMiddle:
-            ascent = currentLine().ascent() + (currentLine().height() - size.height());
+        case QTextCharFormat::AlignTop:
+            ascent = line.ascent();
+            break;
+        case QTextCharFormat::AlignMiddle: {
+            QFontMetrics m(format.font());
+            ascent = line.ascent() + (line.height() - size.height());
+            //ascent = (size.height() - m.xHeight()) / 2;
+            break;
+        }
+        case QTextCharFormat::AlignBottom:
+            ascent = size.height() - line.descent();
+
             break;
         case QTextCharFormat::AlignBaseline:
-            ascent = size.height() - m.descent() - 1;
-            break;
         default:
-            ascent = size.height() - 1;
+            ascent = size.height();
         }
         //qDebug() << __PRETTY_FUNCTION__ << ascent << currentLine().ascent() << currentLine().descent() << size << m_currentLineTree.isEmpty();
 
@@ -1024,7 +1033,7 @@ void SlaqTextNodeEngine::addTextBlock(QTextDocument *textDocument, const QTextBl
                         ? SlaqTextNodeEngine::Selected
                         : SlaqTextNodeEngine::Unselected;
 
-                addTextObject(QPointF(), charFormat, selectionState, textDocument, textPos);
+                addTextObject(block, QPointF(), charFormat, selectionState, textDocument, textPos);
             }
             textPos += text.length();
         } else {

@@ -275,8 +275,6 @@ void SlackText::componentComplete()
 
     QQuickLabel::componentComplete();
     postProcessText();
-    //qDebug() << "text is rich" << d->m_tp->richText << d->m_tp->extra.isAllocated() << d->m_tp->extra->doc << d->m_tp->updateType;
-    // create frames for quotes
     // TODO: code highlight?
 }
 
