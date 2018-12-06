@@ -876,11 +876,11 @@ void SlackClientThreadSpawner::deleteFile(const QString &teamId, const QString &
 
 void SlackClientThreadSpawner::clearSettingsAndRestartApp(bool clear)
 {
+    QSettings s;
     if (clear) {
-        QSettings s;
         s.clear();
-        s.sync();
     }
+    s.sync();
     qApp->quit();
     QProcess::startDetached(qApp->arguments()[0], qApp->arguments());
 }

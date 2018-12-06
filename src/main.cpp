@@ -25,6 +25,7 @@
 int main(int argc, char *argv[])
 {
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
+    qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
     QApplication app(argc, argv);
 
     app.setOrganizationName(QStringLiteral("Martin Sandsmark"));

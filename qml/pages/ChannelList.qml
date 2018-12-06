@@ -56,7 +56,7 @@ Page {
             MenuItem {
                 text: qsTr("DnD")
                 checkable: true
-                checked: selfUser.presence === User.Dnd
+                checked: selfUser != null ? selfUser.presence === User.Dnd : false
                 icon.source: "qrc:/icons/dnd-icon.png"
                 icon.color: "transparent"
                 onTriggered: {

@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.7
+VERSION = 0.0.2.0
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
@@ -38,8 +38,8 @@ QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += quick-private core-private gui-private qml-private quickcontrols2-private quicktemplates2-private
 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
-INCLUDEPATH += src src/slackmodels 
-INCLUDEPATH += src/slaqtext 
+INCLUDEPATH += src src/slackmodels
+INCLUDEPATH += src/slaqtext
 INCLUDEPATH += src/QGumboParser
 
 QML_IMPORT_PATH =
