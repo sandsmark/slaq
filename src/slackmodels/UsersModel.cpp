@@ -322,8 +322,13 @@ void UsersModel::updateUser(const QJsonObject &userData)
         qWarning() << "no user found for" << userId << "adding new one";
         addUser(userData);
         _user = m_users.value(userId);
+    } else {
+        _user->setData(userData);
     }
-    _user->setData(userData);
+    if (_user.isNull()) {
+        qWarning() << "still no user found for" << userId;
+        return;
+    }
     QString _id = _user->userId();
     if (_user->isBot()) {
         _id = _user->botId();
