@@ -14,6 +14,7 @@ LazyLoadDialog {
         title: qsTr("Settings")
 
         property bool restart: styleBox.currentIndex !== styleBox.styleIndex ||
+                               setsBox.currentIndex !== setsBox.setIndex ||
                                unloadCb.initialState != unloadCb.checked ||
                                loadLastCb.initialState != loadLastCb.checked ||
                                imagesCacheCb.initialState != imagesCacheCb.checked
