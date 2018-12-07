@@ -86,8 +86,9 @@ void SlackTeamClient::startConnections()
 
     stream = new SlackStream(this);
     reconnectTimer = new QTimer(this);
+#ifndef Q_OS_WIN //reports wrong state on Windows
     networkAccessible = networkAccessManager->networkAccessible();
-
+#endif
     connect(networkAccessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &SlackTeamClient::handleNetworkAccessibleChanged);
     connect(reconnectTimer.data(), &QTimer::timeout, this, &SlackTeamClient::reconnectClient);
 

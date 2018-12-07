@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.2.0
+VERSION = 0.0.2.1
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
@@ -169,6 +169,9 @@ macx {
     BINDIST_EXCLUDE_ARG = "--exclude-toplevel"
     deploylibs.commands = python -u $$PWD/scripts/deploylibs.py -i \"$${TO_DEPLOY}/slaq\" \"$(QMAKE)\"
     deploylibs.depends = install
+} else:win*: {
+    BINDIST_SOURCE = "$${TO_DEPLOY}"
+    BINDIST_EXCLUDE_ARG = "--exclude-toplevel"
 }
 
 INSTALLER_ARCHIVE_FROM_ENV = $$(INSTALLER_ARCHIVE)
