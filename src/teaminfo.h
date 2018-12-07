@@ -25,7 +25,7 @@ class TeamInfo: public QObject {
     Q_PROPERTY(QString teamToken READ teamToken WRITE setTeamToken NOTIFY teamTokenChanged)
     Q_PROPERTY(QString lastChannel READ lastChannel WRITE setLastChannel NOTIFY lastChannelChanged)
     Q_PROPERTY(QString selfId READ selfId CONSTANT)
-    Q_PROPERTY(User* selfUser READ selfUser CONSTANT)
+    Q_PROPERTY(SlackUser* selfUser READ selfUser CONSTANT)
     Q_PROPERTY(ChatsModel* chats READ chats NOTIFY chatsChanged)
     Q_PROPERTY(UsersModel* users READ users NOTIFY usersChanged)
 
@@ -63,7 +63,7 @@ public:
     void setTeamsEmojisUpdated(bool teamsEmojisUpdated);
 
     void createModels(SlackTeamClient *slackClient);
-    User* selfUser() const;
+    SlackUser* selfUser() const;
     FilesSharesModel *fileSharesModel() const;
 
 public slots:
@@ -77,7 +77,7 @@ public slots:
     void setEnterpriseName(const QString& enterpriseName);
     void setTeamToken(const QString& teamToken);
     void setLastChannel(const QString& lastChannel);
-    void addUsersData(const QList<QPointer<User> > &users, bool last);
+    void addUsersData(const QList<QPointer<SlackUser> > &users, bool last);
     void addConversationsData(const QList<Chat *> &chats, bool last);
 
 signals:

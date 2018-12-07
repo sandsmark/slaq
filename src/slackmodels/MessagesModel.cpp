@@ -47,6 +47,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return message->text;
     case Subtype:
         return message->subtype;
+    case OriginalText:
+        return message->originalText;
     case User:
         if (message->user.isNull()) {
             message->user = m_usersModel->user(message->user_id);
@@ -101,7 +103,7 @@ void MessageListModel::updateReactionUsers(Message* message) {
             reaction->m_users.clear();
         }
         foreach (const QString& userId, reaction->m_userIds) {
-            ::User* user_ = m_usersModel->user(userId);
+            ::SlackUser* user_ = m_usersModel->user(userId);
             if (user_ != nullptr) {
                 reaction->appendUser(m_usersModel->user(userId)->username());
             } else {
@@ -339,7 +341,7 @@ void MessageListModel::preprocessMessage(Message *message)
             qWarning() << "user is null for " << message->user_id << message->userName << m_usersModel->users().count();
             //try to construct user from message
             if (!message->user_id.isEmpty()) {
-                QPointer<::User> _user = new ::User(message->user_id, message->userName, nullptr);
+                QPointer<::SlackUser> _user = new ::SlackUser(message->user_id, message->userName, nullptr);
                 QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);
                 message->user = _user;
                 m_usersModel->addUser(_user);
@@ -360,8 +362,9 @@ QString MessageListModel::firstMessageTs() const
 
 void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
 {
-    //updateReactionUsers(message);
-    m_formatter.replaceAll(chat, message->text);
+    m_formatter.replaceLinks(message->text); //must be 1st
+    m_formatter.replaceChannelInfo(chat, message->text);
+    m_formatter.replaceTargetInfo(message->text);
     for (QObject* attachmentObj : message->attachments) {
         Attachment* attachment = static_cast<Attachment*>(attachmentObj);
         m_formatter.replaceAll(chat, attachment->text);
@@ -399,12 +402,12 @@ void MessageListModel::usersModelChanged(const QModelIndex &topLeft, const QMode
         qWarning() << __PRETTY_FUNCTION__ << "roles are empty";
         return;
     }
-    ::User* _user = qvariant_cast<::User*>(m_usersModel->data(topLeft, roles.at(0)));
+    ::SlackUser* _user = qvariant_cast<::SlackUser*>(m_usersModel->data(topLeft, roles.at(0)));
     if (_user != nullptr) {
         //qWarning() << "USER CHANGED" << _user->userId() << _user->username();
         //got thru messages and inform about user gets changed
         for (int i = 0; i < m_messages.count(); i++) {
-            QPointer<::User> user = m_messages.at(i)->user;
+            QPointer<::SlackUser> user = m_messages.at(i)->user;
             QString _userId = m_messages.at(i)->user_id;
             if (_userId.isEmpty() && !user.isNull()) {
                 _userId = user->isBot() ? user->botId() : user->userId();
@@ -561,7 +564,7 @@ void MessageListModel::findNewUsers(QString& message)
 {
     //DEBUG_BLOCK
 
-    QPointer<::User> user;
+    QPointer<::SlackUser> user;
     QRegularExpressionMatchIterator i = m_newUserPattern.globalMatch(message);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
@@ -569,7 +572,7 @@ void MessageListModel::findNewUsers(QString& message)
         user = m_usersModel->user(id);
         if (user.isNull()) {
             QString name = match.captured(2);
-            user = new ::User(id, name, nullptr);
+            user = new ::SlackUser(id, name, nullptr);
             QQmlEngine::setObjectOwnership(user, QQmlEngine::CppOwnership);
             if (QThread::currentThread() != qApp->thread()) {
                 user->moveToThread(qApp->thread());
@@ -662,6 +665,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     QHash<int, QByteArray> names;
     names[Text] = "Text";
     names[Subtype] = "Subtype";
+    names[OriginalText] = "OriginalText";
     names[User] = "User";
     names[Time] = "Time";
     names[SlackTimestamp] = "SlackTimestamp";
@@ -703,6 +707,7 @@ void Message::setData(const QJsonObject &data)
     //    Q_ASSERT(time.isValid());
 
     text = data.value(QStringLiteral("text")).toString();
+    originalText = text;
     const QJsonValue chan_ = data.value(QStringLiteral("channel"));
     if (chan_.isString()) {
         channel_id = chan_.toString();

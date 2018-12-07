@@ -44,7 +44,7 @@ MessageFormatter::MessageFormatter() :
     m_codeBlockPattern.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 }
 
-void MessageFormatter::replaceUserInfo(User* user, QString &message)
+void MessageFormatter::replaceUserInfo(SlackUser* user, QString &message)
 {
     if (user == nullptr) {
         qWarning() << "no user for message" << message;
@@ -93,16 +93,10 @@ void MessageFormatter::replaceLinks(QString &message)
 
 void MessageFormatter::replaceMarkdown(QString &message)
 {
-    const QPalette& palette = QGuiApplication::palette();
-    const QString& blockStyleBg = palette.color(QPalette::AlternateBase).name(QColor::HexRgb);
-    const QString& blockStyleFg = palette.color(QPalette::HighlightedText).name(QColor::HexRgb);
-
+    message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
     message.replace(m_italicPattern, QStringLiteral("\\1<i>\\2</i>\\3"));
     message.replace(m_boldPattern, QStringLiteral("\\1<b>\\2</b>\\3"));
     message.replace(m_strikePattern, QStringLiteral("\\1<s>\\2</s>\\3"));
-    message.replace(m_codeBlockPattern, QStringLiteral("<blockquote><table style=\"background-color:%1; color:%2; white-space:pre; word-wrap:break-word;\"><tr><td>\\1</td></tr></table></blockquote>").arg(blockStyleBg).arg(blockStyleFg));
-    message.replace(m_codePattern, QStringLiteral("\\1<span style=\"background-color:%1; color:%2; white-space:pre;\"> \\2 </span>\\3").arg(blockStyleBg).arg(blockStyleFg));
-    message.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
 }
 
 void MessageFormatter::replaceEmoji(QString &message)
@@ -127,9 +121,9 @@ void MessageFormatter::replaceEmoji(QString &message)
             if (imageCache->isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
                 message.replace(":" + captured + ":", imageCache->getEmojiByName(captured));
             } else {
-                QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" align=\"%2\" width=\"%3\" height=\"%4\" />"))
+                QString replacement = QString(QStringLiteral("<img src=\"image://emoji/%1\" alt=\"\\1\" vertical-align:\"%2\" width=\"%3\" height=\"%4\" />"))
                         .arg(captured)
-                        .arg(QStringLiteral("center"))
+                        .arg(QStringLiteral("middle"))
                         .arg(24)
                         .arg(24);
 

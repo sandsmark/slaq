@@ -11,7 +11,7 @@
 #include <QColor>
 #include <QMutexLocker>
 
-class User : public QObject
+class SlackUser : public QObject
 {
     Q_OBJECT
 
@@ -42,9 +42,9 @@ public:
     };
     Q_ENUM(Presence)
 
-    User(QObject *parent = nullptr);
-    User(const User& copy, QObject *parent = nullptr);
-    User(const QString& id, const QString& name, QObject *parent = nullptr);
+    SlackUser(QObject *parent = nullptr);
+    SlackUser(const SlackUser& copy, QObject *parent = nullptr);
+    SlackUser(const QString& id, const QString& name, QObject *parent = nullptr);
 
     void setData(const QJsonObject &data);
 
@@ -128,22 +128,22 @@ public:
     int rowCount(const QModelIndex &/*parent*/ = QModelIndex()) const override { return m_users.count(); }
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
-    QMap<QString, QPointer<User> > users() const;
+    QMap<QString, QPointer<SlackUser> > users() const;
 
     bool usersFetched() const;
     void setUsersFetched(bool usersFetched);
     bool selected() const;
 
 signals:
-    void requestUserInfo(User* user);
+    void requestUserInfo(SlackUser* user);
     void selectedChanged(bool selected);
 
 public slots:
-    void addUser(User *user);
+    void addUser(SlackUser *user);
     void updateUser(const QJsonObject &userData);
     void addUser(const QJsonObject &userData);
-    void addUsers(const QList<QPointer<User>> &users, bool last);
-    QPointer<User> user(const QString &id);
+    void addUsers(const QList<QPointer<SlackUser>> &users, bool last);
+    QPointer<SlackUser> user(const QString &id);
     QStringList selectedUserIds();
     bool isSelected() const;
     void setSelected(int index);
@@ -151,7 +151,7 @@ public slots:
     void createAndRequestInfo(const QString &id);
 
 private:
-    QMap<QString, QPointer<User>> m_users;
+    QMap<QString, QPointer<SlackUser>> m_users;
     QStringList m_userIds;
     bool m_addingUsers { false };
     bool m_usersFetched { false };

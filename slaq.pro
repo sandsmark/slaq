@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.1.7
+VERSION = 0.0.2.0
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
@@ -35,9 +35,13 @@ TRANSLATIONS += translations/slaq-fi.ts
 CONFIG += c++11
 
 QT += quick xml quickcontrols2 multimedia widgets websockets
+QT += quick-private core-private gui-private qml-private quickcontrols2-private quicktemplates2-private
 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
-INCLUDEPATH += src src/slackmodels src/QGumboParser
+INCLUDEPATH += src src/slackmodels
+INCLUDEPATH += src/slaqtext
+INCLUDEPATH += src/QGumboParser
+
 QML_IMPORT_PATH =
 # enable for address sanitizer
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
@@ -63,7 +67,11 @@ SOURCES += src/main.cpp \
     src/slackmodels/MessagesModel.cpp \
     src/slackmodels/UsersModel.cpp \
     src/slackmodels/searchmessagesmodel.cpp \
-    src/slackmodels/FilesSharesModel.cpp
+    src/slackmodels/FilesSharesModel.cpp \
+    src/slaqtext/slaqtext.cpp \
+    src/slaqtext/slaqtextnode.cpp \
+    src/slaqtext/slaqtextnodeengine.cpp \
+    src/slaqtext/slaqtextdocument.cpp
 
 OTHER_FILES += translations/*.ts \
     icons/slaq.svg \
@@ -91,7 +99,12 @@ HEADERS += \
     src/slackmodels/MessagesModel.h \
     src/slackmodels/UsersModel.h \
     src/slackmodels/searchmessagesmodel.h \
-    src/slackmodels/FilesSharesModel.h
+    src/slackmodels/FilesSharesModel.h \
+    src/slaqtext/slaqtext.h \
+    src/slaqtext/slaqtext_p.h \
+    src/slaqtext/slaqtextnode_p.h \
+    src/slaqtext/slaqtextnodeengine_p.h \
+    src/slaqtext/slaqtextdocument_p.h
 
 DISTFILES += \
     qml/dialogs/*.qml \
@@ -100,7 +113,9 @@ DISTFILES += \
     qml/*.qml \
     scripts/*.py \
     qml/components/*.qml \
-    qml/components/EmojisGrid.qml
+    qml/components/EmojisGrid.qml \
+    qml/dialogs/EditMessageDialog.qml \
+    qml/dialogs/EditMessageDialog.qml
 
 win* {
 OTHER_FILES += \

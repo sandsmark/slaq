@@ -105,7 +105,7 @@ signals:
     void userTyping(const QString& teamId, const QString& channelId, const QString& userName);
     void usersPresenceChanged(const QStringList& users, const QString& presence, const QDateTime& snoozeEnds = QDateTime(), bool force = false);
 
-    void usersDataChanged(const QList<QPointer<User>>& users, bool last);
+    void usersDataChanged(const QList<QPointer<SlackUser>>& users, bool last);
     void conversationsDataChanged(const QList<Chat*>& chats, bool last);
     void conversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
 
@@ -143,9 +143,9 @@ public slots:
     void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
     void requestConversationInfo(const QString& channelId);
-    void requestUserInfo(User* user);
+    void requestUserInfo(SlackUser* user);
     void requestUserInfoById(const QString& userId);
-    void updateUserInfo(User* user);
+    void updateUserInfo(SlackUser* user);
     void updateUserAvatar(const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
     void setPresence(bool isAway);
     void setDnD(int minutes);

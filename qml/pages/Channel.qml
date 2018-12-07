@@ -136,6 +136,7 @@ Page {
             id: messagesListView
             Layout.fillHeight: true
             Layout.fillWidth: true
+            messageInput: input
 
             onLoadCompleted: {
                 loaderIndicator.visible = false
@@ -175,7 +176,13 @@ Page {
             enabled: messagesListView.inputEnabled
             placeholder: qsTr("Message %1%2").arg("#").arg(channel.name)
             onSendMessage: {
-                SlackClient.postMessage(teamRoot.teamId, channel.id, content)
+                if (updating) {
+                    SlackClient.updateMessage(teamId, channel.id, content,
+                                              messageTime, messageSlackTime)
+                    updating = false
+                } else {
+                    SlackClient.postMessage(teamRoot.teamId, channel.id, content)
+                }
             }
 
             nickPopupVisible: nickPopup.visible

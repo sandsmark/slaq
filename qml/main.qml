@@ -30,6 +30,7 @@ ApplicationWindow {
     property alias errorDialog: errorDialog
     property alias dndDialog: dndDialog
     property alias filesSharesList: filesSharesList
+    property alias editMessageDialog: editMessageDialog
 
     property int totalUnreadChannelMessages: 0
     property int totalUnreadIMMessages: 0
@@ -128,6 +129,7 @@ ApplicationWindow {
     LoginDialog { id: loginDialog }
     AboutDialog { id: aboutDialog }
     DndDialog { id: dndDialog }
+    EditMessageDialog { id: editMessageDialog }
 
     color: palette.window
 
@@ -306,39 +308,46 @@ ApplicationWindow {
                 }
             }
             ToolSeparator {}
-            RowLayout {
-                spacing: 2
+
+            TextField {
+                id: searchInput
+                placeholderText: qsTr("Search...")
+                // workaround for bug in Material l'n'f
+                implicitWidth: undefined
+                Layout.fillWidth: true
+                rightPadding: closeButton.width + Theme.paddingSmall
+                leftPadding: doSearchButton.width + Theme.paddingMedium
+                Material.accent: "transparent"
+                onAccepted: {
+                    SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
+                }
                 EmojiToolButton {
+                    id: doSearchButton
+                    padding: 0
+                    anchors.left: parent.left
+                    anchors.rightMargin: -Theme.paddingSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: -2
+                    width: searchInput.contentHeight
+                    height: searchInput.contentHeight
                     text: "🔍"
                     onClicked: {
                         SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
                     }
                 }
-
-                TextField {
-                    id: searchInput
-                    placeholderText: qsTr("Search...")
-                    Layout.fillWidth: true
-                    rightPadding: closeButton.width + Theme.paddingSmall
-                    leftPadding: Theme.paddingMedium
-                    onAccepted: {
-                        SlackClient.searchMessages(teamsSwipe.currentItem.item.teamId, searchInput.text)
-                    }
-
-                    EmojiToolButton {
-                        id: closeButton
-                        padding: 0
-                        anchors.right: parent.right
-                        anchors.rightMargin: -Theme.paddingSmall
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -2
-                        width: searchInput.contentHeight
-                        height: searchInput.contentHeight
-                        text: "✖️"
-                        visible: searchInput.text !== ""
-                        onClicked: {
-                            searchInput.text = ""
-                        }
+                EmojiToolButton {
+                    id: closeButton
+                    padding: 0
+                    anchors.right: parent.right
+                    anchors.rightMargin: -Theme.paddingSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: -2
+                    width: searchInput.contentHeight
+                    height: searchInput.contentHeight
+                    text: "✖️"
+                    visible: searchInput.text !== ""
+                    onClicked: {
+                        searchInput.text = ""
                     }
                 }
             }

@@ -1,0 +1,258 @@
+#include "slaqtextnode_p.h"
+
+#include "slaqtextnodeengine_p.h"
+
+#include <private/qsgadaptationlayer_p.h>
+#include <private/qsgdistancefieldglyphnode_p.h>
+#include <private/qquickclipnode_p.h>
+#include <private/qquickitem_p.h>
+#include <QtQuick/private/qsgcontext_p.h>
+
+#include <QtCore/qpoint.h>
+#include <qtextdocument.h>
+#include <qtextlayout.h>
+#include <qabstracttextdocumentlayout.h>
+#include <qxmlstream.h>
+#include <private/qquickstyledtext_p.h>
+#include <private/qfont_p.h>
+#include <private/qfontengine_p.h>
+
+#include <private/qtextdocumentlayout_p.h>
+#include <qhash.h>
+
+QT_BEGIN_NAMESPACE
+
+namespace {
+
+    class ProtectedLayoutAccessor: public QAbstractTextDocumentLayout
+    {
+    public:
+        inline QTextCharFormat formatAccessor(int pos)
+        {
+            return format(pos);
+        }
+    };
+
+}
+
+/*!
+  Creates an empty QQuickTextNode
+*/
+SlaqTextNode::SlaqTextNode(QQuickItem *ownerElement)
+    : m_cursorNode(nullptr), m_ownerElement(ownerElement), m_useNativeRenderer(false)
+{
+#ifdef QSG_RUNTIME_DESCRIPTION
+    qsgnode_set_description(this, QLatin1String("text"));
+#endif
+}
+
+SlaqTextNode::~SlaqTextNode()
+{
+    qDeleteAll(m_textures);
+}
+
+QSGGlyphNode *SlaqTextNode::addGlyphs(const QPointF &position, const QGlyphRun &glyphs, const QColor &color,
+                                     QQuickText::TextStyle style, const QColor &styleColor,
+                                     QSGNode *parentNode)
+{
+    QSGRenderContext *sg = QQuickItemPrivate::get(m_ownerElement)->sceneGraphRenderContext();
+    QRawFont font = glyphs.rawFont();
+    bool preferNativeGlyphNode = m_useNativeRenderer;
+    if (!preferNativeGlyphNode) {
+        QRawFontPrivate *fontPriv = QRawFontPrivate::get(font);
+        if (fontPriv->fontEngine->hasUnreliableGlyphOutline()) {
+            preferNativeGlyphNode = true;
+        } else {
+            QFontEngine *fe = QRawFontPrivate::get(font)->fontEngine;
+            preferNativeGlyphNode = !fe->isSmoothlyScalable;
+        }
+    }
+
+    QSGGlyphNode *node = sg->sceneGraphContext()->createGlyphNode(sg, preferNativeGlyphNode);
+
+    node->setOwnerElement(m_ownerElement);
+    node->setGlyphs(position + QPointF(0, glyphs.rawFont().ascent()), glyphs);
+    node->setStyle(style);
+    node->setStyleColor(styleColor);
+    node->setColor(color);
+    node->update();
+
+    /* We flag the geometry as static, but we never call markVertexDataDirty
+       or markIndexDataDirty on them. This is because all text nodes are
+       discarded when a change occurs. If we start appending/removing from
+       existing geometry, then we also need to start marking the geometry as
+       dirty.
+     */
+    node->geometry()->setIndexDataPattern(QSGGeometry::StaticPattern);
+    node->geometry()->setVertexDataPattern(QSGGeometry::StaticPattern);
+
+    if (parentNode == nullptr)
+        parentNode = this;
+    parentNode->appendChildNode(node);
+
+    return node;
+}
+
+void SlaqTextNode::setCursor(const QRectF &rect, const QColor &color)
+{
+    if (m_cursorNode != nullptr)
+        delete m_cursorNode;
+
+    QSGRenderContext *sg = QQuickItemPrivate::get(m_ownerElement)->sceneGraphRenderContext();
+    m_cursorNode =  sg->sceneGraphContext()->createInternalRectangleNode(rect, color);
+    appendChildNode(m_cursorNode);
+}
+
+void SlaqTextNode::clearCursor()
+{
+    if (m_cursorNode)
+        removeChildNode(m_cursorNode);
+    delete m_cursorNode;
+    m_cursorNode = nullptr;
+}
+
+void SlaqTextNode::addRectangleNode(const QRectF &rect, const QColor &color)
+{
+    QSGRenderContext *sg = QQuickItemPrivate::get(m_ownerElement)->sceneGraphRenderContext();
+    auto rectNode = sg->sceneGraphContext()->createInternalRectangleNode(rect, color);
+
+//    rectNode->setRect(rect);
+//    rectNode->setColor(color);
+
+//    rectNode->setAligned(true);
+//    rectNode->setRadius(5);
+//    rectNode->setAntialiasing(true);
+//    rectNode->setPenWidth(3);
+//    rectNode->setPenColor(color);
+//    rectNode->update();
+
+    appendChildNode(rectNode);
+}
+
+
+void SlaqTextNode::addImage(const QRectF &rect, const QImage &image)
+{
+    QSGRenderContext *sg = QQuickItemPrivate::get(m_ownerElement)->sceneGraphRenderContext();
+    QSGInternalImageNode *node = sg->sceneGraphContext()->createInternalImageNode();
+    QSGTexture *texture = sg->createTexture(image);
+    if (m_ownerElement->smooth())
+        texture->setFiltering(QSGTexture::Linear);
+    m_textures.append(texture);
+    node->setTargetRect(rect);
+    node->setInnerTargetRect(rect);
+    node->setTexture(texture);
+    if (m_ownerElement->smooth())
+        node->setFiltering(QSGTexture::Linear);
+    appendChildNode(node);
+    node->update();
+}
+
+void SlaqTextNode::addTextDocument(const QPointF &position, QTextDocument *textDocument,
+                                  const QColor &textColor,
+                                  QQuickText::TextStyle style, const QColor &styleColor,
+                                  const QColor &anchorColor,
+                                  const QColor &selectionColor, const QColor &selectedTextColor,
+                                  int selectionStart, int selectionEnd)
+{
+    SlaqTextNodeEngine engine;
+    engine.setTextColor(textColor);
+    engine.setSelectedTextColor(selectedTextColor);
+    engine.setSelectionColor(selectionColor);
+    engine.setAnchorColor(anchorColor);
+    engine.setPosition(position);
+
+    QList<QTextFrame *> frames;
+    frames.append(textDocument->rootFrame());
+    while (!frames.isEmpty()) {
+        QTextFrame *textFrame = frames.takeFirst();
+        frames.append(textFrame->childFrames());
+
+        engine.addFrameDecorations(textDocument, textFrame);
+
+        if (textFrame->firstPosition() > textFrame->lastPosition()
+         && textFrame->frameFormat().position() != QTextFrameFormat::InFlow) {
+            const int pos = textFrame->firstPosition() - 1;
+            ProtectedLayoutAccessor *a = static_cast<ProtectedLayoutAccessor *>(textDocument->documentLayout());
+            QTextCharFormat format = a->formatAccessor(pos);
+            QRectF rect = a->frameBoundingRect(textFrame);
+
+            QTextBlock block = textFrame->firstCursorPosition().block();
+            //qDebug() << "add block" << block.text();
+            engine.setCurrentLine(block.layout()->lineForTextPosition(pos - block.position()));
+            engine.addTextObject(block, rect.topLeft(), format, SlaqTextNodeEngine::Unselected, textDocument,
+                                 pos, textFrame->frameFormat().position());
+        } else {
+            QTextFrame::iterator it = textFrame->begin();
+
+            while (!it.atEnd()) {
+                Q_ASSERT(!engine.currentLine().isValid());
+
+                QTextBlock block = it.currentBlock();
+                //qDebug() << "add block 1" << block.text() << block.position() << selectionStart << selectionEnd;
+                engine.addTextBlock(textDocument, block, position, textColor, anchorColor, selectionStart, selectionEnd);
+                ++it;
+            }
+        }
+    }
+
+    engine.addToSceneGraph(this, style, styleColor);
+}
+
+void SlaqTextNode::addTextLayout(const QPointF &position, QTextLayout *textLayout, const QColor &color,
+                                QQuickText::TextStyle style, const QColor &styleColor,
+                                const QColor &anchorColor,
+                                const QColor &selectionColor, const QColor &selectedTextColor,
+                                int selectionStart, int selectionEnd,
+                                int lineStart, int lineCount)
+{
+    SlaqTextNodeEngine engine;
+    engine.setTextColor(color);
+    engine.setSelectedTextColor(selectedTextColor);
+    engine.setSelectionColor(selectionColor);
+    engine.setAnchorColor(anchorColor);
+    engine.setPosition(position);
+
+#if QT_CONFIG(im)
+    int preeditLength = textLayout->preeditAreaText().length();
+    int preeditPosition = textLayout->preeditAreaPosition();
+#endif
+
+    QVarLengthArray<QTextLayout::FormatRange> colorChanges;
+    engine.mergeFormats(textLayout, &colorChanges);
+
+    lineCount = lineCount >= 0
+            ? qMin(lineStart + lineCount, textLayout->lineCount())
+            : textLayout->lineCount();
+
+    for (int i=lineStart; i<lineCount; ++i) {
+        QTextLine line = textLayout->lineAt(i);
+
+        int start = line.textStart();
+        int length = line.textLength();
+        int end = start + length;
+
+#if QT_CONFIG(im)
+        if (preeditPosition >= 0
+         && preeditPosition >= start
+         && preeditPosition < end) {
+            end += preeditLength;
+        }
+#endif
+
+        engine.setCurrentLine(line);
+        engine.addGlyphsForRanges(colorChanges, start, end, selectionStart, selectionEnd);
+    }
+
+    engine.addToSceneGraph(this, style, styleColor);
+}
+
+void SlaqTextNode::deleteContent()
+{
+    while (firstChild() != nullptr)
+        delete firstChild();
+    m_cursorNode = nullptr;
+    qDeleteAll(m_textures);
+    m_textures.clear();
+}
+
+QT_END_NAMESPACE

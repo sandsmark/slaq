@@ -3,6 +3,8 @@ import QtQuick.Controls 2.4
 import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
 
+import SlackComponents 1.0
+
 import ".."
 import "../components"
 
@@ -17,13 +19,7 @@ MouseArea {
     // counts as same if previouse user is same and last message was within 3 minutes
     readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000
 
-    function updateText() {
-        var editedText = contentLabel.getText(0, contentLabel.text.length);
-        SlackClient.updateMessage(teamRoot.teamId, channel.id, editedText, model.Time, model.SlackTimestamp)
-        contentLabel.focus = false
-        contentLabel.readOnly = true
-        input.forceActiveFocus()
-    }
+    property var messageInput
 
     Connections {
         target: emojiSelector
@@ -58,14 +54,17 @@ MouseArea {
                                                         "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
+
             Column {
                 id: columnText
                 height: implicitHeight
                 width: parent.width
                 spacing: 1
-                TextArea {
-                    id: contentLabel
+
+                Control {
                     topPadding: Theme.paddingLarge
+                    width: parent.width - avatarImage.width - parent.spacing
+                    height: contentLabel.text.length == 0 ? topPadding : contentLabel.implicitHeight + topPadding
                     RowLayout {
                         spacing: Theme.paddingMedium/2
                         visible: !sameuser || itemDelegate.containsMouse
@@ -94,9 +93,9 @@ MouseArea {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     var cursorpos = input.messageInput.cursorPosition
-                                    input.messageInput.insert(input.messageInput.cursorPosition, "@" + User.username + " ")
-                                    input.messageInput.forceActiveFocus()
-                                    input.messageInput.cursorPosition = cursorpos + User.username.length + 2
+                                    messageInput.messageInput.insert(input.messageInput.cursorPosition, "@" + User.username + " ")
+                                    messageInput.messageInput.forceActiveFocus()
+                                    messageInput.messageInput.cursorPosition = cursorpos + User.username.length + 2
                                 }
                             }
                         }
@@ -171,79 +170,76 @@ MouseArea {
                                 id: editButton
                                 visible: !isSearchResult && (model.User != null &&
                                                              model.User.userId === teamRoot.slackClient.teamInfo().selfId)
-                                text: contentLabel.readOnly ? "✎" : "💾"
+                                text: input.updating ? "✖" : "✎" //"💾"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    if (contentLabel.readOnly == true) {
-                                        contentLabel.readOnly = false
-                                        contentLabel.forceActiveFocus();
+                                    if (messageInput.updating === true) {
+                                        messageInput.updating = false
                                     } else {
-                                        updateText()
+                                        messageInput.messageInput.text = model.OriginalText
+                                        messageInput.updating = true
+                                        messageInput.messageTime = model.Time
+                                        messageInput.messageSlackTime = model.SlackTimestamp
+                                        messageInput.messageInput.forceActiveFocus();
                                     }
                                 }
                                 background: Item {}
                             }
                         }
                     }
+                    SlackText {
+                        id: contentLabel
+                        y: parent.topPadding
+                        color: contentLabel.palette.windowText
+                        linkColor: contentLabel.palette.link
+                        wrapMode: Text.WordWrap
+                        width: parent.width
+                        //readOnly: true
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.italic: model.IsChanged
+                        font.underline: model.Subtype === "me_message"
+                        verticalAlignment: Text.AlignVCenter
+                        textFormat: Text.RichText
+                        text: model.Text
+                        renderType: Text.QtRendering
+                        selectByMouse: true
+                        onLinkActivated: handleLink(link)
+                        //activeFocusOnPress: false
+                        onLinkHovered:  {
+                            if (link !== "") {
+                                mouseArea.cursorShape = Qt.PointingHandCursor
+                            } else {
+                                mouseArea.cursorShape = Qt.ArrowCursor
+                            }
+                        }
+                        onImageHovered:  {
+                            if (imagelink.length <= 0) {
+                                imgToolTip.close()
+                                return
+                            }
 
-                    width: parent.width - avatarImage.width - parent.spacing
-                    height: text === "" ? 0 : implicitHeight
-                    readOnly: true
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.italic: model.IsChanged
-                    font.underline: model.Subtype === "me_message"
-                    verticalAlignment: Text.AlignVCenter
-                    textFormat: Text.RichText
-                    text: model.Text
-                    renderType: Text.QtRendering
-                    selectByMouse: true
-                    onLinkActivated: handleLink(link)
-                    activeFocusOnPress: false
-                    onLinkHovered:  {
-                        if (link !== "") {
-                            mouseArea.cursorShape = Qt.PointingHandCursor
-                        } else {
-                            mouseArea.cursorShape = Qt.ArrowCursor
+                            imgToolTip.text = imagelink.replace("image://emoji/", "")
+                            imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
+                            imgToolTip.y = mapToItem(msgListView, x, 0).y -
+                                    (imgToolTip.height + Theme.paddingSmall)
+//                            console.log("image: `" + imagelink +"` " + " x: " + x + " y: " + y +
+//                                        " tt x: " + imgToolTip.x + " tt y: " + imgToolTip.y)
+                            imgToolTip.open()
                         }
-                    }
-                    onSelectedTextChanged: {
-                        if (selectedText !== "") {
-                            forceActiveFocus()
-                        } else {
-                            input.forceActiveFocus()
+                        onSelectedTextChanged: {
+                            if (selectedText !== "") {
+                                forceActiveFocus()
+                            } else {
+                                messageInput.forceActiveFocus()
+                            }
                         }
-                    }
-                    onEditingFinished: {
-                        //undo editing if new focus is not edit save button
-                        if (editButton.focus == false) {
-                            undo();
-                            readOnly = true
-                            input.forceActiveFocus()
-                        }
-                    }
-                    Keys.onReturnPressed: {
-                        if (readOnly == false && event.modifiers == 0) {
-                            updateText()
-                        }
-                        event.accepted = false
-                    }
 
-                    Keys.onEnterPressed: {
-                        if (readOnly == false && event.modifiers == 0) {
-                            updateText()
+                        MouseArea {
+                            id: mouseArea
+                            enabled: false //we need this just for changing cursor shape
+                            anchors.fill: parent
+                            propagateComposedEvents: true
                         }
-                        event.accepted = false
-                    }
-                    wrapMode: Text.WordWrap
-
-                    // To avoid the border on some styles, we only want a textarea to be able to select things
-                    background: Item {}
-
-                    MouseArea {
-                        id: mouseArea
-                        enabled: false //we need this just for changing cursor shape
-                        anchors.fill: parent
-                        propagateComposedEvents: true
                     }
                 }
 
@@ -311,7 +307,7 @@ MouseArea {
 
                 delegate: Attachment {
                     width: column.width
-                    Layout.maximumWidth: column.width
+                    //Layout.maximumWidth: column.width
                     attachment: Attachments[index]
                     onLinkClicked: handleLink(link)
                 }

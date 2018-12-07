@@ -15,7 +15,6 @@ Button {
     ToolTip.timeout: 5000
     ToolTip.visible: hovered
     text: reaction.emojiInfo.unified
-    height: Theme.headerSize
     width: (ImagesCache.isUnicode  && !(reaction.emojiInfo.imagesExist & EmojiInfo.ImageSlackTeam) ?
                 contentItem.contentWidth : Theme.headerSize - 4)
            + Theme.paddingMedium*2

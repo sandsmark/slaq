@@ -27,7 +27,7 @@ void TeamInfo::parseSelfData(const QJsonObject &selfObj) {
     m_selfId = selfObj.value(QStringLiteral("id")).toString();
 }
 
-void TeamInfo::addUsersData(const QList<QPointer<User>>& users, bool last)
+void TeamInfo::addUsersData(const QList<QPointer<SlackUser>>& users, bool last)
 {
     //qDebug() << "start" << __PRETTY_FUNCTION__;
 #if 0
@@ -96,7 +96,7 @@ void TeamInfo::createModels(SlackTeamClient *slackClient)
     connect(m_users, &UsersModel::requestUserInfo, slackClient, &SlackTeamClient::requestUserInfo, Qt::QueuedConnection);
 }
 
-User *TeamInfo::selfUser() const
+SlackUser *TeamInfo::selfUser() const
 {
     return m_users->user(m_selfId);
 }

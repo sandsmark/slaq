@@ -26,7 +26,7 @@ public:
     bool isOnline();
 
     Q_INVOKABLE SlackTeamClient *slackClient(const QString& teamId);
-    Q_INVOKABLE User *selfUser(const QString& teamId);
+    Q_INVOKABLE SlackUser *selfUser(const QString& teamId);
     Q_INVOKABLE UsersModel *usersModel(const QString& teamId);
     Q_INVOKABLE ChatsModel *chatsModel(const QString& teamId);
     Q_INVOKABLE SlackTeamClient::ClientStatus slackClientStatus(const QString& teamId);
@@ -153,7 +153,7 @@ public slots:
     void setMediaSource(QObject *mediaPlayer, const QString& teamId, const QString& url);
     QString teamToken(const QString& teamId);
 
-    void onUsersDataChanged(const QList<QPointer<User> > &users, bool last);
+    void onUsersDataChanged(const QList<QPointer<SlackUser> > &users, bool last);
     void onConversationsDataChanged(const QList<Chat *> &chats, bool last);
     void onConversationMembersChanged(const QString &channelId, const QStringList& members, bool last);
     void onUsersPresenceChanged(const QStringList &users, const QString &presence,
@@ -161,7 +161,7 @@ public slots:
     void onMessagesReceived(const QString &channelId, const QList<Message *> &messages, bool hasMore, const QString &threadTs);
 
     void sendUserTyping(const QString& teamId, const QString& channelId);
-    void updateUserInfo(const QString& teamId, User *user);
+    void updateUserInfo(const QString& teamId, SlackUser *user);
     void updateUserAvatar(const QString& teamId, const QString &filePath, int cropSide = 0, int cropX = 0, int cropY = 0);
 
     void setPresence(const QString& teamId, bool isAway);
@@ -178,7 +178,7 @@ protected:
 
 private:
     SlackTeamClient *createNewClientInstance(const QString &teamId, const QString &accessToken = QString(""));
-    bool checkForPersonal(const QString &msg, User *selfUser);
+    bool checkForPersonal(const QString &msg, SlackUser *selfUser);
 
 private:
     QQmlObjectListModel<TeamInfo> m_teamsModel;

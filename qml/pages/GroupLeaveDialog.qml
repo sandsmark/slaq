@@ -16,8 +16,10 @@ Dialog {
 
     modal: true
     contentItem: Rectangle {
+        width: label.implicitWidth
         color: palette.base
         Label {
+            id: label
             text: question
         }
     }

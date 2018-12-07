@@ -15,6 +15,9 @@ ColumnLayout {
     property bool nickPopupVisible: false
     property var nickSuggestions: []
     property int currentNickSuggestionIndex: 0
+    property bool updating: false
+    property var messageTime
+    property string messageSlackTime
 
     signal sendMessage(string content)
     signal showNickPopup()

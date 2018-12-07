@@ -3,7 +3,7 @@
 #include <QString>
 #include <QRegularExpression>
 
-class User;
+class SlackUser;
 class ChatsModel;
 class Chat;
 
@@ -12,7 +12,7 @@ class MessageFormatter
 public:
     MessageFormatter();
 
-    void replaceUserInfo(User *user, QString &message);
+    void replaceUserInfo(SlackUser *user, QString &message);
     void replaceTargetInfo(QString &message);
     void replaceChannelInfo(ChatsModel *chatModel, QString &message);
     void replaceSpecialCharacters(QString &message);
