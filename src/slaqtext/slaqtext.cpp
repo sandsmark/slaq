@@ -136,9 +136,9 @@ bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEn
 QString SlackText::preProcessText(const QString& txt) {
     QString _txt = txt;
 
+    qDebug().noquote().nospace() << "preprocess [" << txt << "]";
     MessageFormatter::replaceLinks(m_chat, _txt);
-
-    QStringList _blocks = txt.split("```");
+    QStringList _blocks = _txt.split("```");
     // there must be at least 3 blocks and the numbers of blocks must be odd
     if (_blocks.size() > 2 && _blocks.size() % 2 == 1) {
         _txt = _blocks.at(0);
@@ -148,9 +148,11 @@ QString SlackText::preProcessText(const QString& txt) {
                 _txt += _blocks[i].replace(" ", QChar(QChar::Nbsp)).replace("\n", "<br/>");
                 _txt += "```";
             } else {
-                _txt += _blocks.at(i);
+                _txt += _blocks[i].replace("\n", "<br/>");
             }
         }
+    } else {
+        _txt = _txt.replace("\n", "<br/>");
     }
 
     return _txt;
@@ -158,6 +160,7 @@ QString SlackText::preProcessText(const QString& txt) {
 
 void SlackText::postProcessText() {
     Q_D(SlackText);
+
     if (d->m_dirty && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
         d->m_modified = false;
         const QPalette& palette = QGuiApplication::palette();
@@ -287,16 +290,6 @@ void SlackText::postProcessText() {
             from.insertText(selText, chFmt);
         });
 
-        d->m_modified |= markupUpdate("&lt;", "&gt;", [=] (QTextCursor& from, QString& selText) {
-            QTextCharFormat chFmt = from.charFormat();
-            QFont fnt = chFmt.font();
-            fnt.setStrikeOut(true);
-            fnt.setBold(true);
-            chFmt.setFont(fnt);
-            from.insertText(selText, chFmt);
-        });
-
-
         if (d->m_modified) {
             qDebug() << "updating";
             d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());
@@ -311,6 +304,11 @@ void SlackText::postProcessText() {
 void SlackText::componentComplete()
 {
     Q_D(SlackText);
+
+    QQuickLabel::setRenderType(QtRendering);
+    QQuickLabel::setTextFormat(RichText);
+    QQuickLabel::setColor(palette().windowText().color());
+    QQuickLabel::setLinkColor(palette().link().color());
 
     QQuickLabel::componentComplete();
     postProcessText();
@@ -464,32 +462,17 @@ void SlackTextPrivate::moveSelectionCursor(int pos, bool mark)
         m_selDirty = false;
         emit q->selectionChanged();
     }
-    //emitCursorPositionChanged();
-
 }
 
 QRectF SlackText::positionToRectangle(int pos)
 {
     Q_D(SlackText);
-    //    if (d->m_echoMode == NoEcho)
-    //        pos = 0;
-    //#if QT_CONFIG(im)
-    //    else if (pos > d->m_cursor)
-    //        pos += d->preeditAreaText().length();
-    //#endif
     QTextLine l = d->m_lp->layout.lineForTextPosition(pos);
-    //QTextLine l = d->layout.lineForTextPosition(pos);
     if (!l.isValid())
         return QRectF();
     qreal x = l.cursorToX(pos)/* - d->hscroll*/;
     qreal y = l.y()/* - d->vscroll*/;
     qreal w = 1;
-    //    if (d->overwriteMode) {
-    //        if (pos < text().length())
-    //            w = l.cursorToX(pos + 1) - x;
-    //        else
-    //            w = QFontMetrics(font()).width(QLatin1Char(' ')); // in sync with QTextLine::draw()
-    //    }
     return QRectF(x, y, w, l.height());
 }
 
@@ -659,9 +642,6 @@ void SlackText::mousePressEvent(QMouseEvent *event)
 
     d->pressPos = event->localPos();
 
-    //    if (d->sendMouseEventToInputContext(event))
-    //        return;
-
     if (d->selectByMouse) {
         setKeepMouseGrab(false);
         d->selectPressed = true;
@@ -715,6 +695,9 @@ void SlackText::mouseReleaseEvent(QMouseEvent *event)
     } else if (d->selectPressed) {
         d->selectPressed = false;
         setKeepMouseGrab(false);
+        if (d->hasSelectedText() == true) {
+            forceActiveFocus();
+        }
     }
 #if QT_CONFIG(clipboard)
     if (QGuiApplication::clipboard()->supportsSelection()) {
@@ -725,9 +708,6 @@ void SlackText::mouseReleaseEvent(QMouseEvent *event)
         }
     }
 #endif
-
-    //    if (d->focusOnPress && qGuiApp->styleHints()->setFocusOnTouchRelease())
-    //        ensureActiveFocus();
 
     if (!event->isAccepted())
         QQuickLabel::mouseReleaseEvent(event);
@@ -767,6 +747,11 @@ void SlackText::hoverMoveEvent(QHoverEvent *event)
         //qDebug() << link << d->m_linkHovered;
         d->m_linkHovered = link;
         emit linkHovered(link);
+        if (link.isEmpty()) {
+            qApp->restoreOverrideCursor();
+        } else {
+            qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
+        }
     }
     if (imglink != d->m_imageHovered) {
         d->m_imageHovered = imglink;
@@ -784,6 +769,7 @@ void SlackText::hoverLeaveEvent(QHoverEvent *event)
     emit linkHovered(d->m_linkHovered);
     d->m_imageHovered = "";
     emit imageHovered(d->m_imageHovered, 0, 0);
+    qApp->restoreOverrideCursor();
 }
 
 /**
@@ -942,6 +928,12 @@ ChatsModel *SlackText::chat() const
     return m_chat;
 }
 
+QQuickItem *SlackText::itemFocusOnUnselect() const
+{
+    Q_D(const SlackText);
+    return d->m_itemFocusOnUnselect;
+}
+
 void SlackText::setPersistentSelection(bool on)
 {
     Q_D(SlackText);
@@ -960,6 +952,16 @@ void SlackText::setChat(ChatsModel *chat)
     emit chatChanged(m_chat);
 }
 
+void SlackText::setItemFocusOnUnselect(QQuickItem *itemFocusOnUnselect)
+{
+    Q_D(SlackText);
+    if (d->m_itemFocusOnUnselect == itemFocusOnUnselect)
+        return;
+
+    d->m_itemFocusOnUnselect = itemFocusOnUnselect;
+    emit itemFocusOnUnselectChanged(d->m_itemFocusOnUnselect);
+}
+
 void SlackText::moveCursorSelection(int position)
 {
     Q_D(SlackText);
@@ -970,6 +972,9 @@ void SlackText::moveCursorSelection(int pos, SelectionMode mode)
 {
     Q_D(SlackText);
 
+    if (d->m_tp->extra->doc == nullptr) {
+        return;
+    }
     const QString text = d->m_tp->extra->doc->toPlainText();
     //qDebug() << pos << mode << d->m_cursor;
     if (mode == SelectCharacters) {
@@ -1044,6 +1049,9 @@ void SlackText::selectionChanged()
             d->lastSelectionEnd = d->m_cursor;
         emit selectionEndChanged();
     }
+    if (d->hasSelectedText() == false && d->m_itemFocusOnUnselect != nullptr) {
+        d->m_itemFocusOnUnselect->forceActiveFocus();
+    }
 }
 
 void SlackTextPrivate::setSelection(int start, int length)
@@ -1073,11 +1081,9 @@ void SlackTextPrivate::setSelection(int start, int length)
         m_cursor = start;
     } else {
         m_cursor = start;
-        //emitCursorPositionChanged();
         return;
     }
     emit q->selectionChanged();
-    //emitCursorPositionChanged();
 }
 
 bool SlackTextPrivate::finishChange(bool update)
@@ -1085,92 +1091,14 @@ bool SlackTextPrivate::finishChange(bool update)
     Q_Q(SlackText);
 
     Q_UNUSED(update)
-    //#if QT_CONFIG(im)
-    //    bool inputMethodAttributesChanged = m_textDirty || m_selDirty;
-    //#endif
+
     bool alignmentChanged = false;
     bool textChanged = false;
-
-    //    if (m_textDirty) {
-    //        // do validation
-    //        bool wasValidInput = m_validInput;
-    //        bool wasAcceptable = m_acceptableInput;
-    //        m_validInput = true;
-    //        m_acceptableInput = true;
-    //#if QT_CONFIG(validator)
-    //        if (m_validator) {
-    //            QString textCopy = m_text;
-    //            if (m_maskData)
-    //                textCopy = maskString(0, m_text, true);
-    //            int cursorCopy = m_cursor;
-    //            QValidator::State state = m_validator->validate(textCopy, cursorCopy);
-    //            if (m_maskData)
-    //                textCopy = m_text;
-    //            m_validInput = state != QValidator::Invalid;
-    //            m_acceptableInput = state == QValidator::Acceptable;
-    //            if (m_validInput && !m_maskData) {
-    //                if (m_text != textCopy) {
-    //                    internalSetText(textCopy, cursorCopy);
-    //                    return true;
-    //                }
-    //                m_cursor = cursorCopy;
-    //            }
-    //        }
-    //#endif
-    //        if (m_maskData)
-    //            checkIsValid();
-
-    //        if (validateFromState >= 0 && wasValidInput && !m_validInput) {
-    //            if (m_transactions.count())
-    //                return false;
-    //            internalUndo(validateFromState);
-    //            m_history.resize(m_undoState);
-    //            m_validInput = true;
-    //            m_acceptableInput = wasAcceptable;
-    //            m_textDirty = false;
-    //        }
-
-    //        if (m_textDirty) {
-    //            textChanged = true;
-    //            m_textDirty = false;
-    //#if QT_CONFIG(im)
-    //            m_preeditDirty = false;
-    //#endif
-    //            alignmentChanged = determineHorizontalAlignment();
-    //            if (edited)
-    //                emit q->textEdited();
-    //            emit q->textChanged();
-    //        }
-
-    //        updateDisplayText(alignmentChanged);
-
-    //        if (m_acceptableInput != wasAcceptable)
-    //            emit q->acceptableInputChanged();
-    //    }
-    //#if QT_CONFIG(im)
-    //    if (m_preeditDirty) {
-    //        m_preeditDirty = false;
-    //        if (determineHorizontalAlignment()) {
-    //            alignmentChanged = true;
-    //            updateLayout();
-    //        }
-    //    }
-    //#endif
 
     if (m_selDirty) {
         m_selDirty = false;
         emit q->selectionChanged();
     }
-
-    //#if QT_CONFIG(im)
-    //    inputMethodAttributesChanged |= (m_cursor != m_lastCursorPos);
-    //    if (inputMethodAttributesChanged)
-    //        q->updateInputMethod();
-    //#endif
-    //    emitUndoRedoChanged();
-
-    //    if (!emitCursorPositionChanged() && (alignmentChanged || textChanged))
-    //        q->updateCursorRectangle();
 
     return true;
 }

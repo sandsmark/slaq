@@ -382,11 +382,6 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
         rply->m_user = _usersModel->user(rply->m_userId);
     }
 
-    MessageListModel* _messagesModel = _chatsModel->messages(channel_id);
-    if (_messagesModel != nullptr) {
-        _messagesModel->preprocessFormatting(_chatsModel, message_);
-    }
-
     if (subtype == "message_changed" || subtype == "message_replied") {
        qDebug().noquote() << "message changed" << QJsonDocument(message).toJson();
        message_->isChanged = true;
@@ -459,7 +454,6 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
             }
             r->m_userIds.removeOne(userid);
         }
-        _messagesModel->preprocessFormatting(_chatsModel, m);
         emit messageUpdated(m, false);
     } else {
         qWarning() << "message not found for ts" << ts;
@@ -1512,7 +1506,6 @@ void SlackTeamClient::handleLoadMessagesReply()
             ReplyField* rply = static_cast<ReplyField*>(rplyObj);
             rply->m_user = _usersModel->user(rply->m_userId);
         }
-        messageModel->preprocessFormatting(_chatsModel, message);
         _mlist.append(message);
     }
     emit messagesReceived(channelId, _mlist, _hasMore, threadTs);

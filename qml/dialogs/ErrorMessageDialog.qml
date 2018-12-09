@@ -11,8 +11,8 @@ DD.MessageDialog {
         onError: {
             title = err.domain
             text = err.error_str
-            detailedText = err.details
-            timeout = err.timeout
+            detailedText = err.details !== undefined ? err.details : ""
+            timeout =  err.timeout !== undefined ? err.timeout : ""
             open()
         }
     }

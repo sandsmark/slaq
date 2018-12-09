@@ -360,26 +360,6 @@ QString MessageListModel::firstMessageTs() const
     return "";
 }
 
-void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
-{
-    //m_formatter.replaceLinks(message->text); //must be 1st
-    //m_formatter.replaceChannelInfo(chat, message->text);
-    //m_formatter.replaceTargetInfo(message->text);
-    for (QObject* attachmentObj : message->attachments) {
-        Attachment* attachment = static_cast<Attachment*>(attachmentObj);
-        m_formatter.replaceAll(chat, attachment->text);
-        m_formatter.replaceAll(chat, attachment->pretext);
-        m_formatter.replaceAll(chat, attachment->fallback);
-        m_formatter.replaceAll(chat, attachment->title);
-        m_formatter.replaceAll(chat, attachment->footer);
-        for (QObject* attachmentFieldObj : attachment->fields) {
-            AttachmentField* attachmentField = static_cast<AttachmentField*>(attachmentFieldObj);
-            m_formatter.replaceAll(chat, attachmentField->m_title);
-            m_formatter.replaceAll(chat, attachmentField->m_value);
-        }
-    }
-}
-
 int MessageListModel::countUnread(const QDateTime &lastRead)
 {
     if (!lastRead.isValid()) {
