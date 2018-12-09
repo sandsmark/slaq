@@ -16,16 +16,16 @@ public:
     void replaceTargetInfo(QString &message);
     void replaceChannelInfo(ChatsModel *chatModel, QString &message);
     void replaceSpecialCharacters(QString &message);
-    void replaceLinks(QString &message);
+    static void replaceLinks(ChatsModel *chatModel, QString &message);
     void replaceMarkdown(QString &message);
     static void replaceEmoji(QString &message);
     void replaceAll(ChatsModel* chat,  QString &message);
     void doReplaceChannelInfo(Chat *chat, QString &message);
 
 private:
-    QRegularExpression m_labelPattern;
-    QRegularExpression m_plainPattern;
-    QRegularExpression m_mailtoPattern;
+    static QRegularExpression m_labelPattern;
+    static QRegularExpression m_plainPattern;
+    static QRegularExpression m_mailtoPattern;
 
     QRegularExpression m_italicPattern;
     QRegularExpression m_boldPattern;

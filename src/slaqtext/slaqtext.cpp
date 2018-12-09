@@ -10,6 +10,7 @@
 #include <QtQuickTemplates2/private/qquicklabel_p_p.h>
 
 #include "imagescache.h"
+#include "messageformatter.h"
 
 qreal alignedX(const qreal textWidth, const qreal itemWidth, int alignment)
 {
@@ -96,12 +97,15 @@ void SlackText::onImageLoaded(const QString &id)
     }
 }
 
-bool SlackText::markupUpdate(const QString markupQuote,
+bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEndQuote,
                              std::function<void(QTextCursor& from, QString &selText)> markupReplace) {
     Q_D(SlackText);
     QTextCursor fromCursor = d->m_tp->extra->doc->find(markupQuote, 0);
     if (!fromCursor.isNull()) {
-        QTextCursor toCursor = d->m_tp->extra->doc->find(markupQuote, fromCursor);
+        QTextCursor toCursor = d->m_tp->extra->doc->find(markupEndQuote.isEmpty() ?
+                                                             markupQuote :
+                                                             markupEndQuote,
+                                                         fromCursor);
         if (!toCursor.isNull()) {
 
             QTextCursor brCursor = d->m_tp->extra->doc->find(QChar(QChar::LineSeparator),
@@ -129,6 +133,29 @@ bool SlackText::markupUpdate(const QString markupQuote,
     return false;
 }
 
+QString SlackText::preProcessText(const QString& txt) {
+    QString _txt = txt;
+
+    MessageFormatter::replaceLinks(m_chat, _txt);
+
+    QStringList _blocks = txt.split("```");
+    // there must be at least 3 blocks and the numbers of blocks must be odd
+    if (_blocks.size() > 2 && _blocks.size() % 2 == 1) {
+        _txt = _blocks.at(0);
+        for (int i = 1; i < _blocks.size(); i++) {
+            if (i % 2 != 0) {
+                _txt += "```";
+                _txt += _blocks[i].replace(" ", QChar(QChar::Nbsp)).replace("\n", "<br/>");
+                _txt += "```";
+            } else {
+                _txt += _blocks.at(i);
+            }
+        }
+    }
+
+    return _txt;
+}
+
 void SlackText::postProcessText() {
     Q_D(SlackText);
     if (d->m_dirty && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
@@ -137,6 +164,7 @@ void SlackText::postProcessText() {
         bool singleQuote = false;
         QTextCursor prevCursor(d->m_tp->extra->doc);
         ImagesCache* imageCache = ImagesCache::instance();
+
         QString searchQuote = "```";
 
         while (!prevCursor.isNull() && !prevCursor.atEnd()) {
@@ -237,27 +265,38 @@ void SlackText::postProcessText() {
                 prevCursor = nextCursor;
             }
         }
-        d->m_modified |= markupUpdate("*", [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("*", "", [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setBold(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
         });
-        d->m_modified |= markupUpdate("_", [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("_", "", [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setItalic(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
         });
-        d->m_modified |= markupUpdate("~", [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("~", "", [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setStrikeOut(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
         });
+
+        d->m_modified |= markupUpdate("&lt;", "&gt;", [=] (QTextCursor& from, QString& selText) {
+            QTextCharFormat chFmt = from.charFormat();
+            QFont fnt = chFmt.font();
+            fnt.setStrikeOut(true);
+            fnt.setBold(true);
+            chFmt.setFont(fnt);
+            from.insertText(selText, chFmt);
+        });
+
+
         if (d->m_modified) {
             qDebug() << "updating";
             d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());
@@ -880,22 +919,7 @@ void SlackText::setText(const QString &txt)
 {
     Q_D(SlackText);
     //preprocess text to replace CRs and spaces for frames, otherwize wordwarp not working
-    QString _txt;
-    QStringList _blocks = txt.split("```");
-    // there must be at least 3 blocks and the numbers of blocks must be odd
-    if (_blocks.size() > 2 && _blocks.size() % 2 == 1) {
-        _txt = _blocks.at(0);
-        for (int i = 1; i < _blocks.size(); i++) {
-            if (i % 2 != 0) {
-                _txt += "```";
-                _txt += _blocks[i].replace(" ", QChar(QChar::Nbsp)).replace("\n", "<br/>");
-                _txt += "```";
-            } else {
-                _txt += _blocks.at(i);
-            }
-        }
-    }
-
+    QString _txt  = preProcessText(txt);
     QQuickLabel::setText(_txt.isEmpty() ? txt : _txt);
     d->m_dirty = true;
     postProcessText();
@@ -913,6 +937,11 @@ QString SlackText::hoveredImage() const
     return d->m_imageHovered;
 }
 
+ChatsModel *SlackText::chat() const
+{
+    return m_chat;
+}
+
 void SlackText::setPersistentSelection(bool on)
 {
     Q_D(SlackText);
@@ -920,6 +949,15 @@ void SlackText::setPersistentSelection(bool on)
         return;
     d->persistentSelection = on;
     emit persistentSelectionChanged();
+}
+
+void SlackText::setChat(ChatsModel *chat)
+{
+    if (m_chat == chat)
+        return;
+
+    m_chat = chat;
+    emit chatChanged(m_chat);
 }
 
 void SlackText::moveCursorSelection(int position)

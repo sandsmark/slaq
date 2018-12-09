@@ -217,9 +217,9 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 
     const QString& type = message.value(QStringLiteral("type")).toString();
 
-    if (type != "pong" && type != "user_typing") {
-        qDebug() << "stream message type" << type;
-    }
+//    if (type != "pong" && type != "user_typing") {
+//        qDebug() << "stream message type" << type;
+//    }
     //qDebug().noquote() << QJsonDocument(message).toJson();
 
     if (type == QStringLiteral("message")) {

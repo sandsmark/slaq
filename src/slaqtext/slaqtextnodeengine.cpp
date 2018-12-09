@@ -448,8 +448,11 @@ void SlaqTextNodeEngine::addTextObject(const QTextBlock &block, const QPointF &p
             break;
         case QTextCharFormat::AlignMiddle: {
             QFontMetrics m(format.font());
-            ascent = line.ascent() + (line.height() - size.height());
-            //ascent = (size.height() - m.xHeight()) / 2;
+            if (line.isValid()) {
+                ascent = line.ascent() + (line.height() - size.height());
+            } else {
+                ascent = (size.height() - m.xHeight()) / 2;
+            }
             break;
         }
         case QTextCharFormat::AlignBottom:

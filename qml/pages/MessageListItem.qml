@@ -192,8 +192,9 @@ MouseArea {
                         y: parent.topPadding
                         color: contentLabel.palette.windowText
                         linkColor: contentLabel.palette.link
-                        wrapMode: Text.WordWrap
+                        wrapMode: Text.Wrap
                         width: parent.width
+                        chat: channelsList.channelModel
                         //readOnly: true
                         font.pixelSize: Theme.fontSizeLarge
                         font.italic: model.IsChanged
@@ -208,8 +209,14 @@ MouseArea {
                         onLinkHovered:  {
                             if (link !== "") {
                                 mouseArea.cursorShape = Qt.PointingHandCursor
+                                imgToolTip.text = link
+                                imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
+                                imgToolTip.y = mapToItem(msgListView, x, 0).y -
+                                        (imgToolTip.height + Theme.paddingSmall)
+                                imgToolTip.open()
                             } else {
                                 mouseArea.cursorShape = Qt.ArrowCursor
+                                imgToolTip.close()
                             }
                         }
                         onImageHovered:  {

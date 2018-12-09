@@ -710,10 +710,10 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
 inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, SlackUser* selfUser) {
     return (selfUser != nullptr && (msg.contains(selfUser->userId())
                                     || msg.contains(selfUser->username())
-                                    || msg.contains("@here")
-                                    || msg.contains("@channel")
-                                    || msg.contains("@group")
-                                    || msg.contains("@everyone")));
+                                    || msg.contains("<!here")
+                                    || msg.contains("<!channel")
+                                    || msg.contains("<!group")
+                                    || msg.contains("<!everyone")));
 }
 
 void SlackClientThreadSpawner::onMessageReceived(Message *message)

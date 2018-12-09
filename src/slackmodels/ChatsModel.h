@@ -62,6 +62,7 @@ public:
 
     Q_INVOKABLE MessageListModel *messages(const QString &id);
     UsersModel *members(const QString &id);
+    UsersModel *users() { return m_networkUsers; }
     Chat* chat(const QString &id);
     Chat* chat(int row);
     Chat* generalChat();

@@ -362,9 +362,9 @@ QString MessageListModel::firstMessageTs() const
 
 void MessageListModel::preprocessFormatting(ChatsModel *chat, Message *message)
 {
-    m_formatter.replaceLinks(message->text); //must be 1st
-    m_formatter.replaceChannelInfo(chat, message->text);
-    m_formatter.replaceTargetInfo(message->text);
+    //m_formatter.replaceLinks(message->text); //must be 1st
+    //m_formatter.replaceChannelInfo(chat, message->text);
+    //m_formatter.replaceTargetInfo(message->text);
     for (QObject* attachmentObj : message->attachments) {
         Attachment* attachment = static_cast<Attachment*>(attachmentObj);
         m_formatter.replaceAll(chat, attachment->text);
@@ -578,7 +578,7 @@ void MessageListModel::findNewUsers(QString& message)
                 user->moveToThread(qApp->thread());
             }
             m_usersModel->addUser(user);
-            m_formatter.replaceUserInfo(user.data(), message);
+            //m_formatter.replaceUserInfo(user.data(), message);
         }
     }
     i = m_existingUserPattern.globalMatch(message);
@@ -586,9 +586,9 @@ void MessageListModel::findNewUsers(QString& message)
         QRegularExpressionMatch match = i.next();
         const QString& id = match.captured(1);
         user = m_usersModel->user(id);
-        if (!user.isNull()) {
-            m_formatter.replaceUserInfo(user.data(), message);
-        }
+//        if (!user.isNull()) {
+//            m_formatter.replaceUserInfo(user.data(), message);
+//        }
     }
 }
 

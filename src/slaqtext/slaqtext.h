@@ -3,6 +3,8 @@
 #include <QtQuickTemplates2/private/qquicklabel_p.h>
 #include <QtQuickControls2/private/qtquickcontrols2global_p.h>
 
+#include "ChatsModel.h"
+
 class SlackTextPrivate;
 
 class SlackText : public QQuickLabel
@@ -33,6 +35,7 @@ class SlackText : public QQuickLabel
 
     Q_PROPERTY(QJSValue fontInfo READ fontInfo NOTIFY fontInfoChanged)
     Q_PROPERTY(QSizeF advance READ advance NOTIFY contentSizeChanged)
+    Q_PROPERTY(ChatsModel* chat READ chat WRITE setChat NOTIFY chatChanged)
 
 public:
     enum SelectionMode {
@@ -69,6 +72,8 @@ public:
     QString hoveredLink() const;
     QString hoveredImage() const;
 
+    ChatsModel* chat() const;
+
 Q_SIGNALS:
 
     void textChanged(const QString &text);
@@ -85,6 +90,8 @@ Q_SIGNALS:
     void linkHovered(const QString &link);
     void imageHovered(const QString &imagelink, qreal x, qreal y);
 
+    void chatChanged(ChatsModel* chat);
+
 public Q_SLOTS:
     void copy();
     void selectAll();
@@ -96,11 +103,12 @@ public Q_SLOTS:
     void setSelectByMouse(bool on);
     void setMouseSelectionMode(SelectionMode mouseSelectionMode);
     void setPersistentSelection(bool persistentSelection);
-
+    void setChat(ChatsModel* chat);
 
 private Q_SLOTS:
     void selectionChanged();
     void postProcessText();
+    QString preProcessText(const QString &txt);
     void onImageLoaded(const QString &id);
 
 protected:
@@ -123,7 +131,7 @@ protected:
 private:
     void invalidateFontCaches();
     void insertImage(QTextCursor &cursor, const QString &url, const QImage &img);
-    bool markupUpdate(const QString markupQuote,
+    bool markupUpdate(const QString &markupQuote, const QString &markupEndQuote,
                       std::function<void(QTextCursor& from, QString &selText)> markupReplace);
 
     QColor m_selectionColor;
@@ -134,6 +142,7 @@ private:
     bool m_selectByMouse;
     SelectionMode m_mouseSelectionMode;
     bool m_persistentSelection;
+    ChatsModel* m_chat {nullptr};
 
 private:
     SlackTextPrivate* d_ptr { nullptr };
