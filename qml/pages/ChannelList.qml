@@ -7,13 +7,14 @@ import "../components"
 import com.iskrembilen 1.0
 
 Page {
-    id: page
+    id: channelsList
 
     property bool appActive: Qt.application.state === Qt.ApplicationActive
 
     spacing: 5
     property User selfUser: null
     title: teamRoot.teamName
+    property var channelModel: SlackClient.chatsModel(teamRoot.teamId)
     onAppActiveChanged: {
         SlackClient.setAppActive(teamRoot.teamId, appActive)
     }
@@ -88,7 +89,7 @@ Page {
                 spacing: Theme.paddingTiny
                 Label {
                     Layout.fillWidth: true
-                    text: page.title
+                    text: channelsList.title
                     font.bold: true
                     height: Theme.headerSize
                 }
@@ -121,6 +122,7 @@ Page {
     }
 
     ChannelListView {
+        model: channelModel
         anchors.fill: parent
     }
 }

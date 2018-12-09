@@ -137,7 +137,7 @@ void SlackUser::setData(const QJsonObject &data)
 
 void SlackUser::setPresence(const SlackUser::Presence presence, bool force)
 {
-    qDebug() << "presence for" << m_userId << m_fullName << presence;
+    //qDebug() << "presence for" << m_userId << m_fullName << presence;
     if (!force && m_presence == Dnd && m_snoozeEnds.isValid() && m_snoozeEnds > QDateTime::currentDateTime()) {
         qWarning() << "User currently in DnD mode" << m_userId << m_username << force;
         return;

@@ -17,7 +17,6 @@ ListView {
     }
     interactive: true
     clip: true
-    model: SlackClient.chatsModel(teamRoot.teamId)
 
     function leave(chatType, channelId, channelName) {
         switch (chatType) {

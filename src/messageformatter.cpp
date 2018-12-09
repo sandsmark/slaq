@@ -13,14 +13,21 @@
 #include "UsersModel.h"
 #include "ChatsModel.h"
 
-QRegularExpression MessageFormatter::m_emojiPattern =
-        QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"),
-                           QRegularExpression::OptimizeOnFirstUsageOption);
+QRegularExpression MessageFormatter::
+m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"),
+                           QRegularExpression::OptimizeOnFirstUsageOption));
+QRegularExpression MessageFormatter::
+m_labelPattern(QRegularExpression(QStringLiteral("<(.*?)>"),//("<(http[^\\|>]+)\\|([^>]+)>"),
+                                  QRegularExpression::OptimizeOnFirstUsageOption));
+QRegularExpression MessageFormatter::
+m_plainPattern(QRegularExpression(QStringLiteral("<([^>][a-z0-9]+:.*)>"),
+                                  QRegularExpression::OptimizeOnFirstUsageOption));
+QRegularExpression MessageFormatter::
+m_mailtoPattern(QRegularExpression(QStringLiteral("<(mailto:[^\\|>]+)\\|([^>]+)>"),
+                                   QRegularExpression::OptimizeOnFirstUsageOption));
 
 MessageFormatter::MessageFormatter() :
-    m_labelPattern(QRegularExpression (QStringLiteral("<(http[^\\|>]+)\\|([^>]+)>"))),
-    m_plainPattern(QRegularExpression(QStringLiteral("<([^>][a-z0-9]+:.*)>"))),
-    m_mailtoPattern(QRegularExpression(QStringLiteral("<(mailto:[^\\|>]+)\\|([^>]+)>"))),
+
     m_italicPattern(QRegularExpression(QStringLiteral("(^|\\s)_([^_]+)_(\\s|\\.|\\?|!|,|$)"))),
     m_boldPattern(QRegularExpression(QStringLiteral("(^|\\s)\\*([^\\*]+)\\*(\\s|\\.|\\?|!|,|$)"))),
     m_strikePattern(QRegularExpression(QStringLiteral("(^|\\s)~([^~]+)~(\\s|\\.|\\?|!|,|$)"))),
@@ -30,9 +37,6 @@ MessageFormatter::MessageFormatter() :
     m_variablePattern(QRegularExpression(QStringLiteral("<!(here|channel|group|everyone)>"))),
     m_channelPattern(QRegularExpression(QStringLiteral("<#([A-Z0-9]+)\\|([^>]+)>")))
 {
-    m_labelPattern.optimize();
-    m_plainPattern.optimize();
-    m_mailtoPattern.optimize();
     m_italicPattern.optimize();
     m_boldPattern.optimize();
     m_strikePattern.optimize();
@@ -84,11 +88,48 @@ void MessageFormatter::doReplaceChannelInfo(Chat *chat, QString &message)
     message.replace(channelIdPattern, displayName);
 }
 
-void MessageFormatter::replaceLinks(QString &message)
+void MessageFormatter::replaceLinks(ChatsModel* chatModel, QString &message)
 {
-    message.replace(m_labelPattern, QStringLiteral("<a href=\"\\1\">\\2</a>"));
-    message.replace(m_plainPattern, QStringLiteral("<a href=\"\\1\">\\1</a>"));
-    message.replace(m_mailtoPattern, QStringLiteral("<a href=\"\\1\">\\2</a>"));
+    QRegularExpressionMatchIterator i = m_labelPattern.globalMatch(message);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        QStringRef capture = match.capturedRef(1);
+        //
+        if (!capture.contains("/a")) {
+            QVector<QStringRef> hrefs = capture.split("|");
+            QString link;
+            QString displayName;
+            if (hrefs.count() > 1) {
+                link = hrefs.at(0).toString();
+                displayName = hrefs.at(1).toString();
+            } else {
+                link = capture.toString();
+                displayName = capture.toString();
+            }
+            if (capture.startsWith("#C")) { //channel link
+                link = QString("slaq://channel/%1").arg(hrefs.at(0).mid(1));
+                if (hrefs.size() > 1) {
+                    displayName = "#"+hrefs.at(1).toString();
+                }
+            } else if (capture.startsWith("@U") || capture.startsWith("@W")) { //user
+                SlackUser* user = chatModel->users()->user(hrefs.at(0).mid(1).toString());
+                if (user != nullptr) {
+                    link = QString("slaq://user/%1").arg(user->userId());
+                    displayName = "@" + user->username();
+                }
+            } else if (capture.startsWith("!")) {
+                const QString trgt = hrefs.at(0).mid(1).toString();
+                link = QString("slaq://target/%1").arg(trgt);
+                if (hrefs.size() < 2) {
+                    displayName = "@" + trgt;
+                }
+            }
+            message.replace(match.captured(),
+                            QStringLiteral("<a href=\"%1\">%2</a>").
+                            arg(link).arg(displayName));
+            qDebug() << "links:" << match.capturedTexts() << message;
+        }
+    }
 }
 
 void MessageFormatter::replaceMarkdown(QString &message)
@@ -138,7 +179,7 @@ void MessageFormatter::replaceEmoji(QString &message)
 
 void MessageFormatter::replaceAll(ChatsModel *chat, QString &message)
 {
-    replaceLinks(message); //must be 1st
+    //replaceLinks(message); //must be 1st
     replaceChannelInfo(chat, message);
     replaceTargetInfo(message);
     replaceMarkdown(message);
