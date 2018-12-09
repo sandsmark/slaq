@@ -29,8 +29,6 @@ void SearchMessagesModel::addSearchMessages(const QJsonArray &messages, int page
             qWarning() << "user id is empty" << messageObject;
         }
         message->user = m_usersModel->user(message->user_id);
-
-        preprocessFormatting(nullptr, message);
         m_messages.append(message);
         _index--;
     }

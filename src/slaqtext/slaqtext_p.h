@@ -91,6 +91,7 @@ public:
     QHash<QString, int> m_requestedImages;
 
     SlackText::SelectionMode mouseSelectionMode;
+    QQuickItem* m_itemFocusOnUnselect { nullptr };
 
     bool selectByMouse:1;
     bool selectPressed:1;
@@ -136,7 +137,7 @@ public:
     }
     bool hasSelectedText() const {
         Q_Q(const SlackText);
-        return !m_tp->extra->doc->toPlainText().isEmpty() && m_selend > m_selstart;
+        return m_tp->extra->doc != nullptr && !m_tp->extra->doc->toPlainText().isEmpty() && m_selend > m_selstart;
     }
 
     void setSelection(int start, int length);

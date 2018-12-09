@@ -36,6 +36,7 @@ class SlackText : public QQuickLabel
     Q_PROPERTY(QJSValue fontInfo READ fontInfo NOTIFY fontInfoChanged)
     Q_PROPERTY(QSizeF advance READ advance NOTIFY contentSizeChanged)
     Q_PROPERTY(ChatsModel* chat READ chat WRITE setChat NOTIFY chatChanged)
+    Q_PROPERTY(QQuickItem* itemFocusOnUnselect READ itemFocusOnUnselect WRITE setItemFocusOnUnselect NOTIFY itemFocusOnUnselectChanged)
 
 public:
     enum SelectionMode {
@@ -71,8 +72,8 @@ public:
 
     QString hoveredLink() const;
     QString hoveredImage() const;
-
     ChatsModel* chat() const;
+    QQuickItem* itemFocusOnUnselect() const;
 
 Q_SIGNALS:
 
@@ -89,8 +90,8 @@ Q_SIGNALS:
 
     void linkHovered(const QString &link);
     void imageHovered(const QString &imagelink, qreal x, qreal y);
-
     void chatChanged(ChatsModel* chat);
+    void itemFocusOnUnselectChanged(QQuickItem* itemFocusOnUnselect);
 
 public Q_SLOTS:
     void copy();
@@ -104,6 +105,7 @@ public Q_SLOTS:
     void setMouseSelectionMode(SelectionMode mouseSelectionMode);
     void setPersistentSelection(bool persistentSelection);
     void setChat(ChatsModel* chat);
+    void setItemFocusOnUnselect(QQuickItem* itemFocusOnUnselect);
 
 private Q_SLOTS:
     void selectionChanged();

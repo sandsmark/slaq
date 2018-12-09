@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import ".."
 
 import com.iskrembilen 1.0
+import SlackComponents 1.0
 
 ColumnLayout {
     property Attachment attachment: null
@@ -12,10 +13,11 @@ ColumnLayout {
 
     spacing: Theme.paddingSmall
 
-    Label {
+    SlackText {
         id: pretextLabel
         Layout.fillWidth: true
-        wrapMode: Text.WordWrap
+        wrapMode: Text.Wrap
+        chat: channelsList.channelModel
         font.pointSize: Theme.fontSizeSmall
         visible: text.length > 0
         text: attachment.pretext
@@ -58,8 +60,8 @@ ColumnLayout {
                     source: attachment !== null && attachment.author_icon.toString().length > 0 ? "image://emoji/slack/" + attachment.author_icon : ""
                     sourceSize: Qt.size(16, 16)
                 }
-                Label {
-                    width: parent.width
+                SlackText {
+                    Layout.fillWidth: true
                     font.pointSize: Theme.fontSizeSmall
                     verticalAlignment: Text.AlignVCenter
                     font.weight: Font.Bold
@@ -76,20 +78,24 @@ ColumnLayout {
                 ColumnLayout {
                     id: colLayout
                     Layout.fillWidth: true
-                    Label {
+                    SlackText {
                         id: titleId
                         Layout.fillWidth: true
+                        chat: channelsList.channelModel
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
+                        wrapMode: Text.Wrap
                         text: attachment.title
                         onLinkActivated: linkClicked(link)
                     }
 
-                    Label {
+                    SlackText {
                         id: valueId
                         Layout.fillWidth: true
+                        chat: channelsList.channelModel
                         font.pointSize: Theme.fontSizeSmall
                         text: attachment.text
+                        itemFocusOnUnselect: messageInput
                         wrapMode: Text.Wrap
                         onLinkActivated: linkClicked(link)
                     }
@@ -136,15 +142,17 @@ ColumnLayout {
             source: visible ? "image://emoji/slack/" + attachment.footer_icon : ""
             sourceSize: Qt.size(16, 16)
         }
-        Label {
+        SlackText {
             font.pointSize: Theme.fontSizeSmall
+            chat: channelsList.channelModel
             text: attachment.footer
             verticalAlignment: Text.AlignVCenter
             wrapMode: Text.Wrap
             visible: text.length > 0
         }
-        Label {
+        SlackText {
             font.pointSize: Theme.fontSizeSmall
+            chat: channelsList.channelModel
             text: Qt.formatDateTime(attachment.ts, "dd MMM yyyy hh:mm")
             verticalAlignment: Text.AlignVCenter
             wrapMode: Text.Wrap

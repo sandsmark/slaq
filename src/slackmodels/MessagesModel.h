@@ -391,7 +391,6 @@ public slots:
     bool isThreadModel() const;
     MessageListModel* createThread(Message* parentMessage);
     void processChildMessage(Message *message);
-    void preprocessFormatting(ChatsModel *chat, Message *message);
     void updateReactionUsers(Message *message);
     int countUnread(const QDateTime& lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());

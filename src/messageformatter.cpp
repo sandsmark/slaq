@@ -94,8 +94,8 @@ void MessageFormatter::replaceLinks(ChatsModel* chatModel, QString &message)
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         QStringRef capture = match.capturedRef(1);
-        //
-        if (!capture.contains("/a")) {
+        //qDebug() << "capture" << capture;
+        if (!capture.contains("/a") && !capture.contains("a href=")) {
             QVector<QStringRef> hrefs = capture.split("|");
             QString link;
             QString displayName;
@@ -127,7 +127,7 @@ void MessageFormatter::replaceLinks(ChatsModel* chatModel, QString &message)
             message.replace(match.captured(),
                             QStringLiteral("<a href=\"%1\">%2</a>").
                             arg(link).arg(displayName));
-            qDebug() << "links:" << match.capturedTexts() << message;
+            //qDebug() << "links:" << match.capturedTexts() << message;
         }
     }
 }

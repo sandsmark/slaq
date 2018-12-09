@@ -187,6 +187,7 @@ MouseArea {
                             }
                         }
                     }
+
                     SlackText {
                         id: contentLabel
                         y: parent.topPadding
@@ -195,7 +196,6 @@ MouseArea {
                         wrapMode: Text.Wrap
                         width: parent.width
                         chat: channelsList.channelModel
-                        //readOnly: true
                         font.pixelSize: Theme.fontSizeLarge
                         font.italic: model.IsChanged
                         font.underline: model.Subtype === "me_message"
@@ -205,17 +205,14 @@ MouseArea {
                         renderType: Text.QtRendering
                         selectByMouse: true
                         onLinkActivated: handleLink(link)
-                        //activeFocusOnPress: false
                         onLinkHovered:  {
                             if (link !== "") {
-                                mouseArea.cursorShape = Qt.PointingHandCursor
                                 imgToolTip.text = link
                                 imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
                                 imgToolTip.y = mapToItem(msgListView, x, 0).y -
                                         (imgToolTip.height + Theme.paddingSmall)
                                 imgToolTip.open()
                             } else {
-                                mouseArea.cursorShape = Qt.ArrowCursor
                                 imgToolTip.close()
                             }
                         }
@@ -233,20 +230,7 @@ MouseArea {
 //                                        " tt x: " + imgToolTip.x + " tt y: " + imgToolTip.y)
                             imgToolTip.open()
                         }
-                        onSelectedTextChanged: {
-                            if (selectedText !== "") {
-                                forceActiveFocus()
-                            } else {
-                                messageInput.forceActiveFocus()
-                            }
-                        }
-
-                        MouseArea {
-                            id: mouseArea
-                            enabled: false //we need this just for changing cursor shape
-                            anchors.fill: parent
-                            propagateComposedEvents: true
-                        }
+                        itemFocusOnUnselect: messageInput
                     }
                 }
 
