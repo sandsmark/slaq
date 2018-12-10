@@ -112,10 +112,14 @@ void MessageFormatter::replaceLinks(ChatsModel* chatModel, QString &message)
                     displayName = "#"+hrefs.at(1).toString();
                 }
             } else if (capture.startsWith("@U") || capture.startsWith("@W")) { //user
-                SlackUser* user = chatModel->users()->user(hrefs.at(0).mid(1).toString());
-                if (user != nullptr) {
-                    link = QString("slaq://user/%1").arg(user->userId());
-                    displayName = "@" + user->username();
+                if (chatModel != nullptr) {
+                    SlackUser* user = chatModel->users()->user(hrefs.at(0).mid(1).toString());
+                    if (user != nullptr) {
+                        link = QString("slaq://user/%1").arg(user->userId());
+                        displayName = "@" + user->username();
+                    }
+                } else {
+                    qWarning() << "chatsmodel not setup yet. put chat: before text:";
                 }
             } else if (capture.startsWith("!")) {
                 const QString trgt = hrefs.at(0).mid(1).toString();

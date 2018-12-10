@@ -230,7 +230,7 @@ void SlackText::postProcessText() {
             if (!prevCursor.isNull()) {
                 QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
                 if (nextCursor.isNull()) {
-                    qWarning() << "no next cursor found! not an emoji";
+                    //qWarning() << "no next cursor found! not an emoji";
                     break;
                 }
 
@@ -291,7 +291,7 @@ void SlackText::postProcessText() {
         });
 
         if (d->m_modified) {
-            qDebug() << "updating";
+            //qDebug() << "updating";
             d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());
             d->m_lp->updateSize();
             d->m_lp->updateLayout();
@@ -309,7 +309,6 @@ void SlackText::componentComplete()
     QQuickLabel::setTextFormat(RichText);
     QQuickLabel::setColor(palette().windowText().color());
     QQuickLabel::setLinkColor(palette().link().color());
-
     QQuickLabel::componentComplete();
     postProcessText();
     // TODO: code highlight?
@@ -905,7 +904,7 @@ void SlackText::setText(const QString &txt)
 {
     Q_D(SlackText);
     //preprocess text to replace CRs and spaces for frames, otherwize wordwarp not working
-    QString _txt  = preProcessText(txt);
+    QString _txt = preProcessText(txt);
     QQuickLabel::setText(_txt.isEmpty() ? txt : _txt);
     d->m_dirty = true;
     postProcessText();

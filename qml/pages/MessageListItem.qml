@@ -193,16 +193,14 @@ MouseArea {
                         y: parent.topPadding
                         color: contentLabel.palette.windowText
                         linkColor: contentLabel.palette.link
-                        wrapMode: Text.Wrap
                         width: parent.width
-                        chat: channelsList.channelModel
                         font.pixelSize: Theme.fontSizeLarge
                         font.italic: model.IsChanged
                         font.underline: model.Subtype === "me_message"
                         verticalAlignment: Text.AlignVCenter
-                        textFormat: Text.RichText
+                        chat: channelsList.channelModel
                         text: model.Text
-                        renderType: Text.QtRendering
+                        wrapMode: Text.Wrap
                         selectByMouse: true
                         onLinkActivated: handleLink(link)
                         onLinkHovered:  {
@@ -244,7 +242,8 @@ MouseArea {
                     Label {
                         id: repliesLabel
                         Layout.alignment: Qt.AlignHCenter
-                        text: ThreadReplies.length + " " + qsTr("replies:")
+                        text: ThreadReplies.length + " " + (ThreadReplies.length === 1 ?
+                                  qsTr("reply:") : qsTr("replies:"))
                     }
 
                     ListView {
@@ -345,6 +344,10 @@ MouseArea {
     function handleLink(link) {
         if (link.indexOf("slaq://") === 0) {
             console.log("local link", link)
+            if (link.indexOf("slaq://channel") === 0) {
+                var id = link.replace("slaq://channel/", "")
+                SlackClient.joinChannel(teamRoot.teamId, id)
+            }
         } else {
             console.log("external link", link)
             Qt.openUrlExternally(link)

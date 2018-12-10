@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import com.iskrembilen 1.0
+import SlackComponents 1.0
 
 import ".."
 import "../dialogs"
@@ -72,12 +73,24 @@ Page {
             height: Theme.headerSize
             font.bold: true
         }
-        Label {
-            text: channelRoot.channel != null ? channelRoot.channel.topic : ""
+        SlackText {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             height: Theme.headerSize
             font.bold: false
+            chat: channelsList.channelModel
+            text: channelRoot.channel != null ? channelRoot.channel.topic : ""
+            wrapMode: Text.Wrap
+            onLinkActivated: {
+                if (link.indexOf("slaq://") === 0) {
+                    if (link.indexOf("slaq://channel") === 0) {
+                        var id = link.replace("slaq://channel/", "")
+                        SlackClient.joinChannel(teamRoot.teamId, id)
+                    }
+                } else {
+                    Qt.openUrlExternally(link)
+                }
+            }
         }
     }
 
