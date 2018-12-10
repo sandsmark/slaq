@@ -136,7 +136,7 @@ bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEn
 QString SlackText::preProcessText(const QString& txt) {
     QString _txt = txt;
 
-    qDebug().noquote().nospace() << "preprocess [" << txt << "]";
+    //qDebug().noquote().nospace() << "preprocess [" << txt << "]";
     MessageFormatter::replaceLinks(m_chat, _txt);
     QStringList _blocks = _txt.split("```");
     // there must be at least 3 blocks and the numbers of blocks must be odd
