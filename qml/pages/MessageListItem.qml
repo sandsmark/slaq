@@ -226,40 +226,50 @@ MouseArea {
                             imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
                             imgToolTip.y = mapToItem(msgListView, x, 0).y -
                                     (imgToolTip.height + Theme.paddingSmall)
-//                            console.log("image: `" + imagelink +"` " + " x: " + x + " y: " + y +
-//                                        " tt x: " + imgToolTip.x + " tt y: " + imgToolTip.y)
+                            //                            console.log("image: `" + imagelink +"` " + " x: " + x + " y: " + y +
+                            //                                        " tt x: " + imgToolTip.x + " tt y: " + imgToolTip.y)
                             imgToolTip.open()
                         }
                         itemFocusOnUnselect: messageInput
                     }
                 }
 
-                Item {
+                RowLayout {
+                    id: rowLayout
                     visible: ThreadReplies.length > 0 && isReplies == false
-                    width: repliesRow.implicitWidth
-                    height: visible ? repliesRow.implicitHeight : 0
-                    Row {
-                        id: repliesRow
-                        spacing: 5
-                        Repeater {
-                            id: repliesRepeater
-                            model: ThreadReplies
-                            Image {
-                                source: "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl
-                                sourceSize: Qt.size(16, 16)
-                            }
-                        }
-                        Label {
-                            text: ThreadReplies.length + " " + qsTr("replies")
-                        }
+                    width: parent.width
+                    height: visible ? 16 : 0
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        id: repliesLabel
+                        Layout.alignment: Qt.AlignHCenter
+                        text: ThreadReplies.length + " " + qsTr("replies:")
                     }
-                    MouseArea {
-                        id: repliesMouseArea
-                        enabled: true //we need this just for changing cursor shape
-                        anchors.fill: parent
-                        onClicked: {
-                            console.log("clicked replies", model.ThreadRepliesModel, model.ThreadTs)
-                            channelRoot.openReplies(itemDelegate.ListView.view.model, index, model)
+
+                    ListView {
+                        id: repliesView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        spacing: Theme.paddingTiny
+                        property int messagesIndex: index
+                        property var messagesModel: model
+                        property var threadRepliesModel: ThreadRepliesModel
+                        orientation: ListView.Horizontal
+                        model: ThreadReplies
+                        delegate: Image {
+                            source: "image://emoji/slack/" + ThreadReplies[index].user.avatarUrl
+                            sourceSize: Qt.size(16, 16)
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    console.log("clicked replies", repliesView.messagesIndex)
+                                    channelRoot.openReplies(itemDelegate.ListView.view.model,
+                                                            repliesView.messagesIndex,
+                                                            repliesView.messagesModel)
+                                }
+                            }
                         }
                     }
                 }
