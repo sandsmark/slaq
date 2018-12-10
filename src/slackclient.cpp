@@ -594,6 +594,7 @@ QJsonObject SlackTeamClient::getResult(QNetworkReply *reply)
         errorJson["domain"] = "Network error";
         errorJson["error_str"] = reply->errorString() +
                 QString(". HTTP code: %1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+        emit error(errorJson);
         return errorJson;
     }
 
