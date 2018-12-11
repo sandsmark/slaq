@@ -76,10 +76,6 @@ ListView {
         }
     }
 
-    ToolTip {
-        id: imgToolTip
-    }
-
     delegate: MessageListItem {
         width: msgListView.width - msgListView.ScrollBar.vertical.width - Theme.paddingSmall
         isReplies: msgListView.isReplies

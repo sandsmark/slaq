@@ -745,7 +745,7 @@ void SlackText::hoverMoveEvent(QHoverEvent *event)
     if (link != d->m_linkHovered) {
         //qDebug() << link << d->m_linkHovered;
         d->m_linkHovered = link;
-        emit linkHovered(link);
+        emit linkHovered(link, translatedMousePos.x(), translatedMousePos.y());
         if (link.isEmpty()) {
             qApp->restoreOverrideCursor();
         } else {
@@ -765,7 +765,7 @@ void SlackText::hoverLeaveEvent(QHoverEvent *event)
     Q_D(SlackText);
     QQuickLabel::hoverLeaveEvent(event);
     d->m_linkHovered = "";
-    emit linkHovered(d->m_linkHovered);
+    emit linkHovered(d->m_linkHovered, 0, 0);
     d->m_imageHovered = "";
     emit imageHovered(d->m_imageHovered, 0, 0);
     qApp->restoreOverrideCursor();

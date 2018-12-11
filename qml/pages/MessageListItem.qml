@@ -188,7 +188,7 @@ MouseArea {
                         }
                     }
 
-                    SlackText {
+                    SlaqTextTooltips {
                         id: contentLabel
                         y: parent.topPadding
                         color: contentLabel.palette.windowText
@@ -202,32 +202,6 @@ MouseArea {
                         text: model.Text
                         wrapMode: Text.Wrap
                         selectByMouse: true
-                        onLinkActivated: handleLink(link)
-                        onLinkHovered:  {
-                            if (link !== "") {
-                                imgToolTip.text = link
-                                imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
-                                imgToolTip.y = mapToItem(msgListView, x, 0).y -
-                                        (imgToolTip.height + Theme.paddingSmall)
-                                imgToolTip.open()
-                            } else {
-                                imgToolTip.close()
-                            }
-                        }
-                        onImageHovered:  {
-                            if (imagelink.length <= 0) {
-                                imgToolTip.close()
-                                return
-                            }
-
-                            imgToolTip.text = imagelink.replace("image://emoji/", "")
-                            imgToolTip.x = mapToItem(msgListView, x - imgToolTip.width/2, 0).x
-                            imgToolTip.y = mapToItem(msgListView, x, 0).y -
-                                    (imgToolTip.height + Theme.paddingSmall)
-                            //                            console.log("image: `" + imagelink +"` " + " x: " + x + " y: " + y +
-                            //                                        " tt x: " + imgToolTip.x + " tt y: " + imgToolTip.y)
-                            imgToolTip.open()
-                        }
                         itemFocusOnUnselect: messageInput
                     }
                 }
