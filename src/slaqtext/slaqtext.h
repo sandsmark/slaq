@@ -88,7 +88,7 @@ Q_SIGNALS:
     void mouseSelectionModeChanged(SelectionMode mouseSelectionMode);
     void persistentSelectionChanged();
 
-    void linkHovered(const QString &link);
+    void linkHovered(const QString &link, qreal x, qreal y);
     void imageHovered(const QString &imagelink, qreal x, qreal y);
     void chatChanged(ChatsModel* chat);
     void itemFocusOnUnselectChanged(QQuickItem* itemFocusOnUnselect);

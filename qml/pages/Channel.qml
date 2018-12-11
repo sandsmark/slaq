@@ -81,6 +81,17 @@ Page {
             chat: channelsList.channelModel
             text: channelRoot.channel != null ? channelRoot.channel.topic : ""
             wrapMode: Text.Wrap
+            onLinkHovered:  {
+                if (link !== "") {
+                    msgToolTip.text = link
+                    var coord = mapToItem(teamsSwipe, x, 0)
+                    msgToolTip.x = coord.x - msgToolTip.width/2
+                    msgToolTip.y = coord.y - (msgToolTip.height + Theme.paddingSmall)
+                    msgToolTip.open()
+                } else {
+                    msgToolTip.close()
+                }
+            }
             onLinkActivated: {
                 if (link.indexOf("slaq://") === 0) {
                     if (link.indexOf("slaq://channel") === 0) {

@@ -460,5 +460,6 @@
         <file>icons/filetypes/zsh.svg</file>
         <file>qml/components/EmojisGrid.qml</file>
         <file>qml/dialogs/EditMessageDialog.qml</file>
+        <file>qml/components/SlaqTextTooltips.qml</file>
     </qresource>
 </RCC>

@@ -115,7 +115,8 @@ DISTFILES += \
     qml/components/*.qml \
     qml/components/EmojisGrid.qml \
     qml/dialogs/EditMessageDialog.qml \
-    qml/dialogs/EditMessageDialog.qml
+    qml/dialogs/EditMessageDialog.qml \
+    qml/components/SlaqTextTooltips.qml
 
 win* {
 OTHER_FILES += \

@@ -153,6 +153,10 @@ ApplicationWindow {
         id: fileSend
     }
 
+    ToolTip {
+        id: msgToolTip
+    }
+
     Connections {
         target: SlackClient
         onTeamLeft: {
