@@ -11,9 +11,9 @@ SlackText {
     onLinkHovered:  {
         if (link !== "") {
             msgToolTip.text = link
-            var coord = mapToItem(teamsSwipe, x, 0)
+            var coord = mapToItem(teamsSwipe, x, y)
             msgToolTip.x = coord.x - msgToolTip.width/2
-            msgToolTip.y = coord.y - (msgToolTip.height + Theme.paddingSmall)
+            msgToolTip.y = coord.y - (msgToolTip.height + Theme.paddingLarge)
             msgToolTip.open()
         } else {
             msgToolTip.close()
