@@ -155,6 +155,7 @@ ApplicationWindow {
 
     ToolTip {
         id: msgToolTip
+        parent: teamsSwipe
     }
 
     Connections {
