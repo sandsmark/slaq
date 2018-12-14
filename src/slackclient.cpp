@@ -191,6 +191,8 @@ void SlackTeamClient::reconnectClient()
     setState(ClientStates::RECONNECTING);
     emit reconnecting(m_teamInfo.teamId());
     startClient();
+    //load messages was missed since disconnection
+    m_teamInfo.chats()->requestMissedMessages(m_teamInfo.lastChannel());
 }
 
 void SlackTeamClient::handleStreamStart()
@@ -1384,10 +1386,10 @@ void SlackTeamClient::handleTeamEmojisReply()
 }
 
 void SlackTeamClient::loadMessages(const QString& channelId, const QString& latest,
-                                   const QString &threadTs)
+                                   const QString& oldest, const QString &threadTs)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << channelId << latest << sender();
+    qDebug() << "Loading messages" << channelId << oldest << latest << sender();
     if (channelId.isEmpty()) {
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
@@ -1402,7 +1404,7 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
         qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
-    if (_latest.isEmpty() && threadTs.isEmpty() == true) {
+    if (_latest.isEmpty() && threadTs.isEmpty() && oldest.isEmpty()) {
         MessageListModel* mesgs = _chatsModel->messages(channelId);
         //check if send from QML (sender == null)
         if (sender() == nullptr && mesgs->historyLoaded()) {
@@ -1418,13 +1420,16 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
     }
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    params.insert(QStringLiteral("count"), "50");
+    params.insert(QStringLiteral("count"), "50"); //TODO: make variable
     if (threadTs.isEmpty() == false) {
         params.insert(QStringLiteral("ts"), threadTs);
     }
     if (_latest.isEmpty() == false) {
         params.insert(QStringLiteral("latest"), _latest);
         params.insert(QStringLiteral("inclusive"), "0");
+    }
+    if (oldest.isEmpty() == false) {
+        params.insert(QStringLiteral("oldest"), oldest);
     }
 
     QNetworkReply *reply = executeGet(threadTs.isEmpty() ? "conversations.history" :
@@ -1819,7 +1824,7 @@ void SlackTeamClient::handleDnDInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     const QJsonObject& data = getResult(reply);
-    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     const QString& userId = reply->request().attribute(QNetworkRequest::User).toString();
     //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
     reply->deleteLater();

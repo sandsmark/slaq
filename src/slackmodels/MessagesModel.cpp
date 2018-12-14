@@ -156,7 +156,7 @@ MessageListModel *MessageListModel::createThread(Message *parentMessage)
         }
         if (parentMessage->replies.count() > parentMessage->messageThread->rowCount(QModelIndex()) - 1) {
             qDebug() << "requesting data for thread" << parentMessage->thread_ts;
-            emit fetchMoreMessages(m_channelId, "", parentMessage->thread_ts);
+            emit fetchMoreMessages(m_channelId, "", "", parentMessage->thread_ts);
         }
         return parentMessage->messageThread.data();
     }
@@ -448,7 +448,7 @@ void MessageListModel::addMessage(Message* message)
         if (!m_messages.isEmpty()) {
             Message* prevMsg = prevMsg = m_messages.first();
             message->isSameUser = (prevMsg->user_id == message->user_id);
-            message->timeDiffMs = (message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
+            message->timeDiffMs = qAbs(message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
             Q_ASSERT_X(prevMsg->time != message->time, __PRETTY_FUNCTION__, "Time should not be equal");
         }
         m_modelMutex.unlock();
@@ -577,35 +577,66 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
 {
     DEBUG_BLOCK;
     qDebug() << "Adding" << messages.count() << "messages" << QThread::currentThreadId() <<
-                hasMore << threadTs;
+                hasMore << threadTs << isThread;
+
 
     if (threadTs.isEmpty()) {
         m_hasMore = hasMore;
-        beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + messages.count() - 1);
+        //prepare messages for adding to model
+        //preanalysis, where to add messages, we need to know it to correctly inform model
+        //assume, we have no clue, if the messages suppose to be prepended or appended
+
+
+        QList<Message*> _toAppend;
+        QList<Message*> _toPrepend;
         for (Message* message : messages) {
-            updateReactionUsers(message);
-            preprocessMessage(message);
-            if (!m_messages.isEmpty()) {
-                Message* prevMsg = m_messages.last();
-                prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
-                prevMsg->timeDiffMs = (prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
-            }
-            m_modelMutex.lock();
             //check for duplicates. Debug only purposes!
-//            for (int i = 0; i < m_messages.count(); i++) {
-//                if (m_messages.at(i)->ts == message->ts) {
-//                    qWarning() << QString("Duplicate message for ts %1 at %2 messages %3").
-//                                  arg(message->ts).arg(i).arg(m_messages.count());
-//                }
-//            }
-            if (isThread) {
-                m_messages.prepend(message);
+            //            for (int i = 0; i < m_messages.count(); i++) {
+            //                if (m_messages.at(i)->ts == message->ts) {
+            //                    qWarning() << QString("Duplicate message for ts %1 at %2 messages %3").
+            //                                  arg(message->ts).arg(i).arg(m_messages.count());
+            //                }
+            //            }
+            const bool isLater = m_messages.count() > 0 && message->time > m_messages.first()->time;
+            if ((isThread && isLater) || (!isThread && !isLater)) {
+                _toAppend.append(message);
             } else {
-                m_messages.append(message);
+                _toPrepend.prepend(message);
             }
-            m_modelMutex.unlock();
         }
-        endInsertRows();
+        //qDebug() << _toAppend.count() << _toPrepend.count();
+        if (_toAppend.count() > 0) {
+            beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count() + _toAppend.count() - 1);
+            for (Message* message : _toAppend) {
+                updateReactionUsers(message);
+                preprocessMessage(message);
+                if (!m_messages.isEmpty()) {
+                    Message* prevMsg = m_messages.last();
+                    prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
+                    prevMsg->timeDiffMs = qAbs(prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+                }
+                m_modelMutex.lock();
+                m_messages.append(message);
+                m_modelMutex.unlock();
+            }
+            endInsertRows();
+        }
+        if (_toPrepend.count() > 0) {
+            beginInsertRows(QModelIndex(), 0, messages.count() - 1);
+            for (Message* message : _toPrepend) {
+                updateReactionUsers(message);
+                preprocessMessage(message);
+                if (!m_messages.isEmpty()) {
+                    Message* prevMsg = m_messages.first();
+                    message->isSameUser = (prevMsg->user_id == message->user_id);
+                    message->timeDiffMs = qAbs(prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+                }
+                m_modelMutex.lock();
+                m_messages.prepend(message);
+                m_modelMutex.unlock();
+            }
+            endInsertRows();
+        }
     } else {
         Message* parentMsg = message(threadTs);
         if (parentMsg != nullptr) {
@@ -626,6 +657,16 @@ bool MessageListModel::canFetchMore(const QModelIndex &parent) const
     return m_hasMore;
 }
 
+void MessageListModel::requestMissedMessages()
+{
+    if (m_messages.isEmpty()) {
+        emit fetchMoreMessages(m_channelId, "", "", "");
+    } else {
+        qDebug() << "called fetch more" << m_messages.last()->ts << m_messages.first()->ts;
+        emit fetchMoreMessages(m_channelId, "", m_messages.first()->ts, "");
+    }
+}
+
 void MessageListModel::fetchMore(const QModelIndex &parent)
 {
     Q_UNUSED(parent)
@@ -633,10 +674,10 @@ void MessageListModel::fetchMore(const QModelIndex &parent)
     // to avoid duplicate requests
     m_hasMore = false;
     if (m_messages.isEmpty()) {
-        emit fetchMoreMessages(m_channelId, "", "");
+        emit fetchMoreMessages(m_channelId, "", "", "");
     } else {
         qDebug() << "called fetch more" << m_messages.last()->ts << m_messages.first()->ts;
-        emit fetchMoreMessages(m_channelId, m_messages.last()->ts, "");
+        emit fetchMoreMessages(m_channelId, m_messages.last()->ts, "", "");
     }
 }
 
