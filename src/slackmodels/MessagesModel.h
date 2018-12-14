@@ -395,12 +395,14 @@ public slots:
     int countUnread(const QDateTime& lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
     QString lastMessage() const;
+    void requestMissedMessages();
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;
     void fetchMore(const QModelIndex &parent) override;
 
 signals:
-    void fetchMoreMessages(const QString& channelId, const QString& latest, const QString& threadTs);
+    void fetchMoreMessages(const QString& channelId, const QString& latest,
+                           const QString& oldest, const QString& threadTs);
 private:
     void findNewUsers(QString &message);
 

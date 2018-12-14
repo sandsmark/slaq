@@ -119,7 +119,8 @@ public slots:
                      const QString &slackTs);
 
     void searchMessages(const QString& searchString, int page =  1);
-    void loadMessages(const QString& channelId, const QString &latest = "", const QString &threadTs = "");
+    void loadMessages(const QString& channelId, const QString &latest = "",
+                      const QString &oldest = "", const QString &threadTs = "");
     void postMessage(const QString& channelId, QString content, const QString &thread_ts);
     void updateMessage(const QString& channelId, QString content, const QDateTime &ts, const QString& slackTs);
     void deleteMessage(const QString& channelId, const QDateTime& ts, const QString& slackTs);

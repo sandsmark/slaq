@@ -26,6 +26,22 @@ QString ChatsModel::getSectionName(Chat* chat) const {
     return tr("Other");
 }
 
+QStringList ChatsModel::getChatIds() const
+{
+    return m_chatIds;
+}
+
+void ChatsModel::requestMissedMessages(const QString& lastChannel)
+{
+    for (const QString& id : m_chats.keys()) {
+        if (id == lastChannel) {
+            MessageListModel* msgModel = messages(id);
+            if (msgModel != nullptr)
+                msgModel->requestMissedMessages();
+        }
+    }
+}
+
 QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();

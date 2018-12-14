@@ -73,6 +73,10 @@ public:
     int unreadsInNull(ChatsModel::ChatType type, bool personal);
     int unreadsInNullChannel(const QString &channelId, bool personal);
 
+    QStringList getChatIds() const;
+
+    void requestMissedMessages(const QString &lastChannel);
+
 private:
     QString getSectionName(Chat *chat) const;
 
