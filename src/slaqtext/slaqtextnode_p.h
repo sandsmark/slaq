@@ -52,7 +52,7 @@ public:
                             QQuickText::TextStyle style = QQuickText::Normal, const QColor &styleColor = QColor(),
                             QSGNode *parentNode = 0);
     void addImage(const QRectF &rect, const QImage &image);
-    void addRectangleNode(const QRectF &rect, const QColor &color);
+    void addRectangleNode(const QRectF &rect, const QColor &color, bool border = false);
 
     bool useNativeRenderer() const { return m_useNativeRenderer; }
     void setUseNativeRenderer(bool on) { m_useNativeRenderer = on; }

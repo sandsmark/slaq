@@ -613,11 +613,12 @@ void SlaqTextNodeEngine::addBorder(const QRectF &rect, qreal border,
 
     // Currently we don't support other styles than solid
     Q_UNUSED(borderStyle);
+    m_borderBackgrounds.append(qMakePair(rect.adjusted(-border, -border, border, border), color));
 
-    m_backgrounds.append(qMakePair(QRectF(rect.left(), rect.top(), border, rect.height() + border), color));
-    m_backgrounds.append(qMakePair(QRectF(rect.left() + border, rect.top(), rect.width(), border), color));
-    m_backgrounds.append(qMakePair(QRectF(rect.right(), rect.top() + border, border, rect.height() - border), color));
-    m_backgrounds.append(qMakePair(QRectF(rect.left() + border, rect.bottom(), rect.width(), border), color));
+//    m_borderBackgrounds.append(qMakePair(QRectF(rect.left(), rect.top(), border, rect.height() + border), color));
+//    m_borderBackgrounds.append(qMakePair(QRectF(rect.left() + border, rect.top(), rect.width(), border), color));
+//    m_borderBackgrounds.append(qMakePair(QRectF(rect.right(), rect.top() + border, border, rect.height() - border), color));
+//    m_borderBackgrounds.append(qMakePair(QRectF(rect.left() + border, rect.bottom(), rect.width(), border), color));
 }
 
 void SlaqTextNodeEngine::addFrameDecorations(QTextDocument *document, QTextFrame *frame)
@@ -749,12 +750,20 @@ void  SlaqTextNodeEngine::addToSceneGraph(SlaqTextNode *parentNode,
     QList<BinaryTreeNode *> imageNodes;
     mergeProcessedNodes(&nodes, &imageNodes);
 
+    for (int i = 0; i < m_borderBackgrounds.size(); ++i) {
+        const QRectF &rect = m_borderBackgrounds.at(i).first;
+        const QColor &color = m_borderBackgrounds.at(i).second;
+
+        parentNode->addRectangleNode(rect, color, true);
+    }
+
     for (int i = 0; i < m_backgrounds.size(); ++i) {
         const QRectF &rect = m_backgrounds.at(i).first;
         const QColor &color = m_backgrounds.at(i).second;
 
-        parentNode->addRectangleNode(rect, color);
+        parentNode->addRectangleNode(rect, color, true);
     }
+
 
     // Add all text with unselected color first
     for (int i = 0; i < nodes.size(); ++i) {
@@ -861,14 +870,14 @@ void  SlaqTextNodeEngine::addToSceneGraph(SlaqTextNode *parentNode,
 
     for (int i = 0; i < imageNodes.size(); ++i) {
         const BinaryTreeNode *node = imageNodes.at(i);
-        if (node->selectionState == Selected) {
+        //if (node->selectionState == Selected) {
             parentNode->addImage(node->boundingRect, node->image);
             if (node->selectionState == Selected) {
                 QColor color = m_selectionColor;
                 color.setAlpha(128);
                 parentNode->addRectangleNode(node->boundingRect, color);
             }
-        }
+        //}
     }
 }
 

@@ -208,10 +208,11 @@ void SlackText::postProcessText() {
                     QTextFrameFormat fmt;
                     fmt.setPosition(QTextFrameFormat::InFlow);
                     fmt.setBorderStyle(QTextFrameFormat::BorderStyle_Dashed);
-                    fmt.setBorder(singleQuote ? 1 : 2);
-                    fmt.setPadding(singleQuote ? 1: 5);
+                    fmt.setBorder(1);
+                    fmt.setPadding(5);
                     fmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
                     fmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
+                    fmt.setWidth(QTextLength(QTextLength::PercentageLength, 100));
                     QTextFrame *codeBlockFrame = prevCursor.insertFrame(fmt);
                     //QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
                     prevCursor.insertText(selectedText);

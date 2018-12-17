@@ -111,21 +111,24 @@ void SlaqTextNode::clearCursor()
     m_cursorNode = nullptr;
 }
 
-void SlaqTextNode::addRectangleNode(const QRectF &rect, const QColor &color)
+void SlaqTextNode::addRectangleNode(const QRectF &rect, const QColor &color, bool border)
 {
     QSGRenderContext *sg = QQuickItemPrivate::get(m_ownerElement)->sceneGraphRenderContext();
-    auto rectNode = sg->sceneGraphContext()->createInternalRectangleNode(rect, color);
+    QSGInternalRectangleNode* rectNode = nullptr;
 
-//    rectNode->setRect(rect);
-//    rectNode->setColor(color);
+    if (!border) {
+        rectNode = sg->sceneGraphContext()->createInternalRectangleNode(rect, color);
+    } else {
+        rectNode = sg->sceneGraphContext()->createInternalRectangleNode();
+        rectNode->setRect(rect);
+        rectNode->setColor(color);
 
-//    rectNode->setAligned(true);
-//    rectNode->setRadius(5);
-//    rectNode->setAntialiasing(true);
-//    rectNode->setPenWidth(3);
-//    rectNode->setPenColor(color);
-//    rectNode->update();
-
+        rectNode->setAligned(true);
+        rectNode->setRadius(5);
+        rectNode->setAntialiasing(true);
+        rectNode->setPenColor(color);
+        rectNode->update();
+    }
     appendChildNode(rectNode);
 }
 

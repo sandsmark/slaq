@@ -209,6 +209,7 @@ private:
     Qt::LayoutDirection m_currentTextDirection;
 
     QList<QPair<QRectF, QColor> > m_backgrounds;
+    QList<QPair<QRectF, QColor> > m_borderBackgrounds;
     QList<QRectF> m_selectionRects;
     QVarLengthArray<BinaryTreeNode, 16> m_currentLineTree;
 
