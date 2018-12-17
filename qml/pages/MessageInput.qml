@@ -22,6 +22,7 @@ ColumnLayout {
     signal sendMessage(string content)
     signal showNickPopup()
     signal hideNickPopup()
+    signal upPressed()
 
     Layout.fillWidth: true
     Layout.leftMargin: Theme.paddingLarge/2
@@ -148,13 +149,20 @@ ColumnLayout {
                 event.accepted = true
             }
 
+            Keys.onEscapePressed: {
+                if (nickPopupVisible == false) {
+                    upPressed()
+                }
+                event.accepted = true
+            }
+
             Keys.onUpPressed: {
                 if (nickPopupVisible) {
                     currentNickSuggestionIndex = Math.max(currentNickSuggestionIndex - 1, 0)
-                    event.accepted = true
                 } else {
-                    event.accepted = false
+                    upPressed()
                 }
+                event.accepted = true
             }
             Keys.onDownPressed: {
                 if (nickPopupVisible) {

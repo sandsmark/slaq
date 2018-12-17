@@ -21,6 +21,20 @@ MouseArea {
 
     property var messageInput
 
+    function editMessage() {
+        if (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId) {
+            if (messageInput.updating === true) {
+                messageInput.updating = false
+            } else {
+                messageInput.messageInput.text = model.OriginalText
+                messageInput.updating = true
+                messageInput.messageTime = model.Time
+                messageInput.messageSlackTime = model.SlackTimestamp
+                messageInput.messageInput.forceActiveFocus();
+            }
+        }
+    }
+
     Connections {
         target: emojiSelector
         enabled: itemDelegate.emojiSelectorCalled
@@ -173,15 +187,7 @@ MouseArea {
                                 text: input.updating ? "✖" : "✎" //"💾"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    if (messageInput.updating === true) {
-                                        messageInput.updating = false
-                                    } else {
-                                        messageInput.messageInput.text = model.OriginalText
-                                        messageInput.updating = true
-                                        messageInput.messageTime = model.Time
-                                        messageInput.messageSlackTime = model.SlackTimestamp
-                                        messageInput.messageInput.forceActiveFocus();
-                                    }
+                                    editMessage()
                                 }
                                 background: Item {}
                             }

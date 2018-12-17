@@ -197,6 +197,13 @@ Page {
         MessageInput {
             id: input
 
+            onUpPressed: {
+                var myListItemObject = messagesListView.contentItem.children[0]
+                if (myListItemObject !== null) {
+                    myListItemObject.editMessage()
+                }
+            }
+
             enabled: messagesListView.inputEnabled
             placeholder: qsTr("Message %1%2").arg("#").arg(channel.name)
             onSendMessage: {
