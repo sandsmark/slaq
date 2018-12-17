@@ -198,7 +198,8 @@ Page {
             id: input
 
             onUpPressed: {
-                var myListItemObject = messagesListView.contentItem.children[0]
+                messagesListView.currentIndex = 0
+                var myListItemObject = messagesListView.currentItem
                 if (myListItemObject !== null) {
                     myListItemObject.editMessage()
                 }

@@ -104,6 +104,23 @@ ColumnLayout {
                 }
             }
 
+            function surroundSelected(surrounding, surroundingMultiline, leftOnly) {
+                var selStart = messageInput.selectionStart
+                var selEnd = messageInput.selectionEnd
+                if (selEnd > selStart) {
+                    var surr_ = surrounding
+                    var sel = messageInput.selectedText
+                    if (sel.indexOf("\n") !== -1) {
+                        surr_ = surroundingMultiline
+                    }
+                    if (!leftOnly) {
+                        messageInput.insert(selEnd, surr_)
+                    }
+                    messageInput.insert(selStart, surr_)
+                    messageInput.select(selStart, selEnd + surr_.length*(leftOnly ? 1 : 2))
+                }
+            }
+
             function doEditingFinished() {
                 if (nickPopupVisible) {
                     insertSuggestion()
@@ -113,10 +130,37 @@ ColumnLayout {
                 }
             }
 
+            Keys.onPressed: {
+                //console.log("key", event.key)
+                if (event.modifiers & Qt.ControlModifier) {
+                    if (event.key === Qt.Key_B) {
+                        surroundSelected('*', '*', false)
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_I) {
+                        surroundSelected('_', '_', false)
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_C) {
+                        if (event.modifiers & Qt.ShiftModifier) {
+                            surroundSelected('`', '```', false)
+                            event.accepted = true;
+                        }
+                    } else if (event.key === Qt.Key_X) {
+                        if (event.modifiers & Qt.ShiftModifier) {
+                            surroundSelected('~', false)
+                            event.accepted = true;
+                        }
+                    } else if (event.key === Qt.Key_Greater) {
+                        if (event.modifiers & Qt.ShiftModifier) {
+                            surroundSelected('>', ">>>", true)
+                            event.accepted = true;
+                        }
+                    }
+                }
+            }
             // Enter - sends message,
             // Shift-Enter - new line
             Keys.onReturnPressed: {
-                if (event.modifiers == 0) {
+                if (event.modifiers === 0) {
                     doEditingFinished()
                     event.accepted = true
                 } else {
@@ -125,7 +169,7 @@ ColumnLayout {
             }
 
             Keys.onEnterPressed: {
-                if (event.modifiers == 0) {
+                if (event.modifiers === 0) {
                     doEditingFinished()
                     event.accepted = true
                 } else {
@@ -159,17 +203,18 @@ ColumnLayout {
             Keys.onUpPressed: {
                 if (nickPopupVisible) {
                     currentNickSuggestionIndex = Math.max(currentNickSuggestionIndex - 1, 0)
+                    event.accepted = true
                 } else {
-                    upPressed()
+                    if (text.length === 0) {
+                        upPressed()
+                        event.accepted = true
+                    }
                 }
-                event.accepted = true
             }
             Keys.onDownPressed: {
                 if (nickPopupVisible) {
                     currentNickSuggestionIndex = Math.min(currentNickSuggestionIndex + 1, nickSuggestions.length - 1)
                     event.accepted = true
-                } else {
-                    event.accepted = false
                 }
             }
 
