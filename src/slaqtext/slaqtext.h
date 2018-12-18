@@ -24,6 +24,9 @@ class SlackText : public QQuickLabel
     Q_PROPERTY(SelectionMode mouseSelectionMode READ mouseSelectionMode WRITE setMouseSelectionMode NOTIFY mouseSelectionModeChanged)
     Q_PROPERTY(bool persistentSelection READ persistentSelection WRITE setPersistentSelection NOTIFY persistentSelectionChanged)
 
+    Q_PROPERTY(qreal emojiWidth READ emojiWidth WRITE setEmojiWidth NOTIFY emojiWidthChanged)
+    Q_PROPERTY(qreal emojiHeight READ emojiHeight WRITE setEmojiHeight NOTIFY emojiHeightChanged)
+
     Q_PROPERTY(qreal padding READ padding WRITE setPadding RESET resetPadding NOTIFY paddingChanged)
     Q_PROPERTY(qreal topPadding READ topPadding WRITE setTopPadding RESET resetTopPadding NOTIFY topPaddingChanged)
     Q_PROPERTY(qreal leftPadding READ leftPadding WRITE setLeftPadding RESET resetLeftPadding NOTIFY leftPaddingChanged)
@@ -74,6 +77,8 @@ public:
     QString hoveredImage() const;
     ChatsModel* chat() const;
     QQuickItem* itemFocusOnUnselect() const;
+    qreal emojiWidth() const;
+    qreal emojiHeight() const;
 
 Q_SIGNALS:
 
@@ -92,6 +97,8 @@ Q_SIGNALS:
     void imageHovered(const QString &imagelink, qreal x, qreal y);
     void chatChanged(ChatsModel* chat);
     void itemFocusOnUnselectChanged(QQuickItem* itemFocusOnUnselect);
+    void emojiWidthChanged(qreal emojiWidth);
+    void emojiHeightChanged(qreal emojiHeight);
 
 public Q_SLOTS:
     void copy();
@@ -106,6 +113,8 @@ public Q_SLOTS:
     void setPersistentSelection(bool persistentSelection);
     void setChat(ChatsModel* chat);
     void setItemFocusOnUnselect(QQuickItem* itemFocusOnUnselect);
+    void setEmojiWidth(qreal emojiWidth);
+    void setEmojiHeight(qreal emojiHeight);
 
 private Q_SLOTS:
     void selectionChanged();

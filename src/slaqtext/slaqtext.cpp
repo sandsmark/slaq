@@ -58,8 +58,8 @@ void SlackText::insertImage(QTextCursor& cursor, const QString& url, const QImag
     Q_D(SlackText);
     d->m_tp->extra->doc->addResource(QTextDocument::ImageResource, QUrl(url), img);
     QTextImageFormat fmt;
-    fmt.setWidth(32);
-    fmt.setHeight(32);
+    fmt.setWidth(d->m_emojiWidth);
+    fmt.setHeight(d->m_emojiHeight);
     fmt.setName(url);
     fmt.setVerticalAlignment(QTextCharFormat::AlignMiddle);
     cursor.insertImage(fmt, QTextFrameFormat::InFlow);
@@ -209,10 +209,9 @@ void SlackText::postProcessText() {
                     fmt.setPosition(QTextFrameFormat::InFlow);
                     fmt.setBorderStyle(QTextFrameFormat::BorderStyle_Dashed);
                     fmt.setBorder(1);
-                    fmt.setPadding(5);
+                    fmt.setPadding(3);
                     fmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
                     fmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
-                    fmt.setWidth(QTextLength(QTextLength::PercentageLength, 100));
                     QTextFrame *codeBlockFrame = prevCursor.insertFrame(fmt);
                     //QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
                     prevCursor.insertText(selectedText);
@@ -934,6 +933,18 @@ QQuickItem *SlackText::itemFocusOnUnselect() const
     return d->m_itemFocusOnUnselect;
 }
 
+qreal SlackText::emojiWidth() const
+{
+    Q_D(const SlackText);
+    return d->m_emojiWidth;
+}
+
+qreal SlackText::emojiHeight() const
+{
+    Q_D(const SlackText);
+    return d->m_emojiHeight;
+}
+
 void SlackText::setPersistentSelection(bool on)
 {
     Q_D(SlackText);
@@ -960,6 +971,26 @@ void SlackText::setItemFocusOnUnselect(QQuickItem *itemFocusOnUnselect)
 
     d->m_itemFocusOnUnselect = itemFocusOnUnselect;
     emit itemFocusOnUnselectChanged(d->m_itemFocusOnUnselect);
+}
+
+void SlackText::setEmojiWidth(qreal emojiWidth)
+{
+    Q_D(SlackText);
+    if (qFuzzyCompare(d->m_emojiWidth, emojiWidth))
+        return;
+
+    d->m_emojiWidth = emojiWidth;
+    emit emojiWidthChanged(d->m_emojiWidth);
+}
+
+void SlackText::setEmojiHeight(qreal emojiHeight)
+{
+    Q_D(SlackText);
+    if (qFuzzyCompare(d->m_emojiHeight, emojiHeight))
+        return;
+
+    d->m_emojiHeight = emojiHeight;
+    emit emojiHeightChanged(d->m_emojiHeight);
 }
 
 void SlackText::moveCursorSelection(int position)

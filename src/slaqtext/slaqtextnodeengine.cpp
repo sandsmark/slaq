@@ -250,8 +250,9 @@ void SlaqTextNodeEngine::processCurrentLine()
                 if (currentDecorations & Decoration::StrikeOut)
                     pendingStrikeOuts.append(textDecoration);
 
-                if (currentDecorations & Decoration::Background)
+                if (currentDecorations & Decoration::Background) {
                     m_backgrounds.append(qMakePair(decorationRect, lastBackgroundColor));
+                }
             }
 
             // If we've reached an unselected node from a selected node, we add the
@@ -760,8 +761,15 @@ void  SlaqTextNodeEngine::addToSceneGraph(SlaqTextNode *parentNode,
     for (int i = 0; i < m_backgrounds.size(); ++i) {
         const QRectF &rect = m_backgrounds.at(i).first;
         const QColor &color = m_backgrounds.at(i).second;
-
-        parentNode->addRectangleNode(rect, color, true);
+        bool bordered = false;
+        for (int i = 0; i < m_borderBackgrounds.size(); ++i) {
+            const QRectF &r = m_borderBackgrounds.at(i).first;
+            if (r.contains(rect)) {
+                bordered = true;
+                break;
+            }
+        }
+        parentNode->addRectangleNode(bordered ? rect : rect.adjusted(0, 3, 0, -3), color, true);
     }
 
 

@@ -44,6 +44,8 @@ public:
       , m_cursor(0)
       , m_separator(0)
       , m_maxLength(32767)
+      , m_emojiWidth(32)
+      , m_emojiHeight(32)
     {
     }
 
@@ -83,6 +85,8 @@ public:
     int m_selend;
     int m_cursor;
     int m_maxLength;
+    qreal m_emojiWidth;
+    qreal m_emojiHeight;
 
     SlaqTextNode *textNode;
     SlackText* q_ptr { nullptr };

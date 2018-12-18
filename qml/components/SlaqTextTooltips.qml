@@ -26,9 +26,9 @@ SlackText {
         }
 
         msgToolTip.text = imagelink.replace("image://emoji/", "")
-        var coord = mapToItem(teamsSwipe, x, 0)
+        var coord = mapToItem(teamsSwipe, x, y)
         msgToolTip.x = coord.x - msgToolTip.width/2
-        msgToolTip.y = coord.y - (msgToolTip.height + Theme.paddingSmall)
+        msgToolTip.y = coord.y - (slaqText.emojiHeight + msgToolTip.height + Theme.paddingSmall)
         msgToolTip.open()
     }
     itemFocusOnUnselect: messageInput
