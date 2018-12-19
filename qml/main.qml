@@ -318,7 +318,7 @@ ApplicationWindow {
                 id: searchInput
                 placeholderText: qsTr("Search...")
                 // workaround for bug in Material l'n'f
-                implicitWidth: undefined
+                background.width: width
                 Layout.fillWidth: true
                 rightPadding: closeButton.width + Theme.paddingSmall
                 leftPadding: doSearchButton.width + Theme.paddingMedium
