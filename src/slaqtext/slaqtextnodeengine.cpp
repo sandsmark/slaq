@@ -761,15 +761,7 @@ void  SlaqTextNodeEngine::addToSceneGraph(SlaqTextNode *parentNode,
     for (int i = 0; i < m_backgrounds.size(); ++i) {
         const QRectF &rect = m_backgrounds.at(i).first;
         const QColor &color = m_backgrounds.at(i).second;
-        bool bordered = false;
-        for (int i = 0; i < m_borderBackgrounds.size(); ++i) {
-            const QRectF &r = m_borderBackgrounds.at(i).first;
-            if (r.contains(rect)) {
-                bordered = true;
-                break;
-            }
-        }
-        parentNode->addRectangleNode(bordered ? rect : rect.adjusted(0, 3, 0, -3), color, true);
+        parentNode->addRectangleNode(rect, color, true);
     }
 
 

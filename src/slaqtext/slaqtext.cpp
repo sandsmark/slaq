@@ -161,6 +161,9 @@ QString SlackText::preProcessText(const QString& txt) {
 void SlackText::postProcessText() {
     Q_D(SlackText);
 
+    bool _hasblockquote = false;
+    bool _hassinglequote = false;
+
     if (d->m_dirty && d->m_tp->extra.isAllocated() && d->m_tp->extra->doc) {
         d->m_modified = false;
         const QPalette& palette = QGuiApplication::palette();
@@ -204,6 +207,7 @@ void SlackText::postProcessText() {
                     chFmt.setBackground(QBrush(palette.color(QPalette::AlternateBase)));
                     chFmt.setForeground(QBrush(palette.color(QPalette::HighlightedText)));
                     prevCursor.insertText(selectedText, chFmt);
+                    _hassinglequote = true;
                 } else {
                     QTextFrameFormat fmt;
                     fmt.setPosition(QTextFrameFormat::InFlow);
@@ -215,6 +219,7 @@ void SlackText::postProcessText() {
                     QTextFrame *codeBlockFrame = prevCursor.insertFrame(fmt);
                     //QTextCursor blockCursor = codeBlockFrame->firstCursorPosition();
                     prevCursor.insertText(selectedText);
+                    _hasblockquote = true;
                 }
                 prevCursor = nextCursor;
                 //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
@@ -292,6 +297,9 @@ void SlackText::postProcessText() {
 
         if (d->m_modified) {
             //qDebug() << "updating";
+            if (_hassinglequote && _hasblockquote) {
+                setLineHeight(lineHeight() * 1.2);
+            }
             d->m_tp->extra->doc->markContentsDirty(0, d->m_tp->extra->doc->characterCount());
             d->m_lp->updateSize();
             d->m_lp->updateLayout();
