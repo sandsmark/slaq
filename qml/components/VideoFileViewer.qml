@@ -11,36 +11,61 @@ Item {
         anchors.fill: parent
         asynchronous: true
         fillMode: Image.PreserveAspectFit
-        source: fileshare.thumb_video != "" ? "team://" + teamId + "/" + fileshare.thumb_video : "qrc:/icons/video-thumbnail.png"
+        source: fileshare.thumb_video != "" ?
+                    "team://" + teamId + "/" + fileshare.thumb_video :
+                    "qrc:/icons/video-thumbnail.png"
         visible: video.playbackState === MediaPlayer.StoppedState
         onStatusChanged: {
             if (status === Image.Ready) {
-                videoItem.width = sourceSize.width - Theme.paddingLarge * 4  > 360 ? 360 : sourceSize.width
+                videoItem.width = sourceSize.width - Theme.paddingLarge * 4  > 360 ?
+                            360 : sourceSize.width
                 videoItem.height = width / (sourceSize.width / sourceSize.height)
             }
         }
-        onSourceChanged: console.log("thumb video source:" + fileshare.thumb_video + ":")
+        onSourceChanged: console.log("thumb video source:" + source + ":")
+    }
+
+    Connections {
+        target: downloadManager
+        onFinished: {
+            if (url === fileshare.url_private_download) {
+                console.log("set temp source", url, fileName)
+                video.source = "file://"+fileName
+                playButton.enabled = true
+            }
+        }
     }
 
     MediaPlayer {
         id: video
-        source: fileshare.url_private_download
         audioRole: MediaPlayer.VideoRole
-        Component.onCompleted: {
-            if (availability === MediaPlayer.Available) {
-                SlackClient.setMediaSource(this, teamId, fileshare.url_private_download)
-            }
-        }
-
         onPositionChanged: slider.value = position
         onStatusChanged: {
             if (status === MediaPlayer.Loaded) {
-                slider.to = duration
+                console.log("duration", duration)
+                if (duration > 0) {
+                    slider.to = duration
+                } else {
+                    slider.enabled = false
+                }
             }
         }
-        onErrorChanged: console.error("error for " + source + " : " + error)
-
+        onErrorChanged: {
+            console.error("error for " + source + " : " + error + " playback state: " + playbackState)
+            if (error === MediaPlayer.ResourceError) {
+                errorDialog.showError("Media player", "Error playing video. Please, download the video and play locally")
+                //fallback to temporary file download
+                //TODO: disabled temporarily
+//                playButton.enabled = false
+//                downloadManager.append(fileshare.url_private_download,
+//                                       Platform.StandardPaths.writableLocation(
+//                                           Platform.StandardPaths.TempLocation)
+//                                       + "/" + fileshare.name,
+//                                       SlackClient.teamToken(teamId))
+            }
+        }
     }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Theme.paddingMedium/2
@@ -61,13 +86,17 @@ Item {
             }
 
             Button {
+                id: playButton
                 text: video.playbackState === MediaPlayer.PlayingState ? "▯▯" : "▷"
-                onClicked: video.playbackState !== MediaPlayer.PlayingState ?
-                               video.play() : video.pause()
+                onClicked: videoItem.clicked()
             }
         }
     }
+
     function clicked() {
+        if (video.availability === MediaPlayer.Available) {
+            SlackClient.setMediaSource(video, teamId, fileshare.url_private_download)
+        }
         if (video.playbackState !== MediaPlayer.PlayingState) {
             video.play()
         } else {

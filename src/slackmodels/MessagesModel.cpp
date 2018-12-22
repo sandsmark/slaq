@@ -598,10 +598,17 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
             //                }
             //            }
             const bool isLater = m_messages.count() > 0 && message->time > m_messages.first()->time;
-            if ((isThread && isLater) || (!isThread && !isLater)) {
-                _toAppend.append(message);
+
+            if (isThread) {
+                if (isLater)
+                    _toAppend.prepend(message);
+                else
+                    _toPrepend.append(message);
             } else {
-                _toPrepend.prepend(message);
+                if (isLater)
+                    _toPrepend.prepend(message);
+                else
+                    _toAppend.append(message);
             }
         }
         //qDebug() << _toAppend.count() << _toPrepend.count();

@@ -1200,6 +1200,7 @@ void SlackClientThreadSpawner::setMediaSource(QObject *mediaPlayer, const QStrin
     }
     QNetworkRequest request;
     request.setUrl(url);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
 
     QString token = _slackClient->teamInfo()->teamToken();
     if (!token.isEmpty()) {

@@ -9,11 +9,7 @@ DD.MessageDialog {
     property Connections conn: Connections {
         target: SlackClient
         onError: {
-            title = err.domain
-            text = err.error_str
-            detailedText = err.details !== undefined ? err.details : ""
-            timeout =  err.timeout !== undefined ? err.timeout : ""
-            open()
+            showError(err.domain, err.error_str, err.details, err.timeout)
         }
     }
 
@@ -27,8 +23,8 @@ DD.MessageDialog {
     function showError(errorSource, errorText, errorDetails, errorTimeout) {
         title = errorSource
         text = errorText
-        detailedText = errorDetails
-        timeout = errorTimeout
+        detailedText = errorDetails !== undefined ? errorDetails : ""
+        timeout = errorTimeout !== undefined ? errorTimeout : 0
         open()
     }
 

@@ -3,6 +3,7 @@
 #include <QtNetwork>
 #include <QtCore>
 #include <QHash>
+#include <QTemporaryFile>
 
 class DownloadManager: public QObject
 {
@@ -22,7 +23,7 @@ public:
 
 signals:
     void allFinished();
-    void finished(const QUrl& url, QNetworkReply::NetworkError error);
+    void finished(const QUrl& url, const QString& fileName, QNetworkReply::NetworkError error);
     void downloaded(const QUrl& url, qreal progress);
 
 private slots:
@@ -43,6 +44,7 @@ private:
     QTime downloadTime;
     DownloadRequest currentRequest;
     QHash<QUrl, QByteArray> m_downloadedBuffers;
+    QHash<QUrl, QTemporaryFile*> m_temporaryDownloads;
 
     int downloadedCount = 0;
     int totalCount = 0;

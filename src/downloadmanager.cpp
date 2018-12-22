@@ -68,6 +68,17 @@ void DownloadManager::startNextDownload()
 
     if (currentRequest.where == "buffer") {
         m_downloadedBuffers[currentRequest.what] = QByteArray();
+    } else if (currentRequest.where == "temp") {
+        QTemporaryFile *tempFile = new QTemporaryFile();
+        if (tempFile == nullptr || !tempFile->open()) {
+            qWarning("Problem opening temporary save file for download '%s': %s",
+                     currentRequest.what.toEncoded().constData(),
+                     qPrintable(output.errorString()));
+
+            startNextDownload();
+            return;                 // skip this download
+        }
+        m_temporaryDownloads[currentRequest.what] = tempFile;
     } else {
         QString filename = saveFileName(currentRequest.where);
         output.setFileName(filename);
@@ -104,33 +115,36 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 void DownloadManager::downloadFinished()
 {
     emit downloaded(currentRequest.what, 1.0);
+    QString _fileName;
     if (currentRequest.where != QLatin1String("buffer")) {
-        output.close();
-    }
-
-    emit finished(currentRequest.what, currentDownload->error());
-    if (currentDownload->error()) {
-        // download failed
-        qWarning("Failed: %s\n", qPrintable(currentDownload->errorString()));
-        if (currentRequest.where != QLatin1String("buffer")) {
-            output.remove();
-        } else {
-            m_downloadedBuffers[currentRequest.what].clear();
-        }
-
-    } else {
-        // let's check if it was actually a redirect
-        if (isHttpRedirect()) {
-            reportRedirect();
-            if (currentRequest.where != QLatin1String("buffer")) {
-                output.remove();
-            } else {
-                m_downloadedBuffers[currentRequest.what].clear();
+        if (currentRequest.where == QLatin1String("temp")) {
+            QTemporaryFile *tf = m_temporaryDownloads.value(currentRequest.what);
+            if (tf != nullptr) {
+                _fileName = tf->fileName();
+                tf->close();
             }
         } else {
-            qDebug() << "Succeeded.";
-            ++downloadedCount;
+            _fileName = output.fileName();
+            output.close();
         }
+    }
+
+    if (currentDownload->error() || isHttpRedirect()) {
+        // download failed
+        qWarning("Failed: %s\n", qPrintable(currentDownload->errorString()));
+        if (currentRequest.where == QLatin1String("buffer")) {
+            m_downloadedBuffers[currentRequest.what].clear();
+        } else if (currentRequest.where == QLatin1String("temp")) {
+            QTemporaryFile *tf = m_temporaryDownloads.value(currentRequest.what);
+            delete tf;
+            m_temporaryDownloads.remove(currentRequest.what);
+        } else {
+            output.remove();
+        }
+    } else {
+        qDebug() << "Succeeded.";
+        emit finished(currentRequest.what, _fileName, currentDownload->error());
+        ++downloadedCount;
     }
 
     currentDownload->deleteLater();
@@ -141,6 +155,11 @@ void DownloadManager::downloadReadyRead()
 {
     if (currentRequest.where == QLatin1String("buffer")) {
         m_downloadedBuffers[currentRequest.what].append(currentDownload->readAll());
+    }  else if (currentRequest.where == QLatin1String("temp")) {
+        QTemporaryFile *tf = m_temporaryDownloads.value(currentRequest.what);
+        if (tf != nullptr) {
+            tf->write( currentDownload->readAll());
+        }
     } else {
         output.write(currentDownload->readAll());
     }
