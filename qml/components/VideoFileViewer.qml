@@ -40,14 +40,13 @@ Item {
         id: video
         audioRole: MediaPlayer.VideoRole
         onPositionChanged: slider.value = position
-        onStatusChanged: {
-            if (status === MediaPlayer.Loaded) {
-                console.log("duration", duration)
-                if (duration > 0) {
-                    slider.to = duration
-                } else {
-                    slider.enabled = false
-                }
+        onDurationChanged: {
+            console.log("duration", duration)
+            if (duration > 0) {
+                slider.enabled = true
+                slider.to = duration
+            } else {
+                slider.enabled = false
             }
         }
         onErrorChanged: {
@@ -94,10 +93,10 @@ Item {
     }
 
     function clicked() {
-        if (video.availability === MediaPlayer.Available) {
-            SlackClient.setMediaSource(video, teamId, fileshare.url_private_download)
-        }
         if (video.playbackState !== MediaPlayer.PlayingState) {
+            if (video.playbackState === MediaPlayer.StoppedState) {
+                SlackClient.setMediaSource(video, teamId, fileshare.url_private_download)
+            }
             video.play()
         } else {
             video.pause()
