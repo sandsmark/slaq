@@ -872,7 +872,16 @@ void Reaction::setData(const QJsonObject &data)
 {
     //qDebug().noquote() << "reaction" << QJsonDocument(data).toJson();
     m_name = data.value(QStringLiteral("name")).toString();
+    //get rid of "skin-tone"
+    //TODO: adopt of skin tones
+    int toneIndex = m_name.indexOf("::");
+    if (toneIndex != -1) {
+        m_name.truncate(toneIndex);
+    }
     m_emojiInfo = ImagesCache::instance()->getEmojiInfo(m_name);
+    if (m_emojiInfo == nullptr) {
+        qWarning() << "Cant find emoji info for name" << m_name;
+    }
 
     const QJsonArray usersList = data[QStringLiteral("users")].toArray();
     for (const QJsonValue &usersValue : usersList) {
