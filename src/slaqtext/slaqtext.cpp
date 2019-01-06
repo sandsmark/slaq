@@ -98,10 +98,26 @@ void SlackText::onImageLoaded(const QString &id)
 }
 
 bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEndQuote,
+                             const QStringList& exceptions,
                              std::function<void(QTextCursor& from, QString &selText)> markupReplace) {
     Q_D(SlackText);
+    bool modified = false;
     QTextCursor fromCursor = d->m_tp->extra->doc->find(markupQuote, 0);
-    if (!fromCursor.isNull()) {
+    while (!fromCursor.isNull()) {
+        int exceptionLen = 0;
+        const QString& textBlock = fromCursor.block().text().mid(fromCursor.position());
+        //check for exceptions
+        for (auto excStr : exceptions) {
+            if (textBlock.startsWith(excStr)) {
+                exceptionLen = excStr.size();
+                break;
+            }
+        }
+        if (exceptionLen  > 0) {
+            //found exception. we dont want to proceed further. skip expetion
+            fromCursor = d->m_tp->extra->doc->find(markupQuote, fromCursor.position() + exceptionLen);
+            continue;
+        }
         QTextCursor toCursor = d->m_tp->extra->doc->find(markupEndQuote.isEmpty() ?
                                                              markupQuote :
                                                              markupEndQuote,
@@ -126,11 +142,14 @@ bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEn
                 QString selectedText = fromCursor.selectedText();
                 selectedText = selectedText.remove(markupQuote);
                 markupReplace(fromCursor, selectedText);
-                return true;
+
+                modified = true;
             }
+            fromCursor = toCursor;
         }
+        fromCursor = d->m_tp->extra->doc->find(markupQuote, fromCursor);
     }
-    return false;
+    return modified;
 }
 
 QString SlackText::preProcessText(const QString& txt) {
@@ -228,66 +247,49 @@ void SlackText::postProcessText() {
         }
 
         //search for emojis
-        prevCursor = QTextCursor(d->m_tp->extra->doc);
-        searchQuote = ":";
-        while (!prevCursor.isNull() && !prevCursor.atEnd()) {
-            prevCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
-            if (!prevCursor.isNull()) {
-                QTextCursor nextCursor = d->m_tp->extra->doc->find(searchQuote, prevCursor);
-                if (nextCursor.isNull()) {
-                    //qWarning() << "no next cursor found! not an emoji";
-                    break;
-                }
-
-                bool isundo = d->m_tp->extra->doc->isUndoRedoEnabled();
-                d->m_tp->extra->doc->setUndoRedoEnabled(false);
-                //nextCursor.beginEditBlock();
-                prevCursor.movePosition(QTextCursor::NextCharacter,
-                                        QTextCursor::KeepAnchor,
-                                        nextCursor.position() - prevCursor.position());
-                QString selectedText = prevCursor.selectedText();
-                selectedText = selectedText.remove(searchQuote);
-                EmojiInfo* einfo = imageCache->getEmojiInfo(selectedText);
-                if (einfo != nullptr) {
-                    d->m_modified = true;
-                    prevCursor.removeSelectedText();
-                    //qDebug() << "found emoji" << selectedText << einfo << einfo->image();
-                    if (imageCache->isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
-                        prevCursor.insertText(einfo->unified());
+        d->m_modified |= markupUpdate(":", "",
+                                      QStringList() << "//",
+                                      [=] (QTextCursor& from, QString& selText) {
+            if (selText.contains("skin-tone")) {
+                from.removeSelectedText();
+                return;
+            }
+            EmojiInfo* einfo = imageCache->getEmojiInfo(selText);
+            if (einfo != nullptr) {
+                d->m_modified = true;
+                from.removeSelectedText();
+                //qDebug() << "found emoji" << selectedText << einfo << einfo->image();
+                if (imageCache->isUnicode() && !(einfo->imagesExist() & EmojiInfo::ImageSlackTeam)) {
+                    from.insertText(einfo->unified());
+                } else {
+                    const QString imgUrl = "image://emoji/"+selText;
+                    QImage img = imageCache->image(selText);
+                    if (img.isNull()) {
+                        connect(imageCache, &ImagesCache::imageLoaded,
+                                          this, &SlackText::onImageLoaded, Qt::UniqueConnection);
+                        d->m_requestedImages[selText] = prevCursor.position();
+                        //qWarning() << "img for" << selectedText << "not ready";
                     } else {
-                        const QString imgUrl = "image://emoji/"+selectedText;
-                        QImage img = imageCache->image(selectedText);
-                        if (img.isNull()) {
-                            connect(imageCache, &ImagesCache::imageLoaded,
-                                              this, &SlackText::onImageLoaded, Qt::UniqueConnection);
-                            d->m_requestedImages[selectedText] = prevCursor.position();
-                            //qWarning() << "img for" << selectedText << "not ready";
-                        } else {
-                            insertImage(prevCursor, imgUrl, img);
-                        }
+                        insertImage(from, imgUrl, img);
                     }
                 }
-                //qDebug() << "frame" << d->m_tp->extra->doc->rootFrame()->frameFormat().width().type();//codeBlockFrame->firstPosition() << codeBlockFrame->lastPosition();
-                //nextCursor.endEditBlock();
-                d->m_tp->extra->doc->setUndoRedoEnabled(isundo);
-                prevCursor = nextCursor;
             }
-        }
-        d->m_modified |= markupUpdate("*", "", [=] (QTextCursor& from, QString& selText) {
+        });
+        d->m_modified |= markupUpdate("*", "", QStringList(), [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setBold(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
         });
-        d->m_modified |= markupUpdate("_", "", [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("_", "", QStringList(), [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setItalic(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
         });
-        d->m_modified |= markupUpdate("~", "", [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("~", "", QStringList(), [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setStrikeOut(true);

@@ -143,6 +143,7 @@ private:
     void invalidateFontCaches();
     void insertImage(QTextCursor &cursor, const QString &url, const QImage &img);
     bool markupUpdate(const QString &markupQuote, const QString &markupEndQuote,
+                      const QStringList &exceptions,
                       std::function<void(QTextCursor& from, QString &selText)> markupReplace);
 
     QColor m_selectionColor;
