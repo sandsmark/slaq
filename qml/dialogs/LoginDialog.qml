@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import Qt.labs.settings 1.0
 
+import ".."
 LazyLoadDialog {
     sourceComponent: Dialog {
         id: loginDialog
@@ -50,6 +51,15 @@ LazyLoadDialog {
                 anchors {
                     fill: parent
                     margins: 5
+                }
+                Label {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    text: qsTr("In order to be able to login to Slack workspace, user have to do the following steps using browser:\n" +
+                               "1. Request invite for the workspace\n"+
+                               "2. Go to invite url and create user account\n"+
+                               "3. Confirm account and do first login\n")
+                    font.pixelSize: Theme.fontSizeLarge
                 }
                 TextField {
                     id: email
