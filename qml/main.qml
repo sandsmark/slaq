@@ -53,8 +53,6 @@ ApplicationWindow {
     }
 
     Action {
-        id: openAction
-        text: "&Open"
         shortcut: "Ctrl+D"
         onTriggered: {
             console.log("ctrl-d")

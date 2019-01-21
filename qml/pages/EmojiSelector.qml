@@ -12,6 +12,7 @@ Popup {
     height: 500 + lastUsed.implicitHeight
 
     property string state: ""
+    property string callerTeam: ""
 
     signal emojiSelected(string emoji)
     property bool dbLoaded: false

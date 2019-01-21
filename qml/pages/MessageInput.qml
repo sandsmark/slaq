@@ -97,7 +97,7 @@ ColumnLayout {
             Connections {
                 target: emojiSelector
                 onEmojiSelected: {
-                    if (emojiSelector.state === "input" && emoji !== "") {
+                    if (emojiSelector.state === "input" && emojiSelector.callerTeam === teamId && emoji !== "") {
                         messageInput.insert(messageInput.cursorPosition, emoji)
                         messageInput.forceActiveFocus()
                     }
@@ -247,6 +247,7 @@ ColumnLayout {
                 emojiSelector.x = x
                 emojiSelector.y = mapToItem(teamsSwipe, x, y).y - emojiSelector.height
                 emojiSelector.state = "input"
+                emojiSelector.callerTeam = teamId
                 emojiSelector.open()
             }
         }

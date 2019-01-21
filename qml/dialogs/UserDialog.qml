@@ -50,7 +50,7 @@ LazyLoadDialog {
         Connections {
             target: emojiSelector
             onEmojiSelected: {
-                if (emojiSelector.state === "userdialog" && emoji !== "") {
+                if (emojiSelector.state === "userdialog" && emojiSelector.callerTeam === teamId && emoji !== "") {
                     console.log("selected emoji", emoji, ImagesCache.getNameByEmoji(emoji))
                     user.statusEmoji = ":"+ImagesCache.getNameByEmoji(emoji)+":"
                     userDataChanged = true
@@ -278,6 +278,7 @@ LazyLoadDialog {
                                 emojiSelector.x = mapToGlobal(x, y).x
                                 emojiSelector.y = mapToGlobal(x, y).y - emojiSelector.height - parent.height
                                 emojiSelector.state = "userdialog"
+                                emojiSelector.callerTeam = teamId
                                 emojiSelector.open()
                             }
                         }
