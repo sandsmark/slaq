@@ -16,6 +16,7 @@ MouseArea {
     property bool isReplies: false
     property bool emojiSelectorCalled: false
 
+    property var messagesModel: model
     // counts as same if previouse user is same and last message was within 3 minutes
     readonly property bool sameuser: model.SameUser && model.TimeDiff < 180000
 
@@ -244,9 +245,9 @@ MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
                                     console.log("clicked replies", repliesView.messagesIndex)
-                                    channelRoot.openReplies(itemDelegate.ListView.view.model,
-                                                            repliesView.messagesIndex,
-                                                            repliesView.messagesModel)
+                                    channelRoot.openReplies(itemDelegate.ListView.view.model, repliesView.messagesIndex,
+                                                            messagesModel)
+
                                 }
                             }
                         }
