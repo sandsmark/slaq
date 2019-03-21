@@ -192,6 +192,17 @@ private:
     NetworkAccessManager m_qnam;
 };
 
+template<typename Callable>
+void executeInLoop(Callable &&callable, QObject *object = QCoreApplication::instance())
+{
+    if (QThread *thread = qobject_cast<QThread *>(object))
+        object = QAbstractEventDispatcher::instance(thread);
+
+    QMetaObject::invokeMethod(object, std::forward<Callable>(callable));
+    //example:
+    //       executeInLoop([&] { clangPchManagerServer.setProgress(progress, total); });
+}
+
 class ThreadExecutor: public QObject {
     Q_OBJECT
 

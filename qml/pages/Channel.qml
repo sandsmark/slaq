@@ -171,7 +171,7 @@ Page {
             }
 
             Rectangle {
-                width: parent.width - parent.ScrollBar.vertical.width
+                width: parent.width - parent.ScrollBar.vertical.width - 10
                 height: 50
                 opacity: messagesListView.contentY > messagesListView.originY ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 100 } }
@@ -182,7 +182,7 @@ Page {
             }
 
             Rectangle {
-                width: parent.width - parent.ScrollBar.vertical.width
+                width: parent.width - parent.ScrollBar.vertical.width - 10
                 height: 50
                 anchors.bottom: parent.bottom
                 opacity: messagesListView.contentY - messagesListView.originY < messagesListView.contentHeight - messagesListView.height ? 1 : 0

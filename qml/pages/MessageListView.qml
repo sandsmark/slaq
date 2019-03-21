@@ -43,7 +43,21 @@ ListView {
         console.log("load messages start", channel.name, teamRoot.teamId, channelRoot.channel.type)
         SlackClient.loadMessages(teamRoot.teamId, channelRoot.channel.id)
     }
-    ScrollBar.vertical: ScrollBar {}
+
+    ScrollBar.vertical: ScrollBar {
+        id: sbar
+        policy: ScrollBar.AlwaysOn; minimumSize: 0.05
+        anchors.right: parent.right
+        //moved to left until https://codereview.qt-project.org/#/c/244603/ is merged
+        anchors.rightMargin: 10
+
+        contentItem: Rectangle {
+            implicitWidth: 6
+            implicitHeight: 100
+            radius: width / 2
+            color: sbar.pressed ? sbar.palette.dark : sbar.palette.mid
+        }
+    }
 
     Timer {
         id: readTimer
