@@ -23,9 +23,12 @@ ListView {
     property var latestRead
     property var messageInput
 
+    property int lastCount: 0
+
     onAppActiveChanged: {
         markLatest()
     }
+
     function markLatest() {
         readTimer.restart()
     }
@@ -33,10 +36,18 @@ ListView {
     function doMarkLatest() {
         if (channelRoot.channel == null)
             return
-        if (appActive && atBottom
-                && teamId === SlackClient.lastTeam
-                && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channel.id) {
-            SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
+        if (appActive && teamId === SlackClient.lastTeam
+                && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channel.id
+                && count > 0) {
+            if (atBottom) {
+                console.log("mark latest", count, channelRoot.channel.name, atBottom)
+                SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
+            }
+        } else {
+            if (count != lastCount) {
+                positionViewAtIndex(currentIndex, ListView.Beginning)
+                lastCount = count
+            }
         }
     }
 
@@ -67,7 +78,8 @@ ListView {
             text: "⟱"
             visible: !atBottom
             onClicked: {
-                msgListView.positionViewAtBeginning()
+                msgListView.positionViewAtIndex(0, ListView.Beginning)
+                markLatest()
             }
         }
     }

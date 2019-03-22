@@ -54,7 +54,6 @@ SOURCES += src/main.cpp \
     src/networkaccessmanagerfactory.cpp \
     src/networkaccessmanager.cpp \
     src/slackstream.cpp \
-    src/storage.cpp \
     src/messageformatter.cpp \
     src/notificationlistener.cpp \
     src/filemodel.cpp \
@@ -84,7 +83,6 @@ HEADERS += \
     src/networkaccessmanagerfactory.h \
     src/networkaccessmanager.h \
     src/slackstream.h \
-    src/storage.h \
     src/messageformatter.h \
     src/notificationlistener.h \
     src/filemodel.h \
