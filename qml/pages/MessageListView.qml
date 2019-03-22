@@ -3,6 +3,7 @@ import QtQuick.Controls 2.4
 import QtQuick.Controls.Material 2.4
 import com.iskrembilen 1.0
 import ".."
+import "../components"
 
 ListView {
     id: msgListView
@@ -56,6 +57,18 @@ ListView {
             implicitHeight: 100
             radius: width / 2
             color: sbar.pressed ? sbar.palette.dark : sbar.palette.mid
+        }
+        EmojiButton {
+            background: Item {}
+            width: parent.width
+            font.bold: true
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: -(height - contentItem.paintedHeight)/2
+            text: "⟱"
+            visible: !atBottom
+            onClicked: {
+                msgListView.positionViewAtBeginning()
+            }
         }
     }
 
