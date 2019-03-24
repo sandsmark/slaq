@@ -1230,7 +1230,7 @@ void SlackClientThreadSpawner::onUsersDataChanged(const QList<QPointer<SlackUser
     //query conversations only when last batch of users gets loaded
     if (last) {
         emit usersModelChanged(_slackClient->teamInfo()->teamId(), _slackClient->teamInfo()->users());
-        QMetaObject::invokeMethod(_slackClient, "requestConversationsList", Qt::QueuedConnection, Q_ARG(QString, ""));
+        //QMetaObject::invokeMethod(_slackClient, "requestConversationsList", Qt::QueuedConnection, Q_ARG(QString, ""));
         connect(_slackClient->teamInfo()->fileSharesModel(), &FilesSharesModel::fetchMoreData,
                 _slackClient, &SlackTeamClient::requestSharedFiles, Qt::QueuedConnection);
     }

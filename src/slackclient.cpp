@@ -1335,6 +1335,7 @@ void SlackTeamClient::handleTeamInfoReply()
     config->saveTeamInfo(m_teamInfo);
     emit teamInfoChanged(m_teamInfo.teamId());
     qDebug() << __PRETTY_FUNCTION__ << "teaminfo:" << m_teamInfo.name() << m_teamInfo.teamId();
+    QMetaObject::invokeMethod(this, "requestConversationsList", Qt::QueuedConnection, Q_ARG(QString, ""));
     requestUsersList("");
 }
 

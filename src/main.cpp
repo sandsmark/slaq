@@ -10,7 +10,6 @@
 #include "slackclient.h"
 #include "networkaccessmanagerfactory.h"
 #include "notificationlistener.h"
-#include "storage.h"
 #include "filemodel.h"
 #include "emojiprovider.h"
 #include "imagescache.h"

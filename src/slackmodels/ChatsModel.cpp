@@ -8,7 +8,9 @@
 #include <QJsonArray>
 
 ChatsModel::ChatsModel(const QString &selfId, QObject *parent, UsersModel *networkUsers) : QAbstractListModel(parent),
-    m_networkUsers(networkUsers), m_selfId(selfId) {}
+    m_networkUsers(networkUsers), m_selfId(selfId) {
+    connect(m_networkUsers, &UsersModel::dataChanged, this, &ChatsModel::onUsersDataChanged);
+}
 
 QString ChatsModel::getSectionName(Chat* chat) const {
     switch (chat->type) {
@@ -39,6 +41,36 @@ void ChatsModel::requestMissedMessages(const QString& lastChannel)
             if (msgModel != nullptr)
                 msgModel->requestMissedMessages();
         }
+    }
+}
+
+void ChatsModel::onUsersDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+{
+    Q_UNUSED(bottomRight)
+    Q_UNUSED(roles)
+
+    QVariant u = m_networkUsers->data(topLeft, UsersModel::UserObject);
+    // From QVariant to QObject *
+    QObject * obj = qvariant_cast<QObject *>(m_networkUsers->data(topLeft, UsersModel::UserObject));
+    // from QObject* to myClass*
+    SlackUser* user = qobject_cast<SlackUser *>(obj);
+    if (user != nullptr) {
+        //qDebug() << "updated user" << user->userId() << user->username();
+        for (Chat *chat : m_chats.values()) {
+            if (chat->type == Conversation || chat->type == MultiUserConversation) {
+                if (chat->user == user->userId()) {
+                    chat->name = user->fullName();
+                    if (chat->name.startsWith("mpdm")) {
+                        chat->setReadableName(m_selfId);
+                    }
+                    int row = m_chatIds.indexOf(chat->id);
+                    QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
+                    emit dataChanged(index, index);
+                }
+            }
+        }
+    } else {
+        qWarning() << "updating user not found";
     }
 }
 

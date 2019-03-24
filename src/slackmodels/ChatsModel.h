@@ -76,7 +76,8 @@ public:
     QStringList getChatIds() const;
 
     void requestMissedMessages(const QString &lastChannel);
-
+public slots:
+    void onUsersDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
 private:
     QString getSectionName(Chat *chat) const;
 

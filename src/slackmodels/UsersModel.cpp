@@ -415,6 +415,7 @@ QPointer<SlackUser> UsersModel::user(const QString &id)
     if (m_addingUsers) {
         qWarning() << "NOT ALL USERS ADDED!";
     }
+    createAndRequestInfo(id);
     return m_users.value(id);
 }
 
