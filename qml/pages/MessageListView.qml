@@ -40,6 +40,7 @@ ListView {
                 && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channel.id
                 && count > 0) {
             if (atBottom) {
+                currentIndex = 0
                 console.log("mark latest", count, channelRoot.channel.name, atBottom)
                 SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
             }
@@ -47,6 +48,7 @@ ListView {
             if (count != lastCount) {
                 positionViewAtIndex(currentIndex, ListView.Beginning)
                 lastCount = count
+                console.log("position", currentIndex, atBottom, msgListView.atYBeginning)
             }
         }
     }
