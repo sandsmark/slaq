@@ -230,7 +230,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
                type == QStringLiteral("channel_marked") ||
                type == QStringLiteral("im_marked") ||
                type == QStringLiteral("mpim_marked")) {
-        parseChannelUpdate(message);
+        parseChannelMarkUpdate(message);
     } else if (type == QStringLiteral("im_created")
                || type == QStringLiteral("channel_created")) {
         createChannelIfNeeded(message.value(QStringLiteral("channel")).toObject());
@@ -326,7 +326,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
     }
 }
 
-void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
+void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
     //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
@@ -342,12 +342,14 @@ void SlackTeamClient::parseChannelUpdate(const QJsonObject& message)
         return;
     }
     int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
-    const QDateTime& lastRead = slackToDateTime(message.value(QStringLiteral("ts")).toString());
+    const QString& lastReadTs = message.value(QStringLiteral("ts")).toString();
+    const QDateTime& lastRead = slackToDateTime(lastReadTs);
     if (unreadCountDisplay != chat->unreadCountDisplay
-            || lastRead != chat->lastRead) {
+            || lastReadTs != chat->lastReadTs) {
         chat->unreadCountDisplay = unreadCountDisplay;
         chat->unreadCountPersonal = 0;
         chat->lastRead = lastRead;
+        chat->lastReadTs = lastReadTs;
         emit channelUpdated(chat);
     }
 }

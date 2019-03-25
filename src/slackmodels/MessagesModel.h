@@ -392,7 +392,7 @@ public slots:
     MessageListModel* createThread(Message* parentMessage);
     void processChildMessage(Message *message);
     void updateReactionUsers(Message *message);
-    int countUnread(const QDateTime& lastRead);
+    int countUnread(const QString &lastRead);
     void usersModelChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
     QString lastMessage() const;
     void requestMissedMessages();

@@ -811,7 +811,8 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     }
 }
 
-void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, const QList<Message*>& messages, bool hasMore, const QString &threadTs)
+void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, const QList<Message*>& messages,
+                                                  bool hasMore, const QString &threadTs)
 {
     auto _slackClient = static_cast<SlackTeamClient*>(sender());
 
@@ -827,10 +828,10 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, cons
         return;
     }
     Chat* _chat = _chatsModel->chat(channelId);
-    QDateTime _lastRead;
+    QString _lastRead;
     if (_chat != nullptr) {
         qDebug() << "Adding messages for chat" << _chat->name;
-        _lastRead = _chat->lastRead;
+        _lastRead = _chat->lastReadTs;
     }
 
     messagesModel->addMessages(messages, hasMore, threadTs);

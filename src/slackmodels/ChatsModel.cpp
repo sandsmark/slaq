@@ -99,6 +99,8 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
         return chat->isGeneral;
     case LastRead:
         return chat->lastRead;
+    case LastReadTs:
+        return chat->lastReadTs;
     case UnreadCountDisplay:
         return chat->unreadCountDisplay;
     case UnreadCountPersonal:
@@ -458,7 +460,8 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     user = data.value("user").toString();
 
     isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
-    lastRead = slackToDateTime(data.value(QStringLiteral("last_read")).toString());
+    lastReadTs = data.value(QStringLiteral("last_read")).toString();
+    lastRead = slackToDateTime(lastReadTs);
     creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();

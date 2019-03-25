@@ -360,15 +360,15 @@ QString MessageListModel::firstMessageTs() const
     return "";
 }
 
-int MessageListModel::countUnread(const QDateTime &lastRead)
+int MessageListModel::countUnread(const QString &lastRead)
 {
-    if (!lastRead.isValid()) {
+    if (lastRead.isEmpty()) {
         return 0;
     }
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
         //qDebug() << "comparing" << i << m_messages.at(i)->time << lastRead;
-        if (m_messages.at(i)->time == lastRead) {
+        if (m_messages.at(i)->ts == lastRead) {
             return i;
         }
     }

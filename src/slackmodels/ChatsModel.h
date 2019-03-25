@@ -27,6 +27,7 @@ public:
         IsOpen,
         IsGeneral,
         LastRead,
+        LastReadTs,
         UnreadCount,
         UnreadCountDisplay,
         UnreadCountPersonal,
@@ -101,6 +102,7 @@ class Chat: public QObject
     Q_PROPERTY(QString topic MEMBER topic CONSTANT)
     Q_PROPERTY(QDateTime creationDate MEMBER creationDate CONSTANT)
     Q_PROPERTY(QDateTime lastRead MEMBER lastRead CONSTANT)
+    Q_PROPERTY(QString lastReadTs MEMBER lastReadTs CONSTANT)
     Q_PROPERTY(int unreadCount MEMBER unreadCount)
     Q_PROPERTY(int unreadCountDisplay MEMBER unreadCountDisplay)
     Q_PROPERTY(bool isOpen MEMBER isOpen CONSTANT)
@@ -128,6 +130,7 @@ public:
     bool isGeneral = false;
 
     QDateTime lastRead;
+    QString lastReadTs;
     int unreadCount = 0;
     int unreadCountDisplay = 0;
     int unreadCountPersonal = 0; //used for broadcast or personal messages on channel

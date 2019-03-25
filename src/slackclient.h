@@ -211,7 +211,7 @@ private:
 
     void parseMessageUpdate(const QJsonObject& message);
     void parseReactionUpdate(const QJsonObject& message);
-    void parseChannelUpdate(const QJsonObject& message);
+    void parseChannelMarkUpdate(const QJsonObject& message);
     void parsePresenceChange(const QJsonObject& message, bool force = false);
     void parseNotification(const QJsonObject& message);
 
