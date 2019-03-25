@@ -362,6 +362,28 @@ QString SlackClientThreadSpawner::version() const
     return qApp->applicationVersion();
 }
 
+static QByteArray extractBootData(const QByteArray& data) {
+    // get the index of the search value
+    const QByteArray search = QByteArrayLiteral("var boot_data = ");
+    int i = data.indexOf(search);
+    if (i < 0) {
+        qWarning() << "boot data not found";
+        return "";
+    }
+
+    // b is the index of the beginning of the value we want
+    int b = i + search.length();
+
+    // get the index of the next double quote character, starting from b
+    int ii = data.indexOf(QByteArrayLiteral("};"), b);
+    if (ii < 0) {
+        qWarning() << "did not find terminating byte in boot data";
+        return "";
+    }
+
+    return data.mid(b, ii - b + 1);
+}
+
 static QString parseInlineJsValue(const QByteArray& data, const QString& search, QChar end) {
     // get the index of the search value
     int i = data.indexOf(search);
@@ -392,47 +414,75 @@ void SlackClientThreadSpawner::getSessionDetails(const QString &url) {
     connect(sessionDetailsReply, &QNetworkReply::finished, [this, sessionDetailsReply]() {
         int httpCode = sessionDetailsReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const QByteArray& data = sessionDetailsReply->readAll();
-//        qDebug() << "session details:" << data;
-//        qDebug() << "session details http code 2:" << httpCode;
+        //        qDebug() << "session details:" << data;
+        //        qDebug() << "session details http code 2:" << httpCode;
         if (data.size() <= apiTokenString.size()) {
             showError("Slack login error", "Session data error",
                       "Input data too short to contain valid data");
             return;
         }
-
-        // look for the api_token value within the response body buffer
-        QString apiToken = parseInlineJsValue(data, apiTokenString, '"');
-        if (apiToken.isEmpty()) {
-            showError("Slack login error", "Session data error",
-                      "Unable to find api token in response");
-            return;
+#if 0
+        {
+            QFile f(_teamId + "_boot.json");
+            f.open(QFile::WriteOnly);
+            f.write(QJsonDocument(bootData).toJson());
+            f.close();
         }
+#endif
+        QString apiToken;
+        QString versionTS;
+        QString versionUID;
+        QString teamID;
+        QString logoutURL;
 
-        // look for the version_ts value within the response body buffer
-        QString versionTS = parseInlineJsValue(data, versionTSstring, '"');
-        if (versionTS.isEmpty()) {
-            qWarning() << "unable to find version_ts in response";
-        }
+        const QByteArray& boot_data = extractBootData(data);
+        //qDebug() << "session boot data:" << boot_data;
+        if (boot_data.size() <= 0) {
+            // look for the api_token value within the response body buffer
+            apiToken = parseInlineJsValue(data, apiTokenString, '"');
+            if (apiToken.isEmpty()) {
+                showError("Slack login error", "Session data error",
+                          "Unable to find api token in response");
+                return;
+            }
 
-        // look for the version_uid value within the response body buffer
-        QString versionUID = parseInlineJsValue(data, versionUIDstring, '"');
-        if (versionUID.isEmpty()) {
-            qWarning() << "unable to find version_uid in response";
-        }
+            // look for the version_ts value within the response body buffer
+            versionTS = parseInlineJsValue(data, versionTSstring, '"');
+            if (versionTS.isEmpty()) {
+                qWarning() << "unable to find version_ts in response";
+            }
 
-        QString teamID = parseInlineJsValue(data, teamIDstring, '\'');
-        if (teamID.isEmpty()) {
-            showError("Slack login error", "Session data error",
-                      "Unable to find team id in response");
-            return;
-        }
+            // look for the version_uid value within the response body buffer
+            versionUID = parseInlineJsValue(data, versionUIDstring, '"');
+            if (versionUID.isEmpty()) {
+                qWarning() << "unable to find version_uid in response";
+            }
 
-        // get the logoutURL value; while noting its format is different than those above
-        // because of this format difference we also need to do some later string formatting
-        QString logoutURL = parseInlineJsValue(data, logOutURLString, ';');
-        logoutURL = logoutURL.remove("+").remove("'").remove('"').replace("\\/", "/");
-        if (logoutURL.isEmpty()) {
-            qWarning() << "unable to find boot_data.logout_url in response";
+            teamID = parseInlineJsValue(data, teamIDstring, '\'');
+            if (teamID.isEmpty()) {
+                showError("Slack login error", "Session data error",
+                          "Unable to find team id in response");
+                return;
+            }
+
+            // get the logoutURL value; while noting its format is different than those above
+            // because of this format difference we also need to do some later string formatting
+            logoutURL = parseInlineJsValue(data, logOutURLString, ';');
+            logoutURL = logoutURL.remove("+").remove("'").remove('"').replace("\\/", "/");
+            if (logoutURL.isEmpty()) {
+                qWarning() << "unable to find boot_data.logout_url in response";
+            }
+        } else {
+            QJsonDocument jdoc = QJsonDocument::fromJson(boot_data);
+            if (!jdoc.isNull()) {
+                const QJsonObject& bdObj = jdoc.object();
+                versionUID = bdObj.value("version_uid").toString();
+                versionTS = QString("%1").arg(bdObj.value("version_ts").toInt());
+                apiToken = bdObj.value("api_token").toString();
+                teamID = bdObj.value("team_id").toString();
+            } else {
+                qWarning() << "Error parsing boot data";
+            }
         }
         qDebug() << "got slack api details" << teamID << apiToken << "\n" << versionTS << "\n" << versionUID << "\n" << logoutURL;
         delete sessionDetailsReply;
@@ -529,7 +579,7 @@ void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString 
                 request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
                 request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
 
-               // qDebug() << "POST" << url.toString() << body;
+                // qDebug() << "POST" << url.toString() << body;
                 QNetworkReply * loginReply = m_qnam.post(request, body);
                 connect(loginReply, &QNetworkReply::finished, [this, loginReply, _url]() {
                     int httpCode = loginReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -1246,16 +1296,29 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
     TeamInfo* _teamInfo = _slackClient->teamInfo();
     _teamInfo->addConversationsData(chats, last);
     // request extra info about IM chats
+    ChatsModel* chModel = _teamInfo->chats();
     for (Chat* chat : chats) {
-        if (chat->type == ChatsModel::Conversation) {
-            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, chat->id));
+        // chats list, comes from the conversations data might be already added
+        // so, get chat instance from the model instead
+
+        Chat* _chat = chModel->chat(chat->id);
+        if (_chat == nullptr) {
+            continue;
         }
-        if (chat->isOpen || chat->type != ChatsModel::Channel) {
+        if (_chat->type == ChatsModel::Conversation) {
+            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, _chat->id));
+        }
+        if (_chat->isOpen || _chat->type != ChatsModel::Channel) {
             //connect only to opened chats and conversations
-            emit channelCountersUpdated(_teamInfo->teamId(), chat->id,
-                                        chat->unreadCountDisplay, chat->unreadCountPersonal);
-            connect(chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
-                    _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
+            emit channelCountersUpdated(_teamInfo->teamId(), _chat->id,
+                                        _chat->unreadCountDisplay, _chat->unreadCountPersonal);
+            if (!_chat->messagesModel.isNull()) {
+                //reconnect in case af already connected
+                disconnect(_chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
+                        _slackClient, &SlackTeamClient::loadMessages);
+                connect(_chat->messagesModel.data(), &MessageListModel::fetchMoreMessages,
+                        _slackClient, &SlackTeamClient::loadMessages, Qt::QueuedConnection);
+            }
         }
     }
     if (last) {
