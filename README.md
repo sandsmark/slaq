@@ -23,5 +23,5 @@ Note: currently tested only on Linux
 Compile, build and run: `qmake && make && ./slaq`
 
 Privacy policy, because that is necessary: We don't connect to anything apart from Slack.
+![Alt text](https://user-images.githubusercontent.com/11473810/55072233-d58ce380-508a-11e9-9e6a-b6b80fc83dd6.png?raw=true "Screenshot")
 
-https://user-images.githubusercontent.com/11473810/55072233-d58ce380-508a-11e9-9e6a-b6b80fc83dd6.png
