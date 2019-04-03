@@ -11,18 +11,21 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.2.4
+VERSION = 0.0.2.5
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 
 include(src/QGumboParser/QGumboParser.pri)
+include(src/qtbreakpad/qtbreakpad.pri)
 
 CONFIG(debug, debug|release) {
   DEFINES += SLAQ_DEBUG
   TO_DEPLOY = $$PWD/build/Debug/
 } else {
+  CONFIG += force_debug_info
+  CONFIG += separate_debug_info
   DEFINES += SLAQ_RELEASE
   TO_DEPLOY = $$PWD/to_deploy/
 }

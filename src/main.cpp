@@ -20,9 +20,11 @@
 #include "downloadmanager.h"
 #include "slaqtext.h"
 #include "UsersModel.h"
+#include "qtsystemexceptionhandler.h"
 
 int main(int argc, char *argv[])
 {
+    QtSystemExceptionHandler exceptionHandler("");
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
     qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
 //    qputenv("GST_DEBUG_NO_COLOR", "1");
