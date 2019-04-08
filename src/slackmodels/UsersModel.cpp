@@ -57,38 +57,7 @@
 SlackUser::SlackUser(QObject *parent) : QObject(parent) {}
 
 SlackUser::SlackUser(const SlackUser &copy, QObject *parent) : QObject(parent) {
-    m_userId = copy.m_userId;
-    if (!copy.m_appId.isEmpty()) {
-        m_appId = copy.m_appId;
-    }
-    if (!copy.m_botId.isEmpty()) {
-        m_botId = copy.m_botId;
-    }
-    if (!copy.m_username.isEmpty()) {
-        m_username = copy.m_username;
-    }
-    if (!copy.m_fullName.isEmpty()) {
-        m_fullName = copy.m_fullName;
-    }
-    if (!copy.m_avatarUrl.isEmpty()) {
-        m_avatarUrl = copy.m_avatarUrl;
-    }
-    m_isBot = copy.m_isBot;
-    if (!copy.m_statusEmoji.isEmpty()) {
-        m_statusEmoji = copy.m_statusEmoji;
-    }
-    if (!copy.m_status.isEmpty()) {
-        m_status = copy.m_status;
-    }
-    if (!copy.m_email.isEmpty()) {
-        m_email = copy.m_email;
-    }
-    if (copy.m_color != m_color) {
-        m_color = copy.m_color;
-    }
-    if (copy.m_presence != m_presence) {
-        m_presence = copy.m_presence;
-    }
+    copyData(copy);
 }
 
 SlackUser::SlackUser(const QString &id, const QString &name, QObject *parent)
@@ -107,7 +76,7 @@ void SlackUser::setData(const QJsonObject &data)
     m_isBot = data.value(QStringLiteral("is_bot")).toBool(false);
     const QJsonObject& profile = data.value(QStringLiteral("profile")).toObject();
     m_fullName = data.value(QStringLiteral("real_name")).toString();
-    m_username = data.value(QStringLiteral("name")).toString();
+    setUsername(data.value(QStringLiteral("name")).toString());
     if (m_fullName.isEmpty()) {
         //qWarning() << "No full name set";
         m_fullName = profile.value(QStringLiteral("real_name")).toString();
@@ -135,6 +104,42 @@ void SlackUser::setData(const QJsonObject &data)
     }
 }
 
+void SlackUser::copyData(const SlackUser &copy)
+{
+    setUserId(copy.m_userId);
+    if (!copy.m_appId.isEmpty()) {
+        m_appId = copy.m_appId;
+    }
+    if (!copy.m_botId.isEmpty()) {
+        m_botId = copy.m_botId;
+    }
+    if (!copy.m_username.isEmpty()) {
+        setUsername(copy.m_username);
+    }
+    if (!copy.m_fullName.isEmpty()) {
+        setFullName(copy.m_fullName);
+    }
+    if (!copy.m_avatarUrl.isEmpty()) {
+        setAvatarUrl(copy.m_avatarUrl);
+    }
+    m_isBot = copy.m_isBot;
+    if (!copy.m_statusEmoji.isEmpty()) {
+        setStatusEmoji(copy.m_statusEmoji);
+    }
+    if (!copy.m_status.isEmpty()) {
+        setStatus(copy.m_status);
+    }
+    if (!copy.m_email.isEmpty()) {
+        setEmail(copy.m_email);
+    }
+    if (copy.m_color != m_color) {
+        setColor(copy.m_color);
+    }
+    if (copy.m_presence != m_presence) {
+        setPresence(copy.m_presence);
+    }
+}
+
 void SlackUser::setPresence(const SlackUser::Presence presence, bool force)
 {
     //qDebug() << "presence for" << m_userId << m_fullName << presence;
@@ -156,6 +161,7 @@ SlackUser::Presence SlackUser::presence()
 
 QString SlackUser::username() const
 {
+    //qDebug() << "username" << m_username << "for" << m_userId << this;
     return m_username;
 }
 
@@ -268,6 +274,38 @@ void SlackUser::setLastName(const QString &lastName)
     emit lastNameChanged(m_lastName);
 }
 
+void SlackUser::setUsername(QString username)
+{
+    if (m_username == username)
+        return;
+
+    m_username = username;
+    emit usernameChanged(m_username);
+}
+
+void SlackUser::setColor(QColor color)
+{
+    if (m_color == color)
+        return;
+
+    m_color = color;
+    emit colorChanged(m_color);
+}
+
+void SlackUser::setFullName(QString fullName)
+{
+    if (m_fullName == fullName)
+        return;
+
+    m_fullName = fullName;
+    emit fullNameChanged(m_fullName);
+}
+
+QString SlackUser::fullName()
+{
+    return m_fullName;
+}
+
 void SlackUser::setSnoozeEnds(const QDateTime &snoozeEnds)
 {
     m_snoozeEnds = snoozeEnds;
@@ -280,6 +318,11 @@ void SlackUser::setSnoozeEnds(const QDateTime &snoozeEnds)
         });
     }
     emit snoozeEndsChanged(snoozeEnds);
+}
+
+QColor SlackUser::color() const
+{
+    return m_color;
 }
 
 UsersModel::UsersModel(QObject *parent) : QAbstractListModel(parent)
@@ -334,9 +377,9 @@ void UsersModel::updateUser(const QJsonObject &userData)
         _id = _user->botId();
     }
     int row  = m_userIds.indexOf(_id);
-    QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
+    QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index, roleNames().keys().toVector());
-    qDebug() << "updated user" << _user->userId() << _user->username();
+    qDebug() << "updated user" << _user->userId() << _user->username();// << _user;
 }
 
 void UsersModel::addUser(SlackUser *user)
@@ -346,7 +389,7 @@ void UsersModel::addUser(SlackUser *user)
     int row  = m_userIds.indexOf(user->userId());
     if (row >= 0) {
         m_users.insert(user->userId(), user);
-        QModelIndex index = QAbstractListModel::index (row, 0,  QModelIndex());
+        QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
         emit dataChanged(index, index, roleNames().keys().toVector());
     } else {
         beginInsertRows(QModelIndex(), m_users.count(), m_users.count());
@@ -383,6 +426,18 @@ void UsersModel::addUsers(const QList<QPointer<SlackUser>>& users, bool last)
     {
         QMutexLocker locker(&m_modelMutex);
         for (QPointer<SlackUser> user : users) {
+            if (m_users.contains(user->userId())) {
+                QPointer<SlackUser> _user = m_users.value(user->userId());
+                if (_user->username().isEmpty() && !user->username().isEmpty()) {
+                    _user->copyData(user.data());
+                    int row = m_userIds.indexOf(_user->userId());
+                    if (row >= 0) {
+                        QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
+                        emit dataChanged(index, index, roleNames().keys().toVector());
+                    }
+                }
+                continue;
+            }
             int _cnt = m_users.count();
             //if user is a bot as well
             if (user->isBot() && !user->botId().isEmpty()) {

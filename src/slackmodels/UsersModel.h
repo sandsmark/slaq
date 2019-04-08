@@ -18,17 +18,17 @@ class SlackUser : public QObject
     Q_PROPERTY(QString userId MEMBER m_userId CONSTANT)
     Q_PROPERTY(QString botId MEMBER m_botId CONSTANT)
     Q_PROPERTY(QString appId MEMBER m_appId CONSTANT)
-    Q_PROPERTY(QString username MEMBER m_username CONSTANT)
-    Q_PROPERTY(QString fullName READ fullName NOTIFY fullNameChanged)
+    Q_PROPERTY(QString username READ username WRITE setUsername NOTIFY usernameChanged)
+    Q_PROPERTY(QString fullName READ fullName WRITE setFullName NOTIFY fullNameChanged)
     Q_PROPERTY(QString firstName READ firstName WRITE setFirstName NOTIFY firstNameChanged)
     Q_PROPERTY(QString lastName READ lastName WRITE setLastName NOTIFY lastNameChanged)
     Q_PROPERTY(QString statusEmoji READ statusEmoji WRITE setStatusEmoji NOTIFY statusEmojiChanged)
     Q_PROPERTY(QString status READ status WRITE setStatus NOTIFY statusChanged)
     Q_PROPERTY(QString email READ email WRITE setEmail NOTIFY emailChanged)
-    Q_PROPERTY(QColor color MEMBER m_color CONSTANT)
+    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(QUrl avatarUrl READ avatarUrl WRITE setAvatarUrl NOTIFY avatarChanged)
     Q_PROPERTY(bool isBot MEMBER m_isBot CONSTANT)
-    Q_PROPERTY(Presence presence READ presence NOTIFY presenceChanged)
+    Q_PROPERTY(Presence presence READ presence WRITE setPresence NOTIFY presenceChanged)
     Q_PROPERTY(bool selected READ selected NOTIFY selectedChanged)
     Q_PROPERTY(QDateTime snoozeEnds READ snoozeEnds NOTIFY snoozeEndsChanged)
 
@@ -47,6 +47,7 @@ public:
     SlackUser(const QString& id, const QString& name, QObject *parent = nullptr);
 
     void setData(const QJsonObject &data);
+    void copyData(const SlackUser& copy);
 
     void setPresence(const Presence presence, bool force = false);
     Presence presence();
@@ -73,12 +74,16 @@ public:
     QString firstName() const;
     QString lastName() const;
     QDateTime snoozeEnds() const;
-
     void setSnoozeEnds(const QDateTime &snoozeEnds);
+    QColor color() const;
+    QString fullName();
 
 public slots:
     void setFirstName(const QString& firstName);
     void setLastName(const QString& lastName);
+    void setUsername(QString username);
+    void setColor(QColor color);
+    void setFullName(QString fullName);
 
 signals:
     void presenceChanged();
@@ -91,6 +96,8 @@ signals:
     void statusEmojiChanged(QString statusEmoji);
     void statusChanged(QString status);
     void snoozeEndsChanged(QDateTime snoozeEnds);
+    void usernameChanged(QString username);
+    void colorChanged(QColor color);
 
 private:
     QString m_userId;
