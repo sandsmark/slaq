@@ -169,6 +169,8 @@ macx {
 } else:linux-*: {
     BINDIST_SOURCE = "$${TO_DEPLOY}"
     BINDIST_EXCLUDE_ARG = "--exclude-toplevel"
+    DEBUG_INFO_SOURCE = "$${TO_DEPLOY}"
+    DEBUG_INFO_ARG = "--exclude-toplevel --debug"
     deploylibs.commands = python -u $$PWD/scripts/deploylibs.py -i \"$${TO_DEPLOY}/slaq\" \"$(QMAKE)\"
     deploylibs.depends = install
 } else:win*: {
@@ -183,7 +185,10 @@ isEmpty(INSTALLER_ARCHIVE_FROM_ENV) {
     INSTALLER_ARCHIVE = $$TO_DEPLOY/$$(INSTALLER_ARCHIVE)
 }
 
+DEBUG_INFO_ARCHIVE = $$TO_DEPLOY/$${BASENAME}-debuginfo-archive.7z
+
 bindist_installer.commands = python -u $$PWD/scripts/createDistPackage.py $$BINDIST_EXCLUDE_ARG $${INSTALLER_ARCHIVE} \"$$BINDIST_SOURCE\"
+debuginfodist_installer.commands = python -u $$PWD/scripts/createDistPackage.py $$DEBUG_INFO_ARG $${DEBUG_INFO_ARCHIVE} \"$$DEBUG_INFO_SOURCE\"
 
 win* {
     deploylibs.commands ~= s,/,\\\\,g
@@ -191,6 +196,6 @@ win* {
     bindist_installer.commands ~= s,/,\\\\,g
 }
 
-QMAKE_EXTRA_TARGETS += deploylibs bindist_installer
+QMAKE_EXTRA_TARGETS += deploylibs bindist_installer debuginfodist_installer
 
 INSTALLS += target other

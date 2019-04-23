@@ -15,7 +15,7 @@
 
 QRegularExpression MessageFormatter::
 m_emojiPattern(QRegularExpression(QStringLiteral(":([\\w\\+\\-]+):?:([skin-tone\\w\\+\\-]+)?:?[\\?\\.!]?"),
-                           QRegularExpression::OptimizeOnFirstUsageOption));
+                                  QRegularExpression::OptimizeOnFirstUsageOption));
 QRegularExpression MessageFormatter::
 m_labelPattern(QRegularExpression(QStringLiteral("<(.*?)>"),//("<(http[^\\|>]+)\\|([^>]+)>"),
                                   QRegularExpression::OptimizeOnFirstUsageOption));
@@ -90,12 +90,13 @@ void MessageFormatter::doReplaceChannelInfo(Chat *chat, QString &message)
 
 void MessageFormatter::replaceLinks(ChatsModel* chatModel, QString &message)
 {
-    QRegularExpressionMatchIterator i = m_labelPattern.globalMatch(message);
-    while (i.hasNext()) {
-        QRegularExpressionMatch match = i.next();
-        QStringRef capture = match.capturedRef(1);
-        //qDebug() << "capture" << capture;
-        if (!capture.contains("/a") && !capture.contains("a href=")) {
+    if (!message.contains("/a>") && !message.contains("a href=")) {
+        QRegularExpressionMatchIterator i = m_labelPattern.globalMatch(message);
+        while (i.hasNext()) {
+            QRegularExpressionMatch match = i.next();
+            QStringRef capture = match.capturedRef(1);
+            //qDebug() << "capture" << capture;
+
             QVector<QStringRef> hrefs = capture.split("|");
             QString link;
             QString displayName;
