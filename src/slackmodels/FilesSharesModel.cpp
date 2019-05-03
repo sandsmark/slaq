@@ -102,7 +102,6 @@ QVariant FilesSharesModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
     if (row >= m_fileShares.count() || row < 0) {
-        qWarning() << "invalid row" << row;
         return QVariant();
     }
 

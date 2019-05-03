@@ -336,7 +336,7 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
     if (row >= m_users.count() || row < 0) {
-        qWarning() << "invalid row" << row;
+        qWarning() << "users invalid row" << row;
         return QVariant();
     }
 
@@ -403,7 +403,7 @@ void UsersModel::addUser(SlackUser *user)
         endInsertRows();
         if (user->username().isEmpty()) {
             //user data is empty. request user's info
-            qDebug() << "requesting users info";
+            qDebug() << "requesting users info for" << user->userId();
             emit requestUserInfo(user);
         }
     }
@@ -467,18 +467,18 @@ void UsersModel::addUsers(const QList<QPointer<SlackUser>>& users, bool last)
 
 QPointer<SlackUser> UsersModel::user(const QString &id)
 {
-    if (m_addingUsers) {
-        qWarning() << "NOT ALL USERS ADDED!";
-    }
+//    if (m_addingUsers) {
+//        qWarning() << "NOT ALL USERS ADDED!";
+//    }
     createAndRequestInfo(id);
     return m_users.value(id);
 }
 
 void UsersModel::createAndRequestInfo(const QString &id)
 {
-    if (m_addingUsers) {
-        qWarning() << "NOT ALL USERS ADDED!";
-    }
+//    if (m_addingUsers) {
+//        qWarning() << "NOT ALL USERS ADDED!";
+//    }
     if (!m_users.contains(id)) {
         QPointer<SlackUser> _user = new SlackUser;
         QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);

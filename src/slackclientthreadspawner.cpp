@@ -1306,9 +1306,9 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
         if (_chat == nullptr) {
             continue;
         }
-        if (_chat->type == ChatsModel::Conversation) {
-            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, _chat->id));
-        }
+        //if (_chat->type == ChatsModel::Conversation) {
+        //    QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, _chat->id));
+        //}
         if (_chat->isOpen || _chat->type != ChatsModel::Channel) {
             //connect only to opened chats and conversations
             emit channelCountersUpdated(_teamInfo->teamId(), _chat->id,

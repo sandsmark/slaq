@@ -640,7 +640,7 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
         request.setAttribute(QNetworkRequest::User, attribute);
     }
 
-    qDebug() << "GET" << url.toString();
+    //qDebug() << "GET" << url.toString();
     return networkAccessManager->get(request);
 }
 
@@ -1188,7 +1188,7 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
-    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
+    //qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
     if (m_teamInfo.users() == nullptr || !m_teamInfo.users()->usersFetched() || !cursor.isEmpty()) {
         QMap<QString, QString> params;
         params.insert(QStringLiteral("limit"), "10000");
@@ -1392,12 +1392,12 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
                                    const QString& oldest, const QString &threadTs)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << channelId << oldest << latest << sender();
     if (channelId.isEmpty()) {
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
     }
     QString _latest = latest;
+    QString _oldest = oldest;
     ChatsModel* _chatsModel = teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
@@ -1407,7 +1407,8 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
         qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
-    if (_latest.isEmpty() && threadTs.isEmpty() && oldest.isEmpty()) {
+    qDebug() << "Loading messages" << channelId << oldest << latest << sender() << chat->lastReadTs;
+    if (_latest.isEmpty() && threadTs.isEmpty() && _oldest.isEmpty()) {
         MessageListModel* mesgs = _chatsModel->messages(channelId);
         //check if send from QML (sender == null)
         if (sender() == nullptr && mesgs->historyLoaded()) {
@@ -1421,6 +1422,9 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
             _latest = mesgs->firstMessageTs();
         }
     }
+//    if (oldest.isEmpty() && !chat->lastReadTs.isEmpty()) {
+//        _oldest = chat->lastReadTs;
+//    }
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
     params.insert(QStringLiteral("count"), "50"); //TODO: make variable
@@ -1431,8 +1435,8 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
         params.insert(QStringLiteral("latest"), _latest);
         params.insert(QStringLiteral("inclusive"), "0");
     }
-    if (oldest.isEmpty() == false) {
-        params.insert(QStringLiteral("oldest"), oldest);
+    if (_oldest.isEmpty() == false) {
+        params.insert(QStringLiteral("oldest"), _oldest);
     }
 
     QNetworkReply *reply = executeGet(threadTs.isEmpty() ? "conversations.history" :
@@ -1723,11 +1727,15 @@ void SlackTeamClient::handleConversationsListReply()
         }
 #endif
     }
-    emit conversationsDataChanged(_chats, cursor.isEmpty());
+
+
 
     QJsonArray presenceIds;
 
     for (Chat* chat : _chats) {
+        //conversation info contains last read info as well
+        // TODO: slowdowns messages show. investigate
+        requestConversationInfo(chat->id);
         if (chat->type != ChatsModel::Conversation && chat->type != ChatsModel::Channel) {
             requestConversationMembers(chat->id, "");
         }
@@ -1735,6 +1743,7 @@ void SlackTeamClient::handleConversationsListReply()
             presenceIds.append(QJsonValue(chat->user));
         }
     }
+    emit conversationsDataChanged(_chats, cursor.isEmpty());
     //create presence status request
     if (presenceIds.count() > 0) {
         QJsonObject presenceRequest;

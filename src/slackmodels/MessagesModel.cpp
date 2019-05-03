@@ -32,7 +32,7 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
 
     int row = index.row();
     if (row >= m_messages.count() || row < 0) {
-        qWarning() << "Invalid row" << row;
+        qWarning() << "message Invalid row" << row;
         return QVariant();
     }
 

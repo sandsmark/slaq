@@ -78,7 +78,6 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
     if (row >= m_chatIds.count() || row < 0) {
-        qWarning() << "invalid row" << row;
         return QVariant();
     }
     Chat* chat = m_chats.value(m_chatIds.at(row));
@@ -460,8 +459,13 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     user = data.value("user").toString();
 
     isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
-    lastReadTs = data.value(QStringLiteral("last_read")).toString();
+
+    const QString& _last_read = data.value(QStringLiteral("last_read")).toString();
+    if (!_last_read.isEmpty() && _last_read != "0000000000.000000")
+        lastReadTs = _last_read;
     lastRead = slackToDateTime(lastReadTs);
+//    if (type == ChatsModel::Channel)
+//        qDebug() << __PRETTY_FUNCTION__ << "last read" << lastReadTs << lastRead;
     creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();

@@ -23,7 +23,7 @@ MouseArea {
     property var messageInput
 
     function editMessage() {
-        if (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId) {
+        if (model.User !== null && model.User.userId === teamRoot.slackClient.teamInfo().selfId) {
             if (messageInput.updating === true) {
                 messageInput.updating = false
             } else {
@@ -76,6 +76,11 @@ MouseArea {
                 width: parent.width
                 spacing: 1
 
+                Text {
+                    text: "Last read (DEBUG)"
+                    color: "red"
+                    visible: channelRoot.channel.lastReadTs === model.SlackTimestamp
+                }
                 Control {
                     topPadding: Theme.paddingLarge
                     width: parent.width - avatarImage.width - parent.spacing
