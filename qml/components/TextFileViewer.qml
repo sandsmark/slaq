@@ -14,7 +14,7 @@ Item {
         id: textEdit
         width: paintedWidth
         height: paintedHeight
-        text: fileshare.preview_highlight
+        text: fileshare.preview_highlight !== "" ? fileshare.preview_highlight : qsTr("Preview not available")
         wrapMode: Text.WordWrap
         textFormat: Text.RichText
         renderType: Text.QtRendering
