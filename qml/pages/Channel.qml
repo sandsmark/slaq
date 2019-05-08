@@ -64,19 +64,23 @@ Page {
         }
     }
 
-    header: Row {
+    header: RowLayout {
         spacing: 10
+        width: parent.width
+        height: channelTitle.paintedHeight > Theme.headerSize ? channelTitle.paintedHeight + Theme.paddingMedium : Theme.headerSize
         Label {
             text: "#" + channelRoot.title
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            height: Theme.headerSize
+            Layout.fillHeight: true
             font.bold: true
         }
         SlackText {
+            id: channelTitle
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            height: Theme.headerSize
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             font.bold: false
             chat: channelsList.channelModel
             text: channelRoot.channel != null ? channelRoot.channel.topic : ""
