@@ -469,6 +469,9 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();
+    if (unreadCount > 0 || unreadCountDisplay > 0) {
+        qWarning() << "unread count for" << name << unreadCount << unreadCountDisplay;
+    }
     topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
     purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
 }

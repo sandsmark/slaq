@@ -1326,6 +1326,13 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
         emit chatsModelChanged(_teamInfo->teamId(), _teamInfo->chats());
         connect(_teamInfo->searches(), &SearchMessagesModel::fetchMoreData,
                 _slackClient, &SlackTeamClient::onFetchMoreSearchData, Qt::QueuedConnection);
+        for (const QString& chatId : chModel->getChatIds()) {
+            //conversation info contains last read info as well
+            // TODO: slowdowns messages show. investigate
+            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(QString, chatId));
+        }
     }
 }
 

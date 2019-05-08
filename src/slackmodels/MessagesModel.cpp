@@ -363,6 +363,7 @@ QString MessageListModel::firstMessageTs() const
 int MessageListModel::countUnread(const QString &lastRead)
 {
     if (lastRead.isEmpty()) {
+        qWarning("last read not defined!");
         return 0;
     }
     QMutexLocker locker(&m_modelMutex);

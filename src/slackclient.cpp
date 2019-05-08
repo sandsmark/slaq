@@ -1214,6 +1214,8 @@ void SlackTeamClient::requestConversationInfo(const QString &channelId)
 {
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
+    params.insert(QStringLiteral("include_num_members"), QStringLiteral("true"));
+
     QNetworkReply *reply = executeGet(QStringLiteral("conversations.info"), params, channelId);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
@@ -1728,14 +1730,10 @@ void SlackTeamClient::handleConversationsListReply()
 #endif
     }
 
-
-
     QJsonArray presenceIds;
 
     for (Chat* chat : _chats) {
-        //conversation info contains last read info as well
-        // TODO: slowdowns messages show. investigate
-        requestConversationInfo(chat->id);
+
         if (chat->type != ChatsModel::Conversation && chat->type != ChatsModel::Channel) {
             requestConversationMembers(chat->id, "");
         }
@@ -1760,6 +1758,12 @@ void SlackTeamClient::handleConversationsListReply()
         }
         emit initSuccess(m_teamInfo.teamId());
         m_status = INITED;
+        ChatsModel* chModel = m_teamInfo.chats();
+        for (const QString& chatId : chModel->getChatIds()) {
+            //conversation info contains last read info as well
+            // TODO: slowdowns messages show. investigate
+            requestConversationInfo(chatId);
+        }
     }
 }
 
