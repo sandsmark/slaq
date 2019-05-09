@@ -963,7 +963,7 @@ void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
     messages->updateMessage(message, replace);
 }
 
-void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, const QDateTime &ts)
+void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, quint64 ts)
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());

@@ -343,7 +343,7 @@ void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
     }
     int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
     const QString& lastReadTs = message.value(QStringLiteral("ts")).toString();
-    const QDateTime& lastRead = slackToDateTime(lastReadTs);
+    const quint64 lastRead = slackTsToInternalTs(lastReadTs);
     if (unreadCountDisplay != chat->unreadCountDisplay
             || lastReadTs != chat->lastReadTs) {
         chat->unreadCountDisplay = unreadCountDisplay;
@@ -392,7 +392,7 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
        emit messageUpdated(message_);
        //TODO: implement handling all empty subtypes
     } else if (subtype == "message_deleted") {
-        const QDateTime& deleted_ts = slackToDateTime(message.value(QStringLiteral("deleted_ts")).toString());
+        const quint64 deleted_ts = slackTsToInternalTs(message.value(QStringLiteral("deleted_ts")).toString());
         const QString& channel_id = message.value(QStringLiteral("channel")).toString();
         emit messageDeleted(channel_id, deleted_ts);
     } else if (subtype == "file_comment") {
@@ -1608,20 +1608,20 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteReaction(const QString& channelId, const QDateTime &ts, const QString& reaction)
+void SlackTeamClient::deleteReaction(const QString& channelId, quint64 ts, const QString& reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
+    data.insert(QStringLiteral("timestamp"), internalTsToSlackTs(ts));
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.remove"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
+void SlackTeamClient::addReaction(const QString &channelId, quint64 ts,
                                   const QString &reaction,
                                   const QString &slackTs)
 {
@@ -1633,7 +1633,7 @@ void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
     if (!slackTs.isEmpty()) {
         data.insert(QStringLiteral("timestamp"), slackTs);
     } else {
-        data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
+        data.insert(QStringLiteral("timestamp"), internalTsToSlackTs(ts));
     }
     QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
@@ -1665,7 +1665,7 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
 }
 
 void SlackTeamClient::updateMessage(const QString &channelId, QString content,
-                                    const QDateTime &ts, const QString &slackTs)
+                                    quint64 ts, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
@@ -1676,14 +1676,14 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content,
     if (!slackTs.isEmpty()) {
         data.insert(QStringLiteral("ts"), slackTs);
     } else {
-        data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+        data.insert(QStringLiteral("ts"), internalTsToSlackTs(ts));
     }
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.update"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts, const QString &slackTs)
+void SlackTeamClient::deleteMessage(const QString &channelId, quint64 ts, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
@@ -1691,7 +1691,7 @@ void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &t
     if (!slackTs.isEmpty()) {
         data.insert(QStringLiteral("ts"), slackTs);
     } else {
-        data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
+        data.insert(QStringLiteral("ts"), internalTsToSlackTs(ts));
     }
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
 

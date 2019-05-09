@@ -59,7 +59,7 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         }
         return QVariant::fromValue(message->user.data());
     case Time:
-        return message->time;
+        return internalTsToDateTime(message->time);
     case SlackTimestamp:
         return message->ts;
     case Attachments:
@@ -237,7 +237,7 @@ Message *MessageListModel::message(const QString &ts)
     return nullptr;
 }
 
-bool MessageListModel::deleteMessage(const QDateTime &ts)
+bool MessageListModel::deleteMessage(quint64 ts)
 {
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
@@ -449,7 +449,7 @@ void MessageListModel::addMessage(Message* message)
         if (!m_messages.isEmpty()) {
             Message* prevMsg = prevMsg = m_messages.first();
             message->isSameUser = (prevMsg->user_id == message->user_id);
-            message->timeDiffMs = qAbs(message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
+            message->timeDiffMs = internalTsDiff(prevMsg->time,  message->time);
             Q_ASSERT_X(prevMsg->time != message->time, __PRETTY_FUNCTION__, "Time should not be equal");
         }
         m_modelMutex.unlock();
@@ -621,7 +621,7 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                 if (!m_messages.isEmpty()) {
                     Message* prevMsg = m_messages.last();
                     prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
-                    prevMsg->timeDiffMs = qAbs(prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+                    prevMsg->timeDiffMs = internalTsDiff(prevMsg->time,  message->time);
                 }
                 m_modelMutex.lock();
                 m_messages.append(message);
@@ -637,7 +637,7 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                 if (!m_messages.isEmpty()) {
                     Message* prevMsg = m_messages.first();
                     message->isSameUser = (prevMsg->user_id == message->user_id);
-                    message->timeDiffMs = qAbs(prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+                    message->timeDiffMs = internalTsDiff(prevMsg->time,  message->time);
                 }
                 m_modelMutex.lock();
                 m_messages.prepend(message);
@@ -726,7 +726,7 @@ void Message::setData(const QJsonObject &data)
     //qDebug() << "message" << data;
     type = data.value(QStringLiteral("type")).toString();
     ts = data.value(QStringLiteral("ts")).toString();
-    time = slackToDateTime(ts);
+    time = slackTsToInternalTs(ts);
     const QJsonValue thread_ = data.value(QStringLiteral("thread_ts"));
     if (!thread_.isUndefined()) {
         thread_ts = thread_.toString();
@@ -1008,5 +1008,5 @@ ReplyField::ReplyField(QObject *parent): QObject(parent) {}
 void ReplyField::setData(const QJsonObject &data)
 {
     m_userId = data.value(QStringLiteral("user")).toString();
-    m_ts = slackToDateTime(data.value(QStringLiteral("ts")).toString());
+    m_ts = slackTsToInternalTs(data.value(QStringLiteral("ts")).toString());
 }

@@ -100,8 +100,8 @@ class Chat: public QObject
     Q_PROPERTY(QString user MEMBER user CONSTANT)
     Q_PROPERTY(QString readableName MEMBER readableName CONSTANT)
     Q_PROPERTY(QString topic MEMBER topic CONSTANT)
-    Q_PROPERTY(QDateTime creationDate MEMBER creationDate CONSTANT)
-    Q_PROPERTY(QDateTime lastRead MEMBER lastRead CONSTANT)
+    Q_PROPERTY(quint64 creationDate MEMBER creationDate CONSTANT)
+    Q_PROPERTY(quint64 lastRead MEMBER lastRead CONSTANT)
     Q_PROPERTY(QString lastReadTs MEMBER lastReadTs CONSTANT)
     Q_PROPERTY(int unreadCount MEMBER unreadCount)
     Q_PROPERTY(int unreadCountDisplay MEMBER unreadCountDisplay)
@@ -124,12 +124,12 @@ public:
     QString readableName;
     QString topic;
     QString purpose;
-    QDateTime creationDate;
+    quint64 creationDate;
     bool isOpen = false;
     bool isPrivate = false;
     bool isGeneral = false;
 
-    QDateTime lastRead;
+    quint64 lastRead;
     QString lastReadTs;
     int unreadCount = 0;
     int unreadCountDisplay = 0;

@@ -131,7 +131,7 @@ public slots:
     //from slack thread to main thread
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message, bool replace = true);
-    void onMessageDeleted(const QString& channelId, const QDateTime& ts);
+    void onMessageDeleted(const QString& channelId, quint64 ts);
     void onChannelUpdated(Chat *chat);
     void onChannelJoined(Chat *chat);
     void onChannelLeft(const QString &channelId);

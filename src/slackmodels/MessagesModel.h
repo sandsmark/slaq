@@ -20,28 +20,37 @@ class MessageListModel;
 class EmojiInfo;
 
 namespace {
-inline QDateTime slackToDateTime(const QString& slackts) {
-    QDateTime dt;
-    QStringList ts_ = slackts.split(".");
+inline quint64 slackTsToInternalTs(const QString& slackts) {
+    quint64 dt = 0;
+    int ts_extra = 0;
+    QStringList ts_ = slackts.split(".", QString::SkipEmptyParts);
     if (ts_.size() >= 1) {
-        if (!ts_.at(0).isEmpty()) {
-            dt = QDateTime::fromSecsSinceEpoch(ts_.at(0).toLongLong());
-        } else if (!slackts.isEmpty()) {
-            dt = QDateTime::fromSecsSinceEpoch(slackts.toLongLong());
+        dt = ts_.at(0).toULongLong();
+        if (ts_.size() == 2) {
+            ts_extra = ts_.at(1).toInt();
         }
+    } else {
+        dt = slackts.toLongLong();
     }
-
-    if (ts_.size() == 2) {
-        QString _secondPart = ts_.at(1);
-        //_secondPart.remove(0, 3);
-        int msecs = _secondPart.toInt();
-        dt = dt.addMSecs(msecs);
-    }
+    // code unix epoh to 1st 32 bits
+    dt = (dt << 32) | ts_extra;
     return dt;
 }
 
-inline QString dateTimeToSlack(const QDateTime& dt) {
-    return QString("%1.000").arg(dt.toSecsSinceEpoch()) + QString("%1").arg(dt.time().msec(), 3, 10, QChar('0'));
+inline QString internalTsToSlackTs(quint64 dt) {
+    quint64 _dt = dt >> 32;;
+    int ts_extra = dt & 0xFFFFFFFF;
+    return QString("%1.%2").arg(_dt).arg(ts_extra, 6, 10, QChar('0'));
+}
+
+inline QDateTime internalTsToDateTime(quint64 dt) {
+    quint64 _dt = dt >> 32;;
+    int ts_extra = dt & 0xFFFFFFFF;
+    return QDateTime::fromSecsSinceEpoch(_dt);
+}
+
+inline quint64 internalTsDiff(quint64 ts1, quint64 ts2) {
+    return qAbs((ts2 >> 32) - (ts1 >> 32))*1000;
 }
 
 static int compareSlackTs(const QString& ts1, const QString& ts2) {
@@ -103,7 +112,7 @@ public:
 class ReplyField: public QObject  {
     Q_OBJECT
     Q_PROPERTY(SlackUser* user READ user CONSTANT)
-    Q_PROPERTY(QDateTime ts MEMBER m_ts CONSTANT)
+    Q_PROPERTY(quint64 ts MEMBER m_ts CONSTANT)
 
 public:
     ReplyField(QObject* parent = nullptr);
@@ -111,7 +120,7 @@ public:
 
     QPointer<SlackUser> m_user;
     QString m_userId;
-    QDateTime m_ts;
+    quint64 m_ts;
     SlackUser* user() const { return m_user.data(); }
 };
 
@@ -289,7 +298,7 @@ struct Message {
     QString userName;
 
     QStringList pinnedTo;
-    QDateTime time;
+    quint64 time;
     QString thread_ts;
     QUrl permalink;
 
@@ -319,7 +328,7 @@ struct Message {
         jo["user_id"] = user_id;
         jo["team_id"] = team_id;
         jo["userName"] = userName;
-        jo["time_slack"] = dateTimeToSlack(time);
+        jo["time_slack"] = internalTsToSlackTs(time);
         jo["ts"] = ts;
         jo["thread_ts"] = thread_ts;
         return jo;
@@ -374,7 +383,7 @@ public slots:
     void addMessages(const QList<Message *> &messages, bool hasMore, const QString &threadTs,
                      bool isThread = false);
     Message* message(const QString &ts);
-    bool deleteMessage(const QDateTime& ts);
+    bool deleteMessage(quint64 ts);
     Message* message(int row);
     void clear();
     void appendMessageToModel(Message *message);

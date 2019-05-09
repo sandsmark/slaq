@@ -463,10 +463,10 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     const QString& _last_read = data.value(QStringLiteral("last_read")).toString();
     if (!_last_read.isEmpty() && _last_read != "0000000000.000000")
         lastReadTs = _last_read;
-    lastRead = slackToDateTime(lastReadTs);
+    lastRead = slackTsToInternalTs(lastReadTs);
 //    if (type == ChatsModel::Channel)
 //        qDebug() << __PRETTY_FUNCTION__ << "last read" << lastReadTs << lastRead;
-    creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
+    creationDate = slackTsToInternalTs(data.value(QStringLiteral("created")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();
     if (unreadCount > 0 || unreadCountDisplay > 0) {
