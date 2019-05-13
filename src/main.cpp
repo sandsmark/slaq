@@ -25,6 +25,8 @@
 int main(int argc, char *argv[])
 {
     QtSystemExceptionHandler exceptionHandler("");
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");
     qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
 //    qputenv("GST_DEBUG_NO_COLOR", "1");
