@@ -31,7 +31,9 @@ CONFIG(debug, debug|release) {
 }
 
 DEFINES += SLAQ_VERSION=\\\"$$VERSION\\\"
-windows: DEFINES += __PRETTY_FUNCTION__=__FUNCSIG__
+win32-msvc* {
+    windows: DEFINES += __PRETTY_FUNCTION__=__FUNCSIG__
+}
 # Translations
 TRANSLATIONS += translations/slaq-fi.ts
 
