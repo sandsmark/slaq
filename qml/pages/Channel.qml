@@ -213,8 +213,7 @@ Page {
             placeholder: qsTr("Message %1%2").arg("#").arg(channel.name)
             onSendMessage: {
                 if (updating) {
-                    SlackClient.updateMessage(teamId, channel.id, content,
-                                              messageTime, messageSlackTime)
+                    SlackClient.updateMessage(teamId, channel.id, content, messageSlackTime)
                     updating = false
                 } else {
                     SlackClient.postMessage(teamRoot.teamId, channel.id, content)

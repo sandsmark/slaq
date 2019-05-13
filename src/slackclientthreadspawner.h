@@ -120,13 +120,12 @@ public slots:
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QString &thread_ts = "");
-    void updateMessage(const QString& teamId, const QString& channelId, const QString& content,
-                       quint64 ts, const QString& slackTs);
-    void deleteMessage(const QString& teamId, const QString& channelId, quint64 ts, const QString& slackTs);
+    void updateMessage(const QString& teamId, const QString& channelId, const QString& content, const QString& slackTs);
+    void deleteMessage(const QString& teamId, const QString& channelId, const QString& slackTs);
     void postFile(const QString& teamId, const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
-    void deleteReaction(const QString& teamId, const QString& channelId, quint64 ts, const QString& reaction);
+    void deleteReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
     void addReaction(const QString& teamId, const QString& channelId,
-                     quint64 ts, const QString& reaction, const QString& slackTs);
+                     const QString& ts, const QString& reaction);
 
     //from slack thread to main thread
     void onMessageReceived(Message* message);

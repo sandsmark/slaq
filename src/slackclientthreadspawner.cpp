@@ -690,8 +690,7 @@ void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString 
                               Q_ARG(QString, thread_ts));
 }
 
-void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QString &channelId, const QString &content,
-                                             quint64 ts, const QString &slackTs)
+void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QString &channelId, const QString &content, const QString &slackTs)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -700,12 +699,10 @@ void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QStrin
     QMetaObject::invokeMethod(_slackClient, "updateMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
                               Q_ARG(QString, content),
-                              Q_ARG(quint64, ts),
                               Q_ARG(QString, slackTs));
 }
 
-void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId,
-                                             quint64 ts, const QString& slackTs)
+void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId, const QString& slackTs)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -713,7 +710,6 @@ void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QStrin
     }
     QMetaObject::invokeMethod(_slackClient, "deleteMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(quint64, ts),
                               Q_ARG(QString, slackTs));
 }
 
@@ -730,7 +726,7 @@ void SlackClientThreadSpawner::postFile(const QString& teamId, const QString &ch
                               Q_ARG(QString, comment));
 }
 
-void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QString &channelId, quint64 ts, const QString &reaction)
+void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QString &channelId, const QString& ts, const QString &reaction)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -738,13 +734,12 @@ void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QStri
     }
     QMetaObject::invokeMethod(_slackClient, "deleteReaction", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(quint64, ts),
+                              Q_ARG(QString, ts),
                               Q_ARG(QString, reaction));
 }
 
 void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString &channelId,
-                                           quint64 ts, const QString &reaction,
-                                           const QString &slackTs)
+                                           const QString &ts, const QString &reaction)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -752,9 +747,8 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
     }
     QMetaObject::invokeMethod(_slackClient, "addReaction", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(quint64, ts),
-                              Q_ARG(QString, reaction),
-                              Q_ARG(QString, slackTs));
+                              Q_ARG(QString, ts),
+                              Q_ARG(QString, reaction));
 }
 
 inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, SlackUser* selfUser) {

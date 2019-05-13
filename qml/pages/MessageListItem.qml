@@ -42,9 +42,8 @@ MouseArea {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamId, channel.id, model.Time,
-                                        ImagesCache.getNameByEmoji(emoji),
-                                        model.SlackTimestamp);
+                SlackClient.addReaction(teamId, channel.id, model.SlackTimestamp,
+                                        ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -181,7 +180,7 @@ MouseArea {
                                 text: "\uD83D\uDDD1"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    teamRoot.deleteMessage(channel.id, model.Time, model.SlackTimestamp)
+                                    teamRoot.deleteMessage(channel.id, model.SlackTimestamp)
                                 }
                                 background: Item {}
                             }

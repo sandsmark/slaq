@@ -55,8 +55,7 @@ Drawer {
             onSendMessage: {
                 if (parentMessage != undefined) {
                     if (updating) {
-                        SlackClient.updateMessage(teamId, channel.id, content,
-                                                  messageTime, messageSlackTime)
+                        SlackClient.updateMessage(teamId, channel.id, content, messageSlackTime)
                         updating = false
                     } else {
                         SlackClient.postMessage(teamRoot.teamId, channel.id, content, modelMsg.ThreadTs)

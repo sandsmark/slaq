@@ -60,6 +60,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(message->user.data());
     case Time:
         return internalTsToDateTime(message->time);
+    case Timestamp:
+        return message->time;
     case SlackTimestamp:
         return message->ts;
     case Attachments:
@@ -169,7 +171,7 @@ Message *MessageListModel::message(int row)
     return m_messages.at(row);
 }
 
-QString MessageListModel::lastMessage() const
+quint64 MessageListModel::lastMessage() const
 {
 
     // debugging
@@ -181,19 +183,19 @@ QString MessageListModel::lastMessage() const
     QMutexLocker locker(&m_modelMutex);
     if (m_messages.count() <= 0) {
         qDebug() << "Last message not found";
-        return "";
+        return 0;
     }
-    QString _lastMsgTs = m_messages.at(0)->ts;
+    quint64 _lastMsgTs = m_messages.at(0)->time;
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
-        if (::compareSlackTs(message->ts, _lastMsgTs) > 0) {
-            _lastMsgTs = message->ts;
+        if (::compareSlackTs(message->time, _lastMsgTs) > 0) {
+            _lastMsgTs = message->time;
         }
         // 1st message in the message thread is parent message
         // so to avoid recursive search - check if the message thread its not current thread
         if (!message->messageThread.isNull() && message->messageThread.data() != this) {
             locker.unlock();
-            QString _lastMsgTsThread = message->messageThread->lastMessage();
+            quint64 _lastMsgTsThread = message->messageThread->lastMessage();
             if (::compareSlackTs(_lastMsgTsThread, _lastMsgTs) > 0) {
                 _lastMsgTs = _lastMsgTsThread;
             }
@@ -697,6 +699,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[OriginalText] = "OriginalText";
     names[User] = "User";
     names[Time] = "Time";
+    names[Timestamp] = "Timestamp";
     names[SlackTimestamp] = "SlackTimestamp";
     names[Attachments] = "Attachments";
     names[Reactions] = "Reactions";

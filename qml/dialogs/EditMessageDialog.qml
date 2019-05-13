@@ -24,7 +24,7 @@ LazyLoadDialog {
 
         function updateText() {
             var editedText = updatedMessageInput.getText(0, updatedMessageInput.text.length);
-            SlackClient.updateMessage(teamId, channelId, editedText, messageTime, messageSlackTime)
+            SlackClient.updateMessage(teamId, channelId, editedText, messageSlackTime)
             //messageInput.forceActiveFocus()
             close()
         }

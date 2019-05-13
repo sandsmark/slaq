@@ -37,9 +37,8 @@ Page {
         }
     }
 
-    function deleteMessage(channelId, ts, slackts) {
+    function deleteMessage(channelId, slackts) {
         deleteMessageDialog.channelId = channelId
-        deleteMessageDialog.ts = ts
         deleteMessageDialog.slackts = slackts
         deleteMessageDialog.open()
     }
@@ -56,7 +55,7 @@ Page {
         standardButtons: StandardButton.Yes | StandardButton.Cancel
         text: qsTr("You going to delete message. Are you sure?")
         onYes: {
-            SlackClient.deleteMessage(teamId, channelId, ts, slackts)
+            SlackClient.deleteMessage(teamId, channelId, slackts)
         }
     }
 

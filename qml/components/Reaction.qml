@@ -21,7 +21,8 @@ Button {
            + countLabel.contentWidth
 
     onClicked: {
-        SlackClient.deleteReaction(teamId, channel.id, Time, reaction.name)
+        console.warn("reaction timestamps:", SlackTimestamp, Timestamp)
+        SlackClient.deleteReaction(teamId, channel.id, SlackTimestamp, reaction.name)
     }
 
     contentItem: Item {

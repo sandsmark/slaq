@@ -1608,33 +1608,28 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteReaction(const QString& channelId, quint64 ts, const QString& reaction)
+void SlackTeamClient::deleteReaction(const QString& channelId, const QString& ts, const QString& reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    data.insert(QStringLiteral("timestamp"), internalTsToSlackTs(ts));
+    data.insert(QStringLiteral("timestamp"), ts);
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.remove"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::addReaction(const QString &channelId, quint64 ts,
-                                  const QString &reaction,
-                                  const QString &slackTs)
+void SlackTeamClient::addReaction(const QString &channelId, const QString &ts,
+                                  const QString &reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    if (!slackTs.isEmpty()) {
-        data.insert(QStringLiteral("timestamp"), slackTs);
-    } else {
-        data.insert(QStringLiteral("timestamp"), internalTsToSlackTs(ts));
-    }
+    data.insert(QStringLiteral("timestamp"), ts);
     QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
@@ -1664,8 +1659,7 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::updateMessage(const QString &channelId, QString content,
-                                    quint64 ts, const QString &slackTs)
+void SlackTeamClient::updateMessage(const QString &channelId, QString content, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
@@ -1673,26 +1667,19 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content,
     data.insert(QStringLiteral("text"), content);
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
     data.insert(QStringLiteral("parse"), QStringLiteral("full"));
-    if (!slackTs.isEmpty()) {
-        data.insert(QStringLiteral("ts"), slackTs);
-    } else {
-        data.insert(QStringLiteral("ts"), internalTsToSlackTs(ts));
-    }
+    data.insert(QStringLiteral("ts"), slackTs);
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.update"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteMessage(const QString &channelId, quint64 ts, const QString &slackTs)
+void SlackTeamClient::deleteMessage(const QString &channelId, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
-    if (!slackTs.isEmpty()) {
-        data.insert(QStringLiteral("ts"), slackTs);
-    } else {
-        data.insert(QStringLiteral("ts"), internalTsToSlackTs(ts));
-    }
+    data.insert(QStringLiteral("ts"), slackTs);
+
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.delete"), data);
