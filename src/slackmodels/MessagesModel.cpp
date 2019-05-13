@@ -362,16 +362,16 @@ QString MessageListModel::firstMessageTs() const
     return "";
 }
 
-int MessageListModel::countUnread(const QString &lastRead)
+int MessageListModel::countUnread(quint64 lastRead)
 {
-    if (lastRead.isEmpty()) {
+    if (lastRead == 0) {
         qWarning("last read not defined!");
         return 0;
     }
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
         //qDebug() << "comparing" << i << m_messages.at(i)->time << lastRead;
-        if (m_messages.at(i)->ts == lastRead) {
+        if (m_messages.at(i)->time == lastRead) {
             return i;
         }
     }

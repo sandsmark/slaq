@@ -329,7 +329,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-    //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
+    qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
@@ -346,6 +346,7 @@ void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
     const quint64 lastRead = slackTsToInternalTs(lastReadTs);
     if (unreadCountDisplay != chat->unreadCountDisplay
             || lastReadTs != chat->lastReadTs) {
+        qDebug() << __PRETTY_FUNCTION__ << "unread counter" << unreadCountDisplay;
         chat->unreadCountDisplay = unreadCountDisplay;
         chat->unreadCountPersonal = 0;
         chat->lastRead = lastRead;
@@ -1593,7 +1594,7 @@ void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& chan
     if (dt.isEmpty()) {
         auto messagesModel = _chatsModel->messages(channelId);
         if (messagesModel != nullptr) {
-            dt = messagesModel->lastMessage();
+            dt = ::internalTsToSlackTs(messagesModel->lastMessage());
         } else {
             qDebug() << "message model not ready for the channel" << channelId;
         }

@@ -781,6 +781,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
         }
         if (message->subtype != "message_changed") {
             chat->unreadCountDisplay++;
+            qDebug() << __PRETTY_FUNCTION__ << "unread counter" << chat->unreadCountDisplay << message->subtype;
             _chatsModel->chatChanged(chat);
             emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id,
                                         chat->unreadCountDisplay, chat->unreadCountPersonal);
@@ -822,10 +823,10 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, cons
         return;
     }
     Chat* _chat = _chatsModel->chat(channelId);
-    QString _lastRead;
+    quint64 _lastRead = 0;
     if (_chat != nullptr) {
         qDebug() << "Adding messages for chat" << _chat->name;
-        _lastRead = _chat->lastReadTs;
+        _lastRead = _chat->lastRead;
     }
 
     messagesModel->addMessages(messages, hasMore, threadTs);
