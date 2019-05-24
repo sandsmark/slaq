@@ -41,7 +41,7 @@ inline QString internalTsToSlackTs(quint64 dt) {
     quint64 _dt = dt >> 32;
     int ts_extra = (int)(dt & 0xFFFFFFFF);
     QString s= QString("%1.%2").arg(_dt).arg(ts_extra, 6, 10, QChar('0'));
-    qDebug() << "int to slack" << s << hex << dt;
+    //qDebug() << "int to slack" << s << hex << dt;
     return s;
 }
 
@@ -384,9 +384,12 @@ public slots:
     void updateMessage(Message *message, bool replace = true);
     void addMessages(const QList<Message *> &messages, bool hasMore, const QString &threadTs,
                      bool isThread = false);
-    Message* message(const QString &ts);
     bool deleteMessage(quint64 ts);
+
+    Message* message(const QString &ts);
     Message* message(int row);
+    Message *message(quint64 ts);
+
     void clear();
     void appendMessageToModel(Message *message);
     void prependMessageToModel(Message *message);

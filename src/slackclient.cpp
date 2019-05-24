@@ -329,7 +329,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-    qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
+    //qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
@@ -1580,18 +1580,20 @@ TeamInfo *SlackTeamClient::teamInfo()
     return &m_teamInfo;
 }
 
-void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime &time)
+void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, quint64 time)
 {
     DEBUG_BLOCK;
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    QString dt;// = time;
+    QString dt;
     ChatsModel* _chatsModel = teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
     }
-    if (dt.isEmpty()) {
+    if (time != 0) {
+        dt = ::internalTsToSlackTs(time);
+    } else {
         auto messagesModel = _chatsModel->messages(channelId);
         if (messagesModel != nullptr) {
             dt = ::internalTsToSlackTs(messagesModel->lastMessage());
@@ -1728,6 +1730,10 @@ void SlackTeamClient::handleConversationsListReply()
         if (chat->type == ChatsModel::Conversation && !chat->user.isEmpty()) {
             presenceIds.append(QJsonValue(chat->user));
         }
+        if (chat->isOpen || chat->type != ChatsModel::Channel) {
+            requestConversationInfo(chat->id);
+        }
+
     }
     emit conversationsDataChanged(_chats, cursor.isEmpty());
     //create presence status request
@@ -1746,12 +1752,13 @@ void SlackTeamClient::handleConversationsListReply()
         }
         emit initSuccess(m_teamInfo.teamId());
         m_status = INITED;
-        ChatsModel* chModel = m_teamInfo.chats();
-        for (const QString& chatId : chModel->getChatIds()) {
-            //conversation info contains last read info as well
-            // TODO: slowdowns messages show. investigate
-            requestConversationInfo(chatId);
-        }
+
+//        ChatsModel* chModel = m_teamInfo.chats();
+//        for (const QString& chatId : chModel->getChatIds()) {
+//            //conversation info contains last read info as well
+//            // TODO: slowdowns messages show. investigate
+//            requestConversationInfo(chatId);
+//        }
     }
 }
 
@@ -1821,6 +1828,10 @@ void SlackTeamClient::handleConversationInfoReply()
     if (chat != nullptr) {
         chat->setData(data.value("channel").toObject());
         emit channelUpdated(chat);
+        if (chat->isOpen) {
+            qDebug() << "chat lastread" << chat->name << ::internalTsToDateTime(chat->lastRead) << chat->lastReadTs;
+            markChannel(chat->type, chat->id, chat->lastRead);
+        }
     }
 }
 

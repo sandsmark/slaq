@@ -239,6 +239,39 @@ Message *MessageListModel::message(const QString &ts)
     return nullptr;
 }
 
+Message *MessageListModel::message(quint64 ts)
+{
+    qDebug() << "searching for" << ts << "at" << this;
+    // debugging
+    if (!m_modelMutex.tryLock(100)) {
+        qWarning() << "message model mutex was locked too long!" << QThread::currentThread();
+    }
+    m_modelMutex.unlock();
+    // end debugging
+    QMutexLocker locker(&m_modelMutex);
+    for (int i = 0; i < m_messages.count(); i++) {
+        Message* message = m_messages.at(i);
+        if (message->time == ts) {
+            qDebug() << "found message";
+            return message;
+        }
+        // 1st message in the message thread is parent message
+        // so to avoid recursive search - check if the message thread its not current thread
+        if (!message->messageThread.isNull() && message->messageThread.data() != this) {
+            qDebug() << "search in subthread";
+            locker.unlock();
+            Message* threadedMsg = message->messageThread->message(ts);
+            if (threadedMsg != nullptr) {
+                qDebug() << "found message in subthread";
+                return threadedMsg;
+            }
+            locker.relock();
+        }
+    }
+    qDebug() << "nothing found";
+    return nullptr;
+}
+
 bool MessageListModel::deleteMessage(quint64 ts)
 {
     QMutexLocker locker(&m_modelMutex);

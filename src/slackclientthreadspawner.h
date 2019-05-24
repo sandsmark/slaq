@@ -107,7 +107,7 @@ public slots:
 
     //channels
     void createChat(const QString& teamId, const QString &channelName, bool isPrivate);
-    void markChannel(const QString& teamId, ChatsModel::ChatType type, const QString& channelId, const QDateTime &time = QDateTime());
+    void markChannel(const QString& teamId, ChatsModel::ChatType type, const QString& channelId, quint64 time = 0);
     void joinChannel(const QString& teamId, const QString& channelId);
     void leaveChannel(const QString& teamId, const QString& channelId);
     void archiveChannel(const QString& teamId, const QString& channelId);

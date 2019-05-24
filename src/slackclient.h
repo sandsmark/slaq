@@ -126,7 +126,7 @@ public slots:
     void deleteFile(const QString& fileId);
 
     void createChat(const QString &channelName, bool isPrivate);
-    void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
+    void markChannel(ChatsModel::ChatType type, const QString& channelId, quint64 time = 0);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
     void archiveChannel(const QString& channelId);
@@ -138,9 +138,11 @@ public slots:
     void requestTeamInfo();
     void requestConversationsList(const QString& cursor);
     void requestConversationMembers(const QString& channelId, const QString& cursor);
+    void requestConversationInfo(const QString& channelId);
+
     void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
-    void requestConversationInfo(const QString& channelId);
+
     void requestUserInfo(SlackUser* user);
     void requestUserInfoById(const QString& userId);
     void updateUserInfo(SlackUser* user);

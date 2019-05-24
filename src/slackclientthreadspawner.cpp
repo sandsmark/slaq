@@ -252,7 +252,7 @@ void SlackClientThreadSpawner::createChat(const QString &teamId, const QString &
                               Q_ARG(bool, isPrivate));
 }
 
-void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::ChatType type, const QString &channelId, const QDateTime &time)
+void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::ChatType type, const QString &channelId, quint64 time)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -261,7 +261,7 @@ void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::Ch
     QMetaObject::invokeMethod(_slackClient, "markChannel", Qt::QueuedConnection,
                               Q_ARG(ChatsModel::ChatType, type),
                               Q_ARG(QString, channelId),
-                              Q_ARG(QDateTime, time));
+                              Q_ARG(quint64, time));
 }
 
 void SlackClientThreadSpawner::joinChannel(const QString& teamId, const QString &channelId)
