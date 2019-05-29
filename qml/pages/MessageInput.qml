@@ -260,10 +260,11 @@ ColumnLayout {
             enabled: messageInput.text.length > 0
             onClicked: handleSendMessage()
         }
-
-        Button {
+        EmojiButton {
             id: uploadButton
-            icon.name: "upload-media"
+            font.bold: true
+            width: height
+            text: "⛰"
             onClicked: {
                 fileSend.channelId = channelRoot.channel.id
                 fileSend.teamId = teamRoot.teamId

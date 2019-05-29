@@ -19,6 +19,7 @@ public:
     static void replaceLinks(ChatsModel *chatModel, QString &message);
     void replaceMarkdown(QString &message);
     static void replaceEmoji(QString &message);
+    static void replaceTextEmoji(QString &message);
     void replaceAll(ChatsModel* chat,  QString &message);
     void doReplaceChannelInfo(Chat *chat, QString &message);
 
