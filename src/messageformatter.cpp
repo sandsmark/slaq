@@ -182,6 +182,20 @@ void MessageFormatter::replaceEmoji(QString &message)
     }
 }
 
+void MessageFormatter::replaceTextEmoji(QString &message)
+{
+    ImagesCache* ic = ImagesCache::instance();
+    const QStringList& textsList = ic->getEmojisTextsList();
+    for (const QString& txt : textsList) {
+        if (message.contains(txt)) {
+            EmojiInfo* ei = ic->getEmojiByText(txt);
+            if (ei) {
+                message.replace(txt, ei->unified());
+            }
+        }
+    }
+}
+
 void MessageFormatter::replaceAll(ChatsModel *chat, QString &message)
 {
     //replaceLinks(message); //must be 1st

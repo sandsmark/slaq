@@ -317,10 +317,14 @@ void ImagesCache::parseSlackJson()
                 }
             }
             einfo->m_text = obj.value(QStringLiteral("text")).toString();
+            if (!einfo->m_text.isEmpty()) {
+                m_emojiTextList[einfo->m_text] = einfo;
+            }
             foreach (const auto& tvalue, obj.value(QStringLiteral("texts")).toArray()) {
                 const QString txt = tvalue.toString();
                 if (!einfo->m_texts.contains(txt)) {
                     einfo->m_texts << txt;
+                    m_emojiTextList[txt] = einfo;
                 }
             }
             const QString& emCat = obj.value(QStringLiteral("category")).toString();
@@ -597,6 +601,15 @@ QStringList ImagesCache::getLastUsedEmojisList(const QString &teamId)
         }
     }
     return _emojis;
+}
+
+QStringList ImagesCache::getEmojisTextsList()
+{
+    return m_emojiTextList.keys();
+}
+
+EmojiInfo* ImagesCache::getEmojiByText(const QString& txtEmoji) {
+    return m_emojiTextList.value(txtEmoji);
 }
 
 QVariant ImagesCache::getLastUsedEmojisModel(const QString &teamId)

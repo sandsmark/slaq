@@ -27,7 +27,6 @@ public:
     bool isCached(const QString &id);
     QImage image(const QString &id);
     bool isImagesDatabaseLoaded() { return m_emojiList.size() > 0; }
-    void loadImagesDatabase();
     void parseSlackJson();
     Q_INVOKABLE void setEmojiImagesSet(const QString& setName);
     Q_INVOKABLE QString getEmojiImagesSet();
@@ -49,7 +48,13 @@ public:
 public slots:
     void addLastUsedEmoji(const QString &teamId, const QString &emojiName);
     QStringList getLastUsedEmojisList(const QString &teamId);
+    /**
+     * @brief getEmojisTextsList
+     * @return list of emiji's text representation
+     */
+    QStringList getEmojisTextsList();
     void setLastUsedEmojisList(const QString &teamId, const QStringList &emojis);
+    EmojiInfo *getEmojiByText(const QString &txtEmoji);
 signals:
     void imageLoaded(const QString &id);
     void requestImageViaHttp(const QString &id);
@@ -76,7 +81,8 @@ private:
     int m_currentImagesSetIndex {-1}; //represents current images set. Might be several in images cache folder
     QString m_cache;
     QHash<QString, QImage> m_requestedImages;
-    QHash<QString, EmojiInfo *> m_emojiList;
+    QHash<QString, EmojiInfo*> m_emojiList;
+    QHash<QString, EmojiInfo*> m_emojiTextList;
     QMultiMap<EmojiInfo::EmojiCategories, EmojiInfo *> m_emojiCategories;
     QSet<QString> m_iconsCached;
 

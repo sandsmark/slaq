@@ -1638,6 +1638,9 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
     DEBUG_BLOCK;
     QMap<QString, QString> data;
     QNetworkReply *reply = nullptr;
+
+    MessageFormatter::replaceTextEmoji(content);
+
     data.insert(QStringLiteral("channel"), channelId);
     if (!thread_ts.isEmpty()) {
         data.insert(QStringLiteral("thread_ts"), thread_ts);
@@ -1663,6 +1666,7 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content,
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
+    MessageFormatter::replaceTextEmoji(content);
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("text"), content);
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
