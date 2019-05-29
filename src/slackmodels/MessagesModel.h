@@ -387,8 +387,8 @@ public slots:
     bool deleteMessage(quint64 ts);
 
     Message* message(const QString &ts);
-    Message* message(int row);
-    Message *message(quint64 ts);
+    Message* messageAt(int row);
+    Message* message(quint64 ts);
 
     void clear();
     void appendMessageToModel(Message *message);

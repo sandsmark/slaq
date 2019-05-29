@@ -165,7 +165,7 @@ MessageListModel *MessageListModel::createThread(Message *parentMessage)
     return nullptr;
 }
 
-Message *MessageListModel::message(int row)
+Message *MessageListModel::messageAt(int row)
 {
     QMutexLocker locker(&m_modelMutex);
     return m_messages.at(row);

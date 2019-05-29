@@ -23,7 +23,7 @@ Drawer {
 
     onAboutToShow: {
         if (parentMessageIndex !== -1) {
-            parentMessage = parentMessagesModel.message(parentMessageIndex)
+            parentMessage = parentMessagesModel.messageAt(parentMessageIndex)
             //no thread model. Need to create one
             repliesListView.model = parentMessagesModel.createThread(parentMessage)
             console.log("thread", parentMessagesModel, parentMessageIndex, modelMsg.ThreadTs)

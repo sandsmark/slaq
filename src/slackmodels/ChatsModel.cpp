@@ -439,6 +439,7 @@ void Chat::setReadableName(const QString& selfId) {
 
 void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
+    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     id = data.value(QStringLiteral("id")).toString();
     type = type_;
     if (data.value(QStringLiteral("is_mpim")).toBool(false)) {

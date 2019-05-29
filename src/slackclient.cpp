@@ -329,7 +329,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-    //qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
+    qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
@@ -342,9 +342,10 @@ void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
         return;
     }
     int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
+    int unreadCount = message.value(QStringLiteral("unread_count")).toInt();
     const QString& lastReadTs = message.value(QStringLiteral("ts")).toString();
     const quint64 lastRead = slackTsToInternalTs(lastReadTs);
-    if (unreadCountDisplay != chat->unreadCountDisplay
+    if (unreadCount != chat->unreadCount || unreadCountDisplay != chat->unreadCountDisplay
             || lastReadTs != chat->lastReadTs) {
         qDebug() << __PRETTY_FUNCTION__ << "unread counter" << unreadCountDisplay;
         chat->unreadCountDisplay = unreadCountDisplay;
@@ -1829,7 +1830,7 @@ void SlackTeamClient::handleConversationInfoReply()
         chat->setData(data.value("channel").toObject());
         emit channelUpdated(chat);
         if (chat->isOpen) {
-            qDebug() << "chat lastread" << chat->name << ::internalTsToDateTime(chat->lastRead) << chat->lastReadTs;
+            //qDebug() << "chat lastread" << chat->name << ::internalTsToDateTime(chat->lastRead) << chat->lastReadTs;
             markChannel(chat->type, chat->id, chat->lastRead);
         }
     }
