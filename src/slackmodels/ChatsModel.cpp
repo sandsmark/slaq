@@ -93,6 +93,7 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case Name:
         return chat->readableName.isEmpty() ? chat->name : chat->readableName;
     case IsOpen:
+        qDebug() << "data. is open" << chat->name << chat->isOpen;
         return chat->isOpen;
     case IsGeneral:
         return chat->isGeneral;
@@ -439,7 +440,7 @@ void Chat::setReadableName(const QString& selfId) {
 
 void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
-    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     id = data.value(QStringLiteral("id")).toString();
     type = type_;
     if (data.value(QStringLiteral("is_mpim")).toBool(false)) {
@@ -453,13 +454,22 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     }
 
     isGeneral = data.value(QStringLiteral("is_general")).toBool(false);
-    name = data.value(QStringLiteral("name")).toString(name);
+    if (name.isEmpty())
+        name = data.value(QStringLiteral("name")).toString(name);
     presence = QStringLiteral("none");
-    isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
-                                             data.value(QStringLiteral("is_open")).toBool();
+    const QJsonValue& isOpenVal = data.value(QStringLiteral("is_open"));
+    if (!isOpenVal.isUndefined() && type == ChatsModel::Channel)
+        isOpen = isOpenVal.toBool();
+    const QJsonValue& isMemberVal = data.value(QStringLiteral("is_member"));
+    if (!isMemberVal.isUndefined())
+        isOpen = isMemberVal.toBool();
+
+    qDebug() << "chat is open" << name << isOpen;
     user = data.value("user").toString();
 
-    isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
+    const QJsonValue& isPrivateVal = data.value(QStringLiteral("is_private"));
+    if (!isPrivateVal.isUndefined())
+        isPrivate = isPrivateVal.toBool(false);
 
     const QString& _last_read = data.value(QStringLiteral("last_read")).toString();
     if (!_last_read.isEmpty() && _last_read != "0000000000.000000")

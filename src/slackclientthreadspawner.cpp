@@ -1301,9 +1301,14 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
         if (_chat == nullptr) {
             continue;
         }
-        //if (_chat->type == ChatsModel::Conversation) {
-        //    QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, _chat->id));
-        //}
+        if (_chat->type != ChatsModel::Channel) {
+            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, _chat->id));
+        } else if (_chat->isOpen) {
+            QMetaObject::invokeMethod(_slackClient, "requestChannelsInfo",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(QString, _chat->id));
+        }
+
         if (_chat->isOpen || _chat->type != ChatsModel::Channel) {
             //connect only to opened chats and conversations
             emit channelCountersUpdated(_teamInfo->teamId(), _chat->id,
@@ -1321,13 +1326,6 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
         emit chatsModelChanged(_teamInfo->teamId(), _teamInfo->chats());
         connect(_teamInfo->searches(), &SearchMessagesModel::fetchMoreData,
                 _slackClient, &SlackTeamClient::onFetchMoreSearchData, Qt::QueuedConnection);
-        for (const QString& chatId : chModel->getChatIds()) {
-            //conversation info contains last read info as well
-            // TODO: slowdowns messages show. investigate
-            QMetaObject::invokeMethod(_slackClient, "requestConversationInfo",
-                                      Qt::QueuedConnection,
-                                      Q_ARG(QString, chatId));
-        }
     }
 }
 

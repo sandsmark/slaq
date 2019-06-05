@@ -1212,6 +1212,26 @@ void SlackTeamClient::requestTeamEmojis()
     }
 }
 
+//void SlackTeamClient::requestGroupsInfo(const QString &channelId)
+//{
+//    QMap<QString, QString> params;
+//    params.insert(QStringLiteral("channel"), channelId);
+
+//    QNetworkReply *reply = executeGet(QStringLiteral("channels.info"), params, channelId);
+
+//    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
+//}
+
+void SlackTeamClient::requestChannelsInfo(const QString &channelId)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("channel"), channelId);
+
+    QNetworkReply *reply = executeGet(QStringLiteral("channels.info"), params, channelId);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleChannelsInfoReply);
+}
+
 void SlackTeamClient::requestConversationInfo(const QString &channelId)
 {
     QMap<QString, QString> params;
@@ -1735,10 +1755,11 @@ void SlackTeamClient::handleConversationsListReply()
         if (chat->type == ChatsModel::Conversation && !chat->user.isEmpty()) {
             presenceIds.append(QJsonValue(chat->user));
         }
-        if (chat->isOpen || chat->type != ChatsModel::Channel) {
-            requestConversationInfo(chat->id);
-        }
 
+        if (chat->type != ChatsModel::Channel)
+            requestConversationInfo(chat->id);
+        else if (chat->isOpen)
+            requestChannelsInfo(chat->id);
     }
     emit conversationsDataChanged(_chats, cursor.isEmpty());
     //create presence status request
@@ -1817,6 +1838,32 @@ void SlackTeamClient::handleConversationMembersReply()
     }
 }
 
+//used only for number of unread messages. rest info is inconsistent and cant be trusted
+void SlackTeamClient::handleChannelsInfoReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    const QJsonObject& data = getResult(reply);
+    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    const QString& channelId = reply->request().attribute(QNetworkRequest::User).toString();
+    //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
+    reply->deleteLater();
+    ChatsModel* _chatsModel = teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+    Chat* chat = _chatsModel->chat(channelId);
+    if (chat != nullptr) {
+        const QJsonValue& chatVal = data.value("channel");
+        if (chatVal.isUndefined()) {
+            qWarning() << "Channel info reply. Chat" << chat->name << "type is undefined";
+            return;
+        }
+        chat->unreadCountDisplay = chatVal.toObject().value(QStringLiteral("unread_count_display")).toInt(0);
+        chat->unreadCount = chatVal.toObject().value(QStringLiteral("unread_count")).toInt(0);
+        emit channelUpdated(chat);
+    }
+}
+
 void SlackTeamClient::handleConversationInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -1831,12 +1878,20 @@ void SlackTeamClient::handleConversationInfoReply()
     }
     Chat* chat = _chatsModel->chat(channelId);
     if (chat != nullptr) {
-        chat->setData(data.value("channel").toObject());
-        emit channelUpdated(chat);
-        if (chat->isOpen) {
-            //qDebug() << "chat lastread" << chat->name << ::internalTsToDateTime(chat->lastRead) << chat->lastReadTs;
-            markChannel(chat->type, chat->id, chat->lastRead);
+        QJsonValue chatVal = data.value("channel");
+        if (chatVal.isUndefined())
+            chatVal = data.value("group");
+        if (chatVal.isUndefined()) {
+            qWarning() << "Chat" << chat->name << "type is undefined";
+            return;
         }
+
+        chat->setData(chatVal.toObject());
+        emit channelUpdated(chat);
+//        if (chat->isOpen) {
+//            //qDebug() << "chat lastread" << chat->name << ::internalTsToDateTime(chat->lastRead) << chat->lastReadTs;
+//            markChannel(chat->type, chat->id, chat->lastRead);
+//        }
     }
 }
 

@@ -161,6 +161,7 @@ public slots:
     void sendUserTyping(const QString& channelId);
     void requestSharedFiles(int page, const QString &channelId = QString(), const QString &userId = QString());
     void requestSharedFileInfo(const QString &fileId);
+    void requestChannelsInfo(const QString &channelId);
 
 private slots:
     void handleStartReply();
@@ -193,7 +194,7 @@ private slots:
 
     void createChannelIfNeeded(const QJsonObject &channel);
     void handleTeamFilesReply();
-
+    void handleChannelsInfoReply();
 private:
     bool appActive;
     QString activeWindow;
