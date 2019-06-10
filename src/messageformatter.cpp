@@ -187,11 +187,18 @@ void MessageFormatter::replaceTextEmoji(QString &message)
     ImagesCache* ic = ImagesCache::instance();
     const QStringList& textsList = ic->getEmojisTextsList();
     for (const QString& txt : textsList) {
-        if (message.contains(txt)) {
+        int _emInd = message.indexOf(txt);
+        while (_emInd >= 0) {
+            // check for url scheme at that index
+            if (txt == ":/" && message.size() > (_emInd + 2) && message.at(_emInd + 2) == "/") {
+                _emInd = message.indexOf(txt, _emInd + 1);
+                continue;
+            }
             EmojiInfo* ei = ic->getEmojiByText(txt);
             if (ei) {
-                message.replace(txt, ei->unified());
+                message = message.replace(_emInd, txt.size(), ei->unified());
             }
+            _emInd = message.indexOf(txt, _emInd + 1);
         }
     }
 }
