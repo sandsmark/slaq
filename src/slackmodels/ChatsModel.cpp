@@ -98,9 +98,9 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case IsGeneral:
         return chat->isGeneral;
     case LastRead:
-        return chat->lastRead;
+        return chat->lastRead();
     case LastReadTs:
-        return chat->lastReadTs;
+        return chat->lastReadTs();
     case UnreadCountDisplay:
         return chat->unreadCountDisplay;
     case UnreadCountPersonal:
@@ -438,6 +438,13 @@ void Chat::setReadableName(const QString& selfId) {
     readableName = _users.join(", ");
 }
 
+void Chat::setLastReadData(const QString& lastread) {
+    if (!lastread.isEmpty() && lastread != "0000000000.000000") {
+        setLastReadTs(lastread);
+        setLastRead(slackTsToInternalTs(m_lastReadTs));
+    }
+
+}
 void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
     qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
@@ -471,10 +478,8 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     if (!isPrivateVal.isUndefined())
         isPrivate = isPrivateVal.toBool(false);
 
-    const QString& _last_read = data.value(QStringLiteral("last_read")).toString();
-    if (!_last_read.isEmpty() && _last_read != "0000000000.000000")
-        lastReadTs = _last_read;
-    lastRead = slackTsToInternalTs(lastReadTs);
+    setLastReadData(data.value(QStringLiteral("last_read")).toString());
+
 //    if (type == ChatsModel::Channel)
 //        qDebug() << __PRETTY_FUNCTION__ << "last read" << lastReadTs << lastRead;
     creationDate = slackTsToInternalTs(data.value(QStringLiteral("created")).toString());
@@ -485,5 +490,27 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     }
     topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
     purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
+}
+
+QString Chat::lastReadTs() const
+{
+    return m_lastReadTs;
+}
+
+quint64 Chat::lastRead() const
+{
+    return m_lastRead;
+}
+
+void Chat::setLastReadTs(const QString &lastReadTs)
+{
+    m_lastReadTs = lastReadTs;
+    emit lastReadTsChanged(m_lastReadTs);
+}
+
+void Chat::setLastRead(const quint64 &lastRead)
+{
+    m_lastRead = lastRead;
+    emit lastReadChanged(m_lastRead);
 }
 

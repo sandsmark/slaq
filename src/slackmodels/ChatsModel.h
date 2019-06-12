@@ -101,8 +101,8 @@ class Chat: public QObject
     Q_PROPERTY(QString readableName MEMBER readableName CONSTANT)
     Q_PROPERTY(QString topic MEMBER topic CONSTANT)
     Q_PROPERTY(quint64 creationDate MEMBER creationDate CONSTANT)
-    Q_PROPERTY(quint64 lastRead MEMBER lastRead CONSTANT)
-    Q_PROPERTY(QString lastReadTs MEMBER lastReadTs CONSTANT)
+    Q_PROPERTY(quint64 lastRead READ lastRead NOTIFY lastReadChanged)
+    Q_PROPERTY(QString lastReadTs READ lastReadTs NOTIFY lastReadTsChanged)
     Q_PROPERTY(int unreadCount MEMBER unreadCount)
     Q_PROPERTY(int unreadCountDisplay MEMBER unreadCountDisplay)
     Q_PROPERTY(bool isOpen MEMBER isOpen CONSTANT)
@@ -129,8 +129,6 @@ public:
     bool isPrivate = false;
     bool isGeneral = false;
 
-    quint64 lastRead;
-    QString lastReadTs;
     int unreadCount = 0;
     int unreadCountDisplay = 0;
     int unreadCountPersonal = 0; //used for broadcast or personal messages on channel
@@ -139,4 +137,20 @@ public:
 
     void setReadableName(const QString &selfId);
     void setData(const QJsonObject &data,  ChatsModel::ChatType type_ = ChatsModel::Channel);
+    QString lastReadTs() const;
+    quint64 lastRead() const;
+
+private:
+    void setLastReadTs(const QString &lastReadTs);
+    void setLastRead(const quint64 &lastRead);
+
+public slots:
+    void setLastReadData(const QString &lastread);
+signals:
+    void lastReadTsChanged(QString lastReadTs);
+    void lastReadChanged(quint64 lastRead);
+
+private:
+    QString m_lastReadTs;
+    quint64 m_lastRead;
 };

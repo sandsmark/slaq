@@ -775,7 +775,7 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     Chat* chat = _chatsModel->chat(message->channel_id);
 
     //qDebug() << "message" << message->text << checkForPersonal(message->text, _slackClient->teamInfo()->selfUser());
-    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
+    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead()) {
         if (checkForPersonal(message->text, _slackClient->teamInfo()->selfUser())) {
             chat->unreadCountPersonal++;
         }
@@ -826,7 +826,7 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, cons
     quint64 _lastRead = 0;
     if (_chat != nullptr) {
         qDebug() << "Adding messages for chat" << _chat->name;
-        _lastRead = _chat->lastRead;
+        _lastRead = _chat->lastRead();
     }
 
     messagesModel->addMessages(messages, hasMore, threadTs);

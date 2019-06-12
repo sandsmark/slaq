@@ -68,7 +68,6 @@ MouseArea {
                                                         "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
-
             Column {
                 id: columnText
                 height: implicitHeight
