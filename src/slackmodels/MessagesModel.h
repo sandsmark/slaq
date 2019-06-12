@@ -126,14 +126,18 @@ class Attachment: public QObject {
     Q_PROPERTY(QString fallback MEMBER fallback CONSTANT)
     Q_PROPERTY(QString color MEMBER color CONSTANT)
     Q_PROPERTY(QUrl imageUrl MEMBER imageUrl CONSTANT)
+    Q_PROPERTY(QSize imageSize MEMBER imageSize CONSTANT)
     Q_PROPERTY(QString author_name MEMBER author_name CONSTANT)
     Q_PROPERTY(QUrl author_link MEMBER author_link CONSTANT)
     Q_PROPERTY(QUrl author_icon MEMBER author_icon CONSTANT)
     Q_PROPERTY(QUrl thumb_url MEMBER thumb_url CONSTANT)
+    Q_PROPERTY(QSize thumb_size MEMBER thumb_size CONSTANT)
+    Q_PROPERTY(QUrl service_url MEMBER service_url CONSTANT)
     Q_PROPERTY(QString footer MEMBER footer CONSTANT)
     Q_PROPERTY(QUrl footer_icon MEMBER footer_icon CONSTANT)
 
-    Q_PROPERTY(QSize imageSize MEMBER imageSize CONSTANT)
+    Q_PROPERTY(QString video_html MEMBER video_html CONSTANT)
+    Q_PROPERTY(QSize video_html_size MEMBER video_html_size CONSTANT)
     Q_PROPERTY(QList<QObject*> fields MEMBER fields CONSTANT)
     Q_PROPERTY(QDateTime ts MEMBER ts CONSTANT)
     Q_PROPERTY(bool isAnimated MEMBER m_isAnimated CONSTANT)
@@ -149,13 +153,18 @@ public:
     QString fallback;
     QString color;
     QString author_name;
+    QString service_name;
+    QUrl service_url;
     QUrl author_link;
     QUrl author_icon;
     QUrl thumb_url;
+    QSize thumb_size;
     QString footer;
     QUrl footer_icon;
     QUrl imageUrl;
     QSize imageSize;
+    QString video_html;
+    QSize video_html_size;
     QDateTime ts;
     bool m_isAnimated { false };
     QList<QObject*> fields;

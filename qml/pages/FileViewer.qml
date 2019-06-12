@@ -43,6 +43,7 @@ Item {
         Loader {
             id: loader
             Component.onCompleted: {
+                console.warn("mime type:", fileshare.mimetype)
                 if (fileshare.mimetype.indexOf("video") !== -1) {
                     setSource("qrc:/qml/components/VideoFileViewer.qml")
                 } else if (fileshare.mimetype.indexOf("image") !== -1) {

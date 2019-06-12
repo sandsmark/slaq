@@ -47,7 +47,7 @@ ColumnLayout {
 
         ColumnLayout {
             id: attachmentColumn
-            Layout.fillWidth: true
+            Layout.fillWidth: false
             spacing: Theme.paddingSmall
 
             RowLayout {
@@ -115,16 +115,19 @@ ColumnLayout {
             }
 
             Item {
-                width: attachment.imageSize.width
-                height: attachment.imageSize.height
+                readonly property bool isThumb: attachment.thumb_url.toString().length > 0
+                readonly property bool isImage: attachment.imageUrl.toString().length > 0
+                visible: attachment !== null && (isThumb || isImage > 0)
+                width: isThumb ? attachment.thumb_size.width : attachment.imageSize.width
+                height: isThumb ? attachment.thumb_size.height : attachment.imageSize.height
                 AnimatedImage {
                     anchors.fill: parent
                     asynchronous: true
-                    visible: attachment !== null && attachment.imageUrl.toString().length > 0
+
                     fillMode: Image.PreserveAspectFit
                     // AnimatedImage does not support async image provider
                     //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
-                    source: visible ? attachment.imageUrl : ""
+                    source: parent.isImage ? attachment.imageUrl : (parent.isThumb ? attachment.thumb_url : "")
                     onStatusChanged: {
                         if (status == Image.Error) {
                             source = "qrc:/icons/no-image.png"
