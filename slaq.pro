@@ -75,7 +75,8 @@ SOURCES += src/main.cpp \
     src/slaqtext/slaqtext.cpp \
     src/slaqtext/slaqtextnode.cpp \
     src/slaqtext/slaqtextnodeengine.cpp \
-    src/slaqtext/slaqtextdocument.cpp
+    src/slaqtext/slaqtextdocument.cpp \
+    src/youtubevideourlparser.cpp
 
 OTHER_FILES += translations/*.ts \
     icons/slaq.svg \
@@ -107,7 +108,8 @@ HEADERS += \
     src/slaqtext/slaqtext_p.h \
     src/slaqtext/slaqtextnode_p.h \
     src/slaqtext/slaqtextnodeengine_p.h \
-    src/slaqtext/slaqtextdocument_p.h
+    src/slaqtext/slaqtextdocument_p.h \
+    src/youtubevideourlparser.h
 
 DISTFILES += \
     qml/dialogs/*.qml \

@@ -125,6 +125,8 @@ class Attachment: public QObject {
     Q_PROPERTY(QString text MEMBER text CONSTANT)
     Q_PROPERTY(QString fallback MEMBER fallback CONSTANT)
     Q_PROPERTY(QString color MEMBER color CONSTANT)
+    Q_PROPERTY(QUrl from_url MEMBER from_url CONSTANT)
+    Q_PROPERTY(QUrl original_url MEMBER original_url CONSTANT)
     Q_PROPERTY(QUrl imageUrl MEMBER imageUrl CONSTANT)
     Q_PROPERTY(QSize imageSize MEMBER imageSize CONSTANT)
     Q_PROPERTY(QString author_name MEMBER author_name CONSTANT)
@@ -134,6 +136,7 @@ class Attachment: public QObject {
     Q_PROPERTY(QSize thumb_size MEMBER thumb_size CONSTANT)
     Q_PROPERTY(QUrl service_url MEMBER service_url CONSTANT)
     Q_PROPERTY(QString footer MEMBER footer CONSTANT)
+    Q_PROPERTY(QString service_name MEMBER service_name CONSTANT)
     Q_PROPERTY(QUrl footer_icon MEMBER footer_icon CONSTANT)
 
     Q_PROPERTY(QString video_html MEMBER video_html CONSTANT)
@@ -154,6 +157,8 @@ public:
     QString color;
     QString author_name;
     QString service_name;
+    QUrl from_url;
+    QUrl original_url;
     QUrl service_url;
     QUrl author_link;
     QUrl author_icon;

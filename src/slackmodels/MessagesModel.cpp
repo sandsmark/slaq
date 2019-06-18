@@ -827,6 +827,8 @@ void Attachment::setData(const QJsonObject &data)
     m_isAnimated = data.value(QStringLiteral("is_animated")).toBool(false);
     service_name = data.value(QStringLiteral("service_name")).toString();
     service_url = QUrl(data.value(QStringLiteral("service_url")).toString());
+    from_url = QUrl(data.value(QStringLiteral("from_url")).toString());
+    original_url = QUrl(data.value(QStringLiteral("original_url")).toString());
     video_html = data.value(QStringLiteral("video_html")).toString();
     video_html_size = QSize(data.value("video_html_width").toInt(), data.value("video_html_height").toInt());
 

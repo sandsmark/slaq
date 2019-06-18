@@ -1,5 +1,6 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
+import QtMultimedia 5.9
 import QtQuick.Layouts 1.3
 import ".."
 import "../components"
@@ -120,20 +121,52 @@ ColumnLayout {
                 visible: attachment !== null && (isThumb || isImage > 0)
                 width: isThumb ? attachment.thumb_size.width : attachment.imageSize.width
                 height: isThumb ? attachment.thumb_size.height : attachment.imageSize.height
-                AnimatedImage {
-                    anchors.fill: parent
-                    asynchronous: true
+//                AnimatedImage {
+//                    anchors.fill: parent
+//                    asynchronous: true
 
-                    fillMode: Image.PreserveAspectFit
-                    // AnimatedImage does not support async image provider
-                    //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
-                    source: parent.isImage ? attachment.imageUrl : (parent.isThumb ? attachment.thumb_url : "")
-                    onStatusChanged: {
-                        if (status == Image.Error) {
-                            source = "qrc:/icons/no-image.png"
-                        }
-                    }
-                }
+//                    fillMode: Image.PreserveAspectFit
+//                    // AnimatedImage does not support async image provider
+//                    //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
+//                    source: parent.isImage ? attachment.imageUrl : (parent.isThumb ? attachment.thumb_url : "")
+//                    onStatusChanged: {
+//                        if (status == Image.Error) {
+//                            source = "qrc:/icons/no-image.png"
+//                        }
+//                    }
+//                }
+                Item {
+                    anchors.fill: parent
+                     MediaPlayer {
+                         id: mediaplayer
+                         //source: "https://www.youtube.com/embed/QZE_mWONFaA?feature=oembed&autoplay=1&iv_load_policy=3"
+                     }
+
+                     VideoOutput {
+                         anchors.fill: parent
+                         source: mediaplayer
+                     }
+
+                     MouseArea {
+                         id: playArea
+                         anchors.fill: parent
+                         onPressed: mediaplayer.play();
+                     }
+                     Connections {
+                         target: youtubeParser
+                         onUrlParsed: {
+                             console.log("youtube video parsed", videoUrl)
+                             mediaplayer.source = videoUrl
+                         }
+                     }
+
+                     Component.onCompleted: {
+                         if (attachment.from_url.toString().length > 0 && attachment.service_name === "YouTube") {
+                             console.log("requesting youtube url:", attachment.from_url)
+                             youtubeParser.requestUrl(attachment.from_url)
+                         }
+                     }
+                 }
             }
         }
     }

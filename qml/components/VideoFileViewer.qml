@@ -11,7 +11,7 @@ Item {
         anchors.fill: parent
         asynchronous: true
         fillMode: Image.PreserveAspectFit
-        source: fileshare.thumb_video != "" ?
+        source: fileshare.thumb_video.toString().length > 0 ?
                     "team://" + teamId + "/" + fileshare.thumb_video :
                     "qrc:/icons/video-thumbnail.png"
         visible: video.playbackState === MediaPlayer.StoppedState
