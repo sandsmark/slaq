@@ -6,6 +6,7 @@
 #include <QtCore/QTimer>
 #include <QEventLoop>
 
+#include <QMetaEnum>
 #include "youtubevideourlparser.h"
 
 /**
@@ -38,7 +39,11 @@ QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetw
 }
 
 void percentDecode(QString& str) {
-    str = QUrl::fromPercentEncoding(str.replace("\\u0026", "&").toUtf8());
+    qDebug() << __PRETTY_FUNCTION__ << "\n\n\n" << str << "\n\n";
+    QByteArray ba1 = str.toUtf8().replace("\\u0026", "&").replace("%2525", "%").replace("%25", "%");
+    QByteArray ba = QByteArray::fromPercentEncoding(ba1);
+    qDebug() << ba1 << "\n\n" << ba << "\n\n\n";
+    str = QString::fromUtf8(ba, ba.size());
 }
 
 void decypher(QString& str, QList<QPair<QString, int>> ops) {
@@ -47,6 +52,7 @@ void decypher(QString& str, QList<QPair<QString, int>> ops) {
     for(QPair<QString, int> cyphOp : ops) {
         if (cyphOp.first == "reverse") {
             QString reverse;
+            reverse.reserve(str.size());
             for(int i = str.size(); i >= 0; --i) reverse.append(str.at(i));
             str = reverse;
         } else if (cyphOp.first == "slice") {
@@ -61,6 +67,22 @@ void decypher(QString& str, QList<QPair<QString, int>> ops) {
             str = str.replace(0, 1, indChar);
         }
     }
+}
+
+QString midInner(const QString& s, const QString& before, const QString& after) {
+    int ind_before = s.indexOf(before);
+    if (ind_before == -1) {
+        //qWarning() << "cant find" << before;
+        return "";
+    }
+    ind_before += before.size();
+    int ind_after = s.indexOf(after, ind_before);
+    if (ind_after == -1) {
+        //qWarning() << "cant find" << after;
+        return "";
+    }
+    // video/mp4;
+    return s.mid(ind_before, ind_after - ind_before);
 }
 
 YoutubeVideoUrlParser::YoutubeVideoUrlParser(QObject *parent) : QObject(parent)
@@ -138,12 +160,10 @@ void YoutubeVideoUrlParser::requestUrl(const QUrl &url)
                                 pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
                             } else {
                                 pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
-                                pc->muxedStreamInfosUrlEncoded =
-                                        QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map")).
-                                                                  replace("\\u0026", "&").toUtf8());
-                                pc->adaptiveStreamInfosUrlEncoded =
-                                        QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("adaptive_fmts")).
-                                                                  replace("\\u0026", "&").toUtf8());
+                                pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
+                                //percentDecode(pc->muxedStreamInfosUrlEncoded);
+                                pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
+                                //percentDecode(pc->adaptiveStreamInfosUrlEncoded);
                             }
                         } else {
                             qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
@@ -193,31 +213,32 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
              << playerConfig->isLiveStream
              << playerConfig->playerSourceUrl
              << playerConfig->validUntil;
-//             << playerConfig->manifestUrl
-//             << playerConfig->muxedStreamInfosUrlEncoded
-//             << playerConfig->adaptiveStreamInfosUrlEncoded;
+    //             << playerConfig->manifestUrl
+    //             << playerConfig->muxedStreamInfosUrlEncoded
+    //             << playerConfig->adaptiveStreamInfosUrlEncoded;
     if (!playerConfig->succeed) {
         qWarning() << "Player config exctraction was not succeed";
         return;
     }
     const QStringList& muxedStreamInfoList = playerConfig->muxedStreamInfosUrlEncoded.split(",");
     for (const auto muxedStreamInfo : muxedStreamInfoList) {
-        QUrlQuery urlq(muxedStreamInfo);
+        qDebug() << "muxed stream info" << muxedStreamInfo;
+        QUrlQuery streamInfoDic(muxedStreamInfo);
         // Extract info
-        int itag = urlq.queryItemValue("itag").toInt();
-        QString url = urlq.queryItemValue("url");
+        int itag = streamInfoDic.queryItemValue("itag").toInt();
+        QString url = streamInfoDic.queryItemValue("url");
         percentDecode(url);
         // Decipher signature if needed
-        QString signature = urlq.queryItemValue("s");
+        QString signature = streamInfoDic.queryItemValue("s");
         qDebug() << "signature: " << signature;
-        QUrl _url = QUrl(url);
+        QUrl _url = url;//QUrl::fromPercentEncoding(url.toUtf8());
         if (!signature.isEmpty()) {
             // Get cipher operations
             QList<QPair<QString, int>> cipherOperations = getCypherOperations(playerConfig);
             // Decipher signature
             decypher(signature, cipherOperations);
             // Set the corresponding parameter in the URL
-            const QString& signatureParameter = urlq.queryItemValue("sp").isEmpty() ? "signature" : urlq.queryItemValue("sp");
+            const QString& signatureParameter = streamInfoDic.queryItemValue("sp").isEmpty() ? "signature" : streamInfoDic.queryItemValue("sp");
 
             // replace query with new signature
             QUrlQuery _urlQuery(_url.query());
@@ -233,7 +254,8 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             httpGetSync(_url, &manager, hdrPairs);
             qDebug() << "headers size" << hdrPairs.size();
             for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
-                if (hdrPair.first == "ContentLength") {
+                qDebug() << hdrPair.first << hdrPair.second;
+                if (hdrPair.first == "Content-Length") {
                     contentLength = hdrPair.second.toInt();
                     break;
                 }
@@ -243,28 +265,22 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             if (contentLength <= 0)
                 continue;
         }
-/*
-        // Extract container
-        var containerRaw = streamInfoDic["type"].SubstringUntil(";").SubstringAfter("/");
-        var container = Heuristics.ContainerFromString(containerRaw);
+        QString containerType = streamInfoDic.queryItemValue("type");
+        percentDecode(containerType);
+        const QString& containerRaw = midInner(containerType, "/", ";");
+        const QString& codecsListRaw = midInner(containerType, "codecs=\"", "\"");
+        const QStringList& codecsList = codecsListRaw.split(",+");
+        const QString& audioEncodingRaw = codecsList.last();
+        const QString& videoEncodingRaw = codecsList.first();
+        qDebug().noquote() << "youtube encodings:" << audioEncodingRaw << videoEncodingRaw << codecsListRaw << containerType << containerRaw;
 
-        // Extract audio encoding
-        var audioEncodingRaw = streamInfoDic["type"].SubstringAfter("codecs=\"").SubstringUntil("\"").Split(", ").Last();
-        var audioEncoding = Heuristics.AudioEncodingFromString(audioEncodingRaw);
-
-        // Extract video encoding
-        var videoEncodingRaw = streamInfoDic["type"].SubstringAfter("codecs=\"").SubstringUntil("\"").Split(", ").First();
-        var videoEncoding = Heuristics.VideoEncodingFromString(videoEncodingRaw);
-
-        // Determine video quality from itag
-        var videoQuality = Heuristics.VideoQualityFromItag(itag);
-
-        // Determine video quality label from video quality
-        var videoQualityLabel = Heuristics.VideoQualityToLabel(videoQuality);
-
-        // Determine video resolution from video quality
-        var resolution = Heuristics.VideoQualityToResolution(videoQuality);
-
+        YoutubeContainer container = parseContainer(containerRaw);
+        YoutubeAudioCodec acodec = parseAudioCodec(audioEncodingRaw);
+        YoutubeVideoCodec vcodec = parseVideoCodec(videoEncodingRaw);
+        YoutubeVideoQuality quality = itagToQuality(itag);
+        QString videoQualityLabel = videoQualityToLabel(quality);
+        QSize resolution = videoQualityToResolution(quality);
+        /*
         // Add to list
         muxedStreamInfoMap[itag] = new MuxedStreamInfo(itag, url, container, contentLength, audioEncoding, videoEncoding,
             videoQualityLabel, videoQuality, resolution);
@@ -310,8 +326,8 @@ QList<QPair<QString, int>> YoutubeVideoUrlParser::getCypherOperations(PlayerConf
 
     for (const QString& statement : cypherStatements) {
         if (!reverseFuncName.isEmpty() &&
-            !sliceFuncName.isEmpty() &&
-            !swapFuncName.isEmpty())
+                !sliceFuncName.isEmpty() &&
+                !swapFuncName.isEmpty())
             break;
         const QString& calledFuncName = QRegularExpression("\\w+(?:.|\\[)(\\""?\\w+(?:\\"")?)\\]?\\(").match(statement).captured(1);
         if (calledFuncName.isEmpty())
@@ -381,4 +397,163 @@ void YoutubeVideoUrlParser::finished(QNetworkReply *reply)
 void YoutubeVideoUrlParser::error(QNetworkReply::NetworkError error)
 {
     qDebug() << "youtube error:" << error;
+}
+
+YoutubeVideoUrlParser::YoutubeContainer YoutubeVideoUrlParser::parseContainer(const QString &container)
+{
+    if (container.contains("mp4", Qt::CaseInsensitive))
+        return YoutubeContainer::Mp4;
+    if (container.contains("webm", Qt::CaseInsensitive))
+        return YoutubeContainer::WebM;
+    if (container.contains("3gpp", Qt::CaseInsensitive))
+        return YoutubeContainer::Tgpp;
+    return YoutubeContainer::UnknownContainer;
+}
+
+YoutubeVideoUrlParser::YoutubeAudioCodec YoutubeVideoUrlParser::parseAudioCodec(const QString &codec)
+{
+    if (codec.contains("mp4a", Qt::CaseInsensitive))
+        return YoutubeAudioCodec::Aac;
+    if (codec.contains("vorbis", Qt::CaseInsensitive))
+        return YoutubeAudioCodec::Vorbis;
+    if (codec.contains("opus", Qt::CaseInsensitive))
+        return YoutubeAudioCodec::Opus;
+    return YoutubeAudioCodec::UnknownACodec;
+
+}
+
+YoutubeVideoUrlParser::YoutubeVideoCodec YoutubeVideoUrlParser::parseVideoCodec(const QString &codec)
+{
+    if (codec.contains("mp4v", Qt::CaseInsensitive))
+        return YoutubeVideoCodec::Mp4V;
+    if (codec.contains("avc1", Qt::CaseInsensitive))
+        return YoutubeVideoCodec::H264;
+    if (codec.contains("vp8", Qt::CaseInsensitive))
+        return YoutubeVideoCodec::Vp8;
+    if (codec.contains("vp9", Qt::CaseInsensitive))
+        return YoutubeVideoCodec::Vp9;
+    if (codec.contains("av01", Qt::CaseInsensitive))
+        return YoutubeVideoCodec::Av1;
+    return YoutubeVideoCodec::UnknownVCodec;
+
+}
+
+YoutubeVideoUrlParser::YoutubeVideoQuality YoutubeVideoUrlParser::itagToQuality(int itag)
+{
+    static QMap<int, YoutubeVideoQuality> itagToVideoQualityMap =
+    {
+        {5, Low144},
+        {6, Low240},
+        {13, Low144},
+        {17, Low144},
+        {18, Medium360},
+        {22, High720},
+        {34, Medium360},
+        {35, Medium480},
+        {36, Low240},
+        {37, High1080},
+        {38, High3072},
+        {43, Medium360},
+        {44, Medium480},
+        {45, High720},
+        {46, High1080},
+        {59, Medium480},
+        {78, Medium480},
+        {82, Medium360},
+        {83, Medium480},
+        {84, High720},
+        {85, High1080},
+        {91, Low144},
+        {92, Low240},
+        {93, Medium360},
+        {94, Medium480},
+        {95, High720},
+        {96, High1080},
+        {100, Medium360},
+        {101, Medium480},
+        {102, High720},
+        {132, Low240},
+        {151, Low144},
+        {133, Low240},
+        {134, Medium360},
+        {135, Medium480},
+        {136, High720},
+        {137, High1080},
+        {138, High4320},
+        {160, Low144},
+        {212, Medium480},
+        {213, Medium480},
+        {214, High720},
+        {215, High720},
+        {216, High1080},
+        {217, High1080},
+        {264, High1440},
+        {266, High2160},
+        {298, High720},
+        {299, High1080},
+        {399, High1080},
+        {398, High720},
+        {397, Medium480},
+        {396, Medium360},
+        {395, Low240},
+        {394, Low144},
+        {167, Medium360},
+        {168, Medium480},
+        {169, High720},
+        {170, High1080},
+        {218, Medium480},
+        {219, Medium480},
+        {242, Low240},
+        {243, Medium360},
+        {244, Medium480},
+        {245, Medium480},
+        {246, Medium480},
+        {247, High720},
+        {248, High1080},
+        {271, High1440},
+        {272, High2160},
+        {278, Low144},
+        {302, High720},
+        {303, High1080},
+        {308, High1440},
+        {313, High2160},
+        {315, High2160},
+        {330, Low144},
+        {331, Low240},
+        {332, Medium360},
+        {333, Medium480},
+        {334, High720},
+        {335, High1080},
+        {336, High1440},
+        {337, High2160}
+    };
+    return itagToVideoQualityMap.value(itag, UnknownQuality);
+}
+
+QString YoutubeVideoUrlParser::videoQualityToLabel(YoutubeVideoUrlParser::YoutubeVideoQuality quality)
+{
+    QMetaEnum metaEnum = QMetaEnum::fromType<YoutubeVideoUrlParser::YoutubeVideoQuality>();
+    // Convert to string, strip non-digits and add "p"
+    return QString(metaEnum.valueToKey(quality)).remove(QRegularExpression("[^0-9.]")) + "p";
+}
+
+
+QSize YoutubeVideoUrlParser::videoQualityToResolution(YoutubeVideoUrlParser::YoutubeVideoQuality quality)
+{
+    static QMap<YoutubeVideoQuality, QSize> videoQualityToResolutionMap =
+    {
+        {Low144, QSize(256, 144)},
+        {Low240, QSize(426, 240)},
+        {Medium360, QSize(640, 360)},
+        {Medium480, QSize(854, 480)},
+        {High720, QSize(1280, 720)},
+        {High1080, QSize(1920, 1080)},
+        {High1440, QSize(2560, 1440)},
+        {High2160, QSize(3840, 2160)},
+        {High2880, QSize(5120, 2880)},
+        {High3072, QSize(4096, 3072)},
+        {High4320, QSize(7680, 4320)}
+    };
+
+    return videoQualityToResolutionMap.value(quality, QSize(0, 0));
 }

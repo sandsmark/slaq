@@ -22,6 +22,54 @@ class YoutubeVideoUrlParser : public QObject
 {
     Q_OBJECT
 public:
+    enum YoutubeAudioCodec
+    {
+        UnknownACodec = -1,
+        Aac = 0, // MPEG-4 Part 3, Advanced Audio Coding (AAC).
+        Vorbis,
+        Opus
+    };
+    Q_ENUM(YoutubeAudioCodec)
+
+    enum YoutubeContainer
+    {
+        UnknownContainer = -1,
+        Mp4 = 0,  // MPEG-4 Part 14 (.mp4).
+        WebM, // Web Media (.webm).
+        Tgpp  // 3rd Generation Partnership Project (.3gpp).
+    };
+    Q_ENUM(YoutubeContainer)
+
+    enum YoutubeVideoCodec
+    {
+        UnknownVCodec = -1,
+        Mp4V = 0, // MPEG-4 Part 2.
+        H263, // H263.Obsoleted
+        H264, // MPEG-4 Part 10, H264, Advanced Video Coding (AVC).
+        Vp8,
+        Vp9,
+        Av1
+    };
+    Q_ENUM(YoutubeVideoCodec)
+
+    enum YoutubeVideoQuality
+    {
+        UnknownQuality = -1,
+        Low144 = 0,  // Low quality (144p).
+        Low240,
+        Medium360, // Medium quality (360p).
+        Medium480,
+        High720, // High quality (720p).
+        High1080,
+        High1440,
+        High2160,
+        High2880,
+        High3072,
+        High4320
+    };
+    Q_ENUM(YoutubeVideoQuality)
+
+
     explicit YoutubeVideoUrlParser(QObject *parent = nullptr);
 
 public slots:
@@ -39,6 +87,8 @@ signals:
     void playerConfigChanged(PlayerConfiguration* playerConfig);
 
 private:
+    YoutubeContainer parseContainer(const QString& container);
+private:
     QUrl m_url;
     QNetworkAccessManager manager;
     QRegularExpression m_youtubeIdRegular;
@@ -47,6 +97,13 @@ private:
     QRegularExpression m_youtubePlayerEmbed;
 
     QHash<QString, PlayerConfiguration*> m_youtubeRequests;
+    YoutubeVideoUrlParser::YoutubeAudioCodec parseAudioCodec(const QString &codec);
+    YoutubeVideoUrlParser::YoutubeVideoCodec parseVideoCodec(const QString &codec);
+    YoutubeVideoUrlParser::YoutubeVideoQuality itagToQuality(int itag);
+    QString videoQualityToLabel(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
+    QSize videoQualityToResolution(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
 };
+
+
 
 #endif // YOUTUBEVIDEOURLPARSER_H
