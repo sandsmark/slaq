@@ -36,6 +36,7 @@ int httpHeadSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetworkRep
 }
 
 QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetworkReply::RawHeaderPair> &hdrPairs, int timeout = 20000) {
+    QTime a;a.start();
     QTimer timer;
     QEventLoop loop;
     QByteArray _downloadedData;
@@ -57,7 +58,7 @@ QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetw
     }
     reply->deleteLater();
     hdrPairs = reply->rawHeaderPairs();
-
+    qWarning().noquote() << "request time:" << a.elapsed() << "for:" << url;
     return _downloadedData;
 }
 
@@ -310,7 +311,7 @@ void YoutubeVideoUrlParser::checkContentLengthAndRedirections(const QUrl &url, Y
 {
     // make request anyway to check for redirected playable url
     QList<QNetworkReply::RawHeaderPair> hdrPairs;
-    httpGetSync(url, &manager, hdrPairs);
+    httpHeadSync(url, &manager, hdrPairs);
     for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
         if (hdrPair.first == "Content-Length") {
             qint64 _contentLength = hdrPair.second.toLongLong();
