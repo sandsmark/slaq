@@ -213,8 +213,8 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
              << playerConfig->videoId
              << playerConfig->isLiveStream
              << playerConfig->playerSourceUrl
-             << playerConfig->validUntil;
-    //             << playerConfig->manifestUrl
+             << playerConfig->validUntil
+             << playerConfig->manifestUrl;
     //             << playerConfig->muxedStreamInfosUrlEncoded
     //             << playerConfig->adaptiveStreamInfosUrlEncoded;
     if (!playerConfig->succeed) {
@@ -225,7 +225,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
     // get muxed stream infos
     const QStringList& muxedStreamInfoList = playerConfig->muxedStreamInfosUrlEncoded.split(",");
     for (const auto muxedStreamInfo : muxedStreamInfoList) {
-        qDebug() << "muxed stream info" << muxedStreamInfo;
+        //qDebug() << "muxed stream info" << muxedStreamInfo;
         QUrlQuery streamInfoDic(muxedStreamInfo);
         // Extract info
         int itag = streamInfoDic.queryItemValue("itag", QUrl::FullyDecoded).toInt();
@@ -233,15 +233,17 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         percentDecode(url);
         // Decipher signature if needed
         QString signature = streamInfoDic.queryItemValue("s", QUrl::FullyDecoded);
-        qDebug() << "signature: " << signature;
-        QUrl _url = url;//QUrl::fromPercentEncoding(url.toUtf8());
+        qDebug() << "signature (muxed): " << signature;
+        QUrl _url = url;
         if (!signature.isEmpty()) {
             // Get cipher operations
             QList<QPair<QString, int>> cipherOperations = getCipherOperations(playerConfig);
             // Decipher signature
             decypher(signature, cipherOperations);
             // Set the corresponding parameter in the URL
-            const QString& signatureParameter = streamInfoDic.queryItemValue("sp").isEmpty() ? "signature" : streamInfoDic.queryItemValue("sp");
+            const QString& signatureParameter = streamInfoDic.hasQueryItem("sp") ?
+                        "signature" :
+                        streamInfoDic.queryItemValue("sp", QUrl::FullyDecoded);
 
             // replace query with new signature
             QUrlQuery _urlQuery(_url.query());
@@ -276,6 +278,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         //qDebug().noquote() << "youtube encodings:" << audioEncodingRaw << videoEncodingRaw << codecsListRaw << containerType << containerRaw;
 
         MediaStreamInfo msi;
+        msi.playableUrl = _url;
         msi.itag = itag;
         msi.container = parseContainer(containerRaw);
         msi.acodec = parseAudioCodec(audioEncodingRaw);
@@ -298,7 +301,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         percentDecode(url);
         msi.bitrate = streamInfoDic.queryItemValue("bitrate", QUrl::FullyDecoded).toInt();
         QString signature = streamInfoDic.queryItemValue("s", QUrl::FullyDecoded);
-        qDebug() << "signature: " << signature;
+        qDebug() << "signature (adaptive): " << signature;
         QUrl _url = url;
 
         if (!signature.isEmpty()) {
@@ -307,13 +310,14 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             // Decipher signature
             decypher(signature, cipherOperations);
             // Set the corresponding parameter in the URL
-            const QString& signatureParameter = streamInfoDic.queryItemValue("sp").isEmpty() ? "signature" : streamInfoDic.queryItemValue("sp");
+            const QString& signatureParameter = streamInfoDic.hasQueryItem("sp") ? "signature" : streamInfoDic.queryItemValue("sp");
 
             // replace query with new signature
             QUrlQuery _urlQuery(_url.query());
             _urlQuery.addQueryItem(signatureParameter, signature);
             _url.setQuery(_urlQuery);
         }
+        msi.playableUrl = _url;
         // Try to extract content length, otherwise get it manually
         int contentLength = streamInfoDic.queryItemValue("clen", QUrl::FullyDecoded).toInt();
         qDebug() << "content length from url" << contentLength << url;
@@ -342,6 +346,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             //qDebug() << "audio only" << msi.acodec << msi.container;
         } else {
             // video only
+
             // Extract video encoding
             msi.vcodec = codecRaw.compare("unknown", Qt::CaseInsensitive) == 0 ? Av1 : parseVideoCodec(codecRaw);
             // Extract video quality label and video quality
@@ -364,6 +369,35 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             playerConfig->streams[msi.itag] = msi;
     }
 
+    // Parse dash manifest. Dash mainfest set only for non live streams
+    if (!playerConfig->isLiveStream && !playerConfig->manifestUrl.isEmpty()) {
+        // Extract signature
+        QString dashManifestUrl = playerConfig->manifestUrl;
+        QUrl _url = dashManifestUrl;
+        QString signature = QRegularExpression("/s/(.*?)(?:/|$)").match(dashManifestUrl).captured(1);
+
+        // Decipher signature if needed
+        if (!signature.isEmpty()) {
+            // Get cipher operations
+            QList<QPair<QString, int>> cipherOperations = getCipherOperations(playerConfig);
+            // Decipher signature
+            decypher(signature, cipherOperations);
+
+            // replace query with new signature
+            QUrlQuery _urlQuery(_url.query());
+            _urlQuery.addQueryItem("signature", signature);
+            _url.setQuery(_urlQuery);
+        }
+        QList<QNetworkReply::RawHeaderPair> hdrPairs;
+        const QByteArray& dashManifestXml = httpGetSync(_url, &manager, hdrPairs);
+        qDebug() << "dashManifestXml" << dashManifestXml;
+        //TODO: implement dash manifest streams
+        //QXmlStreamReader dashXml(dashManifestXml);
+    }
+    qDebug() << "Streams recognized:";
+    for (MediaStreamInfo msi : playerConfig->streams) {
+        qDebug().noquote() << "url:" << msi.playableUrl;
+    }
 }
 
 QList<QPair<QString, int>> YoutubeVideoUrlParser::getCipherOperations(PlayerConfiguration *playerConfig)

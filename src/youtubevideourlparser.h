@@ -60,6 +60,7 @@ public:
     Q_ENUM(YoutubeVideoQuality)
 
     struct MediaStreamInfo {
+        QUrl playableUrl;
         int itag = -1;
         YoutubeContainer container = UnknownContainer;
         YoutubeAudioCodec acodec = UnknownACodec;
