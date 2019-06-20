@@ -45,7 +45,11 @@ Item {
             Component.onCompleted: {
                 console.warn("mime type:", fileshare.mimetype)
                 if (fileshare.mimetype.indexOf("video") !== -1) {
-                    setSource("qrc:/qml/components/VideoFileViewer.qml")
+                    setSource("qrc:/qml/components/VideoFileViewer.qml",
+                              { "previewThumb" :fileshare.thumb_video.toString().length > 0 ?
+                                                    "team://" + teamId + "/" + fileshare.thumb_video :
+                                                    "qrc:/icons/video-thumbnail.png",
+                                  "videoUrl": fileshare.url_private_download})
                 } else if (fileshare.mimetype.indexOf("image") !== -1) {
                     setSource("qrc:/qml/components/ImageFileViewer.qml")
                 } else if (fileshare.mimetype.indexOf("text") !== -1) {

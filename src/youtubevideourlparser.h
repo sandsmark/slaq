@@ -76,7 +76,6 @@ public:
     struct PlayerConfiguration
     {
         bool succeed = false;
-        QUrl requestedUrl;
         QString videoId;
         bool isLiveStream = false;
         QString playerSourceUrl;
@@ -90,7 +89,7 @@ public:
     explicit YoutubeVideoUrlParser(QObject *parent = nullptr);
 
 public slots:
-    void requestUrl(const QUrl& url);
+    void requestVideoUrl(const QString& videoId);
     QString parseVideoId(const QString &videoUrl);
 
 private slots:
@@ -98,7 +97,7 @@ private slots:
     QList<QPair<QString, int> > getCipherOperations(PlayerConfiguration* playerConfig);
 
 signals:
-    void urlParsed(const QString& videoUrl, const QUrl& playUrl);
+    void urlParsed(const QString& videoId, const QUrl& playUrl);
     void playerConfigChanged(PlayerConfiguration* playerConfig);
 
 private:
@@ -109,8 +108,8 @@ private:
     QString videoQualityToLabel(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
     QSize videoQualityToResolution(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
     YoutubeVideoUrlParser::YoutubeVideoQuality videoQualityFromLabel(const QString &label);
-
     void checkContentLengthAndRedirections(const QUrl& url, MediaStreamInfo& msi);
+    void pickBestPossibleVideo(PlayerConfiguration *pc);
 
 private:
     QNetworkAccessManager manager;
@@ -119,8 +118,9 @@ private:
     QRegularExpression m_youtubeIdEmbed;
     QRegularExpression m_youtubePlayerEmbed;
 
-    QHash<QUrl, PlayerConfiguration*> m_youtubeRequests;
+    QHash<QString, PlayerConfiguration*> m_youtubeRequests;
     QHash<QString, QList<QPair<QString, int>> > m_cipherCache;
+
 };
 
 

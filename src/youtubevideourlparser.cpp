@@ -36,7 +36,6 @@ int httpHeadSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetworkRep
 }
 
 QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetworkReply::RawHeaderPair> &hdrPairs, int timeout = 20000) {
-    QTime a;a.start();
     QTimer timer;
     QEventLoop loop;
     QByteArray _downloadedData;
@@ -58,7 +57,6 @@ QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetw
     }
     reply->deleteLater();
     hdrPairs = reply->rawHeaderPairs();
-    qWarning().noquote() << "request time:" << a.elapsed() << "for:" << url;
     return _downloadedData;
 }
 
@@ -121,17 +119,34 @@ YoutubeVideoUrlParser::YoutubeVideoUrlParser(QObject *parent) : QObject(parent)
     connect(this, &YoutubeVideoUrlParser::playerConfigChanged, this, &YoutubeVideoUrlParser::onPlayerConfigChanged);
 }
 
-void YoutubeVideoUrlParser::requestUrl(const QUrl &url)
+void YoutubeVideoUrlParser::pickBestPossibleVideo(PlayerConfiguration* pc) {
+    for (MediaStreamInfo msi : pc->streams) {
+        if (msi.quality >= High720) { //TODO: check settings or best possible
+            qDebug() << "best video for id:" << pc->videoId << msi.quality << msi.resolution;
+            emit urlParsed(pc->videoId, msi.playableUrl);
+            return;
+        }
+    }
+    qWarning() << "Youtube: cant pick best video for" << pc->videoId << "from" << pc->streams.size();
+}
+
+void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
 {
     //qDebug() << __PRETTY_FUNCTION__ << url << _videoId;
 
+    PlayerConfiguration* pc = m_youtubeRequests.value(videoId);
+    if (pc != nullptr) { // check if request already sent
+        if (pc->succeed) {
+            pickBestPossibleVideo(pc);
+        }
+        return;
+    }
     // 1st: get video embed page
-    PlayerConfiguration* pc = new PlayerConfiguration;
+    pc = new PlayerConfiguration;
 
     pc->succeed = false;
-    pc->requestedUrl = url;
-    pc->videoId = parseVideoId(url.toString());
-    m_youtubeRequests[url] = pc;
+    pc->videoId = videoId;//parseVideoId(url.toString());
+    m_youtubeRequests[videoId] = pc;
 #if 0
     // emit player configuration in any case
     auto cleanup = qScopeGuard([this, &pc] {
@@ -498,13 +513,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         //TODO: implement dash manifest streams
         //QXmlStreamReader dashXml(dashManifestXml);
     }
-    qDebug() << "Streams recognized:";
-    for (MediaStreamInfo msi : playerConfig->streams) {
-        qDebug().noquote() << "url:" << msi.playableUrl << msi.resolution << msi.quality;
-        if (msi.quality == High720) { //TODO: check settings or best possible
-            emit urlParsed(playerConfig->requestedUrl.toString(), msi.playableUrl);
-        }
-    }
+    pickBestPossibleVideo(playerConfig);
 }
 
 QList<QPair<QString, int>> YoutubeVideoUrlParser::getCipherOperations(PlayerConfiguration *playerConfig)

@@ -115,64 +115,58 @@ ColumnLayout {
                 fieldList: attachment.fields
             }
 
-            Item {
+            AnimatedImage {
                 readonly property bool isThumb: attachment.thumb_url.toString().length > 0
                 readonly property bool isImage: attachment.imageUrl.toString().length > 0
-                visible: attachment !== null && (isThumb || isImage > 0)
+                visible: !youtubeLoader.visible && attachment !== null && (isThumb || isImage)
                 width: isThumb ? attachment.thumb_size.width : attachment.imageSize.width
-                height: isThumb ? attachment.thumb_size.height : attachment.imageSize.height
-                //                AnimatedImage {
-                //                    anchors.fill: parent
-                //                    asynchronous: true
-
-                //                    fillMode: Image.PreserveAspectFit
-                //                    // AnimatedImage does not support async image provider
-                //                    //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
-                //                    source: parent.isImage ? attachment.imageUrl : (parent.isThumb ? attachment.thumb_url : "")
-                //                    onStatusChanged: {
-                //                        if (status == Image.Error) {
-                //                            source = "qrc:/icons/no-image.png"
-                //                        }
-                //                    }
-                //                }
-                Item {
-                    anchors.fill: parent
-
-                    MediaPlayer {
-                        id: mediaplayer
-                        //source: "https://www.youtube.com/embed/QZE_mWONFaA?feature=oembed&autoplay=1&iv_load_policy=3"
+                height: visible ? (isThumb ? attachment.thumb_size.height : attachment.imageSize.height) : 0
+                asynchronous: true
+                fillMode: Image.Stretch
+                // AnimatedImage does not support async image provider
+                //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
+                source: visible ? (isImage ? attachment.imageUrl : (isThumb ? attachment.thumb_url : "")) : ""
+                onStatusChanged: {
+                    if (status == Image.Error) {
+                        console.warn("image load error:", source)
+                        source = "qrc:/icons/no-image.png"
                     }
-
-                    VideoOutput {
-                        anchors.fill: parent
-                        source: mediaplayer
-                    }
-
-                    MouseArea {
-                        id: playArea
-                        anchors.fill: parent
-                        onPressed: mediaplayer.play();
-                    }
-                    Connections {
-                        target: youtubeParser
-                        onUrlParsed: {
-                            console.log("youtube video parsed", videoUrl, attachment.from_url)
-                            if (attachment.from_url == videoUrl) {
-                                mediaplayer.source = playUrl
-                            }
+                }
+            }
+            Loader {
+                id: youtubeLoader
+                property string videoId
+                width: attachment.thumb_size.width
+                height: attachment.thumb_size.height
+                enabled: attachment.service_name === "YouTube"
+                visible: enabled
+                Connections {
+                    target: youtubeParser
+                    onUrlParsed: {
+                        if (youtubeLoader.videoId == videoId) {
+                            console.log("youtube video parsed:", videoId, attachment.from_url)
+                            youtubeLoader.setSource("qrc:/qml/components/VideoFileViewer.qml", {
+                                                        "directPlay":true,
+                                                        "adjustThumbSize":false,
+                                                        "previewThumb":attachment.thumb_url,
+                                                        "videoUrl":playUrl
+                                                    })
                         }
                     }
-
-                    Component.onCompleted: {
-                        if (attachment.from_url.toString().length > 0 && attachment.service_name === "YouTube") {
-                            console.log("requesting youtube url:", attachment.from_url)
-                            youtubeParser.requestUrl(attachment.from_url)
+                }
+                Component.onCompleted: {
+                    if (attachment.from_url.toString().length > 0 && attachment.service_name === "YouTube") {
+                        youtubeLoader.videoId = youtubeParser.parseVideoId(attachment.from_url)
+                        if (youtubeLoader.videoId !== "") {
+                            console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
+                            youtubeParser.requestVideoUrl(youtubeLoader.videoId)
                         }
                     }
                 }
             }
         }
     }
+
     RowLayout {
         id: footerRow
         spacing: Theme.paddingMedium
