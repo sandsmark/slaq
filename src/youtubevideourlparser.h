@@ -61,6 +61,7 @@ public:
 
     struct MediaStreamInfo {
         QUrl playableUrl;
+        qint64 contentLength;
         int itag = -1;
         YoutubeContainer container = UnknownContainer;
         YoutubeAudioCodec acodec = UnknownACodec;
@@ -75,6 +76,7 @@ public:
     struct PlayerConfiguration
     {
         bool succeed = false;
+        QUrl requestedUrl;
         QString videoId;
         bool isLiveStream = false;
         QString playerSourceUrl;
@@ -94,11 +96,9 @@ public slots:
 private slots:
     void onPlayerConfigChanged(PlayerConfiguration* playerConfig);
     QList<QPair<QString, int> > getCipherOperations(PlayerConfiguration* playerConfig);
-protected slots:
-    void finished(QNetworkReply *reply);
-    void error(QNetworkReply::NetworkError error);
+
 signals:
-    void urlParsed(const QString& videoUrl);
+    void urlParsed(const QString& videoUrl, const QUrl& playUrl);
     void playerConfigChanged(PlayerConfiguration* playerConfig);
 
 private:
@@ -110,15 +110,16 @@ private:
     QSize videoQualityToResolution(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
     YoutubeVideoUrlParser::YoutubeVideoQuality videoQualityFromLabel(const QString &label);
 
+    void checkContentLengthAndRedirections(const QUrl& url, MediaStreamInfo& msi);
+
 private:
-    QUrl m_url;
     QNetworkAccessManager manager;
     QRegularExpression m_youtubeIdRegular;
     QRegularExpression m_youtubeIdShort;
     QRegularExpression m_youtubeIdEmbed;
     QRegularExpression m_youtubePlayerEmbed;
 
-    QHash<QString, PlayerConfiguration*> m_youtubeRequests;
+    QHash<QUrl, PlayerConfiguration*> m_youtubeRequests;
     QHash<QString, QList<QPair<QString, int>> > m_cipherCache;
 };
 

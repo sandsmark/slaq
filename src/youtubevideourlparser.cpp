@@ -5,6 +5,7 @@
 #include <QStringList>
 #include <QtCore/QTimer>
 #include <QEventLoop>
+#include <QScopeGuard>
 
 #include <QMetaEnum>
 #include "youtubevideourlparser.h"
@@ -12,6 +13,27 @@
 /**
  * @brief based on https://tyrrrz.me/Blog/Reverse-engineering-YouTube
  */
+
+int httpHeadSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetworkReply::RawHeaderPair> &hdrPairs, int timeout = 20000) {
+    QTimer timer;
+    QEventLoop loop;
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.setSingleShot(true);
+    timer.start(timeout);
+    QNetworkRequest req = QNetworkRequest(url);
+    for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
+        req.setRawHeader(hdrPair.first, hdrPair.second);
+    }
+    QNetworkReply* reply = qnam->head(req);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+    if (reply->error() != QNetworkReply::NoError) {
+        qWarning() << "httpGetSync error:" << reply->error() << "querying" << url;
+    }
+    reply->deleteLater();
+    hdrPairs = reply->rawHeaderPairs();
+    return reply->error();
+}
 
 QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetworkReply::RawHeaderPair> &hdrPairs, int timeout = 20000) {
     QTimer timer;
@@ -21,6 +43,7 @@ QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetw
     timer.setSingleShot(true);
     timer.start(timeout);
     QNetworkRequest req = QNetworkRequest(url);
+    //req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
     for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
         req.setRawHeader(hdrPair.first, hdrPair.second);
     }
@@ -39,9 +62,9 @@ QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetw
 }
 
 void percentDecode(QString& str) {
-//    qDebug() << __PRETTY_FUNCTION__ << "\n\n\n" << str << "\n\n";
+    //    qDebug() << __PRETTY_FUNCTION__ << "\n\n\n" << str << "\n\n";
     const QByteArray& ba = QByteArray::fromPercentEncoding(str.toUtf8().replace("\\u0026", "&").replace("%2525", "%").replace("%25", "%"));
-//    qDebug() << ba1 << "\n\n" << ba << "\n\n\n";
+    //    qDebug() << ba1 << "\n\n" << ba << "\n\n\n";
     str = QString::fromUtf8(ba, ba.size());
 }
 
@@ -99,15 +122,94 @@ YoutubeVideoUrlParser::YoutubeVideoUrlParser(QObject *parent) : QObject(parent)
 
 void YoutubeVideoUrlParser::requestUrl(const QUrl &url)
 {
-    const QString _videoId = parseVideoId(url.toString());
     //qDebug() << __PRETTY_FUNCTION__ << url << _videoId;
 
     // 1st: get video embed page
-    // TODO: implement video watch page request
     PlayerConfiguration* pc = new PlayerConfiguration;
-    pc->videoId = _videoId;
-    m_youtubeRequests[_videoId] = pc;
-    QNetworkRequest req = QNetworkRequest(QString("https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(_videoId));
+
+    pc->succeed = false;
+    pc->requestedUrl = url;
+    pc->videoId = parseVideoId(url.toString());
+    m_youtubeRequests[url] = pc;
+#if 0
+    // emit player configuration in any case
+    auto cleanup = qScopeGuard([this, &pc] {
+        emit playerConfigChanged(pc);
+    });
+    QList<QNetworkReply::RawHeaderPair> hdrPairs;
+    const QUrl& _url1 =  QStringLiteral("https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(pc->videoId);
+    const QByteArray& data = httpGetSync(_url1, &manager, hdrPairs);
+
+    if (data.size() <= 0) {
+        qWarning().noquote() << "Youtube error. Cannot Get video info from" << _url1;
+        return;
+    }
+
+    QRegularExpressionMatch embedMath = m_youtubePlayerEmbed.match(QString(data));
+    if (!embedMath.hasMatch()) {
+        qWarning().noquote() << "Youtube error. Cant parse youtube data from" << _url1;
+        return;
+    }
+
+    const QString& embedJson = embedMath.captured("Json").chopped(1);
+    QJsonParseError error;
+    QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
+
+    if (error.error != QJsonParseError::NoError) {
+        qWarning() << "Youtube error. Parsing youtube json data" << error.errorString();
+        return;
+    }
+
+    QJsonObject obj = document.object();
+    const QString& _sts = obj.value("sts").toString();
+    const QString& _playerSourceUrl = "https://youtube.com" + obj.value("assets").toObject().value("js").toString();
+    pc->playerSourceUrl = _playerSourceUrl;
+    //qDebug() << __PRETTY_FUNCTION__ << _sts << _playerSourceUrl;
+    const QUrl& eurl("https://youtube.googleapis.com/v/" + pc->videoId);
+    const QUrl& _url2(QString("https://www.youtube.com/get_video_info?video_id=%1&el=embedded&sts=%2&eurl=%3&hl=en").
+                      arg(pc->videoId).arg(_sts).arg(eurl.toEncoded().data()));
+    hdrPairs = QList<QNetworkReply::RawHeaderPair>();
+    const QByteArray& data1 = httpGetSync(_url2, &manager, hdrPairs);
+
+    if (data1.size() <= 0) {
+        qWarning().noquote() << "Youtube error. Cannot get video info from" << _url2;
+        return;
+    }
+    // now need to extrcat video_id value
+    QUrlQuery parser(data1);
+    if (!parser.hasQueryItem(QStringLiteral("video_id"))) {
+        qWarning() << "Youtube error. No video_id invideo info dic!";
+        return;
+    }
+    const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
+                                                      replace("\\u0026", "&").toUtf8());
+    document = QJsonDocument::fromJson(plResp.toUtf8(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        qWarning().noquote() << "Youtube error. Error parsing player_response json" << error.error << error.errorString() << plResp;
+        return;
+    }
+    //qDebug() << "player response" << plResp;
+    const QJsonObject& obj1 = document.object();
+    const QJsonObject& playabilityStatusO = obj1.value(QStringLiteral("playabilityStatus")).toObject();
+    const QJsonObject& streamingDataO = obj1.value(QStringLiteral("streamingData")).toObject();
+    //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
+    pc->succeed = true;
+    pc->isLiveStream = obj1.value("videoDetails").toObject().value("isLive").toBool(false);
+    int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
+    pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
+    //qDebug() << _expsecs << pc->validUntil;
+    if (pc->isLiveStream) {
+        pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
+    } else {
+        pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
+        pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
+        pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
+    }
+
+    return;
+#else
+    //lambdas
+    QNetworkRequest req = QNetworkRequest(QString("https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(pc->videoId));
     req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
     QNetworkReply* embedReply = manager.get(req);
     QObject::connect(embedReply, &QNetworkReply::finished, [this, embedReply, pc]() {
@@ -154,15 +256,13 @@ void YoutubeVideoUrlParser::requestUrl(const QUrl &url)
                             pc->isLiveStream = obj.value("videoDetails").toObject().value("isLive").toBool(false);
                             int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
                             pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
-                            qDebug() << _expsecs << pc->validUntil;
+                            //qDebug() << _expsecs << pc->validUntil;
                             if (pc->isLiveStream) {
                                 pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
                             } else {
                                 pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
                                 pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
-                                //percentDecode(pc->muxedStreamInfosUrlEncoded);
                                 pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
-                                //percentDecode(pc->adaptiveStreamInfosUrlEncoded);
                             }
                         } else {
                             qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
@@ -174,13 +274,15 @@ void YoutubeVideoUrlParser::requestUrl(const QUrl &url)
                 });
             } else {
                 qWarning().noquote() << "Error parsing embed json" << error.error << error.errorString() << embedJson;
+                emit playerConfigChanged(pc);
             }
         } else {
             qWarning() << "cant parse youtube player embed" << data;
+            emit playerConfigChanged(pc);
         }
         embedReply->deleteLater();
     });
-
+#endif
 }
 
 /**
@@ -202,6 +304,26 @@ QString YoutubeVideoUrlParser::parseVideoId(const QString& videoUrl)
         return match.captured(1);
     }
     return QString();
+}
+
+void YoutubeVideoUrlParser::checkContentLengthAndRedirections(const QUrl &url, YoutubeVideoUrlParser::MediaStreamInfo &msi)
+{
+    // make request anyway to check for redirected playable url
+    QList<QNetworkReply::RawHeaderPair> hdrPairs;
+    httpGetSync(url, &manager, hdrPairs);
+    for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
+        if (hdrPair.first == "Content-Length") {
+            qint64 _contentLength = hdrPair.second.toLongLong();
+            if (_contentLength != msi.contentLength && _contentLength > 0)
+                msi.contentLength = _contentLength;
+        }
+        if (hdrPair.first == "Location") {
+            //redirected url
+            msi.playableUrl = QUrl(hdrPair.second);
+            qDebug() << "u2be redirected" << msi.playableUrl;
+        }
+    }
+    qDebug() << "content length" << msi.contentLength;
 }
 
 void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerConfig)
@@ -250,24 +372,15 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             _urlQuery.addQueryItem(signatureParameter, signature);
             _url.setQuery(_urlQuery);
         }
-
+        MediaStreamInfo msi;
+        msi.playableUrl = _url;
         // Try to extract content length, otherwise get it manually
-        int contentLength = QRegularExpression("clen=(\\d+)").match(url).captured(1).toInt();
-        qDebug() << "content length from url" << contentLength << url;
-        if (contentLength <= 0) {
-            QList<QNetworkReply::RawHeaderPair> hdrPairs;
-            httpGetSync(_url, &manager, hdrPairs);
-            for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
-                if (hdrPair.first == "Content-Length") {
-                    contentLength = hdrPair.second.toInt();
-                    break;
-                }
-            }
-            qDebug() << "content length from header" << contentLength;
-            // If content length is still not available - stream is gone or faulty
-            if (contentLength <= 0)
-                continue;
-        }
+        msi.contentLength = QRegularExpression("clen=(\\d+)").match(url).captured(1).toLongLong();
+        qDebug() << "content length from url" << msi.contentLength << url;
+        checkContentLengthAndRedirections(_url, msi);
+        // If content length is still not available - stream is gone or faulty
+        if (msi.contentLength <= 0)
+            continue;
         QString containerType = streamInfoDic.queryItemValue("type", QUrl::FullyDecoded);
         percentDecode(containerType);
         const QString& containerRaw = midInner(containerType, "/", ";");
@@ -277,8 +390,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         const QString& videoEncodingRaw = codecsList.first();
         //qDebug().noquote() << "youtube encodings:" << audioEncodingRaw << videoEncodingRaw << codecsListRaw << containerType << containerRaw;
 
-        MediaStreamInfo msi;
-        msi.playableUrl = _url;
+
         msi.itag = itag;
         msi.container = parseContainer(containerRaw);
         msi.acodec = parseAudioCodec(audioEncodingRaw);
@@ -319,22 +431,13 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         }
         msi.playableUrl = _url;
         // Try to extract content length, otherwise get it manually
-        int contentLength = streamInfoDic.queryItemValue("clen", QUrl::FullyDecoded).toInt();
-        qDebug() << "content length from url" << contentLength << url;
-        if (contentLength <= 0) {
-            QList<QNetworkReply::RawHeaderPair> hdrPairs;
-            httpGetSync(_url, &manager, hdrPairs);
-            for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
-                if (hdrPair.first == "Content-Length") {
-                    contentLength = hdrPair.second.toInt();
-                    break;
-                }
-            }
-            qDebug() << "content length from header" << contentLength;
-            // If content length is still not available - stream is gone or faulty
-            if (contentLength <= 0)
-                continue;
-        }
+        msi.contentLength = streamInfoDic.queryItemValue("clen", QUrl::FullyDecoded).toLongLong();
+        qDebug() << "content length from url" << msi.contentLength << url;
+        // make request anyway to check for redirected playable url
+        checkContentLengthAndRedirections(_url, msi);
+        // If content length is still not available - stream is gone or faulty
+        if (msi.contentLength <= 0)
+            continue;
         QString containerType = streamInfoDic.queryItemValue("type", QUrl::FullyDecoded);
         percentDecode(containerType);
         const QString& containerRaw = midInner(containerType, "/", ";");
@@ -396,7 +499,10 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
     }
     qDebug() << "Streams recognized:";
     for (MediaStreamInfo msi : playerConfig->streams) {
-        qDebug().noquote() << "url:" << msi.playableUrl;
+        qDebug().noquote() << "url:" << msi.playableUrl << msi.resolution << msi.quality;
+        if (msi.quality == High720) { //TODO: check settings or best possible
+            emit urlParsed(playerConfig->requestedUrl.toString(), msi.playableUrl);
+        }
     }
 }
 
@@ -472,43 +578,6 @@ QList<QPair<QString, int>> YoutubeVideoUrlParser::getCipherOperations(PlayerConf
     }
     m_cipherCache[playerConfig->playerSourceUrl] = operations;
     return operations;
-}
-
-void YoutubeVideoUrlParser::finished(QNetworkReply *reply)
-{
-    qDebug() << __PRETTY_FUNCTION__ << reply->error();
-    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    reply->deleteLater();
-    return;
-    if (reply->error() == QNetworkReply::NoError/*statusCode >= 200 && statusCode <= 302*/) {
-        // This block is based on file youtube.lua from VideoLAN project
-        QHash<int, QString> stream_map;
-        QRegExp re("\"url_encoded_fmt_stream_map\":\"([^\"]*)\"", Qt::CaseInsensitive, QRegExp::RegExp2);
-        QRegExp urls("itag=(\\d+),url=(.*)");
-
-        if (re.indexIn(reply->readAll()) != -1) {
-            QString result = re.cap(1);
-            for (const QString& line : result.split("\\u0026")) {
-                if (urls.indexIn(QUrl::fromPercentEncoding(line.toLocal8Bit())) != -1) {
-                    stream_map[urls.cap(1).toInt()] = urls.cap(2);
-                }
-            }
-
-            // XXX hardcoded
-            QList<QString> values = stream_map.values();
-            qDebug() << "YoutubeVideoUrlParser" << stream_map;
-            emit urlParsed(values.last());
-        } else {
-            qWarning() << "YoutubeVideoUrlParser no match";
-        }
-    } else {
-        qDebug() << "youtube status code:" << statusCode;
-    }
-}
-
-void YoutubeVideoUrlParser::error(QNetworkReply::NetworkError error)
-{
-    qDebug() << "youtube error:" << error;
 }
 
 YoutubeVideoUrlParser::YoutubeContainer YoutubeVideoUrlParser::parseContainer(const QString &container)
@@ -706,5 +775,5 @@ YoutubeVideoUrlParser::YoutubeVideoQuality YoutubeVideoUrlParser::videoQualityFr
         return High4320;
 
     // Unrecognized
-   return UnknownQuality;
+    return UnknownQuality;
 }
