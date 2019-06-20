@@ -6,17 +6,7 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 
-struct PlayerConfiguration
-{
-    bool succeed = false;
-    QString videoId;
-    bool isLiveStream = false;
-    QString playerSourceUrl;
-    QString manifestUrl;
-    QString muxedStreamInfosUrlEncoded;
-    QString adaptiveStreamInfosUrlEncoded;
-    QDateTime validUntil;
-};
+
 
 class YoutubeVideoUrlParser : public QObject
 {
@@ -69,6 +59,30 @@ public:
     };
     Q_ENUM(YoutubeVideoQuality)
 
+    struct MediaStreamInfo {
+        int itag = -1;
+        YoutubeContainer container = UnknownContainer;
+        YoutubeAudioCodec acodec = UnknownACodec;
+        YoutubeVideoCodec vcodec = UnknownVCodec;
+        YoutubeVideoQuality quality = UnknownQuality;
+        QString videoQualityLabel;
+        QSize resolution;
+        int framerate = -1;
+        int bitrate = -1;
+    };
+
+    struct PlayerConfiguration
+    {
+        bool succeed = false;
+        QString videoId;
+        bool isLiveStream = false;
+        QString playerSourceUrl;
+        QString manifestUrl;
+        QString muxedStreamInfosUrlEncoded;
+        QString adaptiveStreamInfosUrlEncoded;
+        QDateTime validUntil;
+        QMap<int, MediaStreamInfo> streams;
+    };
 
     explicit YoutubeVideoUrlParser(QObject *parent = nullptr);
 
@@ -78,7 +92,7 @@ public slots:
 
 private slots:
     void onPlayerConfigChanged(PlayerConfiguration* playerConfig);
-    QList<QPair<QString, int> > getCypherOperations(PlayerConfiguration* playerConfig);
+    QList<QPair<QString, int> > getCipherOperations(PlayerConfiguration* playerConfig);
 protected slots:
     void finished(QNetworkReply *reply);
     void error(QNetworkReply::NetworkError error);
@@ -88,6 +102,13 @@ signals:
 
 private:
     YoutubeContainer parseContainer(const QString& container);
+    YoutubeVideoUrlParser::YoutubeAudioCodec parseAudioCodec(const QString &codec);
+    YoutubeVideoUrlParser::YoutubeVideoCodec parseVideoCodec(const QString &codec);
+    YoutubeVideoUrlParser::YoutubeVideoQuality itagToQuality(int itag);
+    QString videoQualityToLabel(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
+    QSize videoQualityToResolution(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
+    YoutubeVideoUrlParser::YoutubeVideoQuality videoQualityFromLabel(const QString &label);
+
 private:
     QUrl m_url;
     QNetworkAccessManager manager;
@@ -97,11 +118,7 @@ private:
     QRegularExpression m_youtubePlayerEmbed;
 
     QHash<QString, PlayerConfiguration*> m_youtubeRequests;
-    YoutubeVideoUrlParser::YoutubeAudioCodec parseAudioCodec(const QString &codec);
-    YoutubeVideoUrlParser::YoutubeVideoCodec parseVideoCodec(const QString &codec);
-    YoutubeVideoUrlParser::YoutubeVideoQuality itagToQuality(int itag);
-    QString videoQualityToLabel(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
-    QSize videoQualityToResolution(YoutubeVideoUrlParser::YoutubeVideoQuality quality);
+    QHash<QString, QList<QPair<QString, int>> > m_cipherCache;
 };
 
 

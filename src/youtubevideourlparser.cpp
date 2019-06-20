@@ -39,10 +39,9 @@ QByteArray httpGetSync(const QUrl& url, QNetworkAccessManager* qnam, QList<QNetw
 }
 
 void percentDecode(QString& str) {
-    qDebug() << __PRETTY_FUNCTION__ << "\n\n\n" << str << "\n\n";
-    QByteArray ba1 = str.toUtf8().replace("\\u0026", "&").replace("%2525", "%").replace("%25", "%");
-    QByteArray ba = QByteArray::fromPercentEncoding(ba1);
-    qDebug() << ba1 << "\n\n" << ba << "\n\n\n";
+//    qDebug() << __PRETTY_FUNCTION__ << "\n\n\n" << str << "\n\n";
+    const QByteArray& ba = QByteArray::fromPercentEncoding(str.toUtf8().replace("\\u0026", "&").replace("%2525", "%").replace("%25", "%"));
+//    qDebug() << ba1 << "\n\n" << ba << "\n\n\n";
     str = QString::fromUtf8(ba, ba.size());
 }
 
@@ -207,6 +206,8 @@ QString YoutubeVideoUrlParser::parseVideoId(const QString& videoUrl)
 
 void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerConfig)
 {
+    if (!playerConfig)
+        return;
     qDebug() << "Player config:"
              << "is success:" << playerConfig->succeed
              << playerConfig->videoId
@@ -220,21 +221,23 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         qWarning() << "Player config exctraction was not succeed";
         return;
     }
+
+    // get muxed stream infos
     const QStringList& muxedStreamInfoList = playerConfig->muxedStreamInfosUrlEncoded.split(",");
     for (const auto muxedStreamInfo : muxedStreamInfoList) {
         qDebug() << "muxed stream info" << muxedStreamInfo;
         QUrlQuery streamInfoDic(muxedStreamInfo);
         // Extract info
-        int itag = streamInfoDic.queryItemValue("itag").toInt();
-        QString url = streamInfoDic.queryItemValue("url");
+        int itag = streamInfoDic.queryItemValue("itag", QUrl::FullyDecoded).toInt();
+        QString url = streamInfoDic.queryItemValue("url", QUrl::FullyDecoded);
         percentDecode(url);
         // Decipher signature if needed
-        QString signature = streamInfoDic.queryItemValue("s");
+        QString signature = streamInfoDic.queryItemValue("s", QUrl::FullyDecoded);
         qDebug() << "signature: " << signature;
         QUrl _url = url;//QUrl::fromPercentEncoding(url.toUtf8());
         if (!signature.isEmpty()) {
             // Get cipher operations
-            QList<QPair<QString, int>> cipherOperations = getCypherOperations(playerConfig);
+            QList<QPair<QString, int>> cipherOperations = getCipherOperations(playerConfig);
             // Decipher signature
             decypher(signature, cipherOperations);
             // Set the corresponding parameter in the URL
@@ -252,9 +255,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         if (contentLength <= 0) {
             QList<QNetworkReply::RawHeaderPair> hdrPairs;
             httpGetSync(_url, &manager, hdrPairs);
-            qDebug() << "headers size" << hdrPairs.size();
             for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
-                qDebug() << hdrPair.first << hdrPair.second;
                 if (hdrPair.first == "Content-Length") {
                     contentLength = hdrPair.second.toInt();
                     break;
@@ -265,37 +266,113 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             if (contentLength <= 0)
                 continue;
         }
-        QString containerType = streamInfoDic.queryItemValue("type");
+        QString containerType = streamInfoDic.queryItemValue("type", QUrl::FullyDecoded);
         percentDecode(containerType);
         const QString& containerRaw = midInner(containerType, "/", ";");
         const QString& codecsListRaw = midInner(containerType, "codecs=\"", "\"");
         const QStringList& codecsList = codecsListRaw.split(",+");
         const QString& audioEncodingRaw = codecsList.last();
         const QString& videoEncodingRaw = codecsList.first();
-        qDebug().noquote() << "youtube encodings:" << audioEncodingRaw << videoEncodingRaw << codecsListRaw << containerType << containerRaw;
+        //qDebug().noquote() << "youtube encodings:" << audioEncodingRaw << videoEncodingRaw << codecsListRaw << containerType << containerRaw;
 
-        YoutubeContainer container = parseContainer(containerRaw);
-        YoutubeAudioCodec acodec = parseAudioCodec(audioEncodingRaw);
-        YoutubeVideoCodec vcodec = parseVideoCodec(videoEncodingRaw);
-        YoutubeVideoQuality quality = itagToQuality(itag);
-        QString videoQualityLabel = videoQualityToLabel(quality);
-        QSize resolution = videoQualityToResolution(quality);
-        /*
-        // Add to list
-        muxedStreamInfoMap[itag] = new MuxedStreamInfo(itag, url, container, contentLength, audioEncoding, videoEncoding,
-            videoQualityLabel, videoQuality, resolution);
-*/
+        MediaStreamInfo msi;
+        msi.itag = itag;
+        msi.container = parseContainer(containerRaw);
+        msi.acodec = parseAudioCodec(audioEncodingRaw);
+        msi.vcodec = parseVideoCodec(videoEncodingRaw);
+        msi.quality = itagToQuality(itag);
+        msi.videoQualityLabel = videoQualityToLabel(msi.quality);
+        msi.resolution = videoQualityToResolution(msi.quality);
+        playerConfig->streams[itag] = msi;
     }
+
+    // Get adaptive stream infos
+    const QStringList& adaptiveStreamInfoList = playerConfig->adaptiveStreamInfosUrlEncoded.split(",");
+    //qDebug().noquote() << "adaptiveStreamInfoList" << adaptiveStreamInfoList;
+
+    for (const auto adaptiveStreamInfo : adaptiveStreamInfoList) {
+        QUrlQuery streamInfoDic(adaptiveStreamInfo);
+        MediaStreamInfo msi;
+        msi.itag = streamInfoDic.queryItemValue("itag", QUrl::FullyDecoded).toInt();
+        QString url = streamInfoDic.queryItemValue("url", QUrl::FullyDecoded);
+        percentDecode(url);
+        msi.bitrate = streamInfoDic.queryItemValue("bitrate", QUrl::FullyDecoded).toInt();
+        QString signature = streamInfoDic.queryItemValue("s", QUrl::FullyDecoded);
+        qDebug() << "signature: " << signature;
+        QUrl _url = url;
+
+        if (!signature.isEmpty()) {
+            // Get cipher operations
+            QList<QPair<QString, int>> cipherOperations = getCipherOperations(playerConfig);
+            // Decipher signature
+            decypher(signature, cipherOperations);
+            // Set the corresponding parameter in the URL
+            const QString& signatureParameter = streamInfoDic.queryItemValue("sp").isEmpty() ? "signature" : streamInfoDic.queryItemValue("sp");
+
+            // replace query with new signature
+            QUrlQuery _urlQuery(_url.query());
+            _urlQuery.addQueryItem(signatureParameter, signature);
+            _url.setQuery(_urlQuery);
+        }
+        // Try to extract content length, otherwise get it manually
+        int contentLength = streamInfoDic.queryItemValue("clen", QUrl::FullyDecoded).toInt();
+        qDebug() << "content length from url" << contentLength << url;
+        if (contentLength <= 0) {
+            QList<QNetworkReply::RawHeaderPair> hdrPairs;
+            httpGetSync(_url, &manager, hdrPairs);
+            for (QNetworkReply::RawHeaderPair hdrPair : hdrPairs) {
+                if (hdrPair.first == "Content-Length") {
+                    contentLength = hdrPair.second.toInt();
+                    break;
+                }
+            }
+            qDebug() << "content length from header" << contentLength;
+            // If content length is still not available - stream is gone or faulty
+            if (contentLength <= 0)
+                continue;
+        }
+        QString containerType = streamInfoDic.queryItemValue("type", QUrl::FullyDecoded);
+        percentDecode(containerType);
+        const QString& containerRaw = midInner(containerType, "/", ";");
+        msi.container = parseContainer(containerRaw);
+        const QString& codecRaw = midInner(containerType, "codecs=\"", "\"");
+        if (containerType.startsWith("audio/", Qt::CaseInsensitive)) {
+            // audio only
+            msi.acodec = parseAudioCodec(codecRaw);
+            //qDebug() << "audio only" << msi.acodec << msi.container;
+        } else {
+            // video only
+            // Extract video encoding
+            msi.vcodec = codecRaw.compare("unknown", Qt::CaseInsensitive) == 0 ? Av1 : parseVideoCodec(codecRaw);
+            // Extract video quality label and video quality
+            const QString& videoQualityLabel = streamInfoDic.queryItemValue("quality_label", QUrl::FullyDecoded);
+            msi.quality = videoQualityFromLabel(videoQualityLabel);
+
+            // Extract resolution
+            const QStringList& sizeList = streamInfoDic.queryItemValue("size", QUrl::FullyDecoded).split("x");
+            if (sizeList.size() == 2) {
+                int width = sizeList.at(0).toInt();
+                int height = sizeList.at(1).toInt();
+                msi.resolution = QSize(width, height);
+            }
+            // Extract framerate
+            msi.framerate = streamInfoDic.queryItemValue("fps", QUrl::FullyDecoded).toInt();
+            //qDebug() << "video only" << msi.vcodec << msi.container << msi.quality << msi.resolution << "fps:" << msi.framerate << streamInfoDic.toString(QUrl::FullyDecoded);
+        }
+        // distinguish audio only or video only bycheck audio or video codec is set
+        if (msi.acodec != UnknownACodec || msi.vcodec != UnknownVCodec)
+            playerConfig->streams[msi.itag] = msi;
+    }
+
 }
 
-QList<QPair<QString, int>> YoutubeVideoUrlParser::getCypherOperations(PlayerConfiguration *playerConfig)
+QList<QPair<QString, int>> YoutubeVideoUrlParser::getCipherOperations(PlayerConfiguration *playerConfig)
 {
-    // TODO: implement caching
-    /*
+    if (!playerConfig)
+        return QList<QPair<QString, int>>();
     // If already in cache - return
-    if (_cipherOperationsCache.TryGetValue(playerSourceUrl, out var cached))
-        return cached;
-*/
+    if (!m_cipherCache.contains(playerConfig->playerSourceUrl))
+        return m_cipherCache.value(playerConfig->playerSourceUrl);
 
     QList<QPair<QString, int>> operations;
     QList<QNetworkReply::RawHeaderPair> _hdrPairs;
@@ -359,6 +436,7 @@ QList<QPair<QString, int>> YoutubeVideoUrlParser::getCypherOperations(PlayerConf
             operations.append(QPair<QString, int>("swap", index));
         }
     }
+    m_cipherCache[playerConfig->playerSourceUrl] = operations;
     return operations;
 }
 
@@ -556,4 +634,43 @@ QSize YoutubeVideoUrlParser::videoQualityToResolution(YoutubeVideoUrlParser::You
     };
 
     return videoQualityToResolutionMap.value(quality, QSize(0, 0));
+}
+
+YoutubeVideoUrlParser::YoutubeVideoQuality YoutubeVideoUrlParser::videoQualityFromLabel(const QString& label)
+{
+    if (label.startsWith("144p", Qt::CaseInsensitive))
+        return Low144;
+
+    if (label.startsWith("240p", Qt::CaseInsensitive))
+        return Low240;
+
+    if (label.startsWith("360p", Qt::CaseInsensitive))
+        return Medium360;
+
+    if (label.startsWith("480p", Qt::CaseInsensitive))
+        return Medium480;
+
+    if (label.startsWith("720p", Qt::CaseInsensitive))
+        return High720;
+
+    if (label.startsWith("1080p", Qt::CaseInsensitive))
+        return High1080;
+
+    if (label.startsWith("1440p", Qt::CaseInsensitive))
+        return High1440;
+
+    if (label.startsWith("2160p", Qt::CaseInsensitive))
+        return High2160;
+
+    if (label.startsWith("2880p", Qt::CaseInsensitive))
+        return High2880;
+
+    if (label.startsWith("3072p", Qt::CaseInsensitive))
+        return High3072;
+
+    if (label.startsWith("4320p", Qt::CaseInsensitive))
+        return High4320;
+
+    // Unrecognized
+   return UnknownQuality;
 }
