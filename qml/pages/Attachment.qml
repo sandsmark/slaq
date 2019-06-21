@@ -1,5 +1,6 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.4
+import QtMultimedia 5.9
 import QtQuick.Layouts 1.3
 import ".."
 import "../components"
@@ -47,7 +48,7 @@ ColumnLayout {
 
         ColumnLayout {
             id: attachmentColumn
-            Layout.fillWidth: true
+            Layout.fillWidth: false
             spacing: Theme.paddingSmall
 
             RowLayout {
@@ -114,26 +115,75 @@ ColumnLayout {
                 fieldList: attachment.fields
             }
 
-            Item {
-                width: attachment.imageSize.width
-                height: attachment.imageSize.height
-                AnimatedImage {
-                    anchors.fill: parent
-                    asynchronous: true
-                    visible: attachment !== null && attachment.imageUrl.toString().length > 0
-                    fillMode: Image.PreserveAspectFit
-                    // AnimatedImage does not support async image provider
-                    //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
-                    source: visible ? attachment.imageUrl : ""
-                    onStatusChanged: {
-                        if (status == Image.Error) {
-                            source = "qrc:/icons/no-image.png"
+            AnimatedImage {
+                readonly property bool isThumb: attachment.thumb_url.toString().length > 0
+                readonly property bool isImage: attachment.imageUrl.toString().length > 0
+                visible: !youtubeLoader.visible && attachment !== null && (isThumb || isImage)
+                width: isThumb ? attachment.thumb_size.width : attachment.imageSize.width
+                height: visible ? (isThumb ? attachment.thumb_size.height : attachment.imageSize.height) : 0
+                asynchronous: true
+                fillMode: Image.Stretch
+                // AnimatedImage does not support async image provider
+                //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
+                source: visible ? (isImage ? attachment.imageUrl : (isThumb ? attachment.thumb_url : "")) : ""
+                onStatusChanged: {
+                    if (status == Image.Error) {
+                        console.warn("image load error:", source)
+                        source = "qrc:/icons/no-image.png"
+                    }
+                }
+            }
+            Loader {
+                id: youtubeLoader
+                property string videoId
+                width: attachment.thumb_size.width
+                height: attachment.thumb_size.height
+                enabled: attachment.service_name === "YouTube"
+                visible: enabled
+                active: teamRoot.currentChannelId == channel.id && teamId === teamsSwipe.currentItem.item.teamId
+                Timer {
+                    id: expirationTimer
+                    onTriggered: {
+                        youtubeLoader.source = undefined
+                        if (youtubeLoader.videoId !== "") {
+                            console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
+                            youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                        }
+                    }
+                }
+
+                Connections {
+                    target: youtubeParser
+                    onUrlParsed: {
+                        if (youtubeLoader.videoId == videoId) {
+                            console.log("youtube video parsed:", videoId, attachment.from_url)
+                            expirationTimer.interval = youtubeParser.expiredIn(youtubeLoader.videoId)*1000
+                            expirationTimer.start()
+                            youtubeLoader.setSource("qrc:/qml/components/VideoFileViewer.qml", {
+                                                        "directPlay":true,
+                                                        "adjustThumbSize":false,
+                                                        "previewThumb":attachment.thumb_url,
+                                                        "videoUrl":playUrl
+                                                    })
+                            //console.log("playably url", playUrl)
+                        }
+                    }
+                }
+                Component.onCompleted: {
+                    if (attachment.from_url.toString().length > 0 && attachment.service_name === "YouTube") {
+                        youtubeLoader.videoId = youtubeParser.parseVideoId(attachment.from_url)
+                        if (youtubeLoader.videoId !== "") {
+                            console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
+                            youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                        } else {
+                            console.warn("Youtube error. Cannot parse youtube link", attachment.from_url)
                         }
                     }
                 }
             }
         }
     }
+
     RowLayout {
         id: footerRow
         spacing: Theme.paddingMedium

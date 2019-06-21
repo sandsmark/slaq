@@ -21,6 +21,7 @@
 #include "slaqtext.h"
 #include "UsersModel.h"
 #include "qtsystemexceptionhandler.h"
+#include "youtubevideourlparser.h"
 
 int main(int argc, char *argv[])
 {
@@ -111,8 +112,10 @@ int main(int argc, char *argv[])
 
     DownloadManager downloadManager;
     FileModel fileModel;
+    YoutubeVideoUrlParser youtubeParser;
     engine.rootContext()->setContextProperty(QStringLiteral("fileModel"), &fileModel);
     engine.rootContext()->setContextProperty(QStringLiteral("downloadManager"), &downloadManager);
+    engine.rootContext()->setContextProperty(QStringLiteral("youtubeParser"), &youtubeParser);
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";

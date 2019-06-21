@@ -847,6 +847,7 @@ Attachment::~Attachment()
 
 void Attachment::setData(const QJsonObject &data)
 {
+    qDebug().noquote() << "attach:" << QJsonDocument(data).toJson();
     titleLink = QUrl(data.value(QStringLiteral("title_link")).toString());
     title = data.value(QStringLiteral("title")).toString();
     pretext = data.value(QStringLiteral("pretext")).toString();
@@ -857,13 +858,20 @@ void Attachment::setData(const QJsonObject &data)
     author_link = QUrl(data.value(QStringLiteral("author_link")).toString());
     author_icon = QUrl(data.value(QStringLiteral("author_icon")).toString());
     thumb_url = QUrl(data.value(QStringLiteral("thumb_url")).toString());
+    thumb_size = QSize(data.value("thumb_width").toInt(), data.value("thumb_height").toInt());
     footer = data.value(QStringLiteral("footer")).toString();
     footer_icon = QUrl(data.value(QStringLiteral("footer_icon")).toString());
     m_isAnimated = data.value(QStringLiteral("is_animated")).toBool(false);
+    service_name = data.value(QStringLiteral("service_name")).toString();
+    service_url = QUrl(data.value(QStringLiteral("service_url")).toString());
+    from_url = QUrl(data.value(QStringLiteral("from_url")).toString());
+    original_url = QUrl(data.value(QStringLiteral("original_url")).toString());
+    video_html = data.value(QStringLiteral("video_html")).toString();
+    video_html_size = QSize(data.value("video_html_width").toInt(), data.value("video_html_height").toInt());
 
     if (author_name.isEmpty()) {
         //try service name instead
-        author_name = data.value(QStringLiteral("service_name")).toString();
+        author_name = service_name;
     }
     if (author_icon.isEmpty()) {
         author_icon = QUrl(data.value(QStringLiteral("service_icon")).toString());
@@ -877,8 +885,9 @@ void Attachment::setData(const QJsonObject &data)
         title = QString("<a href=\"%1\">%2</a>").arg(titleLink.toString()).arg(title);
     }
 
-    imageSize = QSize(data["image_width"].toInt(), data["image_height"].toInt());
-    imageUrl = QUrl(data["image_url"].toString());
+
+    imageSize = QSize(data.value("image_width").toInt(), data.value("image_height").toInt());
+    imageUrl = QUrl(data.value("image_url").toString());
     ts = QDateTime::fromSecsSinceEpoch(data.value(QStringLiteral("ts")).toInt());
 
     color = data.value(QStringLiteral("color")).toString();

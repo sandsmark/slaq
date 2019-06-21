@@ -1,34 +1,37 @@
-import QtQuick 2.11
-import QtMultimedia 5.9
-import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.3
+import QtQuick 2.12
+import QtMultimedia 5.12
+import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
 import Qt.labs.platform 1.0 as Platform
 import ".."
 Item {
     id: videoItem
+    property url previewThumb
+    property url videoUrl
+    // set if playbacks from Slack servers, which requires extra headers
+    property bool directPlay: false
+    property bool adjustThumbSize: true
     Image {
         id: thumbVideoImage
         anchors.fill: parent
         asynchronous: true
         fillMode: Image.PreserveAspectFit
-        source: fileshare.thumb_video != "" ?
-                    "team://" + teamId + "/" + fileshare.thumb_video :
-                    "qrc:/icons/video-thumbnail.png"
-        visible: video.playbackState === MediaPlayer.StoppedState
+        source: previewThumb
+        visible: video.playbackState === MediaPlayer.StoppedState && previewThumb.toString().length > 0
         onStatusChanged: {
-            if (status === Image.Ready) {
+            if (status === Image.Ready && videoItem.adjustThumbSize) {
                 videoItem.width = sourceSize.width - Theme.paddingLarge * 4  > 360 ?
                             360 : sourceSize.width
                 videoItem.height = width / (sourceSize.width / sourceSize.height)
             }
         }
-        onSourceChanged: console.log("thumb video source:" + source + ":")
+        onSourceChanged: console.log("thumb video source:" + source)
     }
 
     Connections {
         target: downloadManager
         onFinished: {
-            if (url === fileshare.url_private_download) {
+            if (url === videoUrl) {
                 console.log("set temp source", url, fileName)
                 video.source = "file://"+fileName
                 playButton.enabled = true
@@ -86,6 +89,7 @@ Item {
 
             Button {
                 id: playButton
+                enabled: videoUrl.toString().length > 0
                 text: video.playbackState === MediaPlayer.PlayingState ? "▯▯" : "▷"
                 onClicked: videoItem.clicked()
             }
@@ -95,7 +99,10 @@ Item {
     function clicked() {
         if (video.playbackState !== MediaPlayer.PlayingState) {
             if (video.playbackState === MediaPlayer.StoppedState) {
-                SlackClient.setMediaSource(video, teamId, fileshare.url_private_download)
+                if (directPlay)
+                    video.source = videoUrl
+                else
+                    SlackClient.setMediaSource(video, teamId, videoUrl)
             }
             video.play()
         } else {
