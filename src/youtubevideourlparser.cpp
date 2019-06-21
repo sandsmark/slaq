@@ -517,7 +517,6 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
 
                         //qDebug() << "playable url" << _msi.playableUrl;
                     }
-                    //qDebug() << dashXml.name();
                 }
                 if (_isvalid) {
                     if (_isaudio)
