@@ -155,6 +155,24 @@ void YoutubeVideoUrlParser::dump(PlayerConfiguration* pc) {
     }
 }
 
+bool YoutubeVideoUrlParser::isNotExpired(const QString &videoId)
+{
+    PlayerConfiguration* pc = m_youtubeRequests.value(videoId);
+    if (pc != nullptr) {
+        return (QDateTime::currentMSecsSinceEpoch() < pc->validUntil.toMSecsSinceEpoch());
+    }
+    return false;
+}
+
+int YoutubeVideoUrlParser::expiredIn(const QString &videoId)
+{
+    PlayerConfiguration* pc = m_youtubeRequests.value(videoId);
+    if (pc != nullptr) {
+        return (QDateTime::currentMSecsSinceEpoch() - pc->validUntil.toMSecsSinceEpoch())/1000;
+    }
+    return 0;
+}
+
 void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
 {
     //qDebug() << __PRETTY_FUNCTION__ << url << _videoId;
@@ -284,8 +302,8 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
                             return;
                         }
                         QJsonParseError error;
-//                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
-//                                                                          replace("\\u0026", "&").toUtf8());
+                        //                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
+                        //                                                                          replace("\\u0026", "&").toUtf8());
                         const QString& plResp = parser.queryItemValue(QStringLiteral("player_response"));//.replace("\\u0026", "&");
                         //qWarning().noquote() << "player response" << plResp;
                         QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromPercentEncoding(plResp.toUtf8()), &error);

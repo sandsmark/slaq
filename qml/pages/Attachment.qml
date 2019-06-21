@@ -141,18 +141,31 @@ ColumnLayout {
                 enabled: attachment.service_name === "YouTube"
                 visible: enabled
                 active: teamRoot.currentChannelId == channel.id && teamId === teamsSwipe.currentItem.item.teamId
+                Timer {
+                    id: expirationTimer
+                    onTriggered: {
+                        youtubeLoader.source = undefined
+                        if (youtubeLoader.videoId !== "") {
+                            console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
+                            youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                        }
+                    }
+                }
+
                 Connections {
                     target: youtubeParser
                     onUrlParsed: {
                         if (youtubeLoader.videoId == videoId) {
                             console.log("youtube video parsed:", videoId, attachment.from_url)
+                            expirationTimer.interval = youtubeParser.expiredIn(youtubeLoader.videoId)*1000
+                            expirationTimer.start()
                             youtubeLoader.setSource("qrc:/qml/components/VideoFileViewer.qml", {
                                                         "directPlay":true,
                                                         "adjustThumbSize":false,
                                                         "previewThumb":attachment.thumb_url,
                                                         "videoUrl":playUrl
                                                     })
-                            console.log("playably url", playUrl)
+                            //console.log("playably url", playUrl)
                         }
                     }
                 }

@@ -91,8 +91,10 @@ public:
 public slots:
     void requestVideoUrl(const QString& videoId);
     QString parseVideoId(const QString &videoUrl);
-
     void dump(PlayerConfiguration *pc);
+    bool isNotExpired(const QString &videoId);
+    int expiredIn(const QString &videoId);
+
 private slots:
     void onPlayerConfigChanged(PlayerConfiguration* playerConfig);
     QList<QPair<QString, int> > getCipherOperations(PlayerConfiguration* playerConfig);
