@@ -190,83 +190,7 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
     pc->succeed = false;
     pc->videoId = videoId;//parseVideoId(url.toString());
     m_youtubeRequests[videoId] = pc;
-#if 0
-    // emit player configuration in any case
-    auto cleanup = qScopeGuard([this, &pc] {
-        emit playerConfigChanged(pc);
-    });
-    QList<QNetworkReply::RawHeaderPair> hdrPairs;
-    const QUrl& _url1 =  QStringLiteral("https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(pc->videoId);
-    const QByteArray& data = httpGetSync(_url1, &manager, hdrPairs);
 
-    if (data.size() <= 0) {
-        qWarning().noquote() << "Youtube error. Cannot Get video info from" << _url1;
-        return;
-    }
-
-    QRegularExpressionMatch embedMath = m_youtubePlayerEmbed.match(QString(data));
-    if (!embedMath.hasMatch()) {
-        qWarning().noquote() << "Youtube error. Cant parse youtube data from" << _url1;
-        return;
-    }
-
-    const QString& embedJson = embedMath.captured("Json").chopped(1);
-    QJsonParseError error;
-    QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
-
-    if (error.error != QJsonParseError::NoError) {
-        qWarning() << "Youtube error. Parsing youtube json data" << error.errorString();
-        return;
-    }
-
-    QJsonObject obj = document.object();
-    const QString& _sts = obj.value("sts").toString();
-    const QString& _playerSourceUrl = "https://youtube.com" + obj.value("assets").toObject().value("js").toString();
-    pc->playerSourceUrl = _playerSourceUrl;
-    //qDebug() << __PRETTY_FUNCTION__ << _sts << _playerSourceUrl;
-    const QUrl& eurl("https://youtube.googleapis.com/v/" + pc->videoId);
-    const QUrl& _url2(QString("https://www.youtube.com/get_video_info?video_id=%1&el=embedded&sts=%2&eurl=%3&hl=en").
-                      arg(pc->videoId).arg(_sts).arg(eurl.toEncoded().data()));
-    hdrPairs = QList<QNetworkReply::RawHeaderPair>();
-    const QByteArray& data1 = httpGetSync(_url2, &manager, hdrPairs);
-
-    if (data1.size() <= 0) {
-        qWarning().noquote() << "Youtube error. Cannot get video info from" << _url2;
-        return;
-    }
-    // now need to extrcat video_id value
-    QUrlQuery parser(data1);
-    if (!parser.hasQueryItem(QStringLiteral("video_id"))) {
-        qWarning() << "Youtube error. No video_id invideo info dic!";
-        return;
-    }
-    const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
-                                                      replace("\\u0026", "&").toUtf8());
-    document = QJsonDocument::fromJson(plResp.toUtf8(), &error);
-    if (error.error != QJsonParseError::NoError) {
-        qWarning().noquote() << "Youtube error. Error parsing player_response json" << error.error << error.errorString() << plResp;
-        return;
-    }
-    //qDebug() << "player response" << plResp;
-    const QJsonObject& obj1 = document.object();
-    const QJsonObject& playabilityStatusO = obj1.value(QStringLiteral("playabilityStatus")).toObject();
-    const QJsonObject& streamingDataO = obj1.value(QStringLiteral("streamingData")).toObject();
-    //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
-    pc->succeed = true;
-    pc->isLiveStream = obj1.value("videoDetails").toObject().value("isLive").toBool(false);
-    int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
-    pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
-    //qDebug() << _expsecs << pc->validUntil;
-    if (pc->isLiveStream) {
-        pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
-    } else {
-        pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
-        pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
-        pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
-    }
-
-    return;
-#else
     //lambdas
     QNetworkRequest req = QNetworkRequest(QString("https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(pc->videoId));
     req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
@@ -324,7 +248,7 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
                                 pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
                                 pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
                                 pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
-                                qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
+                                //qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
                             }
                         } else {
                             qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
@@ -344,7 +268,6 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
         }
         embedReply->deleteLater();
     });
-#endif
 }
 
 /**
@@ -559,9 +482,53 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         }
         QList<QNetworkReply::RawHeaderPair> hdrPairs;
         const QByteArray& dashManifestXml = httpGetSync(_url, &manager, hdrPairs);
-        qDebug().noquote().nospace() << "dashManifestXml:" << dashManifestXml;
-        //TODO: implement dash manifest streams
-        //QXmlStreamReader dashXml(dashManifestXml);
+        //qDebug().noquote().nospace() << "dashManifestXml:" << dashManifestXml;
+        QXmlStreamReader dashXml(dashManifestXml);
+        dashXml.setNamespaceProcessing(false);
+        while (!dashXml.atEnd()) {
+            dashXml.readNext();
+            if (dashXml.tokenType() == QXmlStreamReader::StartElement && dashXml.name() == QStringLiteral("Representation")) {
+                bool _isvalid = true; //consider as valid. Check for sourceUrl attribute later
+                bool _isaudio = false;
+                MediaStreamInfo _msi;
+                _msi.itag = dashXml.attributes().value("id").toInt();
+                _msi.bitrate = dashXml.attributes().value("bandwidth").toInt();
+                int _w = dashXml.attributes().value("width").toInt();
+                int _h = dashXml.attributes().value("height").toInt();
+                _msi.resolution = QSize(_w, _h);
+                QString codec = dashXml.attributes().value("codecs").toString();
+
+                while (!(dashXml.tokenType() == QXmlStreamReader::EndElement && dashXml.name() == QStringLiteral("Representation"))) {
+                    dashXml.readNext();
+                    if (dashXml.tokenType() == QXmlStreamReader::StartElement && dashXml.name() == QStringLiteral("AudioChannelConfiguration")) {
+                        _isaudio = true;
+                    }
+                    if (dashXml.tokenType() == QXmlStreamReader::StartElement && dashXml.name() == QStringLiteral("Initialization")) {
+                        if (dashXml.attributes().value("sourceURL").contains("sq/")) {
+                            _isvalid = false;
+                        }
+                    }
+                    if (dashXml.tokenType() == QXmlStreamReader::StartElement && dashXml.name() == QStringLiteral("BaseURL")) {
+                        dashXml.readNext();
+                        _msi.playableUrl = QUrl(QByteArray::fromPercentEncoding(dashXml.text().toUtf8()));
+                        _msi.contentLength = QRegularExpression("clen[/=](\\d+)").match(_msi.playableUrl.toString()).captured(1).toInt();
+                        const QString& containerRaw = QRegularExpression("mime[/=]\\w*%2F([\\w\\d]*)").match(_msi.playableUrl.toString()).captured(1);
+                        _msi.container = parseContainer(containerRaw);
+
+                        //qDebug() << "playable url" << _msi.playableUrl;
+                    }
+                    //qDebug() << dashXml.name();
+                }
+                if (_isvalid) {
+                    if (_isaudio)
+                        _msi.acodec = parseAudioCodec(codec);
+                    else
+                        _msi.vcodec = parseVideoCodec(codec);
+                    _msi.quality = itagToQuality(_msi.itag);
+                    playerConfig->streams.insertMulti(_msi.itag, _msi);
+                }
+            }
+        }
     }
     pickBestPossibleVideo(playerConfig);
     dump(playerConfig);
