@@ -140,6 +140,7 @@ ColumnLayout {
                 height: attachment.thumb_size.height
                 enabled: attachment.service_name === "YouTube"
                 visible: enabled
+                active: teamRoot.currentChannelId == channel.id && teamId === teamsSwipe.currentItem.item.teamId
                 Connections {
                     target: youtubeParser
                     onUrlParsed: {

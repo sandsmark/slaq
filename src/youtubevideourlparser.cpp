@@ -284,15 +284,17 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
                             return;
                         }
                         QJsonParseError error;
-                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
-                                                                          replace("\\u0026", "&").toUtf8());
-                        QJsonDocument document = QJsonDocument::fromJson(plResp.toUtf8(), &error);
+//                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
+//                                                                          replace("\\u0026", "&").toUtf8());
+                        const QString& plResp = parser.queryItemValue(QStringLiteral("player_response"));//.replace("\\u0026", "&");
+                        //qWarning().noquote() << "player response" << plResp;
+                        QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromPercentEncoding(plResp.toUtf8()), &error);
                         if (error.error == QJsonParseError::NoError) {
                             //qDebug() << "player response" << plResp;
                             const QJsonObject& obj = document.object();
                             const QJsonObject& playabilityStatusO = obj.value(QStringLiteral("playabilityStatus")).toObject();
                             const QJsonObject& streamingDataO = obj.value(QStringLiteral("streamingData")).toObject();
-                            qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
+                            //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
                             pc->succeed = true;
                             pc->isLiveStream = obj.value("videoDetails").toObject().value("isLive").toBool(false);
                             int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
@@ -304,6 +306,7 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
                                 pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
                                 pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
                                 pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
+                                qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
                             }
                         } else {
                             qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
@@ -375,9 +378,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
              << "is success:" << playerConfig->succeed
              << playerConfig->videoId
              << playerConfig->isLiveStream
-             << playerConfig->playerSourceUrl
-             << playerConfig->validUntil
-             << playerConfig->manifestUrl;
+             << playerConfig->validUntil;
     //             << playerConfig->muxedStreamInfosUrlEncoded
     //             << playerConfig->adaptiveStreamInfosUrlEncoded;
     if (!playerConfig->succeed) {
@@ -385,17 +386,18 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         return;
     }
 
+    //qDebug().noquote() << "muxed stream info" << playerConfig->muxedStreamInfosUrlEncoded;
     // get muxed stream infos
-    const QStringList& muxedStreamInfoList = playerConfig->muxedStreamInfosUrlEncoded.split(",");
+    // split by %2C whish is ',', because its percent encoded
+    const QStringList& muxedStreamInfoList = playerConfig->muxedStreamInfosUrlEncoded.split("%2C");
     for (const auto muxedStreamInfo : muxedStreamInfoList) {
-        //qDebug() << "muxed stream info" << muxedStreamInfo;
         QUrlQuery streamInfoDic(muxedStreamInfo);
         // Extract info
-        int itag = streamInfoDic.queryItemValue("itag", QUrl::FullyDecoded).toInt();
-        QString url = streamInfoDic.queryItemValue("url", QUrl::FullyDecoded);
+        int itag = streamInfoDic.queryItemValue("itag").toInt();
+        QString url = streamInfoDic.queryItemValue("url");
         percentDecode(url);
         // Decipher signature if needed
-        QString signature = streamInfoDic.queryItemValue("s", QUrl::FullyDecoded);
+        QString signature = streamInfoDic.queryItemValue("s");
         qDebug() << "signature (muxed): " << signature;
         QUrl _url = url;
         if (!signature.isEmpty()) {
@@ -417,7 +419,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         msi.playableUrl = _url;
         // Try to extract content length, otherwise get it manually
         msi.contentLength = QRegularExpression("clen=(\\d+)").match(url).captured(1).toLongLong();
-        qDebug() << "content length from url" << msi.contentLength << url;
+        qDebug() << "content length from url" << msi.contentLength;
         checkContentLengthAndRedirections(_url, msi);
         // If content length is still not available - stream is gone or faulty
         if (msi.contentLength <= 0)
@@ -437,6 +439,9 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         msi.acodec = parseAudioCodec(audioEncodingRaw);
         msi.vcodec = parseVideoCodec(videoEncodingRaw);
         msi.quality = itagToQuality(itag);
+        if (msi.quality == UnknownQuality) {
+            qWarning().noquote() << "Unknown quality from itag" << msi.itag << "parsed from" << streamInfoDic.queryItemValue("itag", QUrl::FullyDecoded);
+        }
         msi.videoQualityLabel = videoQualityToLabel(msi.quality);
         msi.resolution = videoQualityToResolution(msi.quality);
         playerConfig->streams.insertMulti(itag, msi);
@@ -473,7 +478,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         msi.playableUrl = _url;
         // Try to extract content length, otherwise get it manually
         msi.contentLength = streamInfoDic.queryItemValue("clen", QUrl::FullyDecoded).toLongLong();
-        qDebug() << "content length from url" << msi.contentLength << url;
+        qDebug() << "content length from url" << msi.contentLength;
         // make request anyway to check for redirected playable url
         checkContentLengthAndRedirections(_url, msi);
         // If content length is still not available - stream is gone or faulty
@@ -496,6 +501,9 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             // Extract video quality label and video quality
             const QString& videoQualityLabel = streamInfoDic.queryItemValue("quality_label", QUrl::FullyDecoded);
             msi.quality = videoQualityFromLabel(videoQualityLabel);
+            if (msi.quality == UnknownQuality) {
+                qWarning().noquote() << "Unknown quality from label" << videoQualityLabel;
+            }
 
             // Extract resolution
             const QStringList& sizeList = streamInfoDic.queryItemValue("size", QUrl::FullyDecoded).split("x");
@@ -533,7 +541,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         }
         QList<QNetworkReply::RawHeaderPair> hdrPairs;
         const QByteArray& dashManifestXml = httpGetSync(_url, &manager, hdrPairs);
-        qDebug() << "dashManifestXml" << dashManifestXml;
+        qDebug().noquote().nospace() << "dashManifestXml:" << dashManifestXml;
         //TODO: implement dash manifest streams
         //QXmlStreamReader dashXml(dashManifestXml);
     }
