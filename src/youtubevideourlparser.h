@@ -83,7 +83,7 @@ public:
         QString muxedStreamInfosUrlEncoded;
         QString adaptiveStreamInfosUrlEncoded;
         QDateTime validUntil;
-        QMap<int, MediaStreamInfo> streams;
+        QMultiMap<int, MediaStreamInfo> streams;
     };
 
     explicit YoutubeVideoUrlParser(QObject *parent = nullptr);
@@ -92,6 +92,7 @@ public slots:
     void requestVideoUrl(const QString& videoId);
     QString parseVideoId(const QString &videoUrl);
 
+    void dump(PlayerConfiguration *pc);
 private slots:
     void onPlayerConfigChanged(PlayerConfiguration* playerConfig);
     QList<QPair<QString, int> > getCipherOperations(PlayerConfiguration* playerConfig);

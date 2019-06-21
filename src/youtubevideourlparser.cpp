@@ -120,14 +120,39 @@ YoutubeVideoUrlParser::YoutubeVideoUrlParser(QObject *parent) : QObject(parent)
 }
 
 void YoutubeVideoUrlParser::pickBestPossibleVideo(PlayerConfiguration* pc) {
-    for (MediaStreamInfo msi : pc->streams) {
-        if (msi.quality >= High720) { //TODO: check settings or best possible
+    for (const MediaStreamInfo& msi : pc->streams) {
+        if (msi.quality >= High720 && msi.container != UnknownContainer &&
+                msi.acodec != UnknownACodec && msi.vcodec != UnknownVCodec) { //TODO: check settings or best possible
             qDebug() << "best video for id:" << pc->videoId << msi.quality << msi.resolution;
             emit urlParsed(pc->videoId, msi.playableUrl);
             return;
         }
     }
-    qWarning() << "Youtube: cant pick best video for" << pc->videoId << "from" << pc->streams.size();
+    qWarning() << "Youtube: cant pick best video with audio. Try without audio";
+    for (const MediaStreamInfo& msi : pc->streams) {
+        if (msi.quality >= High720 && msi.container != UnknownContainer && msi.vcodec != UnknownVCodec) {
+            qDebug() << "best video for id:" << pc->videoId << msi.quality << msi.resolution;
+            emit urlParsed(pc->videoId, msi.playableUrl);
+            return;
+        }
+    }
+}
+
+void YoutubeVideoUrlParser::dump(PlayerConfiguration* pc) {
+    qDebug().noquote() << "Dump for:";
+    qDebug().noquote() << "  video ID" << pc->videoId;
+    qDebug().noquote() << "  valid till" << pc->validUntil;
+    for (const MediaStreamInfo& msi : pc->streams) {
+        qDebug().noquote() << "    playable url:" << msi.playableUrl;
+        qDebug().noquote() << "    content length:" << msi.contentLength;
+        qDebug().noquote() << "    container:" << msi.container;
+        qDebug().noquote() << "    acodec:" << msi.acodec;
+        qDebug().noquote() << "    vcodec:" << msi.vcodec;
+        qDebug().noquote() << "    resolution:" << msi.resolution;
+        qDebug().noquote() << "    bitrate:" << msi.bitrate;
+        qDebug().noquote() << "    framerate:" << msi.framerate;
+        qDebug().noquote() << "    quality:" << msi.quality;
+    }
 }
 
 void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
@@ -414,7 +439,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         msi.quality = itagToQuality(itag);
         msi.videoQualityLabel = videoQualityToLabel(msi.quality);
         msi.resolution = videoQualityToResolution(msi.quality);
-        playerConfig->streams[itag] = msi;
+        playerConfig->streams.insertMulti(itag, msi);
     }
 
     // Get adaptive stream infos
@@ -484,8 +509,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
             //qDebug() << "video only" << msi.vcodec << msi.container << msi.quality << msi.resolution << "fps:" << msi.framerate << streamInfoDic.toString(QUrl::FullyDecoded);
         }
         // distinguish audio only or video only bycheck audio or video codec is set
-        if (msi.acodec != UnknownACodec || msi.vcodec != UnknownVCodec)
-            playerConfig->streams[msi.itag] = msi;
+        playerConfig->streams.insertMulti(msi.itag, msi);
     }
 
     // Parse dash manifest. Dash mainfest set only for non live streams
@@ -514,6 +538,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         //QXmlStreamReader dashXml(dashManifestXml);
     }
     pickBestPossibleVideo(playerConfig);
+    dump(playerConfig);
 }
 
 QList<QPair<QString, int>> YoutubeVideoUrlParser::getCipherOperations(PlayerConfiguration *playerConfig)

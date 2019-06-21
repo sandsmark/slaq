@@ -48,7 +48,7 @@ ListView {
             if (count != lastCount) {
                 positionViewAtIndex(currentIndex, ListView.Beginning)
                 lastCount = count
-                console.log("position", currentIndex, atBottom, msgListView.atYBeginning)
+                //console.log("position", currentIndex, atBottom, msgListView.atYBeginning)
             }
         }
     }

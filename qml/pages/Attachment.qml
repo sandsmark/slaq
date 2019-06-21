@@ -151,6 +151,7 @@ ColumnLayout {
                                                         "previewThumb":attachment.thumb_url,
                                                         "videoUrl":playUrl
                                                     })
+                            console.log("playably url", playUrl)
                         }
                     }
                 }
@@ -160,6 +161,8 @@ ColumnLayout {
                         if (youtubeLoader.videoId !== "") {
                             console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
                             youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                        } else {
+                            console.warn("Youtube error. Cannot parse youtube link", attachment.from_url)
                         }
                     }
                 }
