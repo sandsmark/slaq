@@ -78,7 +78,7 @@ MouseArea {
                     width: parent.width - Theme.paddingMedium*2
                     x: Theme.paddingMedium
                     height: lrText.paintedHeight
-                    visible: channelRoot.channel.lastReadTs === model.SlackTimestamp
+                    visible: channelRoot.channel.lastReadTs === model.SlackTimestamp && index > 0
                     Text {
                         id: lrText
                         text: qsTr(" Last read ")
