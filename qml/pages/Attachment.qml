@@ -1,7 +1,7 @@
-import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtMultimedia 5.9
-import QtQuick.Layouts 1.3
+import QtQuick 2.12
+import QtQuick.Controls 2.12
+import QtMultimedia 5.12
+import QtQuick.Layouts 1.12
 import ".."
 import "../components"
 
@@ -107,7 +107,7 @@ ColumnLayout {
                 Image {
                     visible: attachment !== null && attachment.thumb_url.toString().length > 0
                     source: visible ? "image://emoji/slack/" + attachment.thumb_url : ""
-                    sourceSize: Qt.size(Theme.avatarSize, Theme.avatarSize)
+                    sourceSize: Qt.size(Theme.avatarSize, Theme.avatarSize/ (attachment.thumb_size.width / attachment.thumb_size.height))
                 }
             }
 
@@ -115,68 +115,78 @@ ColumnLayout {
                 fieldList: attachment.fields
             }
 
-            AnimatedImage {
+            Item {
+                id: imgRoot
                 readonly property bool isThumb: attachment.thumb_url.toString().length > 0
                 readonly property bool isImage: attachment.imageUrl.toString().length > 0
-                visible: !youtubeLoader.visible && attachment !== null && (isThumb || isImage)
-                width: isThumb ? attachment.thumb_size.width : attachment.imageSize.width
-                height: visible ? (isThumb ? attachment.thumb_size.height : attachment.imageSize.height) : 0
-                asynchronous: true
-                fillMode: Image.Stretch
-                // AnimatedImage does not support async image provider
-                //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
-                source: visible ? (isImage ? attachment.imageUrl : (isThumb ? attachment.thumb_url : "")) : ""
-                onStatusChanged: {
-                    if (status == Image.Error) {
-                        console.warn("image load error:", source)
-                        source = "qrc:/icons/no-image.png"
-                    }
-                }
-            }
-            Loader {
-                id: youtubeLoader
-                property string videoId
-                width: attachment.thumb_size.width
-                height: attachment.thumb_size.height
-                enabled: attachment.service_name === "YouTube"
-                visible: enabled
-                active: teamRoot.currentChannelId == channel.id && teamId === teamsSwipe.currentItem.item.teamId
-                Timer {
-                    id: expirationTimer
-                    onTriggered: {
-                        youtubeLoader.source = undefined
-                        if (youtubeLoader.videoId !== "") {
-                            console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
-                            youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                readonly property bool isVideo: attachment.service_name === "YouTube"
+                readonly property real src_width: isVideo && isThumb ? attachment.thumb_size.width : attachment.imageSize.width
+                readonly property real src_height: isVideo && isThumb ? attachment.thumb_size.height : attachment.imageSize.height
+
+                width: src_width - Theme.paddingLarge * 4  > 640 ? 640 : src_width
+                height: width / (src_width / src_height)
+
+                AnimatedImage {
+                    anchors.fill: parent
+                    visible: !imgRoot.isVideo && attachment !== null && imgRoot.isImage
+
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectFit
+                    // AnimatedImage does not support async image provider
+                    //source: visible ? "image://emoji/slack/" + attachment.imageUrl : ""
+                    source: visible ? attachment.imageUrl : ""
+                    onStatusChanged: {
+                        if (status == Image.Error) {
+                            console.warn("image load error:", source)
+                            source = "qrc:/icons/no-image.png"
                         }
                     }
                 }
 
-                Connections {
-                    target: youtubeParser
-                    onUrlParsed: {
-                        if (youtubeLoader.videoId == videoId) {
-                            console.log("youtube video parsed:", videoId, attachment.from_url)
-                            expirationTimer.interval = youtubeParser.expiredIn(youtubeLoader.videoId)*1000
-                            expirationTimer.start()
-                            youtubeLoader.setSource("qrc:/qml/components/VideoFileViewer.qml", {
-                                                        "directPlay":true,
-                                                        "adjustThumbSize":false,
-                                                        "previewThumb":attachment.thumb_url,
-                                                        "videoUrl":playUrl
-                                                    })
-                            //console.log("playably url", playUrl)
+                Loader {
+                    id: youtubeLoader
+                    property string videoId
+                    anchors.fill: parent
+                    enabled: imgRoot.isVideo
+                    visible: enabled
+                    active: teamRoot.currentChannelId == channel.id && teamId === teamsSwipe.currentItem.item.teamId
+                    Timer {
+                        id: expirationTimer
+                        onTriggered: {
+                            youtubeLoader.source = undefined
+                            if (youtubeLoader.videoId !== "") {
+                                console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
+                                youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                            }
                         }
                     }
-                }
-                Component.onCompleted: {
-                    if (attachment.from_url.toString().length > 0 && attachment.service_name === "YouTube") {
-                        youtubeLoader.videoId = youtubeParser.parseVideoId(attachment.from_url)
-                        if (youtubeLoader.videoId !== "") {
-                            console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
-                            youtubeParser.requestVideoUrl(youtubeLoader.videoId)
-                        } else {
-                            console.warn("Youtube error. Cannot parse youtube link", attachment.from_url)
+
+                    Connections {
+                        target: youtubeParser
+                        onUrlParsed: {
+                            if (youtubeLoader.videoId == videoId) {
+                                console.log("youtube video parsed:", videoId, attachment.from_url)
+                                expirationTimer.interval = youtubeParser.expiredIn(youtubeLoader.videoId)*1000
+                                expirationTimer.start()
+                                youtubeLoader.setSource("qrc:/qml/components/VideoFileViewer.qml", {
+                                                            "directPlay":true,
+                                                            "adjustThumbSize":false,
+                                                            "previewThumb":attachment.thumb_url,
+                                                            "videoUrl":playUrl
+                                                        })
+                                //console.log("playably url", playUrl)
+                            }
+                        }
+                    }
+                    Component.onCompleted: {
+                        if (attachment.from_url.toString().length > 0 && attachment.service_name === "YouTube") {
+                            youtubeLoader.videoId = youtubeParser.parseVideoId(attachment.from_url)
+                            if (youtubeLoader.videoId !== "") {
+                                console.log("requesting youtube url:", attachment.from_url, youtubeLoader.videoId)
+                                youtubeParser.requestVideoUrl(youtubeLoader.videoId)
+                            } else {
+                                console.warn("Youtube error. Cannot parse youtube link", attachment.from_url)
+                            }
                         }
                     }
                 }
