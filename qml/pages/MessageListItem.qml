@@ -23,7 +23,7 @@ MouseArea {
     property var messageInput
 
     function editMessage() {
-        if (model.User != null && model.User.userId === teamRoot.slackClient.teamInfo().selfId) {
+        if (model.User !== null && model.User.userId === teamRoot.slackClient.teamInfo().selfId) {
             if (messageInput.updating === true) {
                 messageInput.updating = false
             } else {
@@ -42,9 +42,8 @@ MouseArea {
         onEmojiSelected: {
             emojiSelectorCalled = false
             if (emojiSelector.state === "reaction" && emoji !== "") {
-                SlackClient.addReaction(teamId, channel.id, model.Time,
-                                        ImagesCache.getNameByEmoji(emoji),
-                                        model.SlackTimestamp);
+                SlackClient.addReaction(teamId, channel.id, model.SlackTimestamp,
+                                        ImagesCache.getNameByEmoji(emoji));
             }
         }
     }
@@ -69,13 +68,30 @@ MouseArea {
                                                         "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
-
             Column {
                 id: columnText
                 height: implicitHeight
                 width: parent.width
                 spacing: 1
 
+                Row {
+                    width: parent.width - Theme.paddingMedium*2
+                    x: Theme.paddingMedium
+                    height: lrText.paintedHeight
+                    visible: channelRoot.channel.lastReadTs === model.SlackTimestamp && index > 0
+                    Text {
+                        id: lrText
+                        text: qsTr(" Last read ")
+                        color: "red"
+                    }
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - lrText.paintedWidth - Theme.paddingMedium*2
+                        height: 2
+                        color: "darkred"
+                    }
+
+                }
                 Control {
                     topPadding: Theme.paddingLarge
                     width: parent.width - avatarImage.width - parent.spacing
@@ -176,7 +192,7 @@ MouseArea {
                                 text: "\uD83D\uDDD1"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    teamRoot.deleteMessage(channel.id, model.Time, model.SlackTimestamp)
+                                    teamRoot.deleteMessage(channel.id, model.SlackTimestamp)
                                 }
                                 background: Item {}
                             }

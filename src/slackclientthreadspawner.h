@@ -107,7 +107,7 @@ public slots:
 
     //channels
     void createChat(const QString& teamId, const QString &channelName, bool isPrivate);
-    void markChannel(const QString& teamId, ChatsModel::ChatType type, const QString& channelId, const QDateTime &time = QDateTime());
+    void markChannel(const QString& teamId, ChatsModel::ChatType type, const QString& channelId, quint64 time = 0);
     void joinChannel(const QString& teamId, const QString& channelId);
     void leaveChannel(const QString& teamId, const QString& channelId);
     void archiveChannel(const QString& teamId, const QString& channelId);
@@ -120,18 +120,17 @@ public slots:
     void searchMessages(const QString& teamId, const QString& searchString, int page = 0);
     void loadMessages(const QString& teamId, const QString& channelId);
     void postMessage(const QString& teamId, const QString& channelId, const QString& content, const QString &thread_ts = "");
-    void updateMessage(const QString& teamId, const QString& channelId, const QString& content,
-                       const QDateTime &ts, const QString& slackTs);
-    void deleteMessage(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& slackTs);
+    void updateMessage(const QString& teamId, const QString& channelId, const QString& content, const QString& slackTs);
+    void deleteMessage(const QString& teamId, const QString& channelId, const QString& slackTs);
     void postFile(const QString& teamId, const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
-    void deleteReaction(const QString& teamId, const QString& channelId, const QDateTime& ts, const QString& reaction);
+    void deleteReaction(const QString& teamId, const QString& channelId, const QString& ts, const QString& reaction);
     void addReaction(const QString& teamId, const QString& channelId,
-                     const QDateTime& ts, const QString& reaction, const QString& slackTs);
+                     const QString& ts, const QString& reaction);
 
     //from slack thread to main thread
     void onMessageReceived(Message* message);
     void onMessageUpdated(Message* message, bool replace = true);
-    void onMessageDeleted(const QString& channelId, const QDateTime& ts);
+    void onMessageDeleted(const QString& channelId, quint64 ts);
     void onChannelUpdated(Chat *chat);
     void onChannelJoined(Chat *chat);
     void onChannelLeft(const QString &channelId);

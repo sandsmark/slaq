@@ -78,7 +78,6 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
     if (row >= m_chatIds.count() || row < 0) {
-        qWarning() << "invalid row" << row;
         return QVariant();
     }
     Chat* chat = m_chats.value(m_chatIds.at(row));
@@ -98,9 +97,9 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case IsGeneral:
         return chat->isGeneral;
     case LastRead:
-        return chat->lastRead;
+        return chat->lastRead();
     case LastReadTs:
-        return chat->lastReadTs;
+        return chat->lastReadTs();
     case UnreadCountDisplay:
         return chat->unreadCountDisplay;
     case UnreadCountPersonal:
@@ -438,6 +437,13 @@ void Chat::setReadableName(const QString& selfId) {
     readableName = _users.join(", ");
 }
 
+void Chat::setLastReadData(const QString& lastread) {
+    if (!lastread.isEmpty() && lastread != "0000000000.000000") {
+        setLastReadTs(lastread);
+        setLastRead(slackTsToInternalTs(m_lastReadTs));
+    }
+
+}
 void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
     id = data.value(QStringLiteral("id")).toString();
@@ -453,19 +459,62 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     }
 
     isGeneral = data.value(QStringLiteral("is_general")).toBool(false);
-    name = data.value(QStringLiteral("name")).toString(name);
+    if (name.isEmpty())
+        name = data.value(QStringLiteral("name")).toString(name);
     presence = QStringLiteral("none");
-    isOpen = (type == ChatsModel::Channel) ? data.value(QStringLiteral("is_member")).toBool() :
-                                             data.value(QStringLiteral("is_open")).toBool();
+    const QJsonValue& isOpenVal = data.value(QStringLiteral("is_open"));
+    if (!isOpenVal.isUndefined())
+        isOpen = isOpenVal.toBool();
+    if (isOpen == false) {
+        const QJsonValue& isMemberVal = data.value(QStringLiteral("is_member"));
+        if (!isMemberVal.isUndefined())
+            isOpen = isMemberVal.toBool();
+    }
+
+    //qDebug() << "chat is open" << name << isOpen;
     user = data.value("user").toString();
 
-    isPrivate = data.value(QStringLiteral("is_private")).toBool(false);
-    lastReadTs = data.value(QStringLiteral("last_read")).toString();
-    lastRead = slackToDateTime(lastReadTs);
-    creationDate = slackToDateTime(data.value(QStringLiteral("created")).toString());
+    if (name.isEmpty() and isOpen) {
+        qWarning().noquote() << __PRETTY_FUNCTION__ << "Chat opened but without name:" << data;
+    }
+
+    const QJsonValue& isPrivateVal = data.value(QStringLiteral("is_private"));
+    if (!isPrivateVal.isUndefined())
+        isPrivate = isPrivateVal.toBool(false);
+
+    setLastReadData(data.value(QStringLiteral("last_read")).toString());
+
+//    if (type == ChatsModel::Channel)
+//        qDebug() << __PRETTY_FUNCTION__ << "last read" << lastReadTs << lastRead;
+    creationDate = slackTsToInternalTs(data.value(QStringLiteral("created")).toString());
     unreadCountDisplay = data.value(QStringLiteral("unread_count_display")).toInt();
     unreadCount = data.value(QStringLiteral("unread_count")).toInt();
+    if (unreadCount > 0 || unreadCountDisplay > 0) {
+        qWarning() << "unread count for" << name << unreadCount << unreadCountDisplay;
+    }
     topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
     purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
+}
+
+QString Chat::lastReadTs() const
+{
+    return m_lastReadTs;
+}
+
+quint64 Chat::lastRead() const
+{
+    return m_lastRead;
+}
+
+void Chat::setLastReadTs(const QString &lastReadTs)
+{
+    m_lastReadTs = lastReadTs;
+    emit lastReadTsChanged(m_lastReadTs);
+}
+
+void Chat::setLastRead(const quint64 &lastRead)
+{
+    m_lastRead = lastRead;
+    emit lastReadChanged(m_lastRead);
 }
 

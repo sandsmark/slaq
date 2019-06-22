@@ -32,7 +32,7 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
 
     int row = index.row();
     if (row >= m_messages.count() || row < 0) {
-        qWarning() << "Invalid row" << row;
+        qWarning() << "message Invalid row" << row;
         return QVariant();
     }
 
@@ -59,6 +59,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         }
         return QVariant::fromValue(message->user.data());
     case Time:
+        return internalTsToDateTime(message->time);
+    case Timestamp:
         return message->time;
     case SlackTimestamp:
         return message->ts;
@@ -163,13 +165,13 @@ MessageListModel *MessageListModel::createThread(Message *parentMessage)
     return nullptr;
 }
 
-Message *MessageListModel::message(int row)
+Message *MessageListModel::messageAt(int row)
 {
     QMutexLocker locker(&m_modelMutex);
     return m_messages.at(row);
 }
 
-QString MessageListModel::lastMessage() const
+quint64 MessageListModel::lastMessage() const
 {
 
     // debugging
@@ -181,19 +183,19 @@ QString MessageListModel::lastMessage() const
     QMutexLocker locker(&m_modelMutex);
     if (m_messages.count() <= 0) {
         qDebug() << "Last message not found";
-        return "";
+        return 0;
     }
-    QString _lastMsgTs = m_messages.at(0)->ts;
+    quint64 _lastMsgTs = m_messages.at(0)->time;
     for (int i = 0; i < m_messages.count(); i++) {
         Message* message = m_messages.at(i);
-        if (::compareSlackTs(message->ts, _lastMsgTs) > 0) {
-            _lastMsgTs = message->ts;
+        if (::compareSlackTs(message->time, _lastMsgTs) > 0) {
+            _lastMsgTs = message->time;
         }
         // 1st message in the message thread is parent message
         // so to avoid recursive search - check if the message thread its not current thread
         if (!message->messageThread.isNull() && message->messageThread.data() != this) {
             locker.unlock();
-            QString _lastMsgTsThread = message->messageThread->lastMessage();
+            quint64 _lastMsgTsThread = message->messageThread->lastMessage();
             if (::compareSlackTs(_lastMsgTsThread, _lastMsgTs) > 0) {
                 _lastMsgTs = _lastMsgTsThread;
             }
@@ -237,7 +239,40 @@ Message *MessageListModel::message(const QString &ts)
     return nullptr;
 }
 
-bool MessageListModel::deleteMessage(const QDateTime &ts)
+Message *MessageListModel::message(quint64 ts)
+{
+    qDebug() << "searching for" << ts << "at" << this;
+    // debugging
+    if (!m_modelMutex.tryLock(100)) {
+        qWarning() << "message model mutex was locked too long!" << QThread::currentThread();
+    }
+    m_modelMutex.unlock();
+    // end debugging
+    QMutexLocker locker(&m_modelMutex);
+    for (int i = 0; i < m_messages.count(); i++) {
+        Message* message = m_messages.at(i);
+        if (message->time == ts) {
+            qDebug() << "found message";
+            return message;
+        }
+        // 1st message in the message thread is parent message
+        // so to avoid recursive search - check if the message thread its not current thread
+        if (!message->messageThread.isNull() && message->messageThread.data() != this) {
+            qDebug() << "search in subthread";
+            locker.unlock();
+            Message* threadedMsg = message->messageThread->message(ts);
+            if (threadedMsg != nullptr) {
+                qDebug() << "found message in subthread";
+                return threadedMsg;
+            }
+            locker.relock();
+        }
+    }
+    qDebug() << "nothing found";
+    return nullptr;
+}
+
+bool MessageListModel::deleteMessage(quint64 ts)
 {
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
@@ -360,15 +395,16 @@ QString MessageListModel::firstMessageTs() const
     return "";
 }
 
-int MessageListModel::countUnread(const QString &lastRead)
+int MessageListModel::countUnread(quint64 lastRead)
 {
-    if (lastRead.isEmpty()) {
+    if (lastRead == 0) {
+        qWarning("last read not defined!");
         return 0;
     }
     QMutexLocker locker(&m_modelMutex);
     for (int i = 0; i < m_messages.count(); i++) {
         //qDebug() << "comparing" << i << m_messages.at(i)->time << lastRead;
-        if (m_messages.at(i)->ts == lastRead) {
+        if (m_messages.at(i)->time == lastRead) {
             return i;
         }
     }
@@ -448,7 +484,7 @@ void MessageListModel::addMessage(Message* message)
         if (!m_messages.isEmpty()) {
             Message* prevMsg = prevMsg = m_messages.first();
             message->isSameUser = (prevMsg->user_id == message->user_id);
-            message->timeDiffMs = qAbs(message->time.toMSecsSinceEpoch() - prevMsg->time.toMSecsSinceEpoch());
+            message->timeDiffMs = internalTsDiff(prevMsg->time,  message->time);
             Q_ASSERT_X(prevMsg->time != message->time, __PRETTY_FUNCTION__, "Time should not be equal");
         }
         m_modelMutex.unlock();
@@ -620,7 +656,7 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                 if (!m_messages.isEmpty()) {
                     Message* prevMsg = m_messages.last();
                     prevMsg->isSameUser = (prevMsg->user_id == message->user_id);
-                    prevMsg->timeDiffMs = qAbs(prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+                    prevMsg->timeDiffMs = internalTsDiff(prevMsg->time,  message->time);
                 }
                 m_modelMutex.lock();
                 m_messages.append(message);
@@ -636,7 +672,7 @@ void MessageListModel::addMessages(const QList<Message*> &messages, bool hasMore
                 if (!m_messages.isEmpty()) {
                     Message* prevMsg = m_messages.first();
                     message->isSameUser = (prevMsg->user_id == message->user_id);
-                    message->timeDiffMs = qAbs(prevMsg->time.toMSecsSinceEpoch() - message->time.toMSecsSinceEpoch());
+                    message->timeDiffMs = internalTsDiff(prevMsg->time,  message->time);
                 }
                 m_modelMutex.lock();
                 m_messages.prepend(message);
@@ -696,6 +732,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     names[OriginalText] = "OriginalText";
     names[User] = "User";
     names[Time] = "Time";
+    names[Timestamp] = "Timestamp";
     names[SlackTimestamp] = "SlackTimestamp";
     names[Attachments] = "Attachments";
     names[Reactions] = "Reactions";
@@ -725,7 +762,7 @@ void Message::setData(const QJsonObject &data)
     //qDebug() << "message" << data;
     type = data.value(QStringLiteral("type")).toString();
     ts = data.value(QStringLiteral("ts")).toString();
-    time = slackToDateTime(ts);
+    time = slackTsToInternalTs(ts);
     const QJsonValue thread_ = data.value(QStringLiteral("thread_ts"));
     if (!thread_.isUndefined()) {
         thread_ts = thread_.toString();
@@ -1016,5 +1053,5 @@ ReplyField::ReplyField(QObject *parent): QObject(parent) {}
 void ReplyField::setData(const QJsonObject &data)
 {
     m_userId = data.value(QStringLiteral("user")).toString();
-    m_ts = slackToDateTime(data.value(QStringLiteral("ts")).toString());
+    m_ts = slackTsToInternalTs(data.value(QStringLiteral("ts")).toString());
 }

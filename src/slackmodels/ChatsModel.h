@@ -99,13 +99,13 @@ class Chat: public QObject
     Q_PROPERTY(QString name MEMBER name CONSTANT)
     Q_PROPERTY(QString user MEMBER user CONSTANT)
     Q_PROPERTY(QString readableName MEMBER readableName CONSTANT)
-    Q_PROPERTY(QString topic MEMBER topic CONSTANT)
-    Q_PROPERTY(QDateTime creationDate MEMBER creationDate CONSTANT)
-    Q_PROPERTY(QDateTime lastRead MEMBER lastRead CONSTANT)
-    Q_PROPERTY(QString lastReadTs MEMBER lastReadTs CONSTANT)
+    Q_PROPERTY(QString topic MEMBER topic)
+    Q_PROPERTY(quint64 creationDate MEMBER creationDate CONSTANT)
+    Q_PROPERTY(quint64 lastRead READ lastRead NOTIFY lastReadChanged)
+    Q_PROPERTY(QString lastReadTs READ lastReadTs NOTIFY lastReadTsChanged)
     Q_PROPERTY(int unreadCount MEMBER unreadCount)
     Q_PROPERTY(int unreadCountDisplay MEMBER unreadCountDisplay)
-    Q_PROPERTY(bool isOpen MEMBER isOpen CONSTANT)
+    Q_PROPERTY(bool isOpen MEMBER isOpen)
     Q_PROPERTY(bool isPrivate MEMBER isPrivate CONSTANT)
     Q_PROPERTY(bool isGeneral MEMBER isGeneral CONSTANT)
     Q_PROPERTY(ChatsModel::ChatType type MEMBER type CONSTANT)
@@ -124,13 +124,11 @@ public:
     QString readableName;
     QString topic;
     QString purpose;
-    QDateTime creationDate;
+    quint64 creationDate;
     bool isOpen = false;
     bool isPrivate = false;
     bool isGeneral = false;
 
-    QDateTime lastRead;
-    QString lastReadTs;
     int unreadCount = 0;
     int unreadCountDisplay = 0;
     int unreadCountPersonal = 0; //used for broadcast or personal messages on channel
@@ -139,4 +137,20 @@ public:
 
     void setReadableName(const QString &selfId);
     void setData(const QJsonObject &data,  ChatsModel::ChatType type_ = ChatsModel::Channel);
+    QString lastReadTs() const;
+    quint64 lastRead() const;
+
+private:
+    void setLastReadTs(const QString &lastReadTs);
+    void setLastRead(const quint64 &lastRead);
+
+public slots:
+    void setLastReadData(const QString &lastread);
+signals:
+    void lastReadTsChanged(QString lastReadTs);
+    void lastReadChanged(quint64 lastRead);
+
+private:
+    QString m_lastReadTs;
+    quint64 m_lastRead;
 };

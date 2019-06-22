@@ -252,7 +252,7 @@ void SlackClientThreadSpawner::createChat(const QString &teamId, const QString &
                               Q_ARG(bool, isPrivate));
 }
 
-void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::ChatType type, const QString &channelId, const QDateTime &time)
+void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::ChatType type, const QString &channelId, quint64 time)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -261,7 +261,7 @@ void SlackClientThreadSpawner::markChannel(const QString& teamId, ChatsModel::Ch
     QMetaObject::invokeMethod(_slackClient, "markChannel", Qt::QueuedConnection,
                               Q_ARG(ChatsModel::ChatType, type),
                               Q_ARG(QString, channelId),
-                              Q_ARG(QDateTime, time));
+                              Q_ARG(quint64, time));
 }
 
 void SlackClientThreadSpawner::joinChannel(const QString& teamId, const QString &channelId)
@@ -690,8 +690,7 @@ void SlackClientThreadSpawner::postMessage(const QString& teamId, const QString 
                               Q_ARG(QString, thread_ts));
 }
 
-void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QString &channelId, const QString &content,
-                                             const QDateTime &ts, const QString &slackTs)
+void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QString &channelId, const QString &content, const QString &slackTs)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -700,12 +699,10 @@ void SlackClientThreadSpawner::updateMessage(const QString &teamId, const QStrin
     QMetaObject::invokeMethod(_slackClient, "updateMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
                               Q_ARG(QString, content),
-                              Q_ARG(QDateTime, ts),
                               Q_ARG(QString, slackTs));
 }
 
-void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId,
-                                             const QDateTime &ts, const QString& slackTs)
+void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QString &channelId, const QString& slackTs)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -713,7 +710,6 @@ void SlackClientThreadSpawner::deleteMessage(const QString &teamId, const QStrin
     }
     QMetaObject::invokeMethod(_slackClient, "deleteMessage", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(QDateTime, ts),
                               Q_ARG(QString, slackTs));
 }
 
@@ -730,7 +726,7 @@ void SlackClientThreadSpawner::postFile(const QString& teamId, const QString &ch
                               Q_ARG(QString, comment));
 }
 
-void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QString &channelId, const QDateTime &ts, const QString &reaction)
+void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QString &channelId, const QString& ts, const QString &reaction)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -738,13 +734,12 @@ void SlackClientThreadSpawner::deleteReaction(const QString& teamId, const QStri
     }
     QMetaObject::invokeMethod(_slackClient, "deleteReaction", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(QDateTime, ts),
+                              Q_ARG(QString, ts),
                               Q_ARG(QString, reaction));
 }
 
 void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString &channelId,
-                                           const QDateTime &ts, const QString &reaction,
-                                           const QString &slackTs)
+                                           const QString &ts, const QString &reaction)
 {
     SlackTeamClient* _slackClient = slackClient(teamId);
     if (_slackClient == nullptr) {
@@ -752,9 +747,8 @@ void SlackClientThreadSpawner::addReaction(const QString& teamId, const QString 
     }
     QMetaObject::invokeMethod(_slackClient, "addReaction", Qt::QueuedConnection,
                               Q_ARG(QString, channelId),
-                              Q_ARG(QDateTime, ts),
-                              Q_ARG(QString, reaction),
-                              Q_ARG(QString, slackTs));
+                              Q_ARG(QString, ts),
+                              Q_ARG(QString, reaction));
 }
 
 inline bool SlackClientThreadSpawner::checkForPersonal(const QString& msg, SlackUser* selfUser) {
@@ -781,12 +775,13 @@ void SlackClientThreadSpawner::onMessageReceived(Message *message)
     Chat* chat = _chatsModel->chat(message->channel_id);
 
     //qDebug() << "message" << message->text << checkForPersonal(message->text, _slackClient->teamInfo()->selfUser());
-    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead) {
+    if (chat != nullptr && !chat->id.isEmpty() && message->time > chat->lastRead()) {
         if (checkForPersonal(message->text, _slackClient->teamInfo()->selfUser())) {
             chat->unreadCountPersonal++;
         }
         if (message->subtype != "message_changed") {
             chat->unreadCountDisplay++;
+            qDebug() << __PRETTY_FUNCTION__ << "unread counter" << chat->unreadCountDisplay << message->subtype;
             _chatsModel->chatChanged(chat);
             emit channelCountersUpdated(_slackClient->teamInfo()->teamId(), chat->id,
                                         chat->unreadCountDisplay, chat->unreadCountPersonal);
@@ -828,10 +823,10 @@ void SlackClientThreadSpawner::onMessagesReceived(const QString& channelId, cons
         return;
     }
     Chat* _chat = _chatsModel->chat(channelId);
-    QString _lastRead;
+    quint64 _lastRead = 0;
     if (_chat != nullptr) {
         qDebug() << "Adding messages for chat" << _chat->name;
-        _lastRead = _chat->lastReadTs;
+        _lastRead = _chat->lastRead();
     }
 
     messagesModel->addMessages(messages, hasMore, threadTs);
@@ -963,7 +958,7 @@ void SlackClientThreadSpawner::onMessageUpdated(Message *message, bool replace)
     messages->updateMessage(message, replace);
 }
 
-void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, const QDateTime &ts)
+void SlackClientThreadSpawner::onMessageDeleted(const QString &channelId, quint64 ts)
 {
     DEBUG_BLOCK;
     SlackTeamClient* _slackClient = static_cast<SlackTeamClient*>(sender());
@@ -1306,9 +1301,14 @@ void SlackClientThreadSpawner::onConversationsDataChanged(const QList<Chat*>& ch
         if (_chat == nullptr) {
             continue;
         }
-        if (_chat->type == ChatsModel::Conversation) {
+        if (_chat->type != ChatsModel::Channel) {
             QMetaObject::invokeMethod(_slackClient, "requestConversationInfo", Qt::QueuedConnection, Q_ARG(QString, _chat->id));
+        } else if (_chat->isOpen) {
+            QMetaObject::invokeMethod(_slackClient, "requestChannelsInfo",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(QString, _chat->id));
         }
+
         if (_chat->isOpen || _chat->type != ChatsModel::Channel) {
             //connect only to opened chats and conversations
             emit channelCountersUpdated(_teamInfo->teamId(), _chat->id,

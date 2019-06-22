@@ -336,7 +336,7 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
     if (row >= m_users.count() || row < 0) {
-        qWarning() << "invalid row" << row;
+        qWarning() << "users invalid row" << row;
         return QVariant();
     }
 
@@ -357,7 +357,7 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 
 }
 
-void UsersModel::updateUser(const QJsonObject &userData)
+QPointer<SlackUser> UsersModel::updateUser(const QJsonObject &userData)
 {
     const QString& userId = userData.value(QStringLiteral("id")).toString();
     QPointer<SlackUser> _user = m_users.value(userId);
@@ -370,7 +370,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
     }
     if (_user.isNull()) {
         qWarning() << "still no user found for" << userId;
-        return;
+        return _user;
     }
     QString _id = _user->userId();
     if (_user->isBot()) {
@@ -380,6 +380,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index, roleNames().keys().toVector());
     qDebug() << "updated user" << _user->userId() << _user->username();// << _user;
+    return _user;
 }
 
 void UsersModel::addUser(SlackUser *user)
@@ -403,7 +404,7 @@ void UsersModel::addUser(SlackUser *user)
         endInsertRows();
         if (user->username().isEmpty()) {
             //user data is empty. request user's info
-            qDebug() << "requesting users info";
+            qDebug() << "requesting users info for" << user->userId();
             emit requestUserInfo(user);
         }
     }
@@ -467,18 +468,18 @@ void UsersModel::addUsers(const QList<QPointer<SlackUser>>& users, bool last)
 
 QPointer<SlackUser> UsersModel::user(const QString &id)
 {
-    if (m_addingUsers) {
-        qWarning() << "NOT ALL USERS ADDED!";
-    }
+//    if (m_addingUsers) {
+//        qWarning() << "NOT ALL USERS ADDED!";
+//    }
     createAndRequestInfo(id);
     return m_users.value(id);
 }
 
 void UsersModel::createAndRequestInfo(const QString &id)
 {
-    if (m_addingUsers) {
-        qWarning() << "NOT ALL USERS ADDED!";
-    }
+//    if (m_addingUsers) {
+//        qWarning() << "NOT ALL USERS ADDED!";
+//    }
     if (!m_users.contains(id)) {
         QPointer<SlackUser> _user = new SlackUser;
         QQmlEngine::setObjectOwnership(_user, QQmlEngine::CppOwnership);

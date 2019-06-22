@@ -74,7 +74,7 @@ signals:
     void messagesReceived(const QString &channelId, const QList<Message*>& messages, bool hasMore, const QString &threadTs);
     void searchMessagesReceived(const QJsonArray& matches, int total, const QString& query, int page, int pages);
     void messageUpdated(Message* message, bool replace = true);
-    void messageDeleted(const QString& channelId, const QDateTime& ts);
+    void messageDeleted(const QString& channelId, quint64 ts);
     void error(QJsonObject err);
     void fileSharesReceived(const QList<FileShare*>& shares, int total, int page, int pages);
 
@@ -112,22 +112,21 @@ public slots:
     void startClient();
     void testLogin();
 
-    void deleteReaction(const QString &channelId, const QDateTime &ts, const QString &reaction);
-    void addReaction(const QString &channelId, const QDateTime &ts, const QString &reaction,
-                     const QString &slackTs);
+    void deleteReaction(const QString &channelId, const QString &ts, const QString &reaction);
+    void addReaction(const QString &channelId, const QString& ts, const QString &reaction);
 
     void searchMessages(const QString& searchString, int page =  1);
     void loadMessages(const QString& channelId, const QString &latest = "",
                       const QString &oldest = "", const QString &threadTs = "");
     void postMessage(const QString& channelId, QString content, const QString &thread_ts);
-    void updateMessage(const QString& channelId, QString content, const QDateTime &ts, const QString& slackTs);
-    void deleteMessage(const QString& channelId, const QDateTime& ts, const QString& slackTs);
+    void updateMessage(const QString& channelId, QString content, const QString& slackTs);
+    void deleteMessage(const QString& channelId, const QString& slackTs);
 
     void postFile(const QString& channelId, const QString& filePath, const QString& title, const QString& comment);
     void deleteFile(const QString& fileId);
 
     void createChat(const QString &channelName, bool isPrivate);
-    void markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime& time);
+    void markChannel(ChatsModel::ChatType type, const QString& channelId, quint64 time = 0);
     void joinChannel(const QString& channelId);
     void leaveChannel(const QString& channelId);
     void archiveChannel(const QString& channelId);
@@ -139,9 +138,15 @@ public slots:
     void requestTeamInfo();
     void requestConversationsList(const QString& cursor);
     void requestConversationMembers(const QString& channelId, const QString& cursor);
+    void requestConversationInfo(const QString& channelId);
+
     void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
-    void requestConversationInfo(const QString& channelId);
+
+    // request presence supscriptions. Rate limited
+    void requestPresence(const QString& userId);
+    void requestPresence(const QStringList& userIds);
+
     void requestUserInfo(SlackUser* user);
     void requestUserInfoById(const QString& userId);
     void updateUserInfo(SlackUser* user);
@@ -160,6 +165,7 @@ public slots:
     void sendUserTyping(const QString& channelId);
     void requestSharedFiles(int page, const QString &channelId = QString(), const QString &userId = QString());
     void requestSharedFileInfo(const QString &fileId);
+    void requestChannelsInfo(const QString &channelId);
 
 private slots:
     void handleStartReply();
@@ -192,7 +198,9 @@ private slots:
 
     void createChannelIfNeeded(const QJsonObject &channel);
     void handleTeamFilesReply();
+    void handleChannelsInfoReply();
 
+    void doPresenceRequest();
 private:
     bool appActive;
     QString activeWindow;
@@ -237,7 +245,9 @@ private:
     QObject *m_spawner { nullptr };
 
     static const QMap<QString, QString> kSlackErrors;
-
+    QTimer m_presenceRequestTimer;
+    QStringList m_presenceRequestIds;
+    QMutex m_presenceRequestMutex;
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)

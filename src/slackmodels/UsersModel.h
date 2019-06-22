@@ -147,7 +147,7 @@ signals:
 
 public slots:
     void addUser(SlackUser *user);
-    void updateUser(const QJsonObject &userData);
+    QPointer<SlackUser> updateUser(const QJsonObject &userData);
     void addUser(const QJsonObject &userData);
     void addUsers(const QList<QPointer<SlackUser>> &users, bool last);
     QPointer<SlackUser> user(const QString &id);

@@ -62,6 +62,8 @@ SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const 
         m_teamInfo.setTeamToken(accessToken);
     }
     setState(ClientStates::DISCONNECTED);
+    m_presenceRequestTimer.setSingleShot(true);
+    connect(&m_presenceRequestTimer, &QTimer::timeout, this, &SlackTeamClient::doPresenceRequest);
     qDebug() << "client ctor finished" << m_teamInfo.teamToken() << m_teamInfo.teamId() << m_teamInfo.name();
 }
 
@@ -329,7 +331,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-    //qDebug().noquote() << "channel updated" << QJsonDocument(channelData).toJson();
+    qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
@@ -342,14 +344,17 @@ void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
         return;
     }
     int unreadCountDisplay = message.value(QStringLiteral("unread_count_display")).toInt();
+    int unreadCount = message.value(QStringLiteral("unread_count")).toInt();
     const QString& lastReadTs = message.value(QStringLiteral("ts")).toString();
-    const QDateTime& lastRead = slackToDateTime(lastReadTs);
-    if (unreadCountDisplay != chat->unreadCountDisplay
-            || lastReadTs != chat->lastReadTs) {
+    const quint64 lastRead = slackTsToInternalTs(lastReadTs);
+    if (unreadCount != chat->unreadCount || unreadCountDisplay != chat->unreadCountDisplay
+            || lastReadTs != chat->lastReadTs()) {
+        qDebug() << __PRETTY_FUNCTION__ << "unread counter" << unreadCountDisplay;
         chat->unreadCountDisplay = unreadCountDisplay;
         chat->unreadCountPersonal = 0;
-        chat->lastRead = lastRead;
-        chat->lastReadTs = lastReadTs;
+        //TODO: do we really need to set lastRead here?
+//        chat->setLastRead(lastRead);
+//        chat->setLastReadTs(lastReadTs);
         emit channelUpdated(chat);
     }
 }
@@ -392,7 +397,7 @@ void SlackTeamClient::parseMessageUpdate(const QJsonObject& message)
        emit messageUpdated(message_);
        //TODO: implement handling all empty subtypes
     } else if (subtype == "message_deleted") {
-        const QDateTime& deleted_ts = slackToDateTime(message.value(QStringLiteral("deleted_ts")).toString());
+        const quint64 deleted_ts = slackTsToInternalTs(message.value(QStringLiteral("deleted_ts")).toString());
         const QString& channel_id = message.value(QStringLiteral("channel")).toString();
         emit messageDeleted(channel_id, deleted_ts);
     } else if (subtype == "file_comment") {
@@ -640,7 +645,7 @@ QNetworkReply *SlackTeamClient::executeGet(const QString& method, const QMap<QSt
         request.setAttribute(QNetworkRequest::User, attribute);
     }
 
-    qDebug() << "GET" << url.toString();
+    //qDebug() << "GET" << url.toString();
     return networkAccessManager->get(request);
 }
 
@@ -944,10 +949,7 @@ void SlackTeamClient::handleStartReply()
 
     m_teamInfo.parseSelfData(data.value("self").toObject());
     //subscribe on self presence events
-    QJsonObject presenceRequest;
-    presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
-    presenceRequest.insert(QStringLiteral("ids"), QJsonValue(m_teamInfo.selfId()));
-    stream->sendMessage(presenceRequest);
+    requestPresence(m_teamInfo.selfId());
     requestUserInfoById(m_teamInfo.selfId());
 
     QUrl url(data.value(QStringLiteral("url")).toString());
@@ -1188,7 +1190,7 @@ void SlackTeamClient::requestConversationMembers(const QString &channelId, const
 
 void SlackTeamClient::requestUsersList(const QString& cursor)
 {
-    qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
+    //qDebug() << __PRETTY_FUNCTION__ << m_teamInfo.users()->users().count() << "cursor" << cursor;
     if (m_teamInfo.users() == nullptr || !m_teamInfo.users()->usersFetched() || !cursor.isEmpty()) {
         QMap<QString, QString> params;
         params.insert(QStringLiteral("limit"), "10000");
@@ -1210,10 +1212,52 @@ void SlackTeamClient::requestTeamEmojis()
     }
 }
 
+void SlackTeamClient::requestPresence(const QString &userId)
+{
+    //qDebug() << "presence request to" << userId;
+    QMetaObject::invokeMethod(this, [this, userId] {
+        QMutexLocker lock(&m_presenceRequestMutex);
+        m_presenceRequestIds.append(userId);
+        m_presenceRequestTimer.start(1000);
+    }, Qt::QueuedConnection);
+}
+
+void SlackTeamClient::requestPresence(const QStringList &userIds)
+{
+    //qDebug() << "presence request to" << userIds;
+    QMetaObject::invokeMethod(this, [this, userIds] {
+        QMutexLocker lock(&m_presenceRequestMutex);
+        m_presenceRequestIds.append(userIds);
+        m_presenceRequestTimer.start(1000);
+    }, Qt::QueuedConnection);
+}
+
+//void SlackTeamClient::requestGroupsInfo(const QString &channelId)
+//{
+//    QMap<QString, QString> params;
+//    params.insert(QStringLiteral("channel"), channelId);
+
+//    QNetworkReply *reply = executeGet(QStringLiteral("channels.info"), params, channelId);
+
+//    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
+//}
+
+void SlackTeamClient::requestChannelsInfo(const QString &channelId)
+{
+    QMap<QString, QString> params;
+    params.insert(QStringLiteral("channel"), channelId);
+
+    QNetworkReply *reply = executeGet(QStringLiteral("channels.info"), params, channelId);
+
+    connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleChannelsInfoReply);
+}
+
 void SlackTeamClient::requestConversationInfo(const QString &channelId)
 {
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
+    params.insert(QStringLiteral("include_num_members"), QStringLiteral("true"));
+
     QNetworkReply *reply = executeGet(QStringLiteral("conversations.info"), params, channelId);
 
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleConversationInfoReply);
@@ -1392,12 +1436,12 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
                                    const QString& oldest, const QString &threadTs)
 {
     DEBUG_BLOCK;
-    qDebug() << "Loading messages" << channelId << oldest << latest << sender();
     if (channelId.isEmpty()) {
         qWarning() << __PRETTY_FUNCTION__ << "Empty channel id";
         return;
     }
     QString _latest = latest;
+    QString _oldest = oldest;
     ChatsModel* _chatsModel = teamInfo()->chats();
     if (_chatsModel == nullptr) {
         return;
@@ -1407,7 +1451,8 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
         qWarning() << __PRETTY_FUNCTION__ << "Chat for channel ID" << channelId << "not found";
         return;
     }
-    if (_latest.isEmpty() && threadTs.isEmpty() && oldest.isEmpty()) {
+    qDebug() << "Loading messages" << channelId << oldest << latest << sender() << chat->lastReadTs();
+    if (_latest.isEmpty() && threadTs.isEmpty() && _oldest.isEmpty()) {
         MessageListModel* mesgs = _chatsModel->messages(channelId);
         //check if send from QML (sender == null)
         if (sender() == nullptr && mesgs->historyLoaded()) {
@@ -1421,6 +1466,9 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
             _latest = mesgs->firstMessageTs();
         }
     }
+//    if (oldest.isEmpty() && !chat->lastReadTs.isEmpty()) {
+//        _oldest = chat->lastReadTs;
+//    }
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
     params.insert(QStringLiteral("count"), "50"); //TODO: make variable
@@ -1431,8 +1479,8 @@ void SlackTeamClient::loadMessages(const QString& channelId, const QString& late
         params.insert(QStringLiteral("latest"), _latest);
         params.insert(QStringLiteral("inclusive"), "0");
     }
-    if (oldest.isEmpty() == false) {
-        params.insert(QStringLiteral("oldest"), oldest);
+    if (_oldest.isEmpty() == false) {
+        params.insert(QStringLiteral("oldest"), _oldest);
     }
 
     QNetworkReply *reply = executeGet(threadTs.isEmpty() ? "conversations.history" :
@@ -1520,7 +1568,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     emit messagesReceived(channelId, _mlist, _hasMore, threadTs);
     messageModel->setHistoryLoaded(true);
 
-    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count() << "thread ts" << threadTs;
+    qWarning() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count() << "thread ts" << threadTs;
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 
@@ -1573,62 +1621,41 @@ TeamInfo *SlackTeamClient::teamInfo()
     return &m_teamInfo;
 }
 
-void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, const QDateTime &time)
+void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, quint64 time)
 {
+    Q_UNUSED(time)
     DEBUG_BLOCK;
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    QString dt;// = time;
-    ChatsModel* _chatsModel = teamInfo()->chats();
-    if (_chatsModel == nullptr) {
-        return;
-    }
-    if (dt.isEmpty()) {
-        auto messagesModel = _chatsModel->messages(channelId);
-        if (messagesModel != nullptr) {
-            dt = messagesModel->lastMessage();
-        } else {
-            qDebug() << "message model not ready for the channel" << channelId;
-        }
-    }
-    if (dt.isEmpty()) {
-        qWarning() << "Cant find timestamp for the channel" << channelId;
-        return;
-    }
-    params.insert(QStringLiteral("ts"), dt);
+    params.insert(QStringLiteral("ts"), QString("%1").arg(QDateTime::currentSecsSinceEpoch()));
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteReaction(const QString& channelId, const QDateTime &ts, const QString& reaction)
+void SlackTeamClient::deleteReaction(const QString& channelId, const QString& ts, const QString& reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
+    data.insert(QStringLiteral("timestamp"), ts);
 
     QNetworkReply *reply = executePost(QStringLiteral("reactions.remove"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::addReaction(const QString &channelId, const QDateTime &ts,
-                                  const QString &reaction,
-                                  const QString &slackTs)
+void SlackTeamClient::addReaction(const QString &channelId, const QString &ts,
+                                  const QString &reaction)
 {
     DEBUG_BLOCK
 
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
     data.insert(QStringLiteral("name"), reaction);
-    if (!slackTs.isEmpty()) {
-        data.insert(QStringLiteral("timestamp"), slackTs);
-    } else {
-        data.insert(QStringLiteral("timestamp"), dateTimeToSlack(ts));
-    }
+    data.insert(QStringLiteral("timestamp"), ts);
     QNetworkReply *reply = executePost(QStringLiteral("reactions.add"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
@@ -1661,8 +1688,7 @@ void SlackTeamClient::postMessage(const QString& channelId, QString content, con
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::updateMessage(const QString &channelId, QString content,
-                                    const QDateTime &ts, const QString &slackTs)
+void SlackTeamClient::updateMessage(const QString &channelId, QString content, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
@@ -1671,26 +1697,19 @@ void SlackTeamClient::updateMessage(const QString &channelId, QString content,
     data.insert(QStringLiteral("text"), content);
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
     data.insert(QStringLiteral("parse"), QStringLiteral("full"));
-    if (!slackTs.isEmpty()) {
-        data.insert(QStringLiteral("ts"), slackTs);
-    } else {
-        data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
-    }
+    data.insert(QStringLiteral("ts"), slackTs);
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.update"), data);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
 }
 
-void SlackTeamClient::deleteMessage(const QString &channelId, const QDateTime &ts, const QString &slackTs)
+void SlackTeamClient::deleteMessage(const QString &channelId, const QString &slackTs)
 {
     DEBUG_BLOCK;
     QMap<QString, QString> data;
     data.insert(QStringLiteral("channel"), channelId);
-    if (!slackTs.isEmpty()) {
-        data.insert(QStringLiteral("ts"), slackTs);
-    } else {
-        data.insert(QStringLiteral("ts"), dateTimeToSlack(ts));
-    }
+    data.insert(QStringLiteral("ts"), slackTs);
+
     data.insert(QStringLiteral("as_user"), QStringLiteral("true"));
 
     QNetworkReply *reply = executePost(QStringLiteral("chat.delete"), data);
@@ -1710,12 +1729,18 @@ void SlackTeamClient::handleConversationsListReply()
         cursor = data.value("response_metadata").toObject().value("next_cursor").toString();
         reply->deleteLater();
         for (const QJsonValue& chatValue : data.value("channels").toArray()) {
-            Chat* chat = new Chat(chatValue.toObject());
-            QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);
+            Chat* chat = new Chat();
             if (chat == nullptr) {
                 qWarning() << __PRETTY_FUNCTION__ << "Error allocating memory for Chat";
+                return;
             }
+            QQmlEngine::setObjectOwnership(chat, QQmlEngine::CppOwnership);
+            chat->moveToThread(qApp->thread());
             _chats.append(chat);
+            //in GUI thread
+            QMetaObject::invokeMethod(qApp, [this, chat, chatValue] {
+                chat->setData(chatValue.toObject());
+            });
         }
 #if 0
         {
@@ -1727,24 +1752,27 @@ void SlackTeamClient::handleConversationsListReply()
         }
 #endif
     }
-    emit conversationsDataChanged(_chats, cursor.isEmpty());
 
-    QJsonArray presenceIds;
+    QStringList presenceIds;
 
     for (Chat* chat : _chats) {
+
         if (chat->type != ChatsModel::Conversation && chat->type != ChatsModel::Channel) {
             requestConversationMembers(chat->id, "");
         }
         if (chat->type == ChatsModel::Conversation && !chat->user.isEmpty()) {
-            presenceIds.append(QJsonValue(chat->user));
+            presenceIds.append(chat->user);
         }
+
+        if (chat->type != ChatsModel::Channel)
+            requestConversationInfo(chat->id);
+        else if (chat->isOpen)
+            requestChannelsInfo(chat->id);
     }
+    emit conversationsDataChanged(_chats, cursor.isEmpty());
     //create presence status request
     if (presenceIds.count() > 0) {
-        QJsonObject presenceRequest;
-        presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
-        presenceRequest.insert(QStringLiteral("ids"), QJsonValue(presenceIds));
-        stream->sendMessage(presenceRequest);
+        requestPresence(presenceIds);
     }
 
     if (!cursor.isEmpty()) {
@@ -1755,6 +1783,13 @@ void SlackTeamClient::handleConversationsListReply()
         }
         emit initSuccess(m_teamInfo.teamId());
         m_status = INITED;
+
+//        ChatsModel* chModel = m_teamInfo.chats();
+//        for (const QString& chatId : chModel->getChatIds()) {
+//            //conversation info contains last read info as well
+//            // TODO: slowdowns messages show. investigate
+//            requestConversationInfo(chatId);
+//        }
     }
 }
 
@@ -1808,6 +1843,50 @@ void SlackTeamClient::handleConversationMembersReply()
     }
 }
 
+//used only for number of unread messages. rest info is inconsistent and cant be trusted
+void SlackTeamClient::handleChannelsInfoReply()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    const QJsonObject& data = getResult(reply);
+    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    const QString& channelId = reply->request().attribute(QNetworkRequest::User).toString();
+    //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
+    reply->deleteLater();
+    ChatsModel* _chatsModel = teamInfo()->chats();
+    if (_chatsModel == nullptr) {
+        return;
+    }
+
+    Chat* chat = _chatsModel->chat(channelId);
+    if (chat != nullptr) {
+        const QJsonValue& chatVal = data.value("channel");
+        if (chatVal.isUndefined()) {
+            qWarning() << "Channel info reply. Chat" << chat->name << "type is undefined";
+            return;
+        }
+        chat->unreadCountDisplay = chatVal.toObject().value(QStringLiteral("unread_count_display")).toInt(0);
+        chat->unreadCount = chatVal.toObject().value(QStringLiteral("unread_count")).toInt(0);
+        //in GUI thread
+        QMetaObject::invokeMethod(qApp, [this, chat, chatVal] {
+            chat->setLastReadData(chatVal.toObject().value(QStringLiteral("last_read")).toString());
+            emit channelUpdated(chat);
+        });
+    }
+}
+
+void SlackTeamClient::doPresenceRequest()
+{
+    //qDebug() << "sending presence request to" << m_presenceRequestIds;
+    QMutexLocker lock(&m_presenceRequestMutex);
+    if (!m_presenceRequestIds.isEmpty()) {
+        QJsonObject presenceRequest;
+        presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
+        presenceRequest.insert(QStringLiteral("ids"), QJsonValue(QJsonArray::fromStringList(m_presenceRequestIds)));
+        stream->sendMessage(presenceRequest);
+        m_presenceRequestIds.clear();
+    }
+}
+
 void SlackTeamClient::handleConversationInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -1822,7 +1901,19 @@ void SlackTeamClient::handleConversationInfoReply()
     }
     Chat* chat = _chatsModel->chat(channelId);
     if (chat != nullptr) {
-        chat->setData(data.value("channel").toObject());
+        QJsonValue chatVal = data.value("channel");
+        if (chatVal.isUndefined())
+            chatVal = data.value("group");
+        if (chatVal.isUndefined()) {
+            qWarning() << "Chat" << chat->name << "type is undefined";
+            return;
+        }
+
+        //in GUI thread
+        QMetaObject::invokeMethod(qApp, [this, chat, chatVal] {
+            chat->setData(chatVal.toObject());
+        });
+
         emit channelUpdated(chat);
     }
 }
@@ -1864,13 +1955,18 @@ void SlackTeamClient::handleUsersInfoReply()
         QMetaObject::invokeMethod(qApp, [this, data] {
             if (m_teamInfo.users() != nullptr) {
                 const QJsonObject& userObj = data.value(QStringLiteral("user")).toObject();
-                m_teamInfo.users()->updateUser(userObj);
-                const QString& userId = userObj.value("id").toString();
-                QMetaObject::invokeMethod(this, [this, userId] {
-                    if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
-                        requestDnDInfo(m_teamInfo.selfId());
+                QPointer<SlackUser> _user = m_teamInfo.users()->updateUser(userObj);
+                if (!_user.isNull()) {
+                    const QString& userId = _user->userId();
+                    if (_user->presence() == SlackUser::Unknown) {
+                        requestPresence(userId);
                     }
-                }, Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(this, [this, userId] {
+                        if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
+                            requestDnDInfo(m_teamInfo.selfId());
+                        }
+                    }, Qt::QueuedConnection);
+                }
             }
         }, Qt::QueuedConnection);
     }
@@ -1887,10 +1983,12 @@ void SlackTeamClient::createChannelIfNeeded(const QJsonObject &channel)
     }
     Chat* _chat = _chatsModel->chat(channelId);
     if (_chat == nullptr) {
-        _chat = new Chat(channel);
+        _chat = new Chat();
+        _chat->moveToThread(qApp->thread());
         QQmlEngine::setObjectOwnership(_chat, QQmlEngine::CppOwnership);
         // invoke on the main thread
-        QMetaObject::invokeMethod(qApp, [_chatsModel, _chat] {
+        QMetaObject::invokeMethod(qApp, [_chatsModel, _chat, channel] {
+            _chat->setData(channel);
             _chatsModel->addChat(_chat);
         });
     }
