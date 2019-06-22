@@ -74,10 +74,23 @@ MouseArea {
                 width: parent.width
                 spacing: 1
 
-                Text {
-                    text: "Last read (DEBUG)"
-                    color: "red"
+                Row {
+                    width: parent.width - Theme.paddingMedium*2
+                    x: Theme.paddingMedium
+                    height: lrText.paintedHeight
                     visible: channelRoot.channel.lastReadTs === model.SlackTimestamp
+                    Text {
+                        id: lrText
+                        text: qsTr(" Last read ")
+                        color: "red"
+                    }
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - lrText.paintedWidth - Theme.paddingMedium*2
+                        height: 2
+                        color: "darkred"
+                    }
+
                 }
                 Control {
                     topPadding: Theme.paddingLarge

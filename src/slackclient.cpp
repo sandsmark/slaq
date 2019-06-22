@@ -1623,30 +1623,12 @@ TeamInfo *SlackTeamClient::teamInfo()
 
 void SlackTeamClient::markChannel(ChatsModel::ChatType type, const QString& channelId, quint64 time)
 {
+    Q_UNUSED(time)
     DEBUG_BLOCK;
 
     QMap<QString, QString> params;
     params.insert(QStringLiteral("channel"), channelId);
-    QString dt;
-    ChatsModel* _chatsModel = teamInfo()->chats();
-    if (_chatsModel == nullptr) {
-        return;
-    }
-    if (time != 0) {
-        dt = ::internalTsToSlackTs(time);
-    } else {
-        auto messagesModel = _chatsModel->messages(channelId);
-        if (messagesModel != nullptr) {
-            dt = ::internalTsToSlackTs(messagesModel->lastMessage());
-        } else {
-            qDebug() << "message model not ready for the channel" << channelId;
-        }
-    }
-    if (dt.isEmpty()) {
-        qWarning() << "Cant find timestamp for the channel" << channelId;
-        return;
-    }
-    params.insert(QStringLiteral("ts"), dt);
+    params.insert(QStringLiteral("ts"), QString("%1").arg(QDateTime::currentSecsSinceEpoch()));
 
     QNetworkReply *reply = executeGet(markMethod(type), params);
     connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleCommonReply);
@@ -1866,7 +1848,7 @@ void SlackTeamClient::handleChannelsInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     const QJsonObject& data = getResult(reply);
-    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     const QString& channelId = reply->request().attribute(QNetworkRequest::User).toString();
     //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
     reply->deleteLater();
@@ -1874,6 +1856,7 @@ void SlackTeamClient::handleChannelsInfoReply()
     if (_chatsModel == nullptr) {
         return;
     }
+
     Chat* chat = _chatsModel->chat(channelId);
     if (chat != nullptr) {
         const QJsonValue& chatVal = data.value("channel");
@@ -1886,8 +1869,8 @@ void SlackTeamClient::handleChannelsInfoReply()
         //in GUI thread
         QMetaObject::invokeMethod(qApp, [this, chat, chatVal] {
             chat->setLastReadData(chatVal.toObject().value(QStringLiteral("last_read")).toString());
+            emit channelUpdated(chat);
         });
-        emit channelUpdated(chat);
     }
 }
 

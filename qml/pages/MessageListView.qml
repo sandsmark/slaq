@@ -88,7 +88,7 @@ ListView {
 
     Timer {
         id: readTimer
-        interval: 1000
+        interval: 3000
         triggeredOnStart: false
         running: false
         repeat: false
