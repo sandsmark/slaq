@@ -25,7 +25,6 @@ Item {
                 videoItem.height = width / (sourceSize.width / sourceSize.height)
             }
         }
-        onSourceChanged: console.log("thumb video source:" + source)
     }
 
     Connections {
