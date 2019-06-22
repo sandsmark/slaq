@@ -62,6 +62,8 @@ SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const 
         m_teamInfo.setTeamToken(accessToken);
     }
     setState(ClientStates::DISCONNECTED);
+    m_presenceRequestTimer.setSingleShot(true);
+    connect(&m_presenceRequestTimer, &QTimer::timeout, this, &SlackTeamClient::doPresenceRequest);
     qDebug() << "client ctor finished" << m_teamInfo.teamToken() << m_teamInfo.teamId() << m_teamInfo.name();
 }
 
@@ -947,10 +949,7 @@ void SlackTeamClient::handleStartReply()
 
     m_teamInfo.parseSelfData(data.value("self").toObject());
     //subscribe on self presence events
-    QJsonObject presenceRequest;
-    presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
-    presenceRequest.insert(QStringLiteral("ids"), QJsonValue(m_teamInfo.selfId()));
-    stream->sendMessage(presenceRequest);
+    requestPresence(m_teamInfo.selfId());
     requestUserInfoById(m_teamInfo.selfId());
 
     QUrl url(data.value(QStringLiteral("url")).toString());
@@ -1211,6 +1210,26 @@ void SlackTeamClient::requestTeamEmojis()
         QNetworkReply *reply = executeGet(QStringLiteral("emoji.list"));
         connect(reply, &QNetworkReply::finished, this, &SlackTeamClient::handleTeamEmojisReply);
     }
+}
+
+void SlackTeamClient::requestPresence(const QString &userId)
+{
+    //qDebug() << "presence request to" << userId;
+    QMetaObject::invokeMethod(this, [this, userId] {
+        QMutexLocker lock(&m_presenceRequestMutex);
+        m_presenceRequestIds.append(userId);
+        m_presenceRequestTimer.start(1000);
+    }, Qt::QueuedConnection);
+}
+
+void SlackTeamClient::requestPresence(const QStringList &userIds)
+{
+    //qDebug() << "presence request to" << userIds;
+    QMetaObject::invokeMethod(this, [this, userIds] {
+        QMutexLocker lock(&m_presenceRequestMutex);
+        m_presenceRequestIds.append(userIds);
+        m_presenceRequestTimer.start(1000);
+    }, Qt::QueuedConnection);
 }
 
 //void SlackTeamClient::requestGroupsInfo(const QString &channelId)
@@ -1752,7 +1771,7 @@ void SlackTeamClient::handleConversationsListReply()
 #endif
     }
 
-    QJsonArray presenceIds;
+    QStringList presenceIds;
 
     for (Chat* chat : _chats) {
 
@@ -1760,7 +1779,7 @@ void SlackTeamClient::handleConversationsListReply()
             requestConversationMembers(chat->id, "");
         }
         if (chat->type == ChatsModel::Conversation && !chat->user.isEmpty()) {
-            presenceIds.append(QJsonValue(chat->user));
+            presenceIds.append(chat->user);
         }
 
         if (chat->type != ChatsModel::Channel)
@@ -1771,10 +1790,7 @@ void SlackTeamClient::handleConversationsListReply()
     emit conversationsDataChanged(_chats, cursor.isEmpty());
     //create presence status request
     if (presenceIds.count() > 0) {
-        QJsonObject presenceRequest;
-        presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
-        presenceRequest.insert(QStringLiteral("ids"), QJsonValue(presenceIds));
-        stream->sendMessage(presenceRequest);
+        requestPresence(presenceIds);
     }
 
     if (!cursor.isEmpty()) {
@@ -1875,6 +1891,19 @@ void SlackTeamClient::handleChannelsInfoReply()
     }
 }
 
+void SlackTeamClient::doPresenceRequest()
+{
+    //qDebug() << "sending presence request to" << m_presenceRequestIds;
+    QMutexLocker lock(&m_presenceRequestMutex);
+    if (!m_presenceRequestIds.isEmpty()) {
+        QJsonObject presenceRequest;
+        presenceRequest.insert(QStringLiteral("type"), QJsonValue(QStringLiteral("presence_sub")));
+        presenceRequest.insert(QStringLiteral("ids"), QJsonValue(QJsonArray::fromStringList(m_presenceRequestIds)));
+        stream->sendMessage(presenceRequest);
+        m_presenceRequestIds.clear();
+    }
+}
+
 void SlackTeamClient::handleConversationInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -1943,13 +1972,18 @@ void SlackTeamClient::handleUsersInfoReply()
         QMetaObject::invokeMethod(qApp, [this, data] {
             if (m_teamInfo.users() != nullptr) {
                 const QJsonObject& userObj = data.value(QStringLiteral("user")).toObject();
-                m_teamInfo.users()->updateUser(userObj);
-                const QString& userId = userObj.value("id").toString();
-                QMetaObject::invokeMethod(this, [this, userId] {
-                    if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
-                        requestDnDInfo(m_teamInfo.selfId());
+                QPointer<SlackUser> _user = m_teamInfo.users()->updateUser(userObj);
+                if (!_user.isNull()) {
+                    const QString& userId = _user->userId();
+                    if (_user->presence() == SlackUser::Unknown) {
+                        requestPresence(userId);
                     }
-                }, Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(this, [this, userId] {
+                        if (m_teamInfo.selfUser() != nullptr && m_teamInfo.selfUser()->userId() == userId) {
+                            requestDnDInfo(m_teamInfo.selfId());
+                        }
+                    }, Qt::QueuedConnection);
+                }
             }
         }, Qt::QueuedConnection);
     }

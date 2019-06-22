@@ -93,7 +93,6 @@ QVariant ChatsModel::data(const QModelIndex &index, int role) const
     case Name:
         return chat->readableName.isEmpty() ? chat->name : chat->readableName;
     case IsOpen:
-        qDebug() << "data. is open" << chat->name << chat->isOpen;
         return chat->isOpen;
     case IsGeneral:
         return chat->isGeneral;

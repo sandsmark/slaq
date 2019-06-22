@@ -357,7 +357,7 @@ QHash<int, QByteArray> UsersModel::roleNames() const
 
 }
 
-void UsersModel::updateUser(const QJsonObject &userData)
+QPointer<SlackUser> UsersModel::updateUser(const QJsonObject &userData)
 {
     const QString& userId = userData.value(QStringLiteral("id")).toString();
     QPointer<SlackUser> _user = m_users.value(userId);
@@ -370,7 +370,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
     }
     if (_user.isNull()) {
         qWarning() << "still no user found for" << userId;
-        return;
+        return _user;
     }
     QString _id = _user->userId();
     if (_user->isBot()) {
@@ -380,6 +380,7 @@ void UsersModel::updateUser(const QJsonObject &userData)
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index, roleNames().keys().toVector());
     qDebug() << "updated user" << _user->userId() << _user->username();// << _user;
+    return _user;
 }
 
 void UsersModel::addUser(SlackUser *user)

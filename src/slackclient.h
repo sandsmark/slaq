@@ -143,6 +143,10 @@ public slots:
     void requestUsersList(const QString& cursor);
     void requestTeamEmojis();
 
+    // request presence supscriptions. Rate limited
+    void requestPresence(const QString& userId);
+    void requestPresence(const QStringList& userIds);
+
     void requestUserInfo(SlackUser* user);
     void requestUserInfoById(const QString& userId);
     void updateUserInfo(SlackUser* user);
@@ -195,6 +199,8 @@ private slots:
     void createChannelIfNeeded(const QJsonObject &channel);
     void handleTeamFilesReply();
     void handleChannelsInfoReply();
+
+    void doPresenceRequest();
 private:
     bool appActive;
     QString activeWindow;
@@ -239,7 +245,9 @@ private:
     QObject *m_spawner { nullptr };
 
     static const QMap<QString, QString> kSlackErrors;
-
+    QTimer m_presenceRequestTimer;
+    QStringList m_presenceRequestIds;
+    QMutex m_presenceRequestMutex;
 };
 
 QML_DECLARE_TYPE(SlackTeamClient)
