@@ -447,7 +447,6 @@ void Chat::setLastReadData(const QString& lastread) {
 }
 void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
 {
-    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     id = data.value(QStringLiteral("id")).toString();
     type = type_;
     if (data.value(QStringLiteral("is_mpim")).toBool(false)) {
@@ -465,14 +464,20 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
         name = data.value(QStringLiteral("name")).toString(name);
     presence = QStringLiteral("none");
     const QJsonValue& isOpenVal = data.value(QStringLiteral("is_open"));
-    if (!isOpenVal.isUndefined() && type == ChatsModel::Channel)
+    if (!isOpenVal.isUndefined())
         isOpen = isOpenVal.toBool();
-    const QJsonValue& isMemberVal = data.value(QStringLiteral("is_member"));
-    if (!isMemberVal.isUndefined())
-        isOpen = isMemberVal.toBool();
+    if (isOpen == false) {
+        const QJsonValue& isMemberVal = data.value(QStringLiteral("is_member"));
+        if (!isMemberVal.isUndefined())
+            isOpen = isMemberVal.toBool();
+    }
 
-    qDebug() << "chat is open" << name << isOpen;
+    //qDebug() << "chat is open" << name << isOpen;
     user = data.value("user").toString();
+
+    if (name.isEmpty() and isOpen) {
+        qWarning().noquote() << __PRETTY_FUNCTION__ << "Chat opened but without name:" << data;
+    }
 
     const QJsonValue& isPrivateVal = data.value(QStringLiteral("is_private"));
     if (!isPrivateVal.isUndefined())
