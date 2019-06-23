@@ -1848,7 +1848,7 @@ void SlackTeamClient::handleChannelsInfoReply()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     const QJsonObject& data = getResult(reply);
-    qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
+    //qDebug().noquote() << __PRETTY_FUNCTION__ << "result" << data;
     const QString& channelId = reply->request().attribute(QNetworkRequest::User).toString();
     //qDebug() << __PRETTY_FUNCTION__ << "channel id" << channelId;
     reply->deleteLater();
