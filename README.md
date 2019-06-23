@@ -7,7 +7,7 @@ Based on [Slackfish](https://github.com/markussammallahti/harbour-slackfish).
 
 ## How to use
 Get latest Qt framework. 
-Minimum required version is Qt 5.11.
+Minimum required version is Qt 5.12 LTS.
 
 Note: QtWebEngine module must be installed during the Qt framework installation
 
