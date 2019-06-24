@@ -168,7 +168,13 @@ int YoutubeVideoUrlParser::expiredIn(const QString &videoId)
 {
     PlayerConfiguration* pc = m_youtubeRequests.value(videoId);
     if (pc != nullptr) {
-        return (QDateTime::currentMSecsSinceEpoch() - pc->validUntil.toMSecsSinceEpoch())/1000;
+        int _expireSecs = (pc->validUntil.toMSecsSinceEpoch() - QDateTime::currentMSecsSinceEpoch())/1000;
+        if (_expireSecs <= 0) {
+            qWarning() << "Youtube expiration time" << pc->validUntil
+                       << "less than current time" << QDateTime::currentDateTime();
+            _expireSecs = 3600;
+        }
+        return _expireSecs;
     }
     return 0;
 }

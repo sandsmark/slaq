@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.3.0
+VERSION = 0.0.3.1
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
