@@ -4,9 +4,8 @@ import QtQuick.Controls 2.4
 import ".."
 import "../components"
 
-RowLayout {
+Row {
     property alias fieldList: repeater.model
-    Layout.fillWidth: true
 
     id: grid
     spacing: Theme.paddingLarge

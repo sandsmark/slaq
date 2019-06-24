@@ -7,7 +7,8 @@ import "../components"
 
 import com.iskrembilen 1.0
 
-ColumnLayout {
+Column {
+    id: attachRoot
     property Attachment attachment: null
 
     signal linkClicked(string link)
@@ -16,7 +17,7 @@ ColumnLayout {
 
     SlaqTextTooltips {
         id: pretextLabel
-        Layout.fillWidth: true
+        width: parent.width
         wrapMode: Text.Wrap
         chat: channelsList.channelModel
         font.pointSize: Theme.fontSizeSmall
@@ -29,32 +30,30 @@ ColumnLayout {
 
     Spacer {
         visible: !pretextLabel.visible
-        Layout.fillWidth: true
+        width: parent.width
         height: visible ? Theme.paddingSmall : 0
     }
 
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.margins: Theme.paddingSmall
+    Row {
+        width: parent.width - Theme.paddingSmall*2
         spacing: Theme.paddingMedium
 
         Rectangle {
             id: color
             radius: 5
             width: 5
-            Layout.fillHeight: true
+            height: attachmentColumn.implicitHeight
             color: attachment.color === "theme" ? palette.highlight : attachment.color
         }
 
-        ColumnLayout {
+        Column {
             id: attachmentColumn
-            Layout.fillWidth: false
+            width: parent.width - color.width - parent.spacing*2
             spacing: Theme.paddingSmall
 
-            RowLayout {
+            Row {
                 id: authorRow
-                Layout.fillWidth: true
-                Layout.margins: Theme.paddingSmall
+                width: parent.width - Theme.paddingSmall*2
                 height: visible ? 16 : 0
                 visible: attachment.author_name !== ""
                 spacing: Theme.paddingMedium
@@ -63,27 +62,27 @@ ColumnLayout {
                     sourceSize: Qt.size(16, 16)
                 }
                 SlaqTextTooltips {
-                    Layout.fillWidth: true
+                    width: parent.width
                     font.pointSize: Theme.fontSizeSmall
                     verticalAlignment: Text.AlignVCenter
                     font.weight: Font.Bold
                     text: attachment.author_name
+                    wrapMode: Text.Wrap
                     onLinkActivated: linkClicked(link)
                     itemFocusOnUnselect: messageInput
                 }
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.margins: Theme.paddingSmall
+            Row {
+                width: parent.width - Theme.paddingSmall*2
                 visible: attachment.title !== "" || attachment.text !== ""
 
-                ColumnLayout {
+                Column {
                     id: colLayout
-                    Layout.fillWidth: true
+                    width: parent.width
                     SlaqTextTooltips {
                         id: titleId
-                        Layout.fillWidth: true
+                        width: parent.width
                         chat: channelsList.channelModel
                         font.pointSize: Theme.fontSizeSmall
                         font.bold: true
@@ -95,7 +94,7 @@ ColumnLayout {
 
                     SlaqTextTooltips {
                         id: valueId
-                        Layout.fillWidth: true
+                        width: parent.width
                         chat: channelsList.channelModel
                         font.pointSize: Theme.fontSizeSmall
                         text: attachment.text
@@ -104,6 +103,7 @@ ColumnLayout {
                         onLinkActivated: linkClicked(link)
                     }
                 }
+
                 Image {
                     visible: attachment !== null && attachment.thumb_url.toString().length > 0
                     source: visible ? "image://emoji/slack/" + attachment.thumb_url : ""
@@ -112,6 +112,7 @@ ColumnLayout {
             }
 
             AttachmentFieldGrid {
+                width: parent.width
                 fieldList: attachment.fields
             }
 
@@ -194,8 +195,9 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
+    Row {
         id: footerRow
+        width: parent.width
         spacing: Theme.paddingMedium
         visible: attachment.footer !== ""
 
