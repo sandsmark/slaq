@@ -120,21 +120,44 @@ YoutubeVideoUrlParser::YoutubeVideoUrlParser(QObject *parent) : QObject(parent)
 }
 
 void YoutubeVideoUrlParser::pickBestPossibleVideo(PlayerConfiguration* pc) {
+    MediaStreamInfo _msi;
+    YoutubeVideoQuality preferableQuality = High720;
     for (const MediaStreamInfo& msi : pc->streams) {
-        if (msi.quality >= High720 && msi.container != UnknownContainer &&
+        if (msi.quality >= preferableQuality && msi.container != UnknownContainer &&
                 msi.acodec != UnknownACodec && msi.vcodec != UnknownVCodec) { //TODO: check settings or best possible
-            qDebug() << "best video for id:" << pc->videoId << msi.quality << msi.resolution;
-            emit urlParsed(pc->videoId, msi.playableUrl);
-            return;
+            _msi = msi;
+            break;
         }
     }
-    qWarning() << "Youtube: cant pick best video with audio. Try without audio";
-    for (const MediaStreamInfo& msi : pc->streams) {
-        if (msi.quality >= High720 && msi.container != UnknownContainer && msi.vcodec != UnknownVCodec) {
-            qDebug() << "best video for id:" << pc->videoId << msi.quality << msi.resolution;
-            emit urlParsed(pc->videoId, msi.playableUrl);
-            return;
+    if (_msi.playableUrl.isEmpty()) {
+        qWarning() << "Youtube: cant pick best video with HD quality. Try any quality below 720";
+        preferableQuality = Medium480;
+        while (preferableQuality > UnknownQuality) {
+            for (const MediaStreamInfo& msi : pc->streams) {
+                if (msi.quality == preferableQuality && msi.container != UnknownContainer &&
+                        msi.acodec != UnknownACodec && msi.vcodec != UnknownVCodec) { //TODO: check settings or best possible
+                    _msi = msi;
+                    break;
+                }
+            }
+            preferableQuality = (YoutubeVideoQuality)((int)preferableQuality - 1);
         }
+    }
+    if (_msi.playableUrl.isEmpty()) {
+        qWarning() << "Youtube: cant pick best video with audio. Try without audio";
+        preferableQuality = High4320;
+        while (preferableQuality > UnknownQuality) {
+            for (const MediaStreamInfo& msi : pc->streams) {
+                if (msi.quality >= High720 && msi.container != UnknownContainer && msi.vcodec != UnknownVCodec) {
+                    _msi = msi;
+                    break;
+                }
+            }
+            preferableQuality = (YoutubeVideoQuality)((int)preferableQuality - 1);
+        }
+    }
+    if (!_msi.playableUrl.isEmpty()) {
+        emit urlParsed(pc->videoId, _msi.playableUrl);
     }
 }
 
