@@ -142,9 +142,9 @@ protected:
 private:
     void invalidateFontCaches();
     void insertImage(QTextCursor &cursor, const QString &url, const QImage &img);
-    bool markupUpdate(const QString &markupQuote, const QString &markupEndQuote,
+    bool markupUpdate(const QString &markupQuote, const QStringList &markupEndQuote,
                       const QStringList &exceptions,
-                      std::function<void(QTextCursor& from, QString &selText)> markupReplace);
+                      std::function<bool(QTextCursor &, QString &)> markupReplace);
 
     QColor m_selectionColor;
     QColor m_selectedTextColor;

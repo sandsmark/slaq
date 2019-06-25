@@ -97,14 +97,16 @@ void SlackText::onImageLoaded(const QString &id)
     }
 }
 
-bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEndQuote,
+bool SlackText::markupUpdate(const QString& markupQuote, const QStringList &markupEndQuote,
                              const QStringList& exceptions,
-                             std::function<void(QTextCursor& from, QString &selText)> markupReplace) {
+                             std::function<bool(QTextCursor& from, QString &selText)> markupReplace) {
     Q_D(SlackText);
     bool modified = false;
+
     QTextCursor fromCursor = d->m_tp->extra->doc->find(markupQuote, 0);
     while (!fromCursor.isNull()) {
         int exceptionLen = 0;
+        bool replaced = false;
         const QString& textBlock = fromCursor.block().text().mid(fromCursor.position());
         //check for exceptions
         for (auto excStr : exceptions) {
@@ -114,16 +116,21 @@ bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEn
             }
         }
         if (exceptionLen  > 0) {
-            //found exception. we dont want to proceed further. skip expetion
+            //found exception. we dont want to proceed further. skip exception
             fromCursor = d->m_tp->extra->doc->find(markupQuote, fromCursor.position() + exceptionLen);
             continue;
         }
-        QTextCursor toCursor = d->m_tp->extra->doc->find(markupEndQuote.isEmpty() ?
-                                                             markupQuote :
-                                                             markupEndQuote,
-                                                         fromCursor);
-        if (!toCursor.isNull()) {
 
+        QTextCursor toCursor;
+        for (const QString& quote : markupEndQuote) {
+            toCursor = d->m_tp->extra->doc->find(quote, fromCursor);
+            if (!toCursor.isNull()) {
+                break;
+            }
+        }
+        if (!toCursor.isNull()) {
+            // save cursor position
+            QTextCursor _prevCursor = fromCursor;
             QTextCursor brCursor = d->m_tp->extra->doc->find(QChar(QChar::LineSeparator),
                                                              fromCursor);
             if (brCursor.isNull()) {
@@ -140,12 +147,21 @@ bool SlackText::markupUpdate(const QString& markupQuote, const QString &markupEn
                                         QTextCursor::KeepAnchor,
                                         toCursor.position() - fromCursor.position());
                 QString selectedText = fromCursor.selectedText();
+                //qDebug().noquote().nospace() << "selected [" << selectedText << "]";
                 selectedText = selectedText.remove(markupQuote);
-                markupReplace(fromCursor, selectedText);
-
+                replaced = markupReplace(fromCursor, selectedText);
+                //qDebug() << "replaced" << replaced;
                 modified = true;
             }
-            fromCursor = toCursor;
+            if (replaced) {
+                fromCursor.clearSelection();
+            } else {
+                // return to first cursor plus quote character
+                fromCursor = _prevCursor;
+                fromCursor.movePosition(QTextCursor::NextCharacter,
+                                        QTextCursor::MoveAnchor, markupQuote.size());
+
+            }
         }
         fromCursor = d->m_tp->extra->doc->find(markupQuote, fromCursor);
     }
@@ -247,12 +263,12 @@ void SlackText::postProcessText() {
         }
 
         //search for emojis
-        d->m_modified |= markupUpdate(":", "",
+        d->m_modified |= markupUpdate(":", QStringList() << ":" << " ",
                                       QStringList() << "//",
                                       [=] (QTextCursor& from, QString& selText) {
             if (selText.contains("skin-tone")) {
                 from.removeSelectedText();
-                return;
+                return true;
             }
             EmojiInfo* einfo = imageCache->getEmojiInfo(selText);
             if (einfo != nullptr) {
@@ -273,28 +289,33 @@ void SlackText::postProcessText() {
                         insertImage(from, imgUrl, img);
                     }
                 }
+                return true;
             }
+            return false;
         });
-        d->m_modified |= markupUpdate("*", "", QStringList(), [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("*", QStringList() << "*", QStringList(), [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setBold(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
+            return true;
         });
-        d->m_modified |= markupUpdate("_", "", QStringList(), [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("_", QStringList() << "_", QStringList(), [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setItalic(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
+            return true;
         });
-        d->m_modified |= markupUpdate("~", "", QStringList(), [=] (QTextCursor& from, QString& selText) {
+        d->m_modified |= markupUpdate("~", QStringList() << "~", QStringList(), [=] (QTextCursor& from, QString& selText) {
             QTextCharFormat chFmt = from.charFormat();
             QFont fnt = chFmt.font();
             fnt.setStrikeOut(true);
             chFmt.setFont(fnt);
             from.insertText(selText, chFmt);
+            return true;
         });
 
         if (d->m_modified) {

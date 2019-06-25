@@ -847,7 +847,7 @@ Attachment::~Attachment()
 
 void Attachment::setData(const QJsonObject &data)
 {
-    qDebug().noquote() << "attach:" << QJsonDocument(data).toJson();
+    //qDebug().noquote() << "attach:" << QJsonDocument(data).toJson();
     titleLink = QUrl(data.value(QStringLiteral("title_link")).toString());
     title = data.value(QStringLiteral("title")).toString();
     pretext = data.value(QStringLiteral("pretext")).toString();
