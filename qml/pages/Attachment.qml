@@ -76,10 +76,12 @@ Column {
             Row {
                 width: parent.width - Theme.paddingSmall*2
                 visible: attachment.title !== "" || attachment.text !== ""
+                spacing: Theme.paddingMedium
 
                 Column {
                     id: colLayout
-                    width: parent.width
+                    width: Math.min(Math.max(titleId.implicitWidth, valueId.implicitWidth) + parent.spacing,
+                                    parent.width - Theme.avatarSize - parent.spacing)
                     SlaqTextTooltips {
                         id: titleId
                         width: parent.width
