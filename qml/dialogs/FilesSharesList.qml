@@ -20,23 +20,23 @@ Drawer {
     height: window.height - Theme.paddingMedium
     property int currentPage: -1
     property int totalPages: -1
-    property string teamId: teamsSwipe.currentItem != null ? teamsSwipe.currentItem.item.teamId : ""
+    property string teamId: teamsSwipe.currentItem !== null ? teamsSwipe.currentItem.item.teamId : ""
     property User selfUser: null
     onTeamIdChanged: listView.model = undefined
 
     function fetchData() {
-        if (radioGroup.checkedButton == allFilesButton) {
+        if (radioGroup.checkedButton === allFilesButton) {
             listView.model.retreiveFilesFor("", "")
-        } else if (radioGroup.checkedButton == myFilesButton) {
+        } else if (radioGroup.checkedButton === myFilesButton) {
             listView.model.retreiveFilesFor("", selfUser.userId)
-        } else if (radioGroup.checkedButton == channelFilesButton) {
+        } else if (radioGroup.checkedButton === channelFilesButton) {
             listView.model.retreiveFilesFor(teamsSwipe.currentItem.item.currentChannelId, "")
         }
     }
 
     onOpened: {
         selfUser = SlackClient.selfUser(teamId)
-        if (listView.model == undefined) {
+        if (listView.model === undefined) {
             listView.model = SlackClient.getFilesSharesModel(teamId)
             fetchData()
         }
@@ -123,11 +123,13 @@ Drawer {
                 id: delegate
                 width: listView.width - listView.ScrollIndicator.vertical.width
                 property FileShare fileShare: model.FileShareObject
-                height: Theme.avatarSize
+                enabled: fileShare != null && fileShare != undefined
+                visible: enabled
+                height: visible ? Theme.avatarSize : 0
                 RowLayout {
                     width: parent.width
                     Image {
-                        source: fileShare.thumb_64 != "" ? "team://" + teamId + "/" + fileShare.thumb_64 :
+                        source: fileShare.thumb_64.toString().length > 0 ? "team://" + teamId + "/" + fileShare.thumb_64 :
                                     SlackClient.resourceForFileType(fileShare.filetype, fileShare.name)
                         sourceSize: Qt.size(Theme.avatarSize, Theme.avatarSize)
                     }
@@ -143,21 +145,21 @@ Drawer {
                             Layout.fillWidth: true
                             Label {
                                 font.pixelSize: Theme.fontSizeSmall
-                                text: qsTr("Created by @") + delegate.fileShare.user.username + " at " + Qt.formatDateTime(delegate.fileShare.created, "dd MMM yyyy hh:mm")
+                                text: qsTr("Created by @") + fileShare.user.username + " at " + Qt.formatDateTime(fileShare.created, "dd MMM yyyy hh:mm")
                             }
 
                             Image {
-                                source: delegate.fileShare.user.avatarUrl
+                                source: fileShare.user.avatarUrl
                                 sourceSize: Qt.size(Theme.avatarSize/2, Theme.avatarSize/2)
                             }
 
                             EmojiRoundButton {
                                 id: trashButton
-                                visible:  (selfUser != null && selfUser.userId === delegate.fileShare.user.userId)
+                                visible:  (selfUser != null && selfUser.userId === fileShare.user.userId)
                                 text: "\uD83D\uDDD1"
                                 font.pixelSize: Theme.fontSizeLarge
                                 onClicked: {
-                                    SlackClient.deleteFile(teamId, delegate.fileShare.id)
+                                    SlackClient.deleteFile(teamId, fileShare.id)
                                 }
                             }
                             RoundButton {
@@ -166,8 +168,8 @@ Drawer {
                                 font.pixelSize: Theme.fontSizeLarge
                                 text: "\u21E9"
                                 onClicked: {
-                                    fileSaveDialog.fileName = delegate.fileShare.name
-                                    fileSaveDialog.downloadUrl = delegate.fileShare.url_private_download
+                                    fileSaveDialog.fileName = fileShare.name
+                                    fileSaveDialog.downloadUrl = fileShare.url_private_download
                                     fileSaveDialog.open()
                                 }
                             }

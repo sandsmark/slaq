@@ -129,6 +129,7 @@ OTHER_FILES += \
 
 }
 RESOURCES += \
+    filetypes.qrc \
     qml.qrc \
     data.qrc \
     fonts.qrc

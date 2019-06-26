@@ -187,7 +187,7 @@ private:
     QDateTime m_buildTime;
     ThreadExecutor* m_threadExecutor {nullptr};
     QSettings m_settings;
-    QDir m_fileTypesResDir { ":/icons/filetypes" };
+    QDir m_fileTypesResDir;
     NetworkAccessManager m_qnam;
 };
 

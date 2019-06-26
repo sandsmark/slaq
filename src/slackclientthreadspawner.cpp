@@ -23,6 +23,7 @@ SlackClientThreadSpawner::SlackClientThreadSpawner(QObject *parent) :
     m_lastTeam = settings.value(QStringLiteral("LastTeam")).toString();
     m_buildTime.setDate(QDate::fromString(QString(__DATE__).simplified(), "MMM d yyyy"));
     m_buildTime.setTime(QTime::fromString(QString(__TIME__), "hh:mm:ss"));
+    m_fileTypesResDir = QDir(":/icons/filetypes/");
     qDebug() << "build time" << m_buildTime;
 }
 
@@ -344,16 +345,19 @@ void SlackClientThreadSpawner::dumpChannel(const QString &teamId, const QString 
 
 QString SlackClientThreadSpawner::resourceForFileType(const QString &fileType, const QString& fileName)
 {
-    QString _lowerFt = fileType;
-    _lowerFt = _lowerFt.toLower();
+    QString _lowerFt = fileType.toLower();
     QFileInfo fi(fileName);
-    fi.suffix();
-    for (const QString& ftFile: m_fileTypesResDir.entryList()) {
-        if (ftFile.contains(_lowerFt) || ftFile.contains(fi.suffix())) {
-            return QStringLiteral("qrc:/icons/filetypes/") + ftFile;
+    //workaround for text type
+    if (_lowerFt == QStringLiteral("text"))
+        _lowerFt = QStringLiteral("txt");
+
+    for (const QFileInfo& ftFile: m_fileTypesResDir.entryInfoList()) {
+        //qDebug() << "checking" << ftFile.baseName() << _lowerFt << fi.suffix();
+        if (ftFile.baseName() == _lowerFt || ftFile.baseName() == fi.suffix()) {
+            return QStringLiteral("qrc:/icons/filetypes/") + ftFile.fileName();
         }
     }
-    qDebug() << "not found file for type" << fileType;
+    qDebug() << "not found file for type" << fileType << "file name" << fileName << fi.suffix();
     return QStringLiteral("qrc:/icons/filetypes/blank.svg");
 }
 

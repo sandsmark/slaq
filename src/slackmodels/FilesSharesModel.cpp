@@ -18,7 +18,7 @@ void FilesSharesModel::addFileShares(const QList<FileShare *> &fshares, int tota
         m_totalPages = pages;
     }
 
-    int _initialCount = m_filesIds.size();
+    QList<FileShare *> _fileShares;
 
     QMutexLocker locker(&m_mutex);
     for (FileShare* fs : fshares) {
@@ -30,15 +30,19 @@ void FilesSharesModel::addFileShares(const QList<FileShare *> &fshares, int tota
             emit dataChanged(index, index);
             locker.relock();
         } else {
-            m_fileShares.append(fs);
-            m_filesIds.insert(fs->m_id, m_fileShares.size() - 1);
+            _fileShares.append(fs);
         }
     }
 
-    if (m_filesIds.size() > _initialCount) {
-        beginInsertRows(QModelIndex(), _initialCount, m_filesIds.size() - _initialCount - 1);
+    if (_fileShares.size() > 0) {
+        qDebug() << "actually added to fileshares" << _fileShares.size();
+        beginInsertRows(QModelIndex(), m_filesIds.size(), m_filesIds.size() + _fileShares.size() - 1);
+        for (FileShare* fs : _fileShares) {
+            m_fileShares.append(fs);
+            m_filesIds.insert(fs->m_id, m_fileShares.size() - 1);
+        }
+        m_fetched += _fileShares.size();
         endInsertRows();
-        m_fetched += (m_filesIds.size() - _initialCount);
     }
 
     m_lastPageFetched = page;
@@ -79,14 +83,14 @@ void FilesSharesModel::deleteFile(const QString &fileId)
 int FilesSharesModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-
+    //qDebug() << "rowCount" << m_fetched << m_total;
     return m_fetched;
 }
 
 bool FilesSharesModel::canFetchMore(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
-    qDebug() << "called can fetch more" << parent << m_fetched << m_total;
+    qDebug() << "called can fetch more" << m_fetched << m_total;
     return m_fetched < m_total;
 }
 
