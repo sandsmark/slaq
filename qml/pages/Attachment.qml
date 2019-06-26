@@ -204,25 +204,24 @@ Column {
         visible: attachment.footer !== ""
 
         Image {
+            id: footerImage
             fillMode: Image.PreserveAspectFit
             visible: attachment !== null && attachment.footer_icon.toString().length > 0
             source: visible ? "image://emoji/slack/" + attachment.footer_icon : ""
             sourceSize: Qt.size(16, 16)
         }
         SlaqTextTooltips {
+            width: implicitWidth
             font.pointSize: Theme.fontSizeSmall
             chat: channelsList.channelModel
             text: attachment.footer
-            verticalAlignment: Text.AlignVCenter
-            wrapMode: Text.Wrap
             visible: text.length > 0
         }
         SlaqTextTooltips {
+            width: implicitWidth
             font.pointSize: Theme.fontSizeSmall
             chat: channelsList.channelModel
             text: Qt.formatDateTime(attachment.ts, "dd MMM yyyy hh:mm")
-            verticalAlignment: Text.AlignVCenter
-            wrapMode: Text.Wrap
             visible: attachment.ts > 0
         }
     }

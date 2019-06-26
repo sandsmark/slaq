@@ -13,11 +13,12 @@ Row {
     Repeater {
         id: repeater
 
-        ColumnLayout {
-            Layout.columnSpan: repeater.model[index].fieldIsShort ? 1 : 2
-            Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+        Column {
+            width: parent.width
+            property int columnsNUm: repeater.model[index].fieldIsShort ? 1 : 2
 
             SlaqTextTooltips {
+                width: parent.width/columnsNUm
                 font.pointSize: Theme.fontSizeTiny
                 chat: channelsList.channelModel
                 font.weight: Font.Bold
@@ -26,6 +27,7 @@ Row {
                 text: repeater.model[index].fieldTitle
             }
             SlaqTextTooltips {
+                width: parent.width/columnsNUm
                 font.pointSize: Theme.fontSizeTiny
                 chat: channelsList.channelModel
                 font.weight: Font.Normal
