@@ -64,8 +64,8 @@ MouseArea {
                 visible: !sameuser || (isReplies && model.ThreadIsParentMessage)
                 height: visible ? Theme.avatarSize : 0
                 sourceSize: visible ? Qt.size(Theme.avatarSize, Theme.avatarSize) : Qt.size(0, 0)
-                source: visible && model.User != null ? "image://emoji/slack/" + model.User.avatarUrl :
-                                                        "http://www.gravatar.com/avatar/default?d=identicon"
+                source: visible && model.User !== null ? "image://emoji/slack/" + model.User.avatarUrl :
+                                                         "http://www.gravatar.com/avatar/default?d=identicon"
             }
 
             Column {

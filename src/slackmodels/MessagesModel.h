@@ -47,12 +47,12 @@ inline QString internalTsToSlackTs(quint64 dt) {
 
 inline QDateTime internalTsToDateTime(quint64 dt) {
     quint64 _dt = dt >> 32;;
-    int ts_extra = dt & 0xFFFFFFFF;
     return QDateTime::fromSecsSinceEpoch(_dt);
 }
 
 inline quint64 internalTsDiff(quint64 ts1, quint64 ts2) {
-    return qAbs((ts2 >> 32) - (ts1 >> 32))*1000;
+    qint64 _diff = ts2 - ts1;
+    return (qAbs(_diff) >> 32)*1000;
 }
 
 static int compareSlackTs(quint64 ts1, quint64 ts2) {
