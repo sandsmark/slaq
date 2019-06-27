@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     QQuickStyle::setStyle(settings.value("style", QStringLiteral("Material")).toString());
     settings.setValue("style", QQuickStyle::name());
 
-    int emojiFontId = QFontDatabase::addApplicationFont(QStringLiteral(":/fonts/TwitterColorEmoji.ttf"));
+    int emojiFontId = QFontDatabase::addApplicationFont(QStringLiteral(":/fonts/TwitterColorEmoji_df.ttf"));
     qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     QQmlApplicationEngine engine;

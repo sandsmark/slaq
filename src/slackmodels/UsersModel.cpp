@@ -379,7 +379,7 @@ QPointer<SlackUser> UsersModel::updateUser(const QJsonObject &userData)
     int row  = m_userIds.indexOf(_id);
     QModelIndex index = QAbstractListModel::index(row, 0,  QModelIndex());
     emit dataChanged(index, index, roleNames().keys().toVector());
-    qDebug() << "updated user" << _user->userId() << _user->username();// << _user;
+    //qDebug() << "updated user" << _user->userId() << _user->username();// << _user;
     return _user;
 }
 
@@ -404,7 +404,7 @@ void UsersModel::addUser(SlackUser *user)
         endInsertRows();
         if (user->username().isEmpty()) {
             //user data is empty. request user's info
-            qDebug() << "requesting users info for" << user->userId();
+            //qDebug() << "requesting users info for" << user->userId();
             emit requestUserInfo(user);
         }
     }

@@ -112,7 +112,7 @@ void MessageListModel::updateReactionUsers(Message* message) {
                 qWarning() << "Cant find user" << userId << "while adding reaction";
             }
         }
-        qDebug() << "reaction users" << reaction->m_users << "for" << reaction->m_userIds;
+        //qDebug() << "reaction users" << reaction->m_users << "for" << reaction->m_userIds;
         if (reaction->usersCount() <= 0) {
             message->reactions.removeOne(r);
             reaction->deleteLater();

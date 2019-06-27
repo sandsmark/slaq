@@ -492,7 +492,11 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     if (unreadCount > 0 || unreadCountDisplay > 0) {
         qWarning() << "unread count for" << name << unreadCount << unreadCountDisplay;
     }
-    topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
+    const QString& _topic = data.value(QStringLiteral("topic")).toObject().value(QStringLiteral("value")).toString();
+    if (topic != _topic) {
+        topic = _topic;
+        emit topicChanged(topic);
+    }
     purpose = data.value(QStringLiteral("purpose")).toObject().value(QStringLiteral("value")).toString();
 }
 

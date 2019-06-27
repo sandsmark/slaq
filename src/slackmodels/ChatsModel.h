@@ -99,7 +99,7 @@ class Chat: public QObject
     Q_PROPERTY(QString name MEMBER name CONSTANT)
     Q_PROPERTY(QString user MEMBER user CONSTANT)
     Q_PROPERTY(QString readableName MEMBER readableName CONSTANT)
-    Q_PROPERTY(QString topic MEMBER topic)
+    Q_PROPERTY(QString topic MEMBER topic NOTIFY topicChanged)
     Q_PROPERTY(quint64 creationDate MEMBER creationDate CONSTANT)
     Q_PROPERTY(quint64 lastRead READ lastRead NOTIFY lastReadChanged)
     Q_PROPERTY(QString lastReadTs READ lastReadTs NOTIFY lastReadTsChanged)
@@ -149,6 +149,7 @@ public slots:
 signals:
     void lastReadTsChanged(QString lastReadTs);
     void lastReadChanged(quint64 lastRead);
+    void topicChanged(QString topic);
 
 private:
     QString m_lastReadTs;

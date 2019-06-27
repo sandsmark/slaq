@@ -331,7 +331,7 @@ void SlackTeamClient::handleStreamMessage(const QJsonObject& message)
 void SlackTeamClient::parseChannelMarkUpdate(const QJsonObject& message)
 {
     DEBUG_BLOCK;
-    qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
+    //qDebug().noquote() << "channel mark updated" << QJsonDocument(message).toJson();
     const QString& channelId = message.value(QStringLiteral("channel")).toString();
     ChatsModel* _chatsModel = m_teamInfo.chats();
     if (_chatsModel == nullptr) {
@@ -1568,7 +1568,7 @@ void SlackTeamClient::handleLoadMessagesReply()
     emit messagesReceived(channelId, _mlist, _hasMore, threadTs);
     messageModel->setHistoryLoaded(true);
 
-    qWarning() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count() << "thread ts" << threadTs;
+    qDebug() << "messages loaded for" << channelId << _chatsModel->chat(channelId)->name << m_teamInfo.teamId() << m_teamInfo.name() << _mlist.count() << "thread ts" << threadTs;
     emit loadMessagesSuccess(m_teamInfo.teamId(), channelId);
 }
 

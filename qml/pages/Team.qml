@@ -126,10 +126,10 @@ Page {
                 anchors.centerIn: parent
             }
             onLoaded: {
-                console.log("loaded", item.objectName)
+                //console.log("loaded", item.objectName)
                 item.channel = _channel
                 console.timeEnd("switching_channel")
-                console.warn("Loaded", item.channel.name)
+                console.log("Loaded", item.channel.name)
             }
         }
     }
