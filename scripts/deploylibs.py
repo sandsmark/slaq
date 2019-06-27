@@ -237,6 +237,8 @@ def main():
         libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5DBus.so.5"))
         libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5MultimediaGstTools.so.5"))
         libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5MultimediaWidgets.so.5"))
+        libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5MultimediaQuick.so.5"))
+        libraries.append(os.path.join(QT_INSTALL_LIBS, "libQt5Svg.so.5"))
 
         copy_libs(QT_INSTALL_PREFIX, qt_deploy_prefix, QT_INSTALL_PLUGINS, QT_INSTALL_IMPORTS,
         QT_INSTALL_QML, plugins, imports, qmlimports, libraries)
