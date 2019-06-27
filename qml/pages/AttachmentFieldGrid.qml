@@ -14,11 +14,11 @@ Row {
         id: repeater
 
         Column {
-            width: parent.width
-            property int columnsNUm: repeater.model[index].fieldIsShort ? 1 : 2
+            width: parent.width/columnsNum
+            property int columnsNum: repeater.model[index].fieldIsShort ? 2 : 1
 
             SlaqTextTooltips {
-                width: parent.width/columnsNUm
+                width: parent.width
                 font.pointSize: Theme.fontSizeTiny
                 chat: channelsList.channelModel
                 font.weight: Font.Bold
@@ -27,7 +27,7 @@ Row {
                 text: repeater.model[index].fieldTitle
             }
             SlaqTextTooltips {
-                width: parent.width/columnsNUm
+                width: parent.width
                 font.pointSize: Theme.fontSizeTiny
                 chat: channelsList.channelModel
                 font.weight: Font.Normal

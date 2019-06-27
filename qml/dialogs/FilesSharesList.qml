@@ -84,14 +84,17 @@ Drawer {
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: 0
             Button {
                 id: allFilesButton
+                Layout.fillWidth: true
                 checkable: true
                 ButtonGroup.group: radioGroup
                 text: qsTr("All files")
             }
             Button {
                 id: myFilesButton
+                Layout.fillWidth: true
                 checkable: true
                 ButtonGroup.group: radioGroup
                 checked: true
@@ -99,6 +102,7 @@ Drawer {
             }
             Button {
                 id: channelFilesButton
+                Layout.fillWidth: true
                 checkable: true
                 ButtonGroup.group: radioGroup
                 text: qsTr("Channel files")
@@ -118,61 +122,95 @@ Drawer {
             ScrollIndicator.vertical: ScrollIndicator { }
             verticalLayoutDirection: ListView.BottomToTop
             clip: true
-            spacing: Theme.paddingMedium
-            delegate: Item {
+            spacing: Theme.paddingSmall
+            delegate: ItemDelegate {
                 id: delegate
+                padding: Theme.paddingTiny
                 width: listView.width - listView.ScrollIndicator.vertical.width
+                height: Theme.avatarSize
                 property FileShare fileShare: model.FileShareObject
+                hoverEnabled: true
+                spacing: 0
                 enabled: fileShare != null && fileShare != undefined
                 visible: enabled
-                height: visible ? Theme.avatarSize : 0
-                RowLayout {
-                    width: parent.width
+
+                contentItem: RowLayout {
+                    height: delegate.availableHeight
+                    width: delegate.availableWidth
+
                     Image {
-                        source: fileShare.thumb_64.toString().length > 0 ? "team://" + teamId + "/" + fileShare.thumb_64 :
+                        sourceSize: Qt.size(delegate.availableHeight, delegate.availableHeight)
+                        width: delegate.availableHeight
+                        height: delegate.availableHeight
+                        source: fileShare.thumb_64.toString().length > 0 ?
+                                    "team://" + teamId + "/" + fileShare.thumb_64 :
                                     SlackClient.resourceForFileType(fileShare.filetype, fileShare.name)
-                        sourceSize: Qt.size(Theme.avatarSize, Theme.avatarSize)
+                        RoundButton {
+                            id: downloadButton
+                            hoverEnabled: true
+                            visible: delegate.hovered
+                            anchors.fill: parent
+                            padding: 12
+                            font.pixelSize: Theme.fontSizeLarge
+                            text: "\u21E9"
+                            onClicked: {
+                                fileSaveDialog.fileName = fileShare.name
+                                fileSaveDialog.downloadUrl = fileShare.url_private_download
+                                fileSaveDialog.open()
+                            }
+                        }
                     }
+
                     ColumnLayout {
+                        height: parent.height
                         Layout.fillWidth: true
-                        height: Theme.avatarSize
-                        Label {
-                            id: name
-                            Layout.fillWidth: true
-                            text: fileShare.title + " [" + fileShare.name + "]. Size: " + fileShare.size + " bytes"
+
+                        RowLayout {
+                            Label {
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: !name.visible
+                                text: fileShare.title
+                            }
+                            Label {
+                                id: name
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                visible: fileShare.title !== fileShare.name
+                                text: "[" + fileShare.name + "]."
+                            }
                         }
                         RowLayout {
-                            Layout.fillWidth: true
                             Label {
                                 font.pixelSize: Theme.fontSizeSmall
-                                text: qsTr("Created by @") + fileShare.user.username + " at " + Qt.formatDateTime(fileShare.created, "dd MMM yyyy hh:mm")
+                                text: qsTr("Created by")
                             }
 
                             Image {
                                 source: fileShare.user.avatarUrl
-                                sourceSize: Qt.size(Theme.avatarSize/2, Theme.avatarSize/2)
+                                sourceSize: Qt.size(delegate.availableHeight/2, delegate.availableHeight/2)
                             }
-
-                            EmojiRoundButton {
-                                id: trashButton
-                                visible:  (selfUser != null && selfUser.userId === fileShare.user.userId)
-                                text: "\uD83D\uDDD1"
-                                font.pixelSize: Theme.fontSizeLarge
-                                onClicked: {
-                                    SlackClient.deleteFile(teamId, fileShare.id)
-                                }
+                            Label {
+                                font.pixelSize: Theme.fontSizeSmall
+                                text: "@" + fileShare.user.username
+                                color: palette.link
                             }
-                            RoundButton {
-                                id: downloadButton
-                                padding: 0
-                                font.pixelSize: Theme.fontSizeLarge
-                                text: "\u21E9"
-                                onClicked: {
-                                    fileSaveDialog.fileName = fileShare.name
-                                    fileSaveDialog.downloadUrl = fileShare.url_private_download
-                                    fileSaveDialog.open()
-                                }
+                            Label {
+                                font.pixelSize: Theme.fontSizeSmall
+                                text: " at " + Qt.formatDateTime(fileShare.created, "dd MMM yyyy hh:mm")
                             }
+                            Label {
+                                wrapMode: Text.Wrap
+                                text: qsTr("Size: ") + fileShare.size + qsTr(" bytes")
+                            }
+                        }
+                    }
+                    EmojiRoundButton {
+                        id: trashButton
+                        visible:  (selfUser != null && selfUser.userId === fileShare.user.userId)
+                        text: "\uD83D\uDDD1"
+                        font.pixelSize: Theme.fontSizeLarge
+                        onClicked: {
+                            SlackClient.deleteFile(teamId, fileShare.id)
                         }
                     }
                 }

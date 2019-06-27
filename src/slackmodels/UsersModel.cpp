@@ -336,7 +336,7 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
     if (row >= m_users.count() || row < 0) {
-        qWarning() << "users invalid row" << row;
+        //qWarning() << "users invalid row" << row;
         return QVariant();
     }
 
