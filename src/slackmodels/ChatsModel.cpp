@@ -474,7 +474,7 @@ void Chat::setData(const QJsonObject &data, const ChatsModel::ChatType type_)
     //qDebug() << "chat is open" << name << isOpen;
     user = data.value("user").toString();
 
-    if (name.isEmpty() and isOpen) {
+    if (name.isEmpty() && isOpen) {
         qWarning().noquote() << __PRETTY_FUNCTION__ << "Chat opened but without name:" << data;
     }
 
