@@ -7,18 +7,26 @@ Based on [Slackfish](https://github.com/markussammallahti/harbour-slackfish).
 
 ## How to use
 Get latest Qt framework. 
-Minimum required version is Qt 5.12 LTS.
-
-Note: QtWebEngine module must be installed during the Qt framework installation
-
-Minimun GCC version is 5.x (Linux)
-
+Minimum required version is Qt 5.12.4 LTS.
 We recommends online installer [here](https://www.qt.io/download-qt-installer)
 
 or download offline versions:
-[Linux](http://download.qt.io/official_releases/qt/5.11/5.11.1/qt-opensource-linux-x64-5.11.1.run), [Windows](http://download.qt.io/official_releases/qt/5.11/5.11.1/qt-opensource-windows-x86-5.11.1.exe), [macOS](http://download.qt.io/official_releases/qt/5.11/5.11.1/qt-opensource-mac-x64-5.11.1.dmg)
+[Linux](http://download.qt.io/official_releases/qt/5.12/5.12.4/qt-opensource-linux-x64-5.12.4.run), [Windows](http://download.qt.io/official_releases/qt/5.12/5.12.4/qt-opensource-windows-x86-5.12.4.exe), [macOS](http://download.qt.io/official_releases/qt/5.12/5.12.4/qt-opensource-mac-x64-5.12.4.dmg)
 
-Note: currently tested only on Linux
+Platform specifics:
+
+Windows
+Windows builds requires Qt 5.12.4 version since it is contains prebuilt OpenSSL libraries. The libraries should be installed during Qt installation process
+Built with MinGW 7.3.0
+
+Linux
+Minimun GCC version is 5.x (Linux)
+
+macOS
+No built image provided yet. WIP
+
+
+Note: currently tested only on Linux & Windows
 
 Compile, build and run: `qmake && make && ./slaq`
 

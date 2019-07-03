@@ -123,11 +123,18 @@ DISTFILES += \
     qml/dialogs/EditMessageDialog.qml \
     qml/components/SlaqTextTooltips.qml
 
-win* {
-OTHER_FILES += \
-    3rdparty/ssl/win32/*.dll \
-
+win*: {
+    contains(QT_ARCH, i386) {
+        ## Win32
+        message("Win32 build")
+        OTHER_FILES += $$clean_path($$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x86/bin)/*.dll
+    } else {
+        ##Win64
+        message("Win64 build")
+        OTHER_FILES += $$clean_path($$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x64/bin)/*.dll
+    }
 }
+
 RESOURCES += \
     filetypes.qrc \
     qml.qrc \
