@@ -11,7 +11,7 @@
 
 # App config
 TARGET = slaq
-VERSION = 0.0.3.2
+VERSION = 0.0.3.3
 SRCMOC = .moc
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
@@ -47,7 +47,8 @@ INCLUDEPATH += src src/slackmodels
 INCLUDEPATH += src/slaqtext
 INCLUDEPATH += src/QGumboParser
 
-QML_IMPORT_PATH =
+QML_IMPORT_PATH += $$PWD
+
 # enable for address sanitizer
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
 #QMAKE_LIBS += -lasan

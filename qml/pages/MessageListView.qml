@@ -1,6 +1,6 @@
-import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtQuick.Controls.Material 2.4
+import QtQuick 2.12
+import QtQuick.Controls 2.12
+import QtQuick.Controls.Material 2.12
 import com.iskrembilen 1.0
 import ".."
 import "../components"
@@ -25,6 +25,33 @@ ListView {
 
     property int lastCount: 0
 
+    function forceMarkLatest() {
+        if (atBottom) {
+            console.log("mark latest", count, channelRoot.channel.name, atBottom)
+            currentIndex = 0
+            SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
+        }
+    }
+
+    Component.onDestruction: {
+        if (readTimer.running) {
+            readTimer.stop()
+            forceMarkLatest()
+        }
+
+        console.log("msg view destruction")
+    }
+
+    Connections {
+        target: teamsSwipe
+        onCurrentIndexChanged: {
+            if (readTimer.running) {
+                readTimer.stop()
+                forceMarkLatest()
+            }
+        }
+    }
+
     onAppActiveChanged: {
         markLatest()
     }
@@ -39,11 +66,7 @@ ListView {
         if (appActive && teamId === SlackClient.lastTeam
                 && SlackClient.lastChannel(teamRoot.teamId) === channelRoot.channel.id
                 && count > 0) {
-            if (atBottom) {
-                currentIndex = 0
-                console.log("mark latest", count, channelRoot.channel.name, atBottom)
-                SlackClient.markChannel(teamRoot.teamId, channelRoot.channel.type, channelRoot.channel.id)
-            }
+            forceMarkLatest()
         } else {
             if (count != lastCount) {
                 positionViewAtIndex(currentIndex, ListView.Beginning)

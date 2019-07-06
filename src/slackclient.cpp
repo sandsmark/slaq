@@ -426,7 +426,7 @@ void SlackTeamClient::parseReactionUpdate(const QJsonObject &message)
         qWarning() << "No messages for channel id:" << channelid;
         return;
     }
-    Message* m = _messagesModel->message(ts);
+    Message* m = _messagesModel->message(::slackTsToInternalTs(ts));
     if (m != nullptr) {
         qDebug() << "found message at" << ts << "with reactions" << m->reactions.size();
         const QString& reaction = message.value(QStringLiteral("reaction")).toString();
@@ -1812,7 +1812,7 @@ void SlackTeamClient::handleUsersListReply()
             user->setData(userValue.toObject());
             _users.append(user);
         }
-        qDebug() << "got" << _users.count() << "users";
+        //qDebug() << "got" << _users.count() << "users";
         if (!cursor.isEmpty()) {
             requestUsersList(cursor);
         }

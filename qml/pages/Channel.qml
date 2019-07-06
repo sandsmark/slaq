@@ -1,6 +1,6 @@
 import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
 import com.iskrembilen 1.0
 import SlackComponents 1.0
 
@@ -21,7 +21,7 @@ Page {
             title = (channel.type === ChatsModel.Conversation ||
                      channel.type === ChatsModel.MultiUserConversation ||
                      channel.type === ChatsModel.Group)
-                    && channel.readableName != "" ? channel.readableName : channel.name
+                    && channel.readableName !== "" ? channel.readableName : channel.name
             console.log("channel", channel.id, channel.name, channel.readableName, channel.isPrivate, channel.type)
             setChannelActive()
             messagesListView.loadMessages()

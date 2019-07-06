@@ -22,6 +22,7 @@ Page {
     property string currentChannelId: pageStack.item != null && pageStack.item.channel != undefined ? pageStack.item.channel.id : ""
     property string previousChannelId
     property bool loadingData: false
+    property int swipeIndex
 
     onSlackClientChanged: {
         if (slackClient !== null) {

@@ -453,6 +453,7 @@ ApplicationWindow {
                     slackClient: SlackClient.slackClient(model.teamId)
                     teamId: model.teamId
                     teamName: model.name
+                    swipeIndex: teamloader.SwipeView.index
                 }
                 SwipeView.onIsCurrentItemChanged: {
                     if (SwipeView.isCurrentItem && item !== null) {

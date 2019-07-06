@@ -421,7 +421,7 @@ void UsersModel::addUser(const QJsonObject &userData)
 void UsersModel::addUsers(const QList<QPointer<SlackUser>>& users, bool last)
 {
     int _count = m_users.count();
-    qDebug() << "Adding users" << _count << last;
+    //qDebug() << "Adding users" << _count << last;
 
     m_addingUsers = true;
     {
@@ -462,8 +462,8 @@ void UsersModel::addUsers(const QList<QPointer<SlackUser>>& users, bool last)
     }
     if (last) {
         m_addingUsers = false;
+        qDebug() << "added users" << m_userIds.count() << m_users.count();
     }
-    qDebug() << "added users" << m_userIds.count() << m_users.count();
 }
 
 QPointer<SlackUser> UsersModel::user(const QString &id)
