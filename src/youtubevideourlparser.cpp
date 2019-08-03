@@ -8,6 +8,10 @@
 #include <QScopeGuard>
 
 #include <QMetaEnum>
+
+#include "QGumboParser/qgumbodocument.h"
+#include "QGumboParser/HtmlTag.h"
+#include "QGumboParser/qgumbonode.h"
 #include "youtubevideourlparser.h"
 
 /**
@@ -226,73 +230,80 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
     QNetworkReply* embedReply = manager.get(req);
     QObject::connect(embedReply, &QNetworkReply::finished, [this, embedReply, pc]() {
         const QByteArray& data = embedReply->readAll();
-        QRegularExpressionMatch embedMath = m_youtubePlayerEmbed.match(QString(data));
-        if (embedMath.hasMatch()) {
-            const QString& embedJson = embedMath.captured("Json").chopped(1);
-            QJsonParseError error;
-            QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
+        const QGumboDocument htmlDoc = QGumboDocument::parse(data);
+        const QGumboNodes& script_nodes = htmlDoc.rootNode().getElementsByTagName(HtmlTag::SCRIPT);
+        bool script_found = false;
+        for (const QGumboNode& scriptNode : script_nodes) {
+            QRegularExpressionMatch embedMath = m_youtubePlayerEmbed.match(scriptNode.innerText());
+            if (embedMath.hasMatch()) {
+                script_found = true;
+                const QString& embedJson = embedMath.captured("Json").chopped(1);
+                QJsonParseError error;
+                QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
 
-            if (error.error == QJsonParseError::NoError) {
-                QJsonObject obj = document.object();
-                const QString& _sts = obj.value("sts").toString();
-                const QString& _playerSourceUrl = "https://youtube.com" + obj.value("assets").toObject().value("js").toString();
-                pc->playerSourceUrl = _playerSourceUrl;
-                //qDebug() << __PRETTY_FUNCTION__ << _sts << _playerSourceUrl;
-                const QUrl eurl("https://youtube.googleapis.com/v/" + pc->videoId);
-                const QUrl url(QString("https://www.youtube.com/get_video_info?video_id=%1&el=embedded&sts=%2&eurl=%3&hl=en").
-                               arg(pc->videoId).arg(_sts).arg(eurl.toEncoded().data()));
-                QNetworkRequest req = QNetworkRequest(url);
-                req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
-                QNetworkReply* reply = manager.get(req);
+                if (error.error == QJsonParseError::NoError) {
+                    QJsonObject obj = document.object();
+                    const QString& _playerSourceUrl = "https://youtube.com" + obj.value("assets").toObject().value("js").toString();
+                    pc->playerSourceUrl = _playerSourceUrl;
+                    //qDebug() << __PRETTY_FUNCTION__ << _playerSourceUrl;
+                    const QUrl eurl("https://youtube.googleapis.com/v/" + pc->videoId);
+                    const QUrl url(QString("https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en").
+                                   arg(pc->videoId).arg(eurl.toEncoded().data()));
+                    QNetworkRequest req = QNetworkRequest(url);
+                    req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
+                    QNetworkReply* reply = manager.get(req);
 
-                QObject::connect(reply, &QNetworkReply::finished, [this, reply, pc]() {
-                    if (reply->error() == QNetworkReply::NoError){
-                        const QByteArray& data = reply->readAll();
-                        // now need to extrcat video_id value
-                        QUrlQuery parser(data);
-                        if (!parser.hasQueryItem(QStringLiteral("video_id"))) {
-                            qWarning() << "No video_id invideo info dic!";
-                            return;
-                        }
-                        QJsonParseError error;
-                        //                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
-                        //                                                                          replace("\\u0026", "&").toUtf8());
-                        const QString& plResp = parser.queryItemValue(QStringLiteral("player_response"));//.replace("\\u0026", "&");
-                        //qWarning().noquote() << "player response" << plResp;
-                        QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromPercentEncoding(plResp.toUtf8()), &error);
-                        if (error.error == QJsonParseError::NoError) {
-                            //qDebug() << "player response" << plResp;
-                            const QJsonObject& obj = document.object();
-                            const QJsonObject& playabilityStatusO = obj.value(QStringLiteral("playabilityStatus")).toObject();
-                            const QJsonObject& streamingDataO = obj.value(QStringLiteral("streamingData")).toObject();
-                            //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
-                            pc->succeed = true;
-                            pc->isLiveStream = obj.value("videoDetails").toObject().value("isLive").toBool(false);
-                            int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
-                            pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
-                            //qDebug() << _expsecs << pc->validUntil;
-                            if (pc->isLiveStream) {
-                                pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
+                    QObject::connect(reply, &QNetworkReply::finished, [this, reply, pc]() {
+                        if (reply->error() == QNetworkReply::NoError){
+                            const QByteArray& data = reply->readAll();
+                            // now need to extract video_id value
+                            QUrlQuery parser(data);
+                            QJsonParseError error;
+                            //                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
+                            //                                                                          replace("\\u0026", "&").toUtf8());
+                            const QString& plResp = parser.queryItemValue(QStringLiteral("player_response"));//.replace("\\u0026", "&");
+                            //qWarning().noquote() << "player response" << plResp;
+                            QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromPercentEncoding(plResp.toUtf8()), &error);
+                            if (error.error == QJsonParseError::NoError) {
+                                //qDebug() << "player response" << plResp;
+                                const QJsonObject& obj = document.object();
+                                const QJsonObject& playabilityStatusO = obj.value(QStringLiteral("playabilityStatus")).toObject();
+                                if (playabilityStatusO.value("status").toString().contains("error")) {
+                                    emit playerConfigChanged(pc);
+                                    return;
+                                }
+                                const QJsonObject& streamingDataO = obj.value(QStringLiteral("streamingData")).toObject();
+                                //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
+                                pc->succeed = true;
+                                pc->isLiveStream = obj.value("videoDetails").toObject().value("isLive").toBool(false);
+                                int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
+                                pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
+                                //qDebug() << _expsecs << pc->validUntil;
+                                if (pc->isLiveStream) {
+                                    pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
+                                } else {
+                                    pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
+                                    pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
+                                    pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
+                                    //qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
+                                }
                             } else {
-                                pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
-                                pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
-                                pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
-                                //qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
+                                qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
                             }
                         } else {
-                            qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
+                            qWarning() << "Youtube get video info error" << reply->error();
                         }
-                    } else {
-                        qWarning() << "Youtube get video info error" << reply->error();
-                    }
+                        emit playerConfigChanged(pc);
+                    });
+                } else {
+                    qWarning().noquote() << "Error parsing embed json" << error.error << error.errorString() << embedJson;
                     emit playerConfigChanged(pc);
-                });
-            } else {
-                qWarning().noquote() << "Error parsing embed json" << error.error << error.errorString() << embedJson;
-                emit playerConfigChanged(pc);
+                }
+                break;
             }
-        } else {
-            qWarning() << "cant parse youtube player embed" << data;
+        }
+        if (!script_found) {
+            qWarning() << "Not found script in embedded html page";
             emit playerConfigChanged(pc);
         }
         embedReply->deleteLater();
@@ -388,16 +399,16 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         MediaStreamInfo msi;
         msi.playableUrl = _url;
         // Try to extract content length, otherwise get it manually
-        msi.contentLength = QRegularExpression("clen=(\\d+)").match(url).captured(1).toLongLong();
+        msi.contentLength = QRegularExpression(QStringLiteral("clen=(\\d+)")).match(url).captured(1).toLongLong();
         qDebug() << "content length from url" << msi.contentLength;
         checkContentLengthAndRedirections(_url, msi);
         // If content length is still not available - stream is gone or faulty
         if (msi.contentLength <= 0)
             continue;
-        QString containerType = streamInfoDic.queryItemValue("type", QUrl::FullyDecoded);
+        QString containerType = streamInfoDic.queryItemValue(QStringLiteral("type"), QUrl::FullyDecoded);
         percentDecode(containerType);
         const QString& containerRaw = midInner(containerType, "/", ";");
-        const QString& codecsListRaw = midInner(containerType, "codecs=\"", "\"");
+        const QString& codecsListRaw = midInner(containerType, QStringLiteral("codecs=\""), "\"");
         const QStringList& codecsList = codecsListRaw.split(",+");
         const QString& audioEncodingRaw = codecsList.last();
         const QString& videoEncodingRaw = codecsList.first();
@@ -407,7 +418,7 @@ void YoutubeVideoUrlParser::onPlayerConfigChanged(PlayerConfiguration *playerCon
         msi.itag = itag;
         msi.container = parseContainer(containerRaw);
         msi.acodec = parseAudioCodec(audioEncodingRaw);
-        msi.vcodec = parseVideoCodec(videoEncodingRaw);
+        msi.vcodec = videoEncodingRaw.contains(QStringLiteral("unknown")) ? YoutubeVideoCodec::Av1 : parseVideoCodec(videoEncodingRaw);
         msi.quality = itagToQuality(itag);
         if (msi.quality == UnknownQuality) {
             qWarning().noquote() << "Unknown quality from itag" << msi.itag << "parsed from" << streamInfoDic.queryItemValue("itag", QUrl::FullyDecoded);
@@ -577,7 +588,9 @@ QList<QPair<QString, int>> YoutubeVideoUrlParser::getCipherOperations(PlayerConf
         qWarning() << "Youtube player source is empty:" << playerConfig->playerSourceUrl;
         return operations;;
     }
-    const QString& deciphererFuncName = QRegularExpression("\\bc\\s*&&\\s*d\\.set\\([^,]+,\\s*(?:encodeURIComponent\\s*\\()?\\s*([\\w$]+)\\(").
+    //    const QString& deciphererFuncName = QRegularExpression("\\bc\\s*&&\\s*d\\.set\\([^,]+,\\s*(?:encodeURIComponent\\s*\\()?\\s*([\\w$]+)\\(").
+    //            match(playerSource).captured(1);
+    const QString& deciphererFuncName = QRegularExpression("(\\w+)=function\\(\\w+\\){(\\w+)=\\2\\.split\\(\\x22{2}\\);.*?return\\s+\\2\\.join\\(\\x22{2}\\)}").
             match(playerSource).captured(1);
 
     if (deciphererFuncName.isEmpty()) {
