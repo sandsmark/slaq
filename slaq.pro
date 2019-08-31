@@ -17,7 +17,6 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 
-include(src/QGumboParser/QGumboParser.pri)
 include(src/qtbreakpad/qtbreakpad.pri)
 
 CONFIG(debug, debug|release) {
@@ -45,7 +44,6 @@ QT += quick-private core-private gui-private qml-private quickcontrols2-private 
 linux: QMAKE_LFLAGS += -fuse-ld=gold
 INCLUDEPATH += src src/slackmodels
 INCLUDEPATH += src/slaqtext
-INCLUDEPATH += src/QGumboParser
 
 QML_IMPORT_PATH += $$PWD
 

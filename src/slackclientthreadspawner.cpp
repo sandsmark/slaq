@@ -6,10 +6,6 @@
 #include "searchmessagesmodel.h"
 #include "debugblock.h"
 
-#include "qgumbodocument.h"
-#include <qgumbonode.h>
-#include <qgumboattribute.h>
-
 const QString apiTokenString   = "api_token: \"";
 const QString logOutURLString  = "boot_data.logout_url = \"";
 const QString versionTSstring  = "version_ts: \"";
@@ -513,7 +509,7 @@ void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString 
     req.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
 
     QNetworkReply* reply = m_qnam.get(req);
-    //qDebug() << "sending get to" << req.url() << _url;
+    qDebug() << "sending get to" << req.url() << _url;
     connect(reply, &QNetworkReply::finished, [this, reply, email, password, _url]() {
         int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         qDebug() << "http error:" << reply->errorString();
@@ -525,112 +521,105 @@ void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString 
                 //already logged in
             }
         } else if (httpCode == 200) { //not yet logged in
-            QString crumb;
-            QString signin;
-            QString redir;
-            QGumboDocument htmlDoc = QGumboDocument::parse(reply->readAll());
-            const auto& root = htmlDoc.rootNode();
-            const auto& nodes = root.getElementsByTagName(HtmlTag::INPUT);
-            for (const auto& node: nodes) {
-                //qDebug() << node.tagName() << node.getAttribute("crumb") << node.childNodes().size();
-                bool isCrumb = false;
-                bool isSignin = false;
-                bool isRedir = false;
-                for (const auto& attr: node.allAttributes()) {
-                    //qDebug() << attr.name() << attr.value();
-                    if (attr.name() == "name" && attr.value() == "crumb") {
-                        isCrumb = true;
-                    }
-                    if (attr.name() == "name" && attr.value() == "signin") {
-                        isSignin = true;
-                    }
-                    if (attr.name() == "name" && attr.value() == "redir") {
-                        isRedir = true;
-                    }
-                    if (isCrumb && crumb.isEmpty() && attr.name() == "value") {
-                        crumb = attr.value();
-                    }
-                    if (isSignin && signin.isEmpty() && attr.name() == "value") {
-                        signin = attr.value();
-                    }
-                    if (isRedir && redir.isEmpty() && attr.name() == "value") {
-                        redir = attr.value();
-                    }
+            qDebug() << "Not logged in\n====";
+
+            const QString content = QString::fromUtf8(reply->readAll());
+            reply->deleteLater();
+
+            QRegularExpression inputRegex("<input[^>]+>");
+            QRegularExpressionMatchIterator inputMatches = inputRegex.globalMatch(content);
+
+            QRegularExpression nameRegex("name=\"([^\"]+)\"");
+            QRegularExpression valueRegex("value=\"([^\"]+)\"");
+
+            QString crumb, signin, redir;
+            while (inputMatches.hasNext()) {
+                const QRegularExpressionMatch inputMatch = inputMatches.next();
+                const QString tagContent = inputMatch.captured();
+
+                const QString name = nameRegex.match(tagContent).captured(1);
+                const QString value = valueRegex.match(tagContent).captured(1);
+                if (name == "crumb" && !value.isEmpty() && crumb.isEmpty()) {
+                    crumb = value;
+                } else if (name == "signin" && !value.isEmpty() && signin.isEmpty()) {
+                    signin = value;
+                } else if (name == "redir" && !value.isEmpty() && redir.isEmpty()) {
+                    redir = value;
                 }
             }
-            //qDebug() << "found crumb" << crumb << signin << redir;
-            delete reply;
+            qDebug() << "found crumb" << crumb << signin << redir;
 
-            if (!crumb.isEmpty() && !signin.isEmpty()) {
-                //login
-                QUrlQuery query;
-                query.addQueryItem(QStringLiteral("crumb"), crumb);
-                query.addQueryItem(QStringLiteral("email"), email);
-                query.addQueryItem(QStringLiteral("password"), password);
-                query.addQueryItem(QStringLiteral("redir"), redir);
-                query.addQueryItem(QStringLiteral("signin"), signin);
-
-                QUrl params;
-                params.setQuery(query);
-                // replace '+' manually, since QUrl does not replacing it
-                QByteArray body = params.toEncoded().replace('+', "%2B");
-                body.remove(0, 1);
-
-                QUrl url(_url);
-                QNetworkRequest request(url);
-                request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
-                request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
-                request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
-                request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
-
-                // qDebug() << "POST" << url.toString() << body;
-                QNetworkReply * loginReply = m_qnam.post(request, body);
-                connect(loginReply, &QNetworkReply::finished, [this, loginReply, _url]() {
-                    int httpCode = loginReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                    QUrl redirUrl = loginReply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                    const QByteArray& data = loginReply->readAll();
-                    delete loginReply;
-                    if (httpCode == 200 && data.contains("Sorry, you entered an incorrect email address or password.")) {
-                        //login error. wrong credentials
-                        qWarning() << "login error";
-                        this->showError("Slack login error", "Invalid credentials");
-                    } else if (httpCode == 302) {
-                        //got smthg like: https://slack.com/checkcookie?redir=https%3A%2F%2Fqtmob.slack.com%2F
-                        QNetworkRequest request(redirUrl);
-                        request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
-                        request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
-                        QNetworkReply * loginReply1 = m_qnam.get(request);
-                        connect(loginReply1, &QNetworkReply::finished, [this, loginReply1, _url]() {
-                            int httpCode = loginReply1->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                            QUrl redirUrl = loginReply1->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                            delete loginReply1;
-                            if (httpCode == 302) {
-                                //now check if we redirected to /messages
-                                QNetworkRequest request(redirUrl);
-                                request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
-                                request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
-                                QNetworkReply * loginReply2 = m_qnam.get(request);
-                                connect(loginReply2, &QNetworkReply::finished, [this, loginReply2, _url]() {
-                                    int httpCode = loginReply2->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                                    QUrl redirUrl = loginReply2->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                                    delete loginReply2;
-                                    if (httpCode == 302) {
-                                        this->getSessionDetails(_url + redirUrl.toString());
-                                    } else {
-                                        this->showError("Slack login error", "Undefined error");
-                                    }
-                                });
-                            } else {
-                                this->showError("Slack login error", "Undefined error");
-                            }
-                        });
-                    } else {
-                        this->showError("Slack login error", QString("Cant access slack.com. response code: %1").arg(httpCode));
-                    }
-                });
-            } else {
+            if (crumb.isEmpty() || signin.isEmpty()) {
                 this->showError("Slack login error", "Cant retreive login info. Check team name");
+                return;
             }
+
+            //login
+            QUrlQuery query;
+            query.addQueryItem(QStringLiteral("crumb"), crumb);
+            query.addQueryItem(QStringLiteral("email"), email);
+            query.addQueryItem(QStringLiteral("password"), password);
+            query.addQueryItem(QStringLiteral("redir"), redir);
+            query.addQueryItem(QStringLiteral("signin"), signin);
+
+            QUrl params;
+            params.setQuery(query);
+            // replace '+' manually, since QUrl does not replacing it
+            QByteArray body = params.toEncoded().replace('+', "%2B");
+            body.remove(0, 1);
+
+            QUrl url(_url);
+            QNetworkRequest request(url);
+            request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+            request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+            request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
+            request.setHeader(QNetworkRequest::ContentLengthHeader, body.length());
+
+            // qDebug() << "POST" << url.toString() << body;
+            QNetworkReply * loginReply = m_qnam.post(request, body);
+            connect(loginReply, &QNetworkReply::finished, [this, loginReply, _url]() {
+                int httpCode = loginReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                QUrl redirUrl = loginReply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                const QByteArray& data = loginReply->readAll();
+                delete loginReply;
+                if (httpCode == 200 && data.contains("Sorry, you entered an incorrect email address or password.")) {
+                    //login error. wrong credentials
+                    qWarning() << "login error";
+                    this->showError("Slack login error", "Invalid credentials");
+                } else if (httpCode == 302) {
+                    //got smthg like: https://slack.com/checkcookie?redir=https%3A%2F%2Fqtmob.slack.com%2F
+                    QNetworkRequest request(redirUrl);
+                    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+                    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+                    QNetworkReply * loginReply1 = m_qnam.get(request);
+                    connect(loginReply1, &QNetworkReply::finished, [this, loginReply1, _url]() {
+                        int httpCode = loginReply1->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                        QUrl redirUrl = loginReply1->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                        delete loginReply1;
+                        if (httpCode == 302) {
+                            //now check if we redirected to /messages
+                            QNetworkRequest request(redirUrl);
+                            request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+                            request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+                            QNetworkReply * loginReply2 = m_qnam.get(request);
+                            connect(loginReply2, &QNetworkReply::finished, [this, loginReply2, _url]() {
+                                int httpCode = loginReply2->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                                QUrl redirUrl = loginReply2->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                                delete loginReply2;
+                                if (httpCode == 302) {
+                                    this->getSessionDetails(_url + redirUrl.toString());
+                                } else {
+                                    this->showError("Slack login error", "Undefined error");
+                                }
+                            });
+                        } else {
+                            this->showError("Slack login error", "Undefined error");
+                        }
+                    });
+                } else {
+                    this->showError("Slack login error", QString("Cant access slack.com. response code: %1").arg(httpCode));
+                }
+            });
         } else {
             this->showError("Slack login error", "Cant retreive login info. Check team name");
         }
