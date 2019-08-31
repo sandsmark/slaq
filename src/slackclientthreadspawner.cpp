@@ -586,39 +586,45 @@ void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString 
                     //login error. wrong credentials
                     qWarning() << "login error";
                     this->showError("Slack login error", "Invalid credentials");
-                } else if (httpCode == 302) {
-                    //got smthg like: https://slack.com/checkcookie?redir=https%3A%2F%2Fqtmob.slack.com%2F
+                    return;
+                }
+                if (httpCode != 302) {
+                    this->showError("Slack login error", QString("Cant access slack.com. response code: %1").arg(httpCode));
+                    qDebug().noquote() << data;
+                    return;
+                }
+
+                //got smthg like: https://slack.com/checkcookie?redir=https%3A%2F%2Fqtmob.slack.com%2F
+                QNetworkRequest request(redirUrl);
+                request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
+                request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
+                QNetworkReply * loginReply1 = m_qnam.get(request);
+                connect(loginReply1, &QNetworkReply::finished, [this, loginReply1, _url]() {
+                    int httpCode = loginReply1->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                    QUrl redirUrl = loginReply1->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                    delete loginReply1;
+
+                    if (httpCode != 302) {
+                        this->showError("Slack login error", "Undefined error");
+                        return;
+                    }
+
+                    //now check if we redirected to /messages
                     QNetworkRequest request(redirUrl);
                     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
                     request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
-                    QNetworkReply * loginReply1 = m_qnam.get(request);
-                    connect(loginReply1, &QNetworkReply::finished, [this, loginReply1, _url]() {
-                        int httpCode = loginReply1->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                        QUrl redirUrl = loginReply1->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                        delete loginReply1;
+                    QNetworkReply * loginReply2 = m_qnam.get(request);
+                    connect(loginReply2, &QNetworkReply::finished, [this, loginReply2, _url]() {
+                        int httpCode = loginReply2->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                        QUrl redirUrl = loginReply2->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                        delete loginReply2;
                         if (httpCode == 302) {
-                            //now check if we redirected to /messages
-                            QNetworkRequest request(redirUrl);
-                            request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
-                            request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:60.0) Gecko/20100101 Firefox/60.0");
-                            QNetworkReply * loginReply2 = m_qnam.get(request);
-                            connect(loginReply2, &QNetworkReply::finished, [this, loginReply2, _url]() {
-                                int httpCode = loginReply2->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                                QUrl redirUrl = loginReply2->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                                delete loginReply2;
-                                if (httpCode == 302) {
-                                    this->getSessionDetails(_url + redirUrl.toString());
-                                } else {
-                                    this->showError("Slack login error", "Undefined error");
-                                }
-                            });
+                            this->getSessionDetails(_url + redirUrl.toString());
                         } else {
                             this->showError("Slack login error", "Undefined error");
                         }
                     });
-                } else {
-                    this->showError("Slack login error", QString("Cant access slack.com. response code: %1").arg(httpCode));
-                }
+                });
             });
         } else {
             this->showError("Slack login error", "Cant retreive login info. Check team name");
