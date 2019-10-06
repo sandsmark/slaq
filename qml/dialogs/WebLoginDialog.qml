@@ -31,6 +31,11 @@ Dialog {
             webViewLoader.item.stop()
             close()
         }
+        onTestLoginSuccess: {
+            webViewLoader.item.visible = false
+            webViewLoader.item.stop()
+            close()
+        }
     }
 
     Rectangle {
