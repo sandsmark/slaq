@@ -66,5 +66,6 @@
         <file>qml/components/EmojisGrid.qml</file>
         <file>qml/dialogs/EditMessageDialog.qml</file>
         <file>qml/components/SlaqTextTooltips.qml</file>
+        <file>qml/dialogs/WebLoginDialog.qml</file>
     </qresource>
 </RCC>

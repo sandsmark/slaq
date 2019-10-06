@@ -57,6 +57,11 @@ int main(int argc, char *argv[])
     qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     QQmlApplicationEngine engine;
+#ifdef NO_WEBENGINE
+    engine.rootContext()->setContextProperty("NoWebEngine", true);
+#else
+    engine.rootContext()->setContextProperty("NoWebEngine", false);
+#endif
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
 
     qDebug() << "GUI thread" << QThread::currentThread();

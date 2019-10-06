@@ -124,7 +124,26 @@ ApplicationWindow {
     ErrorMessageDialog { id: errorDialog }
     UserDialog { id: userDialog }
     SettingsDialog { id: settingsDialog }
-    LoginDialog { id: loginDialog }
+
+    Loader {
+        id: loginDialog
+        active: false
+        function open() {
+            if (!active) {
+                active = true
+            } else {
+                item.open()
+            }
+        }
+        onStatusChanged: {
+            if (status === Loader.Ready) {
+                item.open()
+            }
+            onStatusChanged: console.log(status)
+        }
+        source: NoWebEngine ? "qrc:/qml/dialogs/LoginDialog.qml" :  "qrc:/qml/dialogs/WebLoginDialog.qml"
+    }
+
     AboutDialog { id: aboutDialog }
     DndDialog { id: dndDialog }
     EditMessageDialog { id: editMessageDialog }

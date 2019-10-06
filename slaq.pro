@@ -144,6 +144,8 @@ other.path = $$TO_DEPLOY
 INSTALLS += target other
 
 # Create installer if passed `CONFIG+=create-installer`
+# Disables webengine usage as well
 create-installer {
     include(create-installer.pri)
+    DEFINES += NO_WEBENGINE
 }
