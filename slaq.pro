@@ -41,7 +41,6 @@ CONFIG += c++11
 QT += quick xml quickcontrols2 multimedia widgets websockets
 QT += quick-private core-private gui-private qml-private quickcontrols2-private quicktemplates2-private
 
-linux: QMAKE_LFLAGS += -fuse-ld=gold
 INCLUDEPATH += src src/slackmodels
 INCLUDEPATH += src/slaqtext
 
