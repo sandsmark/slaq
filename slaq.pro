@@ -17,8 +17,6 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 
-include(src/qtbreakpad/qtbreakpad.pri)
-
 CONFIG(debug, debug|release) {
   DEFINES += SLAQ_DEBUG
   TO_DEPLOY = $$PWD/build/Debug/
