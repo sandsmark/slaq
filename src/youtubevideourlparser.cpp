@@ -9,9 +9,6 @@
 
 #include <QMetaEnum>
 
-#include "QGumboParser/qgumbodocument.h"
-#include "QGumboParser/HtmlTag.h"
-#include "QGumboParser/qgumbonode.h"
 #include "youtubevideourlparser.h"
 
 /**
@@ -229,14 +226,15 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
     req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
     QNetworkReply* embedReply = manager.get(req);
     QObject::connect(embedReply, &QNetworkReply::finished, [this, embedReply, pc]() {
-        const QByteArray& data = embedReply->readAll();
-        const QGumboDocument htmlDoc = QGumboDocument::parse(data);
-        const QGumboNodes& script_nodes = htmlDoc.rootNode().getElementsByTagName(HtmlTag::SCRIPT);
+        QRegularExpressionMatchIterator embedMatches = m_youtubeIdEmbed.globalMatch(QString::fromUtf8(embedReply->readAll()));
+        embedReply->deleteLater();
         bool script_found = false;
-        for (const QGumboNode& scriptNode : script_nodes) {
-            QRegularExpressionMatch embedMath = m_youtubePlayerEmbed.match(scriptNode.innerText());
-            if (embedMath.hasMatch()) {
-                script_found = true;
+
+        while (embedMatches.hasNext()) {
+            script_found = true;
+
+            QRegularExpressionMatch embedMath = embedMatches.next();
+
                 const QString& embedJson = embedMath.captured("Json").chopped(1);
                 QJsonParseError error;
                 QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
@@ -299,14 +297,11 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
                     qWarning().noquote() << "Error parsing embed json" << error.error << error.errorString() << embedJson;
                     emit playerConfigChanged(pc);
                 }
-                break;
-            }
         }
         if (!script_found) {
             qWarning() << "Not found script in embedded html page";
             emit playerConfigChanged(pc);
         }
-        embedReply->deleteLater();
     });
 }
 
