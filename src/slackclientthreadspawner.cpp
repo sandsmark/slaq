@@ -1166,6 +1166,9 @@ void SlackClientThreadSpawner::connectToTeam(const QString &teamId, const QStrin
         m_knownTeams[teamId] = _slackClient;
         SlackConfig::instance()->setTeams(m_knownTeams.keys());
     }
+    if (!accessToken.isEmpty()) {
+        _slackClient->teamInfo()->setTeamToken(accessToken);
+    }
     _slackClient->startClient();
 }
 
