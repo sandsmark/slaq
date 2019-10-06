@@ -1224,6 +1224,9 @@ void SlackClientThreadSpawner::appendTeam(const QString &teamId)
     if (_slackClient == nullptr) {
         return;
     }
+    if (m_teamsModel.contains(_slackClient->teamInfo())) {
+        return;
+    }
     m_teamsModel.append(_slackClient->teamInfo());
 }
 
