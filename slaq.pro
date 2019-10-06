@@ -17,6 +17,14 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 
+exists(extern/qtcreator-breakpad/qtbreakpad.pri) {
+    message("Enabling breakpad crash handler")
+    include(extern/qtcreator-breakpad/qtbreakpad.pri)
+    DEFINES += ENABLE_BREAKPAD
+} else {
+    message("Breakpad crash handler not enabled")
+}
+
 CONFIG(debug, debug|release) {
   DEFINES += SLAQ_DEBUG
 } else {

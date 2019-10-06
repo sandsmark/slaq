@@ -20,12 +20,18 @@
 #include "downloadmanager.h"
 #include "slaqtext.h"
 #include "UsersModel.h"
-#include "qtsystemexceptionhandler.h"
 #include "youtubevideourlparser.h"
+
+#ifdef ENABLE_BREAKPAD
+#include "qtsystemexceptionhandler.h"
+#endif
 
 int main(int argc, char *argv[])
 {
+#ifdef ENABLE_BREAKPAD
     QtSystemExceptionHandler exceptionHandler("");
+#endif
+
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     qSetMessagePattern("[%{time h:mm:ss.zzz} %{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}] %{file}:%{line} - %{message}");

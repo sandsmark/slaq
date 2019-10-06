@@ -1,3 +1,7 @@
+!exists(extern/qtcreator-breakpad/qtbreakpad.pri) {
+    error("Please check out the extern/qtcreator-breakpad submodule")
+}
+
 CONFIG(debug, debug|release) {
   TO_DEPLOY = $$PWD/build/Debug/
 } else {

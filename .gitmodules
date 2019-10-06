@@ -1,0 +1,3 @@
+[submodule "extern/qtcreator-breakpad"]
+	path = extern/qtcreator-breakpad
+	url = https://github.com/sandsmark/qtcreator-breakpad.git
