@@ -165,6 +165,9 @@ Page {
             Layout.fillHeight: true
             Layout.fillWidth: true
             messageInput: input
+            interactive: false
+            boundsBehavior: Flickable.StopAtBounds
+            boundsMovement: Flickable.StopAtBounds
 
             onLoadCompleted: {
                 loaderIndicator.visible = false
@@ -194,6 +197,15 @@ Page {
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: "transparent" }
                     GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.5) }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                scrollGestureEnabled: true
+                onWheel: {
+                    parent.contentY -= wheel.angleDelta.y
+                    wheel.accepted = true
                 }
             }
         }
