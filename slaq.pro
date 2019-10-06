@@ -46,11 +46,6 @@ INCLUDEPATH += src/slaqtext
 
 QML_IMPORT_PATH += $$PWD
 
-# enable for address sanitizer
-#QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address -fno-sanitize=vptr
-#QMAKE_LIBS += -lasan
-#dont forget to add to env: ASAN_OPTIONS=new_delete_type_mismatch=0
-
 SOURCES += src/main.cpp \
     src/slackclient.cpp \
     src/slackconfig.cpp \
