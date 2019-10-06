@@ -24,6 +24,15 @@ Dialog {
         webViewLoader.sourceComponent = undefined
     }
 
+    Connections {
+        target: SlackClient
+        onAccessTokenSuccess: {
+            webViewLoader.item.visible = false
+            webViewLoader.item.stop()
+            close()
+        }
+    }
+
     Rectangle {
         anchors {
             fill: parent
@@ -31,6 +40,7 @@ Dialog {
         }
         color: "transparent"
         border.color: "black"
+
         Loader {
             id: webViewLoader
             anchors {
@@ -58,15 +68,21 @@ Dialog {
             url: loginDialog.startUrl
 
             onLoadingChanged: {
-                runJavaScript("JSON.stringify(boot_data)", function(result){
-                    if (result !== undefined) {
-                        if (SlackClient.handleAccessTokenReply(JSON.parse(result))) {
-                            webView.visible = false
-                            webView.stop()
-                            loginDialog.close();
-                        }
+                runJavaScript("window.localStorage.getItem(\"localConfig_v2\")", function(result) { try {
+                    if (result === undefined) {
+                        return
                     }
-                })
+                    var localConfig = JSON.parse(result)
+                    // Don't bother update the C++
+                    var teamId = webView.url.toString().split('/')[4]
+                    var bootConfig = {
+                        'api_token': localConfig['teams'][teamId]['token'],
+                        'team_id': teamId,
+                        'user_id' :'dummyTODO', // not used
+                        'team_url' :'dummyTODO', // not used
+                    }
+                    SlackClient.handleAccessTokenReply(bootConfig)
+                } catch (err) { console.log(" error: " + err); } } )
             }
         }
     }

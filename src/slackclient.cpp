@@ -58,6 +58,10 @@ SlackTeamClient::SlackTeamClient(QObject *spawner, const QString &teamId, const 
     m_teamInfo.setTeamId(teamId);
     config = SlackConfig::instance();
     config->loadTeamInfo(m_teamInfo);
+
+    networkAccessManager = new QNetworkAccessManager(this);
+    networkAccessManager->setCookieJar(config->cookieJar);
+
     if (m_teamInfo.teamToken().isEmpty()) {
         m_teamInfo.setTeamToken(accessToken);
     }
@@ -84,8 +88,6 @@ SlackTeamClient::~SlackTeamClient() {
 
 void SlackTeamClient::startConnections()
 {
-    networkAccessManager = new QNetworkAccessManager(this);
-
     stream = new SlackStream(this);
     reconnectTimer = new QTimer(this);
 #ifndef Q_OS_WIN //reports wrong state on Windows

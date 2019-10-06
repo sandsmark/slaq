@@ -26,6 +26,11 @@
 #include "qtsystemexceptionhandler.h"
 #endif
 
+#ifndef NO_WEBENGINE
+#include <QtWebEngine/QQuickWebEngineProfile>
+#include <QtWebEngineCore/QWebEngineCookieStore>
+#endif
+
 int main(int argc, char *argv[])
 {
 #ifdef ENABLE_BREAKPAD
@@ -57,9 +62,17 @@ int main(int argc, char *argv[])
     qDebug() << "emoji fonts:" << QFontDatabase::applicationFontFamilies(emojiFontId);
 
     QQmlApplicationEngine engine;
+
 #ifdef NO_WEBENGINE
     engine.rootContext()->setContextProperty("NoWebEngine", true);
 #else
+
+    QtWebEngine::initialize();
+    QObject::connect(QQuickWebEngineProfile::defaultProfile()->cookieStore(), &QWebEngineCookieStore::cookieAdded,
+            SlackConfig::instance(), &SlackConfig::onCookieAdded);
+    QQuickWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QQuickWebEngineProfile::ForcePersistentCookies);
+    QQuickWebEngineProfile::defaultProfile()->cookieStore()->loadAllCookies();
+
     engine.rootContext()->setContextProperty("NoWebEngine", false);
 #endif
     engine.setNetworkAccessManagerFactory(new NetworkAccessManagerFactory());
@@ -127,6 +140,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("fileModel"), &fileModel);
     engine.rootContext()->setContextProperty(QStringLiteral("downloadManager"), &downloadManager);
     engine.rootContext()->setContextProperty(QStringLiteral("youtubeParser"), &youtubeParser);
+
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         qWarning() << "No root objects?";

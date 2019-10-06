@@ -40,7 +40,7 @@ TRANSLATIONS += translations/slaq-fi.ts
 
 CONFIG += c++11
 
-QT += quick xml quickcontrols2 multimedia widgets websockets
+QT += quick xml quickcontrols2 multimedia widgets websockets webengine
 QT += quick-private core-private gui-private qml-private quickcontrols2-private quicktemplates2-private
 
 INCLUDEPATH += src src/slackmodels

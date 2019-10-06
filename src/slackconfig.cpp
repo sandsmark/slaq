@@ -6,8 +6,38 @@
 #include "teaminfo.h"
 #include "imagescache.h"
 
+CookieJar::CookieJar(QObject *parent) :
+    QNetworkCookieJar(parent)
+{
+    // qt webengine is shit, forcing persistent cookies doesn't work, so we do it ourselves
+    QSettings settings;
+    QVariantList rawCookies = settings.value("cookies").toList();
+    for (const QVariant &rawCookie : rawCookies) {
+        for (const QNetworkCookie &cookie : QNetworkCookie::parseCookies(rawCookie.toByteArray())) {
+            insertCookie(cookie);
+        }
+    }
+    m_initialized = true;
+}
+
+void CookieJar::saveCookies()
+{
+    QVariantList cookieList;
+    for (const QNetworkCookie &toSave : allCookies()) {
+        cookieList.append(toSave.toRawForm());
+    }
+    QSettings settings;
+    settings.setValue("cookies", cookieList);
+}
+
 SlackConfig::SlackConfig(QObject *parent) :
-    QObject(parent), m_settings(this), m_currentUserId()
+    QObject(parent),
+    cookieJar(new CookieJar),
+    m_settings(this)
+{
+}
+
+SlackConfig::~SlackConfig()
 {
 }
 
@@ -76,6 +106,16 @@ void SlackConfig::setTeams(const QStringList &teams)
 QString SlackConfig::accessToken(const QString &teamId)
 {
     return m_teamsTokens.value(teamId);
+}
+
+void SlackConfig::onCookieAdded(const QNetworkCookie &cookie)
+{
+    if (!cookieJar) {
+        qWarning() << "Cookie jar gone!";
+        return;
+    }
+
+    cookieJar->insertCookie(cookie);
 }
 
 void SlackConfig::clearWebViewCache()

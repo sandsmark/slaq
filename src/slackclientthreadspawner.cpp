@@ -520,9 +520,9 @@ void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString 
                 this->getSessionDetails(_url + redirUrl.toString());
                 //already logged in
             }
+#ifdef NO_WEBENGINE
         } else if (httpCode == 200) { //not yet logged in
             qDebug() << "Not logged in\n====";
-
             const QString content = QString::fromUtf8(reply->readAll());
             reply->deleteLater();
 
@@ -626,6 +626,7 @@ void SlackClientThreadSpawner::loginAttempt(const QString &email, const QString 
                     });
                 });
             });
+#endif
         } else {
             this->showError("Slack login error", "Cant retreive login info. Check team name");
         }

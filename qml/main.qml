@@ -180,6 +180,9 @@ ApplicationWindow {
         onTeamLeft: {
             teamsSwipe.indexToLoad = 0
         }
+        onTestLoginFail: {
+            loginDialog.open()
+        }
     }
 
     header: ToolBar {
