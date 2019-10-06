@@ -228,78 +228,85 @@ void YoutubeVideoUrlParser::requestVideoUrl(const QString &videoId)
     QObject::connect(embedReply, &QNetworkReply::finished, [this, embedReply, pc]() {
         QRegularExpressionMatchIterator embedMatches = m_youtubeIdEmbed.globalMatch(QString::fromUtf8(embedReply->readAll()));
         embedReply->deleteLater();
-        bool script_found = false;
 
+        if (!embedMatches.hasNext()) {
+            qWarning() << "Not found script in embedded html page";
+            emit playerConfigChanged(pc);
+            return;
+        }
+
+        bool foundScript = false;
         while (embedMatches.hasNext()) {
-            script_found = true;
-
             QRegularExpressionMatch embedMath = embedMatches.next();
 
-                const QString& embedJson = embedMath.captured("Json").chopped(1);
-                QJsonParseError error;
-                QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
+            const QString& embedJson = embedMath.captured("Json").chopped(1);
+            QJsonParseError error;
+            QJsonDocument document = QJsonDocument::fromJson(embedJson.toLatin1(), &error);
 
-                if (error.error == QJsonParseError::NoError) {
-                    QJsonObject obj = document.object();
-                    const QString& _playerSourceUrl = "https://youtube.com" + obj.value("assets").toObject().value("js").toString();
-                    pc->playerSourceUrl = _playerSourceUrl;
-                    //qDebug() << __PRETTY_FUNCTION__ << _playerSourceUrl;
-                    const QUrl eurl("https://youtube.googleapis.com/v/" + pc->videoId);
-                    const QUrl url(QString("https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en").
-                                   arg(pc->videoId).arg(eurl.toEncoded().data()));
-                    QNetworkRequest req = QNetworkRequest(url);
-                    req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
-                    QNetworkReply* reply = manager.get(req);
+            if (error.error != QJsonParseError::NoError) {
+                qWarning().noquote() << "Error parsing embed json" << error.error << error.errorString() << embedJson;
+                continue;
+            }
 
-                    QObject::connect(reply, &QNetworkReply::finished, [this, reply, pc]() {
-                        if (reply->error() == QNetworkReply::NoError){
-                            const QByteArray& data = reply->readAll();
-                            // now need to extract video_id value
-                            QUrlQuery parser(data);
-                            QJsonParseError error;
-                            //                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
-                            //                                                                          replace("\\u0026", "&").toUtf8());
-                            const QString& plResp = parser.queryItemValue(QStringLiteral("player_response"));//.replace("\\u0026", "&");
-                            //qWarning().noquote() << "player response" << plResp;
-                            QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromPercentEncoding(plResp.toUtf8()), &error);
-                            if (error.error == QJsonParseError::NoError) {
-                                //qDebug() << "player response" << plResp;
-                                const QJsonObject& obj = document.object();
-                                const QJsonObject& playabilityStatusO = obj.value(QStringLiteral("playabilityStatus")).toObject();
-                                if (playabilityStatusO.value("status").toString().contains("error")) {
-                                    emit playerConfigChanged(pc);
-                                    return;
-                                }
-                                const QJsonObject& streamingDataO = obj.value(QStringLiteral("streamingData")).toObject();
-                                //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
-                                pc->succeed = true;
-                                pc->isLiveStream = obj.value("videoDetails").toObject().value("isLive").toBool(false);
-                                int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
-                                pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
-                                //qDebug() << _expsecs << pc->validUntil;
-                                if (pc->isLiveStream) {
-                                    pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
-                                } else {
-                                    pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
-                                    pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
-                                    pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
-                                    //qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
-                                }
-                            } else {
-                                qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
-                            }
-                        } else {
-                            qWarning() << "Youtube get video info error" << reply->error();
+            foundScript = true;
+
+            QJsonObject obj = document.object();
+            const QString& _playerSourceUrl = "https://youtube.com" + obj.value("assets").toObject().value("js").toString();
+            pc->playerSourceUrl = _playerSourceUrl;
+            //qDebug() << __PRETTY_FUNCTION__ << _playerSourceUrl;
+            const QUrl eurl("https://youtube.googleapis.com/v/" + pc->videoId);
+            const QUrl url(QString("https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en").
+                           arg(pc->videoId).arg(eurl.toEncoded().data()));
+            QNetworkRequest req = QNetworkRequest(url);
+            req.setAttribute(QNetworkRequest::RedirectionTargetAttribute, QNetworkRequest::SameOriginRedirectPolicy);
+            QNetworkReply* reply = manager.get(req);
+
+            QObject::connect(reply, &QNetworkReply::finished, [this, reply, pc]() {
+                if (reply->error() == QNetworkReply::NoError){
+                    const QByteArray& data = reply->readAll();
+                    // now need to extract video_id value
+                    QUrlQuery parser(data);
+                    QJsonParseError error;
+                    //                        const QString& plResp = QUrl::fromPercentEncoding(parser.queryItemValue(QStringLiteral("player_response")).
+                    //                                                                          replace("\\u0026", "&").toUtf8());
+                    const QString& plResp = parser.queryItemValue(QStringLiteral("player_response"));//.replace("\\u0026", "&");
+                    //qWarning().noquote() << "player response" << plResp;
+                    QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromPercentEncoding(plResp.toUtf8()), &error);
+                    if (error.error == QJsonParseError::NoError) {
+                        //qDebug() << "player response" << plResp;
+                        const QJsonObject& obj = document.object();
+                        const QJsonObject& playabilityStatusO = obj.value(QStringLiteral("playabilityStatus")).toObject();
+                        if (playabilityStatusO.value("status").toString().contains("error")) {
+                            emit playerConfigChanged(pc);
+                            return;
                         }
-                        emit playerConfigChanged(pc);
-                    });
+                        const QJsonObject& streamingDataO = obj.value(QStringLiteral("streamingData")).toObject();
+                        //qDebug().noquote() << QJsonDocument(streamingDataO).toJson();
+                        pc->succeed = true;
+                        pc->isLiveStream = obj.value("videoDetails").toObject().value("isLive").toBool(false);
+                        int _expsecs = streamingDataO.value("expiresInSeconds").toString().toInt();
+                        pc->validUntil = QDateTime::currentDateTime().addSecs(_expsecs);
+                        //qDebug() << _expsecs << pc->validUntil;
+                        if (pc->isLiveStream) {
+                            pc->manifestUrl = streamingDataO.value("hlsManifestUrl").toString();
+                        } else {
+                            pc->manifestUrl = streamingDataO.value("dashManifestUrl").toString();
+                            pc->muxedStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("url_encoded_fmt_stream_map"));
+                            pc->adaptiveStreamInfosUrlEncoded = parser.queryItemValue(QStringLiteral("adaptive_fmts"));
+                            //qDebug().noquote() << "pc->muxedStreamInfosUrlEncoded" << pc->muxedStreamInfosUrlEncoded;
+                        }
+                    } else {
+                        qWarning().noquote() << "Error parsing player_response json" << error.error << error.errorString() << plResp;
+                    }
                 } else {
-                    qWarning().noquote() << "Error parsing embed json" << error.error << error.errorString() << embedJson;
-                    emit playerConfigChanged(pc);
+                    qWarning() << "Youtube get video info error" << reply->error();
                 }
+                emit playerConfigChanged(pc);
+            });
+            break;
         }
-        if (!script_found) {
-            qWarning() << "Not found script in embedded html page";
+
+        if (!foundScript) {
             emit playerConfigChanged(pc);
         }
     });
